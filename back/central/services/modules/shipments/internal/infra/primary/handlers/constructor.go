@@ -17,6 +17,7 @@ type Handlers struct {
 	pluginBaseURL   string                            // Public backend URL used by the WooCommerce plugin
 	ratesLimiter    ratelimit.Limiter                 // Rate limit + blacklist for the public shipping-rates endpoints (WooCommerce, Shopify)
 	geocoder        domain.IGeocoder                  // Google geocoder for destination address validation
+	overageChecker  domain.ShipmentOverageChecker     // Blocks guide generation past the free plan's included shipments
 }
 
 // New crea una nueva instancia de Handlers
@@ -31,4 +32,8 @@ func New(uc *usecases.UseCases, transportPub domain.ITransportRequestPublisher, 
 		ratesLimiter:    ratesLimiter,
 		geocoder:        geocoder,
 	}
+}
+
+func (h *Handlers) SetOverageChecker(checker domain.ShipmentOverageChecker) {
+	h.overageChecker = checker
 }

@@ -1,6 +1,8 @@
 package announcements
 
 import (
+	"sync"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/secamc93/probability/back/central/services/modules/announcements/internal/app"
@@ -14,6 +16,10 @@ import (
 
 type Bundle struct {
 	UseCase app.IUseCase
+
+	alertCategoryMu       sync.RWMutex
+	alertCategoryID       uint
+	alertCategoryResolved bool
 }
 
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, s3 storage.IS3Service) *Bundle {

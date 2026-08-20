@@ -3,34 +3,37 @@ package announcements
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/secamc93/probability/back/central/services/modules/announcements/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/announcements/internal/domain/entities"
 )
 
-var (
-	alertCategoryOnce sync.Once
-	alertCategoryID   uint
-	alertCategoryErr  error
-)
-
+// resolveAlertCategoryID cachea el ID de la categoria "alert" solo cuando se
+// resuelve con exito. Un fallo transitorio (ej. DB no lista al arrancar) NUNCA
+// queda cacheado: la proxima llamada vuelve a intentar la consulta.
 func (b *Bundle) resolveAlertCategoryID(ctx context.Context) (uint, error) {
-	alertCategoryOnce.Do(func() {
-		categories, err := b.UseCase.ListCategories(ctx)
-		if err != nil {
-			alertCategoryErr = err
-			return
+	b.alertCategoryMu.RLock()
+	if b.alertCategoryResolved {
+		id := b.alertCategoryID
+		b.alertCategoryMu.RUnlock()
+		return id, nil
+	}
+	b.alertCategoryMu.RUnlock()
+
+	categories, err := b.UseCase.ListCategories(ctx)
+	if err != nil {
+		return 0, err
+	}
+	for _, c := range categories {
+		if c.Code == "alert" {
+			b.alertCategoryMu.Lock()
+			b.alertCategoryID = c.ID
+			b.alertCategoryResolved = true
+			b.alertCategoryMu.Unlock()
+			return c.ID, nil
 		}
-		for _, c := range categories {
-			if c.Code == "alert" {
-				alertCategoryID = c.ID
-				return
-			}
-		}
-		alertCategoryErr = fmt.Errorf("alert category not found")
-	})
-	return alertCategoryID, alertCategoryErr
+	}
+	return 0, fmt.Errorf("alert category not found")
 }
 
 func (b *Bundle) CreateBusinessAlert(ctx context.Context, businessID uint, title, message string, createdByID uint, daily bool) (uint, error) {

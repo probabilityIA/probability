@@ -12,6 +12,7 @@ type IRepository interface {
 	UpdateSubscriptionType(ctx context.Context, subType *entities.SubscriptionType) error
 	DeleteSubscriptionType(ctx context.Context, id uint) error
 	GetSubscriptionType(ctx context.Context, id uint) (*entities.SubscriptionType, error)
+	GetSubscriptionTypeByCode(ctx context.Context, code string) (*entities.SubscriptionType, error)
 	ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error)
 	ListCustomPlans(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error)
 
@@ -22,11 +23,16 @@ type IRepository interface {
 	GetSubscriptionByID(ctx context.Context, id uint) (*entities.BusinessSubscription, error)
 	RevertSubscriptionAndRecalculate(ctx context.Context, subscriptionID uint) (*entities.BusinessSubscription, error)
 	UpdateBusinessSubscriptionStatus(ctx context.Context, businessID uint, status string, endDate *time.Time) error
+	AcceptOverage(ctx context.Context, businessID uint, acceptedAt time.Time) error
+	SetOverageAmountDue(ctx context.Context, subscriptionID uint, amount float64) error
+	MarkOverageAmountPaid(ctx context.Context, subscriptionID uint, paidAt time.Time) error
+	ListBusinessesWithEndedFreeCycle(ctx context.Context, before time.Time) ([]uint, error)
 	UpdateSubscriptionDates(ctx context.Context, id uint, startDate, endDate time.Time) error
 	UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error
 	GetBusinessCurrentSubscriptionTypeID(ctx context.Context, businessID uint) (*uint, error)
-	ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]uint, error)
-	ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]uint, error)
+	ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error)
+	ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error)
+	ListBusinessesWithExpiredTrial(ctx context.Context, before time.Time) ([]uint, error)
 	MarkExpiredIfStillActive(ctx context.Context, businessID uint, before time.Time) error
 
 	CreateOverride(ctx context.Context, override *entities.BusinessModuleOverride) error

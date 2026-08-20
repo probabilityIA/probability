@@ -30,6 +30,9 @@ type IUseCase interface {
 	ListAuditLogs(ctx context.Context, businessID uint, limit int) ([]entities.SubscriptionAuditLog, error)
 	GetBusinessSubscription(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
 	GetSubscriptionUsage(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error)
+	CheckShipmentOverage(ctx context.Context, businessID uint) (blocked bool, reason string, fee float64, err error)
+	AcceptShipmentOverage(ctx context.Context, businessID uint) error
+	PayShipmentOverage(ctx context.Context, businessID uint, actorUserID uint) error
 
 	GrantOverride(ctx context.Context, dto dtos.GrantOverrideDTO) error
 	RevokeOverride(ctx context.Context, businessID uint, moduleCode string, actorUserID uint) error
@@ -42,6 +45,9 @@ type IUseCase interface {
 	EcommerceChannelLimit(ctx context.Context, businessID uint) (int, error)
 
 	CheckExpiringSubscriptions(ctx context.Context) error
+	DowngradeExpiredTrials(ctx context.Context) error
+	SettleFreePlanCycles(ctx context.Context) error
+	AssignTrialSubscription(ctx context.Context, businessID uint)
 
 	ListAdminBusinesses(ctx context.Context, page, pageSize int, search, statusFilter string) ([]entities.AdminBusinessRow, int64, error)
 	GetAdminKPIs(ctx context.Context) (entities.AdminKPIs, error)

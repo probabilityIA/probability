@@ -1,6 +1,8 @@
 package demo
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/demo/internal/app"
 	"github.com/secamc93/probability/back/central/services/auth/demo/internal/infra/primary/handlers"
@@ -13,11 +15,21 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, cfg env.IConfig, queue rabbitmq.IQueue) {
+type Bundle struct {
+	UseCase app.IUseCase
+}
+
+func (b *Bundle) SetOnBusinessCreated(hook func(ctx context.Context, businessID uint)) {
+	b.UseCase.SetOnBusinessCreated(hook)
+}
+
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, cfg env.IConfig, queue rabbitmq.IQueue) *Bundle {
 	repo := repository.New(database, logger, cfg.Get("ENCRYPTION_KEY"))
 	emailService := email.New(cfg, logger)
 	otpPublisher := otpqueue.New(queue, logger)
 	useCase := app.New(repo, emailService, otpPublisher, logger, cfg)
 	handler := handlers.New(useCase, logger)
 	handler.RegisterRoutes(router)
+
+	return &Bundle{UseCase: useCase}
 }

@@ -224,6 +224,8 @@ type ICarrierResolver interface {
 	GetActiveShippingCarrier(ctx context.Context, businessID uint) (*CarrierInfo, error)
 }
 
+type ShipmentOverageChecker func(ctx context.Context, businessID uint) (blocked bool, reason string, fee float64, err error)
+
 type TransportRequestMessage struct {
 	ShipmentID        *uint                  `json:"shipment_id,omitempty"`
 	Provider          string                 `json:"provider"`

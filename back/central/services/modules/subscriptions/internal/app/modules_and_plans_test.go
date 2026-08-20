@@ -889,9 +889,9 @@ func TestCheckExpiringSubscriptions_CreaAvisoAQuienesVencenEnMenosDeSieteDias(t 
 	var desde, hasta time.Time
 	ann := &mocks.AnnouncementsGatewayMock{}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]uint, error) {
+		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
 			desde, hasta = from, to
-			return []uint{26, 27}, nil
+			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}}, nil
 		},
 	}
 
@@ -913,8 +913,8 @@ func TestCheckExpiringSubscriptions_NoDuplicaAvisoSiYaHayUnoActivo(t *testing.T)
 		},
 	}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]uint, error) {
-			return []uint{26}, nil
+		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}}, nil
 		},
 	}
 
@@ -928,8 +928,8 @@ func TestCheckExpiringSubscriptions_VencidosRecibenAvisoYQuedanExpired(t *testin
 	var marcados []uint
 	ann := &mocks.AnnouncementsGatewayMock{}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]uint, error) {
-			return []uint{26}, nil
+		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}}, nil
 		},
 		MarkExpiredIfStillActiveFn: func(ctx context.Context, businessID uint, before time.Time) error {
 			marcados = append(marcados, businessID)
@@ -949,8 +949,8 @@ func TestCheckExpiringSubscriptions_UsaElSuperAdminComoAutorDelAviso(t *testing.
 	llamadas := 0
 	ann := &mocks.AnnouncementsGatewayMock{}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]uint, error) {
-			return []uint{26, 27, 28}, nil
+		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}, {BusinessID: 28}}, nil
 		},
 		FindSuperAdminUserIDFn: func(ctx context.Context) (uint, error) {
 			llamadas++
@@ -978,8 +978,8 @@ func TestCheckExpiringSubscriptions_FalloAlCrearUnAviso_NoAbortaElResto(t *testi
 		},
 	}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]uint, error) {
-			return []uint{26, 27}, nil
+		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}}, nil
 		},
 	}
 
@@ -992,8 +992,8 @@ func TestCheckExpiringSubscriptions_FalloAlCrearUnAviso_NoAbortaElResto(t *testi
 func TestCheckExpiringSubscriptions_FalloAlMarcarExpirado_NoAbortaElResto(t *testing.T) {
 	intentos := 0
 	repo := &mocks.RepositoryMock{
-		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]uint, error) {
-			return []uint{26, 27}, nil
+		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}}, nil
 		},
 		MarkExpiredIfStillActiveFn: func(ctx context.Context, businessID uint, before time.Time) error {
 			intentos++
@@ -1012,7 +1012,7 @@ func TestCheckExpiringSubscriptions_ErroresDeConsulta_AbortanElBarrido(t *testin
 
 	t.Run("al listar los que vencen pronto", func(t *testing.T) {
 		repo := &mocks.RepositoryMock{
-			ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]uint, error) {
+			ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
 				return nil, dbErr
 			},
 		}
@@ -1022,7 +1022,7 @@ func TestCheckExpiringSubscriptions_ErroresDeConsulta_AbortanElBarrido(t *testin
 
 	t.Run("al listar los vencidos", func(t *testing.T) {
 		repo := &mocks.RepositoryMock{
-			ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]uint, error) {
+			ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
 				return nil, dbErr
 			},
 		}
@@ -1050,8 +1050,8 @@ func TestCheckExpiringSubscriptions_FalloAlBuscarAvisoActivo_NoAbortaElResto(t *
 		},
 	}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]uint, error) {
-			return []uint{26, 27}, nil
+		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}}, nil
 		},
 	}
 
@@ -1065,8 +1065,8 @@ func TestCheckExpiringSubscriptions_FalloAlBuscarAvisoActivo_NoAbortaElResto(t *
 func TestCheckExpiringSubscriptions_SinSuperAdmin_NoCreaAvisos(t *testing.T) {
 	ann := &mocks.AnnouncementsGatewayMock{}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]uint, error) {
-			return []uint{26}, nil
+		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}}, nil
 		},
 		FindSuperAdminUserIDFn: func(ctx context.Context) (uint, error) {
 			return 0, stderrors.New("no hay super admin")

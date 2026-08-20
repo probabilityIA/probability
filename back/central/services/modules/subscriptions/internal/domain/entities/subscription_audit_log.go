@@ -21,4 +21,7 @@ const (
 	AuditActionOverrideRevoked         = "override_revoked"
 	AuditActionSubscriptionSuspended   = "subscription_suspended"
 	AuditActionSubscriptionReactivated = "subscription_reactivated"
+	AuditActionTrialDowngraded         = "trial_downgraded_to_free"
+	AuditActionOverageSettled          = "overage_settled"
+	AuditActionOverageDuePaid          = "overage_due_paid"
 )

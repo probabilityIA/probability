@@ -22,6 +22,8 @@ type SubscriptionType struct {
 	InvoiceOveragePrice  *float64       `gorm:"column:invoice_overage_price;type:numeric"`
 	IncludedOrders       *int           `gorm:"column:included_orders"`
 	OrderOveragePrice    *float64       `gorm:"column:order_overage_price;type:numeric"`
+	Payable              bool           `gorm:"column:payable;not null;default:true"`
+	TrialDurationDays    *int           `gorm:"column:trial_duration_days"`
 }
 
 func (SubscriptionType) TableName() string {

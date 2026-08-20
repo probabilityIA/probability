@@ -45,6 +45,9 @@ func (r *Repository) GetSubscriptionUsage(ctx context.Context, businessID uint) 
 		InvoiceOveragePrice:  plan.InvoiceOveragePrice,
 		IncludedOrders:       plan.IncludedOrders,
 		OrderOveragePrice:    plan.OrderOveragePrice,
+		OverageAccepted:      sub.OverageAccepted,
+		OverageAmountDue:     sub.OverageAmountDue,
+		OverageAmountPaidAt:  sub.OverageAmountPaidAt,
 	}
 
 	if plan.IncludedShipments != nil {

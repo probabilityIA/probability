@@ -14,6 +14,9 @@ type SubscriptionUsage struct {
 	IncludedShipments    *int
 	ShipmentOveragePrice *float64
 	ShipmentsUsed        int64
+	OverageAccepted      bool
+	OverageAmountDue     *float64
+	OverageAmountPaidAt  *time.Time
 
 	IncludedInvoices    *int
 	InvoiceOveragePrice *float64

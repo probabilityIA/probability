@@ -135,6 +135,9 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateSubscriptionPlans(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateFreeTrialSubscriptionPlans(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateIntegrationStats(ctx); err != nil {
 		return err
 	}

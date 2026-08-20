@@ -43,6 +43,8 @@ func subscriptionTypeToEntity(m *models.SubscriptionType) *entities.Subscription
 		InvoiceOveragePrice:  m.InvoiceOveragePrice,
 		IncludedOrders:       m.IncludedOrders,
 		OrderOveragePrice:    m.OrderOveragePrice,
+		Payable:              m.Payable,
+		TrialDurationDays:    m.TrialDurationDays,
 		CreatedAt:            m.CreatedAt,
 		UpdatedAt:            m.UpdatedAt,
 	}
@@ -76,6 +78,10 @@ func subscriptionToEntity(m *models.BusinessSubscription) *entities.BusinessSubs
 		PaymentMethod:        m.PaymentMethod,
 		PaymentReference:     m.PaymentReference,
 		Notes:                m.Notes,
+		OverageAccepted:      m.OverageAccepted,
+		OverageAcceptedAt:    m.OverageAcceptedAt,
+		OverageAmountDue:     m.OverageAmountDue,
+		OverageAmountPaidAt:  m.OverageAmountPaidAt,
 		CreatedAt:            m.CreatedAt,
 		UpdatedAt:            m.UpdatedAt,
 	}

@@ -17,6 +17,26 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		return
 	}
 
+	if h.overageChecker != nil {
+		blocked, reason, fee, err := h.overageChecker(c.Request.Context(), businessID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al verificar el plan de suscripcion: " + err.Error()})
+			return
+		}
+		if blocked {
+			message := fmt.Sprintf("Superaste los envios incluidos en tu plan gratuito. Desde ahora cada guia adicional tiene un cargo de $%.0f que se facturara al cierre del periodo. Acepta el cargo para seguir generando guias.", fee)
+			if reason == "overage_payment_due" {
+				message = fmt.Sprintf("Tienes un cargo pendiente de $%.0f por excedente de envios del ciclo anterior. Debes pagarlo para seguir generando guias.", fee)
+			}
+			c.JSON(http.StatusPaymentRequired, gin.H{
+				"error":       message,
+				"code":        reason,
+				"overage_fee": fee,
+			})
+			return
+		}
+	}
+
 	carrier, err := h.resolveCarrier(c, businessID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

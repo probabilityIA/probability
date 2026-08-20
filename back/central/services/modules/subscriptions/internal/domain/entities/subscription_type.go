@@ -19,6 +19,8 @@ type SubscriptionType struct {
 	InvoiceOveragePrice  *float64
 	IncludedOrders       *int
 	OrderOveragePrice    *float64
+	Payable              bool
+	TrialDurationDays    *int
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }

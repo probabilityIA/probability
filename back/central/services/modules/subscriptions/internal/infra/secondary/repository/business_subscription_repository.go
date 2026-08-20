@@ -175,6 +175,23 @@ func (r *Repository) MarkExpiredIfStillActive(ctx context.Context, businessID ui
 		Updates(updates).Error
 }
 
+func (r *Repository) AcceptOverage(ctx context.Context, businessID uint, acceptedAt time.Time) error {
+	var sub models.BusinessSubscription
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND status = ?", businessID, entities.SubscriptionStatusPaid).
+		Order("created_at desc").
+		First(&sub).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errs.ErrSubscriptionNotFound
+		}
+		return err
+	}
+
+	return r.db.Conn(ctx).Model(&models.BusinessSubscription{}).Where("id = ?", sub.ID).
+		Updates(map[string]interface{}{"overage_accepted": true, "overage_accepted_at": acceptedAt}).Error
+}
+
 func (r *Repository) UpdateSubscriptionDates(ctx context.Context, id uint, startDate, endDate time.Time) error {
 	return r.db.Conn(ctx).Model(&models.BusinessSubscription{}).Where("id = ?", id).
 		Updates(map[string]interface{}{"start_date": startDate, "end_date": endDate}).Error
@@ -200,10 +217,69 @@ func (r *Repository) GetBusinessCurrentSubscriptionTypeID(ctx context.Context, b
 	return business.SubscriptionTypeID, nil
 }
 
-func (r *Repository) ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]uint, error) {
+func (r *Repository) ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
+	var rows []struct {
+		ID   uint
+		Code string
+	}
+	err := r.db.Conn(ctx).Table("businesses").
+		Select("businesses.id, subscription_types.code").
+		Joins("LEFT JOIN subscription_types ON subscription_types.id = businesses.subscription_type_id").
+		Where("businesses.deleted_at IS NULL AND businesses.subscription_status = ? AND businesses.subscription_end_date BETWEEN ? AND ?",
+			entities.BusinessStatusActive, from, to).
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]entities.ExpiringBusiness, len(rows))
+	for i, row := range rows {
+		result[i] = entities.ExpiringBusiness{BusinessID: row.ID, PlanCode: row.Code}
+	}
+	return result, nil
+}
+
+func (r *Repository) SetOverageAmountDue(ctx context.Context, subscriptionID uint, amount float64) error {
+	return r.db.Conn(ctx).Model(&models.BusinessSubscription{}).Where("id = ?", subscriptionID).
+		Update("overage_amount_due", amount).Error
+}
+
+func (r *Repository) MarkOverageAmountPaid(ctx context.Context, subscriptionID uint, paidAt time.Time) error {
+	return r.db.Conn(ctx).Model(&models.BusinessSubscription{}).Where("id = ?", subscriptionID).
+		Update("overage_amount_paid_at", paidAt).Error
+}
+
+// ListBusinessesWithEndedFreeCycle busca, para cada negocio, su ultima
+// suscripcion pagada (sin importar el subscription_status de businesses, que
+// puede haber sido marcado "expired" por el flujo generico de vencimiento) y
+// filtra las que son del plan gratuito, ya vencieron, y todavia no fueron
+// liquidadas (sin cargo de excedente pendiente sin pagar).
+func (r *Repository) ListBusinessesWithEndedFreeCycle(ctx context.Context, before time.Time) ([]uint, error) {
+	var ids []uint
+	err := r.db.Conn(ctx).Raw(`
+		SELECT bs.business_id
+		FROM (
+			SELECT DISTINCT ON (business_id) *
+			FROM business_subscriptions
+			WHERE status = ?
+			ORDER BY business_id, created_at DESC
+		) bs
+		JOIN subscription_types st ON st.id = bs.subscription_type_id
+		WHERE st.code = ? AND bs.end_date < ?
+		  AND (bs.overage_amount_due IS NULL OR bs.overage_amount_paid_at IS NOT NULL)
+	`, entities.SubscriptionStatusPaid, "free", before).Scan(&ids).Error
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
+func (r *Repository) ListBusinessesWithExpiredTrial(ctx context.Context, before time.Time) ([]uint, error) {
 	var businesses []models.Business
-	err := r.db.Conn(ctx).Select("id").
-		Where("deleted_at IS NULL AND subscription_status = ? AND subscription_end_date BETWEEN ? AND ?", entities.BusinessStatusActive, from, to).
+	err := r.db.Conn(ctx).Select("businesses.id").
+		Joins("JOIN subscription_types ON subscription_types.id = businesses.subscription_type_id").
+		Where("businesses.deleted_at IS NULL AND businesses.subscription_status = ? AND businesses.subscription_end_date < ? AND subscription_types.code = ?",
+			entities.BusinessStatusActive, before, "trial").
 		Find(&businesses).Error
 	if err != nil {
 		return nil, err
@@ -216,18 +292,24 @@ func (r *Repository) ListBusinessesExpiringBetween(ctx context.Context, from, to
 	return ids, nil
 }
 
-func (r *Repository) ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]uint, error) {
-	var businesses []models.Business
-	err := r.db.Conn(ctx).Select("id").
-		Where("deleted_at IS NULL AND subscription_status = ? AND subscription_end_date < ?", entities.BusinessStatusActive, before).
-		Find(&businesses).Error
+func (r *Repository) ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
+	var rows []struct {
+		ID   uint
+		Code string
+	}
+	err := r.db.Conn(ctx).Table("businesses").
+		Select("businesses.id, subscription_types.code").
+		Joins("LEFT JOIN subscription_types ON subscription_types.id = businesses.subscription_type_id").
+		Where("businesses.deleted_at IS NULL AND businesses.subscription_status = ? AND businesses.subscription_end_date < ?",
+			entities.BusinessStatusActive, before).
+		Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
 
-	ids := make([]uint, len(businesses))
-	for i, b := range businesses {
-		ids[i] = b.ID
+	result := make([]entities.ExpiringBusiness, len(rows))
+	for i, row := range rows {
+		result[i] = entities.ExpiringBusiness{BusinessID: row.ID, PlanCode: row.Code}
 	}
-	return ids, nil
+	return result, nil
 }

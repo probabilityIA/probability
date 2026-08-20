@@ -51,12 +51,13 @@ import (
 )
 
 type ModuleBundles struct {
-	router      *gin.RouterGroup
-	database    db.IDatabase
-	logger      log.ILogger
-	environment env.IConfig
-	rabbitMQ    rabbitmq.IQueue
-	redisClient redis.IRedis
+	router        *gin.RouterGroup
+	database      db.IDatabase
+	logger        log.ILogger
+	environment   env.IConfig
+	rabbitMQ      rabbitmq.IQueue
+	redisClient   redis.IRedis
+	Subscriptions *subscriptions.Bundle
 }
 
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore, dianEmitter *factusinv.PlatformEmitter) *ModuleBundles {
@@ -68,7 +69,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	products.New(router, database, logger, environment, rabbitMQ, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
-	shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)
+	shipmentsBundle := shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)
 	codreport.New(router, database, logger)
 	woostore.New(router, environment, logger)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
@@ -91,6 +92,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	payBundle := pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
 	subscriptionsBundle := subscriptions.New(router, database, logger, payBundle, announcementsBundle)
 	integrationCore.SetEcommerceLimitChecker(subscriptionsBundle.UseCase.EcommerceChannelLimit)
+	shipmentsBundle.SetSubscriptionOverageChecker(subscriptionsBundle.UseCase.CheckShipmentOverage)
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "invoicing"))
 	warehouses.New(router, database)
 	commercial.New(router, database, logger)
@@ -122,11 +124,12 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	}
 
 	return &ModuleBundles{
-		router:      router,
-		database:    database,
-		logger:      logger,
-		environment: environment,
-		rabbitMQ:    rabbitMQ,
-		redisClient: redisClient,
+		router:        router,
+		database:      database,
+		logger:        logger,
+		environment:   environment,
+		rabbitMQ:      rabbitMQ,
+		redisClient:   redisClient,
+		Subscriptions: subscriptionsBundle,
 	}
 }

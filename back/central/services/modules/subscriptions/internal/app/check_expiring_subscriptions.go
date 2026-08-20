@@ -11,13 +11,21 @@ func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 	now := time.Now()
 	warnUntil := now.AddDate(0, 0, expiryWarnDays)
 
+	if err := uc.DowngradeExpiredTrials(ctx); err != nil {
+		uc.log.Error(ctx).Err(err).Msg("failed to downgrade expired trials")
+	}
+	if err := uc.SettleFreePlanCycles(ctx); err != nil {
+		uc.log.Error(ctx).Err(err).Msg("failed to settle free plan cycles")
+	}
+
 	expiringSoon, err := uc.repo.ListBusinessesExpiringBetween(ctx, now, warnUntil)
 	if err != nil {
 		return err
 	}
-	for _, businessID := range expiringSoon {
-		if err := uc.ensureExpiryAnnouncement(ctx, businessID, expiringSoonTitle, expiringSoonMessage, true); err != nil {
-			uc.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("failed to ensure expiring soon announcement")
+	for _, business := range expiringSoon {
+		title, message := expiringSoonCopyFor(business.PlanCode)
+		if err := uc.ensureExpiryAnnouncement(ctx, business.BusinessID, title, message, true); err != nil {
+			uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("failed to ensure expiring soon announcement")
 		}
 	}
 
@@ -25,24 +33,53 @@ func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	for _, businessID := range justExpired {
-		if err := uc.ensureExpiryAnnouncement(ctx, businessID, expiredTitle, expiredMessage, true); err != nil {
-			uc.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("failed to ensure expired announcement")
+	for _, business := range justExpired {
+		title, message := expiredCopyFor(business.PlanCode)
+		if err := uc.ensureExpiryAnnouncement(ctx, business.BusinessID, title, message, true); err != nil {
+			uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("failed to ensure expired announcement")
 		}
-		if err := uc.repo.MarkExpiredIfStillActive(ctx, businessID, now); err != nil {
-			uc.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("failed to mark business as expired")
+		if err := uc.repo.MarkExpiredIfStillActive(ctx, business.BusinessID, now); err != nil {
+			uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("failed to mark business as expired")
 		}
 	}
 
 	return nil
 }
 
+// Planes pagos: el negocio debe pagar para renovar, el mensaje lo dice
+// explicitamente. Planes free/trial: no son pagables de la misma forma (el
+// trial degrada solo a free, el free se renueva solo salvo excedente sin
+// pagar, que ya se avisa aparte en el guard de creacion de guia), asi que el
+// mensaje evita decir "realiza el pago".
 const (
-	expiringSoonTitle   = "Tu suscripcion esta por vencer"
-	expiringSoonMessage = "Tu suscripcion vence en menos de 7 dias. Realiza el pago para evitar interrupciones en tus modulos contratados."
-	expiredTitle        = "Tu suscripcion vencio"
-	expiredMessage      = "Tu suscripcion ya vencio. Realiza el pago para seguir disfrutando de todos los modulos contratados."
+	paidExpiringSoonTitle   = "Tu suscripcion esta por vencer"
+	paidExpiringSoonMessage = "Tu suscripcion vence en menos de 7 dias. Realiza el pago para evitar interrupciones en tus modulos contratados."
+	paidExpiredTitle        = "Tu suscripcion vencio"
+	paidExpiredMessage      = "Tu suscripcion ya vencio. Realiza el pago para seguir disfrutando de todos los modulos contratados."
+
+	freeTrialExpiringSoonTitle   = "Tu plan actual esta por finalizar"
+	freeTrialExpiringSoonMessage = "Tu plan actual finaliza en menos de 7 dias. No necesitas hacer nada: tu cuenta continuara activa en el plan gratuito de Probability."
+	freeTrialExpiredTitle        = "Tu plan actual finalizo"
+	freeTrialExpiredMessage      = "Tu plan actual ya finalizo. Tu cuenta continua activa en el plan gratuito de Probability."
 )
+
+func isFreeOrTrialPlan(planCode string) bool {
+	return planCode == freePlanCode || planCode == trialPlanCode
+}
+
+func expiringSoonCopyFor(planCode string) (title, message string) {
+	if isFreeOrTrialPlan(planCode) {
+		return freeTrialExpiringSoonTitle, freeTrialExpiringSoonMessage
+	}
+	return paidExpiringSoonTitle, paidExpiringSoonMessage
+}
+
+func expiredCopyFor(planCode string) (title, message string) {
+	if isFreeOrTrialPlan(planCode) {
+		return freeTrialExpiredTitle, freeTrialExpiredMessage
+	}
+	return paidExpiredTitle, paidExpiredMessage
+}
 
 func (uc *UseCase) ensureExpiryAnnouncement(ctx context.Context, businessID uint, title, message string, daily bool) error {
 	existing, err := uc.announcements.FindActiveBusinessAlert(ctx, businessID, title)
@@ -63,14 +100,21 @@ func (uc *UseCase) ensureExpiryAnnouncement(ctx context.Context, businessID uint
 }
 
 func (uc *UseCase) deactivateExpiryAnnouncements(ctx context.Context, businessID uint) {
-	for _, title := range []string{expiringSoonTitle, expiredTitle} {
+	titles := []string{
+		paidExpiringSoonTitle, paidExpiredTitle,
+		freeTrialExpiringSoonTitle, freeTrialExpiredTitle,
+	}
+	deactivated := make(map[uint]bool)
+	for _, title := range titles {
 		id, err := uc.announcements.FindActiveBusinessAlert(ctx, businessID, title)
-		if err != nil || id == nil {
+		if err != nil || id == nil || deactivated[*id] {
 			continue
 		}
 		if err := uc.announcements.DeactivateAnnouncement(ctx, *id); err != nil {
 			uc.log.Warn(ctx).Err(err).Uint("business_id", businessID).Msg("failed to deactivate expiry announcement")
+			continue
 		}
+		deactivated[*id] = true
 	}
 }
 

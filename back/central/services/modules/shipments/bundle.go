@@ -23,8 +23,16 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
+type Bundle struct {
+	handlers *handlers.Handlers
+}
+
+func (b *Bundle) SetSubscriptionOverageChecker(checker domain.ShipmentOverageChecker) {
+	b.handlers.SetOverageChecker(checker)
+}
+
 // New inicializa el módulo de shipments
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service) *Bundle {
 	repo := repository.New(database)
 	pdfUploader := pdfstorage.New(s3)
 
@@ -82,4 +90,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// 7. Register Routes
 	h.RegisterRoutes(router)
+
+	return &Bundle{handlers: h}
 }

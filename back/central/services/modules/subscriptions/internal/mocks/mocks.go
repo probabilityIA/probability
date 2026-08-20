@@ -11,12 +11,13 @@ import (
 )
 
 type RepositoryMock struct {
-	CreateSubscriptionTypeFn func(ctx context.Context, subType *entities.SubscriptionType) error
-	UpdateSubscriptionTypeFn func(ctx context.Context, subType *entities.SubscriptionType) error
-	DeleteSubscriptionTypeFn func(ctx context.Context, id uint) error
-	GetSubscriptionTypeFn    func(ctx context.Context, id uint) (*entities.SubscriptionType, error)
-	ListSubscriptionTypesFn  func(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error)
-	ListCustomPlansFn        func(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error)
+	CreateSubscriptionTypeFn    func(ctx context.Context, subType *entities.SubscriptionType) error
+	UpdateSubscriptionTypeFn    func(ctx context.Context, subType *entities.SubscriptionType) error
+	DeleteSubscriptionTypeFn    func(ctx context.Context, id uint) error
+	GetSubscriptionTypeFn       func(ctx context.Context, id uint) (*entities.SubscriptionType, error)
+	GetSubscriptionTypeByCodeFn func(ctx context.Context, code string) (*entities.SubscriptionType, error)
+	ListSubscriptionTypesFn     func(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error)
+	ListCustomPlansFn           func(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error)
 
 	CreateSubscriptionAndActivateFn        func(ctx context.Context, subscription *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error
 	GetLatestByBusinessIDFn                func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
@@ -25,12 +26,17 @@ type RepositoryMock struct {
 	GetSubscriptionByIDFn                  func(ctx context.Context, id uint) (*entities.BusinessSubscription, error)
 	RevertSubscriptionAndRecalculateFn     func(ctx context.Context, subscriptionID uint) (*entities.BusinessSubscription, error)
 	UpdateBusinessSubscriptionStatusFn     func(ctx context.Context, businessID uint, status string, endDate *time.Time) error
+	AcceptOverageFn                        func(ctx context.Context, businessID uint, acceptedAt time.Time) error
 	MarkExpiredIfStillActiveFn             func(ctx context.Context, businessID uint, before time.Time) error
 	UpdateSubscriptionDatesFn              func(ctx context.Context, id uint, startDate, endDate time.Time) error
 	UpdateBusinessSubscriptionEndDateFn    func(ctx context.Context, businessID uint, endDate time.Time) error
 	GetBusinessCurrentSubscriptionTypeIDFn func(ctx context.Context, businessID uint) (*uint, error)
-	ListBusinessesExpiringBetweenFn        func(ctx context.Context, from, to time.Time) ([]uint, error)
-	ListBusinessesJustExpiredFn            func(ctx context.Context, before time.Time) ([]uint, error)
+	ListBusinessesExpiringBetweenFn        func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error)
+	ListBusinessesJustExpiredFn            func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error)
+	ListBusinessesWithExpiredTrialFn       func(ctx context.Context, before time.Time) ([]uint, error)
+	ListBusinessesWithEndedFreeCycleFn     func(ctx context.Context, before time.Time) ([]uint, error)
+	SetOverageAmountDueFn                  func(ctx context.Context, subscriptionID uint, amount float64) error
+	MarkOverageAmountPaidFn                func(ctx context.Context, subscriptionID uint, paidAt time.Time) error
 
 	CreateOverrideFn          func(ctx context.Context, override *entities.BusinessModuleOverride) error
 	DeleteOverrideFn          func(ctx context.Context, businessID uint, moduleCode string) error
@@ -74,6 +80,13 @@ func (m *RepositoryMock) GetSubscriptionType(ctx context.Context, id uint) (*ent
 		return m.GetSubscriptionTypeFn(ctx, id)
 	}
 	return &entities.SubscriptionType{ID: id, Active: true, Price: 100}, nil
+}
+
+func (m *RepositoryMock) GetSubscriptionTypeByCode(ctx context.Context, code string) (*entities.SubscriptionType, error) {
+	if m.GetSubscriptionTypeByCodeFn != nil {
+		return m.GetSubscriptionTypeByCodeFn(ctx, code)
+	}
+	return nil, nil
 }
 
 func (m *RepositoryMock) ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error) {
@@ -146,6 +159,34 @@ func (m *RepositoryMock) MarkExpiredIfStillActive(ctx context.Context, businessI
 	return nil
 }
 
+func (m *RepositoryMock) AcceptOverage(ctx context.Context, businessID uint, acceptedAt time.Time) error {
+	if m.AcceptOverageFn != nil {
+		return m.AcceptOverageFn(ctx, businessID, acceptedAt)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) SetOverageAmountDue(ctx context.Context, subscriptionID uint, amount float64) error {
+	if m.SetOverageAmountDueFn != nil {
+		return m.SetOverageAmountDueFn(ctx, subscriptionID, amount)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) MarkOverageAmountPaid(ctx context.Context, subscriptionID uint, paidAt time.Time) error {
+	if m.MarkOverageAmountPaidFn != nil {
+		return m.MarkOverageAmountPaidFn(ctx, subscriptionID, paidAt)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) ListBusinessesWithEndedFreeCycle(ctx context.Context, before time.Time) ([]uint, error) {
+	if m.ListBusinessesWithEndedFreeCycleFn != nil {
+		return m.ListBusinessesWithEndedFreeCycleFn(ctx, before)
+	}
+	return nil, nil
+}
+
 func (m *RepositoryMock) UpdateSubscriptionDates(ctx context.Context, id uint, startDate, endDate time.Time) error {
 	if m.UpdateSubscriptionDatesFn != nil {
 		return m.UpdateSubscriptionDatesFn(ctx, id, startDate, endDate)
@@ -167,16 +208,23 @@ func (m *RepositoryMock) GetBusinessCurrentSubscriptionTypeID(ctx context.Contex
 	return nil, nil
 }
 
-func (m *RepositoryMock) ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]uint, error) {
+func (m *RepositoryMock) ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
 	if m.ListBusinessesExpiringBetweenFn != nil {
 		return m.ListBusinessesExpiringBetweenFn(ctx, from, to)
 	}
 	return nil, nil
 }
 
-func (m *RepositoryMock) ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]uint, error) {
+func (m *RepositoryMock) ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
 	if m.ListBusinessesJustExpiredFn != nil {
 		return m.ListBusinessesJustExpiredFn(ctx, before)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) ListBusinessesWithExpiredTrial(ctx context.Context, before time.Time) ([]uint, error) {
+	if m.ListBusinessesWithExpiredTrialFn != nil {
+		return m.ListBusinessesWithExpiredTrialFn(ctx, before)
 	}
 	return nil, nil
 }

@@ -41,7 +41,9 @@ func Init(ctx context.Context) error {
 	} else {
 		// RabbitMQ info mostrada en LogStartupInfo() - no duplicar aquí
 		// Configurar registry para registrar colas declaradas
-		if rmq, ok := rabbitMQ.(interface{ SetQueueRegistry(rabbitmq.QueueRegistryCallback) }); ok {
+		if rmq, ok := rabbitMQ.(interface {
+			SetQueueRegistry(rabbitmq.QueueRegistryCallback)
+		}); ok {
 			rmq.SetQueueRegistry(queueRegistry.Register)
 		}
 	}
@@ -71,7 +73,7 @@ func Init(ctx context.Context) error {
 	v1Group := r.Group("/api/v1")
 
 	// Initialize Auth Modules
-	auth.New(v1Group, database, logger, environment, s3Service, rabbitMQ)
+	authBundle := auth.New(v1Group, database, logger, environment, s3Service, rabbitMQ)
 
 	// Initialize unified events module (SSE + RabbitMQ consumer + publisher)
 	events.New(v1Group, logger, rabbitMQ, redisClient)
@@ -80,7 +82,10 @@ func Init(ctx context.Context) error {
 	integrationCore, dianEmitter := integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
 
 	// Initialize Order Module (and others) — receives integrationCore for shared platform-credentials access
-	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter)
+	modulesBundle := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter)
+
+	// Todo negocio nuevo registrado via demo signup arranca en el plan de prueba
+	authBundle.Demo.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

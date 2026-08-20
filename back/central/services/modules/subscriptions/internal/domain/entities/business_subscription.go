@@ -15,6 +15,10 @@ type BusinessSubscription struct {
 	PaymentMethod        string
 	PaymentReference     *string
 	Notes                *string
+	OverageAccepted      bool
+	OverageAcceptedAt    *time.Time
+	OverageAmountDue     *float64
+	OverageAmountPaidAt  *time.Time
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }
@@ -37,3 +41,11 @@ const (
 	BusinessStatusExpired   = "expired"
 	BusinessStatusCancelled = "cancelled"
 )
+
+// ExpiringBusiness es un negocio detectado por el chequeo de vencimiento,
+// junto con el codigo del plan que tiene vigente en ese momento. El codigo
+// determina que mensaje de aviso le corresponde (planes pagos vs free/trial).
+type ExpiringBusiness struct {
+	BusinessID uint
+	PlanCode   string
+}

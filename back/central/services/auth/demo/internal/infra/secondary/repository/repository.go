@@ -121,7 +121,7 @@ func (r *Repository) GetDemoRoleID(ctx context.Context) (uint, error) {
 }
 
 func (r *Repository) CreateDemoAccount(ctx context.Context, p domain.CreateDemoAccountParams) (uint, error) {
-	var userID uint
+	var businessID uint
 	err := r.database.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		business := &models.Business{
 			Name:               p.BusinessName,
@@ -135,6 +135,7 @@ func (r *Repository) CreateDemoAccount(ctx context.Context, p domain.CreateDemoA
 		if err := tx.Create(business).Error; err != nil {
 			return err
 		}
+		businessID = business.ID
 
 		scopeBusiness := uint(2)
 		user := &models.User{
@@ -151,7 +152,6 @@ func (r *Repository) CreateDemoAccount(ctx context.Context, p domain.CreateDemoA
 		if err := tx.Model(&models.User{}).Where("id = ?", user.ID).Update("is_active", false).Error; err != nil {
 			return err
 		}
-		userID = user.ID
 
 		if err := tx.Table("user_businesses").Create(map[string]any{
 			"user_id":     user.ID,
@@ -184,7 +184,7 @@ func (r *Repository) CreateDemoAccount(ctx context.Context, p domain.CreateDemoA
 		r.logger.Error().Err(err).Str("email", p.Email).Msg("Error creando cuenta demo")
 		return 0, err
 	}
-	return userID, nil
+	return businessID, nil
 }
 
 func (r *Repository) GetValidEmailVerificationToken(ctx context.Context, tokenHash string) (*domain.EmailVerificationTokenInfo, error) {

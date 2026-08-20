@@ -654,7 +654,7 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 		}
 		_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
 			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
-			assert.ErrorIs(t, err, dbErr)
+		assert.ErrorIs(t, err, dbErr)
 	})
 
 	t.Run("al actualizar la suscripcion", func(t *testing.T) {
@@ -666,7 +666,7 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 		}
 		_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
 			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
-			assert.ErrorIs(t, err, dbErr)
+		assert.ErrorIs(t, err, dbErr)
 	})
 
 	t.Run("al actualizar el negocio", func(t *testing.T) {
@@ -680,7 +680,7 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 		}
 		_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
 			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
-			assert.ErrorIs(t, err, dbErr)
+		assert.ErrorIs(t, err, dbErr)
 	})
 }
 

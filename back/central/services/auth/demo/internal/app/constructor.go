@@ -13,14 +13,16 @@ type IUseCase interface {
 	VerifyEmail(ctx context.Context, request domain.VerifyEmailRequest) (*domain.VerifyEmailResponse, error)
 	DemoVerifyOTP(ctx context.Context, request domain.DemoVerifyOTPRequest) (*domain.DemoVerifyOTPResponse, error)
 	DemoResend(ctx context.Context, request domain.DemoResendRequest) (*domain.DemoResendResponse, error)
+	SetOnBusinessCreated(hook func(ctx context.Context, businessID uint))
 }
 
 type UseCase struct {
-	repository   domain.IDemoRepository
-	emailSender  domain.IEmailSender
-	otpPublisher domain.IDemoOTPPublisher
-	log          log.ILogger
-	env          env.IConfig
+	repository        domain.IDemoRepository
+	emailSender       domain.IEmailSender
+	otpPublisher      domain.IDemoOTPPublisher
+	log               log.ILogger
+	env               env.IConfig
+	onBusinessCreated func(ctx context.Context, businessID uint)
 }
 
 func New(repository domain.IDemoRepository, emailSender domain.IEmailSender, otpPublisher domain.IDemoOTPPublisher, log log.ILogger, env env.IConfig) IUseCase {
@@ -31,4 +33,8 @@ func New(repository domain.IDemoRepository, emailSender domain.IEmailSender, otp
 		log:          log,
 		env:          env,
 	}
+}
+
+func (uc *UseCase) SetOnBusinessCreated(hook func(ctx context.Context, businessID uint)) {
+	uc.onBusinessCreated = hook
 }

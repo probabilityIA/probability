@@ -98,9 +98,14 @@ func (uc *UseCase) DemoRegister(ctx context.Context, request domain.DemoRegister
 		ExpiresAt:    time.Now().Add(ttl),
 	}
 
-	if _, err := uc.repository.CreateDemoAccount(ctx, params); err != nil {
+	businessID, err := uc.repository.CreateDemoAccount(ctx, params)
+	if err != nil {
 		uc.log.Error().Err(err).Str("email", email).Msg("Error creando cuenta demo")
 		return nil, fmt.Errorf("no se pudo crear la cuenta demo")
+	}
+
+	if uc.onBusinessCreated != nil {
+		uc.onBusinessCreated(ctx, businessID)
 	}
 
 	if channel == "whatsapp" {

@@ -73,6 +73,18 @@ func (r *Repository) GetSubscriptionType(ctx context.Context, id uint) (*entitie
 	return subscriptionTypeToEntity(&typeDB), nil
 }
 
+func (r *Repository) GetSubscriptionTypeByCode(ctx context.Context, code string) (*entities.SubscriptionType, error) {
+	var typeDB models.SubscriptionType
+	err := r.db.Conn(ctx).Where("code = ?", code).First(&typeDB).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return subscriptionTypeToEntity(&typeDB), nil
+}
+
 func (r *Repository) ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error) {
 	query := r.db.Conn(ctx).Where("business_id IS NULL").Order("price ASC")
 	if activeOnly {
