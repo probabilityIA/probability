@@ -45,6 +45,38 @@ const FULFILLMENT_STATUSES = [
   { id: 3, code: 'fulfilled', name: 'Preparada' },
 ];
 
+const INTEGRATION_TYPES = [
+  { id: 1, code: 'Shopify', name: 'Shopify', category: 'ecommerce', image_url: 'integration-types/1765744750_shopify.png' },
+  { id: 2, code: 'Whastap', name: 'WhatsApp', category: 'messaging', image_url: 'integration-types/1765744972_whatsap.png' },
+  { id: 3, code: 'Mercado Libre', name: 'Mercado Libre', category: 'ecommerce', image_url: 'integration-types/1771905467_mercado-libre-logo.png' },
+  { id: 4, code: 'woocommerce', name: 'WooCommerce', category: 'ecommerce', image_url: 'integration-types/1765745053_woocomerce.webp' },
+  { id: 7, code: 'factus', name: 'Factus', category: 'invoicing', image_url: 'integration-types/1771736455_factus.png' },
+  { id: 8, code: 'siigo', name: 'Siigo', category: 'invoicing', image_url: 'integration-types/1771738597_siigo.png' },
+  { id: 9, code: 'alegra', name: 'Alegra', category: 'invoicing', image_url: 'integration-types/1771738659_alegra.png' },
+  { id: 10, code: 'world_office', name: 'World Office', category: 'invoicing', image_url: 'integration-types/1771738901_worl-office.png' },
+  { id: 11, code: 'helisa', name: 'Helisa', category: 'invoicing', image_url: 'integration-types/1771739081_logo-helisa.png' },
+  { id: 12, code: 'envioclick', name: 'EnvioClick', category: 'shipping', image_url: 'integration-types/1771901154_envioclik.png' },
+  { id: 13, code: 'enviame', name: 'Enviame', category: 'shipping', image_url: 'integration-types/1771905179_enviame.png' },
+  { id: 15, code: 'mipaquete', name: 'MiPaquete', category: 'shipping', image_url: 'integration-types/1771905337_mipaquete.png' },
+  { id: 16, code: 'vtex', name: 'VTEX', category: 'ecommerce', image_url: 'integration-types/1771905400_vtex.png' },
+  { id: 17, code: 'tiendanube', name: 'Tiendanube', category: 'ecommerce', image_url: 'integration-types/1771905372_tiendanube.png' },
+  { id: 18, code: 'magento', name: 'Magento', category: 'ecommerce', image_url: 'integration-types/1771905298_magneto.png' },
+  { id: 19, code: 'amazon', name: 'Amazon', category: 'ecommerce', image_url: 'integration-types/1771905134_amazon.png' },
+  { id: 20, code: 'falabella', name: 'Falabella', category: 'ecommerce', image_url: 'integration-types/1771905254_falabella.png' },
+  { id: 21, code: 'exito', name: 'Exito', category: 'ecommerce', image_url: 'integration-types/1771905220_exito.png' },
+  { id: 22, code: 'nequi', name: 'Nequi', category: 'payment', image_url: 'integration-types/1772147410_nequi.png' },
+  { id: 23, code: 'bold_pay', name: 'Bold', category: 'payment', image_url: 'integration-types/1777354669_bold.png' },
+  { id: 24, code: 'wompi', name: 'Wompi', category: 'payment', image_url: 'integration-types/1772147507_logowompi.png' },
+  { id: 25, code: 'stripe', name: 'Stripe', category: 'payment', image_url: 'integration-types/1772147475_stripe.png' },
+  { id: 26, code: 'payu', name: 'PayU', category: 'payment', image_url: 'integration-types/1772147440_payu.png' },
+  { id: 27, code: 'epayco', name: 'ePayco', category: 'payment', image_url: 'integration-types/1772147322_epayco.png' },
+  { id: 28, code: 'melipago', name: 'MercadoPago', category: 'payment', image_url: 'integration-types/1772147377_mercado-pago.png' },
+  { id: 33, code: 'jumpseller', name: 'Jumpseller', category: 'ecommerce', image_url: 'integration-types/1784241131_jumpseller.png' },
+  { id: 34, code: 'shipit', name: 'Shipit', category: 'shipping', image_url: 'integration-types/1785346702_shipit.png' },
+  { id: 35, code: 'tiktok', name: 'TikTok', category: 'ecommerce', image_url: 'integration-types/tiktok.png' },
+  { id: 42, code: 'bancolombia_qr', name: 'Bancolombia QR', category: 'payment', image_url: 'integration-types/bancolombia.png' },
+];
+
 const customers = Array.from({ length: 48 }, (_, i) => {
   const name = `${pick(FIRST)} ${pick(LAST)}`;
   return {
@@ -93,62 +125,116 @@ const warehouses = [
   { id: 4, business_id: 1, name: 'Punto de venta Cali', code: 'CLO-01', city: 'Cali', address: 'Av 6N # 25-30', is_active: false, is_default: false, occupancy: 12 },
 ];
 
+const CHANNEL_TYPES = ['Shopify', 'woocommerce', 'Mercado Libre', 'Whastap', 'amazon', 'platform'];
+const CHANNEL_LABELS = {
+  'Shopify': 'Shopify',
+  'woocommerce': 'WooCommerce',
+  'Mercado Libre': 'Mercado Libre',
+  'Whastap': 'WhatsApp',
+  'amazon': 'Amazon',
+  'platform': 'Manual',
+};
+
 const orders = Array.from({ length: 64 }, (_, i) => {
   const customer = customers[i % customers.length];
   const status = ORDER_STATUSES[between(0, ORDER_STATUSES.length - 1)];
   const payment = PAYMENT_STATUSES[between(0, PAYMENT_STATUSES.length - 1)];
   const fulfillment = FULFILLMENT_STATUSES[between(0, FULFILLMENT_STATUSES.length - 1)];
+  const channelCode = CHANNEL_TYPES[i % CHANNEL_TYPES.length];
+  const channelType = INTEGRATION_TYPES.find((t) => t.code === channelCode);
   const itemCount = between(1, 4);
   const items = Array.from({ length: itemCount }, (_, j) => {
     const product = products[(i + j) % products.length];
     const quantity = between(1, 3);
     return {
-      id: i * 10 + j + 1,
+      id: `${i}-${j}`,
       product_id: product.id,
       sku: product.sku,
       name: product.name,
       quantity,
       unit_price: product.price,
-      total: product.price * quantity,
+      total_price: product.price * quantity,
       image_url: null,
     };
   });
-  const subtotal = items.reduce((acc, it) => acc + it.total, 0);
+  const subtotal = items.reduce((acc, it) => acc + it.unit_price * it.quantity, 0);
   const shipping = between(8000, 24000);
+  const tax = Math.round(subtotal * 0.19);
   const isCod = rnd() > 0.55;
+  const hasShipment = status.id >= 4;
+  const isPaid = payment.code === 'paid';
+
   return {
-    id: i + 1,
+    id: `ord-${String(i + 1).padStart(4, '0')}-uuid`,
+    created_at: daysAgo(between(0, 60)),
+    updated_at: daysAgo(between(0, 5)),
     business_id: 1,
-    order_number: `ORD-${10240 + i}`,
+    integration_id: (i % 6) + 1,
+    integration_type: channelCode,
+    integration_name: CHANNEL_LABELS[channelCode],
+    integration_logo_url: channelType ? channelType.image_url : null,
+    platform: CHANNEL_LABELS[channelCode],
     external_id: `${between(100000, 999999)}`,
-    channel: pick(CHANNELS),
+    order_number: `ORD-${10240 + i}`,
+    internal_number: `INT-${5000 + i}`,
+    subtotal,
+    tax,
+    discount: 0,
+    shipping_cost: shipping,
+    total_amount: subtotal + shipping,
+    currency: 'COP',
+    cod_total: isCod ? subtotal + shipping : 0,
     customer_id: customer.id,
     customer_name: customer.name,
     customer_email: customer.email,
     customer_phone: customer.phone,
+    customer_dni: customer.document_number,
+    shipping_street: customer.address,
     shipping_city: customer.city,
-    shipping_address: customer.address,
+    shipping_state: 'Colombia',
+    shipping_country: 'CO',
+    shipping_postal_code: '110111',
+    payment_method_id: 1,
+    is_paid: isPaid,
+    paid_at: isPaid ? daysAgo(between(0, 20)) : null,
+    tracking_number: hasShipment ? `GU${between(100000000, 999999999)}` : null,
+    tracking_link: hasShipment ? 'https://example.com/tracking' : null,
+    guide_id: hasShipment ? `${between(1000, 9999)}` : null,
+    guide_link: hasShipment ? 'https://example.com/guia.pdf' : null,
+    warehouse_id: 1,
+    warehouse_name: 'Bodega principal',
+    driver_id: null,
+    driver_name: '',
+    is_last_mile: false,
+    weight: between(200, 4000),
+    order_type_id: 1,
+    order_type_name: 'Venta',
+    status: status.code,
+    original_status: status.code,
     status_id: status.id,
-    status_code: status.code,
-    status_name: status.name,
-    payment_status_code: payment.code,
-    payment_status_name: payment.name,
-    fulfillment_status_code: fulfillment.code,
-    fulfillment_status_name: fulfillment.name,
+    order_status: { id: status.id, code: status.code, name: status.name, category: 'order', color: null },
+    payment_status_id: payment.id,
+    payment_status: { id: payment.id, code: payment.code, name: payment.name, category: 'payment', color: null },
+    fulfillment_status_id: fulfillment.id,
+    fulfillment_status: { id: fulfillment.id, code: fulfillment.code, name: fulfillment.name, category: 'fulfillment', color: null },
+    notes: null,
+    approved: true,
+    user_id: 1,
+    user_name: 'Sebastian Camacho',
+    is_confirmed: status.id >= 2,
+    invoiceable: true,
+    invoice_status: isPaid ? 'issued' : null,
+    invoice_url: isPaid ? 'https://example.com/factura.pdf' : null,
+    order_items: items,
     items,
     items_count: itemCount,
-    subtotal,
-    discount: 0,
-    shipping_cost: shipping,
-    tax: Math.round(subtotal * 0.19),
-    total: subtotal + shipping,
     is_cod: isCod,
-    cod_total: isCod ? subtotal + shipping : 0,
-    currency: 'COP',
-    has_shipment: status.id >= 4,
-    has_invoice: payment.code === 'paid',
-    created_at: daysAgo(between(0, 60)),
-    updated_at: daysAgo(between(0, 5)),
+    has_shipment: hasShipment,
+    has_invoice: isPaid,
+    total: subtotal + shipping,
+    channel: CHANNEL_LABELS[channelCode],
+    status_code: status.code,
+    status_name: status.name,
   };
 });
 
@@ -267,38 +353,6 @@ const deliveryRoutes = Array.from({ length: 10 }, (_, i) => ({
   scheduled_date: daysAgo(between(-3, 10)),
   created_at: daysAgo(between(0, 20)),
 }));
-
-const INTEGRATION_TYPES = [
-  { id: 1, code: 'Shopify', name: 'Shopify', category: 'ecommerce', image_url: 'integration-types/1765744750_shopify.png' },
-  { id: 2, code: 'Whastap', name: 'WhatsApp', category: 'messaging', image_url: 'integration-types/1765744972_whatsap.png' },
-  { id: 3, code: 'Mercado Libre', name: 'Mercado Libre', category: 'ecommerce', image_url: 'integration-types/1771905467_mercado-libre-logo.png' },
-  { id: 4, code: 'woocommerce', name: 'WooCommerce', category: 'ecommerce', image_url: 'integration-types/1765745053_woocomerce.webp' },
-  { id: 7, code: 'factus', name: 'Factus', category: 'invoicing', image_url: 'integration-types/1771736455_factus.png' },
-  { id: 8, code: 'siigo', name: 'Siigo', category: 'invoicing', image_url: 'integration-types/1771738597_siigo.png' },
-  { id: 9, code: 'alegra', name: 'Alegra', category: 'invoicing', image_url: 'integration-types/1771738659_alegra.png' },
-  { id: 10, code: 'world_office', name: 'World Office', category: 'invoicing', image_url: 'integration-types/1771738901_worl-office.png' },
-  { id: 11, code: 'helisa', name: 'Helisa', category: 'invoicing', image_url: 'integration-types/1771739081_logo-helisa.png' },
-  { id: 12, code: 'envioclick', name: 'EnvioClick', category: 'shipping', image_url: 'integration-types/1771901154_envioclik.png' },
-  { id: 13, code: 'enviame', name: 'Enviame', category: 'shipping', image_url: 'integration-types/1771905179_enviame.png' },
-  { id: 15, code: 'mipaquete', name: 'MiPaquete', category: 'shipping', image_url: 'integration-types/1771905337_mipaquete.png' },
-  { id: 16, code: 'vtex', name: 'VTEX', category: 'ecommerce', image_url: 'integration-types/1771905400_vtex.png' },
-  { id: 17, code: 'tiendanube', name: 'Tiendanube', category: 'ecommerce', image_url: 'integration-types/1771905372_tiendanube.png' },
-  { id: 18, code: 'magento', name: 'Magento', category: 'ecommerce', image_url: 'integration-types/1771905298_magneto.png' },
-  { id: 19, code: 'amazon', name: 'Amazon', category: 'ecommerce', image_url: 'integration-types/1771905134_amazon.png' },
-  { id: 20, code: 'falabella', name: 'Falabella', category: 'ecommerce', image_url: 'integration-types/1771905254_falabella.png' },
-  { id: 21, code: 'exito', name: 'Exito', category: 'ecommerce', image_url: 'integration-types/1771905220_exito.png' },
-  { id: 22, code: 'nequi', name: 'Nequi', category: 'payment', image_url: 'integration-types/1772147410_nequi.png' },
-  { id: 23, code: 'bold_pay', name: 'Bold', category: 'payment', image_url: 'integration-types/1777354669_bold.png' },
-  { id: 24, code: 'wompi', name: 'Wompi', category: 'payment', image_url: 'integration-types/1772147507_logowompi.png' },
-  { id: 25, code: 'stripe', name: 'Stripe', category: 'payment', image_url: 'integration-types/1772147475_stripe.png' },
-  { id: 26, code: 'payu', name: 'PayU', category: 'payment', image_url: 'integration-types/1772147440_payu.png' },
-  { id: 27, code: 'epayco', name: 'ePayco', category: 'payment', image_url: 'integration-types/1772147322_epayco.png' },
-  { id: 28, code: 'melipago', name: 'MercadoPago', category: 'payment', image_url: 'integration-types/1772147377_mercado-pago.png' },
-  { id: 33, code: 'jumpseller', name: 'Jumpseller', category: 'ecommerce', image_url: 'integration-types/1784241131_jumpseller.png' },
-  { id: 34, code: 'shipit', name: 'Shipit', category: 'shipping', image_url: 'integration-types/1785346702_shipit.png' },
-  { id: 35, code: 'tiktok', name: 'TikTok', category: 'ecommerce', image_url: 'integration-types/tiktok.png' },
-  { id: 42, code: 'bancolombia_qr', name: 'Bancolombia QR', category: 'payment', image_url: 'integration-types/bancolombia.png' },
-];
 
 const typeByCode = (code) => INTEGRATION_TYPES.find((t) => t.code === code);
 

@@ -135,13 +135,29 @@ add('GET', '/dashboard/stats', () => {
 
 add('GET', '/orders', ({ url, paginate }) => {
   let rows = d.orders;
-  const status = url.searchParams.get('status_code') || url.searchParams.get('status');
-  if (status && status !== 'all') rows = rows.filter((o) => o.status_code === status);
+  const status = url.searchParams.get('status');
+  if (status && status !== 'all') rows = rows.filter((o) => o.status === status);
+  const orderNumber = url.searchParams.get('order_number');
+  if (orderNumber) {
+    const q = orderNumber.toLowerCase();
+    rows = rows.filter((o) =>
+      o.order_number.toLowerCase().includes(q) ||
+      o.customer_name.toLowerCase().includes(q) ||
+      (o.customer_email || '').toLowerCase().includes(q) ||
+      (o.tracking_number || '').toLowerCase().includes(q));
+  }
+  const integrationType = url.searchParams.get('integration_type');
+  if (integrationType) rows = rows.filter((o) => o.integration_type === integrationType);
+  const isCod = url.searchParams.get('is_cod');
+  if (isCod === 'true') rows = rows.filter((o) => o.is_cod);
+  const isPaid = url.searchParams.get('is_paid');
+  if (isPaid === 'true') rows = rows.filter((o) => o.is_paid);
+  if (isPaid === 'false') rows = rows.filter((o) => !o.is_paid);
   return { status: 200, payload: paginate(rows, url) };
 });
-add('GET', '/orders/:id', ({ params }) => ok(d.orders.find((o) => o.id === Number(params.id))));
-add('GET', '/orders/:id/raw', ({ params }) => ok({ raw: d.orders.find((o) => o.id === Number(params.id)) }));
-add('PUT', '/orders/:id', ({ params, body }) => ok({ ...d.orders.find((o) => o.id === Number(params.id)), ...body }));
+add('GET', '/orders/:id', ({ params }) => ok(d.orders.find((o) => o.id === params.id)));
+add('GET', '/orders/:id/raw', ({ params }) => ok({ raw: d.orders.find((o) => o.id === params.id) }));
+add('PUT', '/orders/:id', ({ params, body }) => ok({ ...d.orders.find((o) => o.id === params.id), ...body }));
 add('POST', '/orders/:id/cancel', () => ok(null, 'Orden cancelada'));
 
 add('GET', '/order-statuses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.ORDER_STATUSES, url) }));

@@ -31,21 +31,28 @@ class OrderProvider extends ChangeNotifier {
   OrderUseCases get _useCases =>
       OrderUseCases(OrderApiRepository(_apiClient));
 
-  Future<void> fetchOrders({int? businessId}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  bool _isLoadingMore = false;
 
-    try {
-      final params = GetOrdersParams(
-        page: _page,
+  bool get isLoadingMore => _isLoadingMore;
+
+  bool get hasMore => _pagination?.hasNext ?? false;
+
+  GetOrdersParams _params(int? businessId, int page) => GetOrdersParams(
+        page: page,
         pageSize: _pageSize,
         businessId: businessId,
         orderNumber: _orderNumberFilter.isNotEmpty ? _orderNumberFilter : null,
         status: _statusFilter.isNotEmpty ? _statusFilter : null,
         integrationId: _integrationIdFilter,
       );
-      final response = await _useCases.getOrders(params);
+
+  Future<void> fetchOrders({int? businessId}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _useCases.getOrders(_params(businessId, _page));
       _orders = response.data;
       _pagination = response.pagination;
     } catch (e) {
@@ -53,6 +60,25 @@ class OrderProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMore({int? businessId}) async {
+    if (_isLoading || _isLoadingMore || !hasMore) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final response = await _useCases.getOrders(_params(businessId, _page + 1));
+      _orders = [..._orders, ...response.data];
+      _pagination = response.pagination;
+      _page += 1;
+    } catch (e) {
+      _error = parseError(e);
+    }
+
+    _isLoadingMore = false;
     notifyListeners();
   }
 
