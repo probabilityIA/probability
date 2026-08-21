@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, forwardRef, useImperativeHandle, Fragment } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle, Fragment, ReactNode } from 'react';
 import { ProductFamily, Product, GetFamiliesParams } from '../../domain/types';
 import { getProductFamiliesAction, deleteProductFamilyAction, getFamilyVariantsAction } from '../../infra/actions';
 import { ChevronRightIcon, ChevronDownIcon, XMarkIcon, PlusIcon, ScaleIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
@@ -119,6 +119,22 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
             setModalVariants([]);
             setExpandedVariantId(null);
             await fetchModalVariants(family.id);
+        };
+
+        const Field = ({ label, value, children }: { label: string; value?: string | null; children?: ReactNode }) => (
+            <div className="min-w-0">
+                <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-400 mb-0.5">{label}</p>
+                {children ?? <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{value || '-'}</p>}
+            </div>
+        );
+
+        const statusBadge = (status?: string) => {
+            const isActive = (status || '').toLowerCase() === 'active';
+            return (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isActive ? 'bg-green-100 text-green-700' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                    {isActive ? 'Activo' : status || 'Inactivo'}
+                </span>
+            );
         };
 
         const stockBadge = (qty: number) => {
@@ -474,51 +490,32 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                                                 {isExpanded && (
                                                                     <tr className="bg-gray-50 dark:bg-gray-900/30">
                                                                         <td colSpan={7} className="px-5 py-4">
-                                                                            <div className="flex flex-col items-center gap-4">
+                                                                            <div className="flex flex-col sm:flex-row gap-5">
                                                                                 {variant.image_url && (
-                                                                                    <img src={variant.image_url} alt={variant.name} className="w-20 h-20 rounded-lg object-cover flex-shrink-0 border border-gray-200 dark:border-gray-700" />
+                                                                                    <img src={variant.image_url} alt={variant.name} className="w-24 h-24 rounded-lg object-cover flex-shrink-0 border border-gray-200 dark:border-gray-700" />
                                                                                 )}
-                                                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-10 gap-y-3 text-xs text-center justify-items-center max-w-3xl mx-auto">
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Categoria</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.category || '-'}</p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Marca</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.brand || '-'}</p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Estado</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.status || '-'}</p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Gestiona inventario</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.manage_stock ? 'Si' : 'No'}</p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Peso</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.weight != null ? `${variant.weight} kg` : '-'}</p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Dimensiones (LxAxA)</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">
-                                                                                            {variant.length != null && variant.width != null && variant.height != null
-                                                                                                ? `${variant.length} x ${variant.width} x ${variant.height} cm`
-                                                                                                : '-'}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Integracion</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.integration_type || '-'}</p>
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="text-gray-400 uppercase tracking-wide">Creado</p>
-                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.created_at ? new Date(variant.created_at).toLocaleDateString('es-CO') : '-'}</p>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4">
+                                                                                        <Field label="Categoria" value={variant.category} />
+                                                                                        <Field label="Marca" value={variant.brand} />
+                                                                                        <Field label="Estado">{statusBadge(variant.status)}</Field>
+                                                                                        <Field label="Gestiona inventario" value={variant.manage_stock ? 'Si' : 'No'} />
+                                                                                        <Field label="Peso" value={variant.weight != null ? `${variant.weight} kg` : undefined} />
+                                                                                        <Field
+                                                                                            label="Dimensiones (LxAxA)"
+                                                                                            value={
+                                                                                                variant.length != null && variant.width != null && variant.height != null
+                                                                                                    ? `${variant.length} x ${variant.width} x ${variant.height} cm`
+                                                                                                    : undefined
+                                                                                            }
+                                                                                        />
+                                                                                        <Field label="Integracion" value={variant.integration_type} />
+                                                                                        <Field label="Creado" value={variant.created_at ? new Date(variant.created_at).toLocaleDateString('es-CO') : undefined} />
                                                                                     </div>
                                                                                     {variant.description && (
-                                                                                        <div className="col-span-2 sm:col-span-4">
-                                                                                            <p className="text-gray-400 uppercase tracking-wide">Descripcion</p>
-                                                                                            <p className="text-gray-800 dark:text-gray-200">{variant.description}</p>
+                                                                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                                                                            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-400 mb-1">Descripcion</p>
+                                                                                            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{variant.description}</p>
                                                                                         </div>
                                                                                     )}
                                                                                 </div>
