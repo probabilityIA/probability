@@ -191,6 +191,13 @@ export function TiendanubeOAuthForm({ onCancel }: TiendanubeOAuthFormProps) {
                         </p>
                     </div>
                 </div>
+                <span
+                    className="inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-[11px] font-semibold shrink-0 bg-white dark:bg-gray-900"
+                    style={{ border: '1px solid #e5e7eb', color: '#6b7280' }}
+                >
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: '#9ca3af' }} />
+                    Sin conectar
+                </span>
             </div>
 
             <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
