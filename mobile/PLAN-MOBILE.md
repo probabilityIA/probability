@@ -85,7 +85,8 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
 | 4 | LISTA | saludo, 4 KPIs accionables, accesos rapidos, ordenes por canal con logo, envios por estado y transportadora con logo, top productos, clientes y ciudades |
 | 5 | LISTA | listado con tarjeta de orden (logo de canal, estados, guia, COD), busqueda con debounce, filtros por estado, scroll infinito |
 | 6 | LISTA | detalle con header de canal, items tipados, totales con bloque COD, cliente, envio, trazabilidad, copiar numero y cancelar orden |
-| 7 | siguiente | envios y guias: lista, detalle, tracking |
+| 7 | LISTA | lista de guias con logo de transportadora, filtros por estado, busqueda y scroll infinito; detalle con desglose de costo, contra entrega, destino, paquete y cancelacion |
+| 8 | siguiente | endpoint `/api/v1/mobile/orders/:id/full` + cotizador y generacion de guia |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 
@@ -94,9 +95,24 @@ pantalla, se crea un endpoint agregado con `mobile` en la ruta. Hasta la fase 6
 **no hizo falta ninguno**: cada pantalla resuelve con un solo GET de los que ya
 existen.
 
-Candidato identificado para la fase 7:
+Estado tras la fase 7: **sigue sin hacer falta ninguno**. El detalle de guia no
+suma una llamada porque reusa el objeto que ya trajo el listado.
+
+Comprometido para la fase 8:
 `GET /api/v1/mobile/orders/:id/full` -> orden + guia + factura + trazabilidad en
-una sola respuesta, para que el detalle no encadene 3 llamadas en red movil.
+una sola respuesta. Ahi el ahorro es real: hoy el detalle de orden tendria que
+pegarle a `/orders/:id`, `/shipments?order_id=` y `/invoices?order_id=`.
+
+## Reglas de negocio respetadas en guias
+
+`.claude/rules/guias-contra-entrega.md` fija la formula del costo. La pantalla de
+detalle la muestra explicita y cuadra la identidad
+`carrier_cost + applied_margin == total_cost` con los datos reales de la tabla
+`shipments`. La comision de contra entrega se muestra aparte porque **no** esta
+incluida en `cod_total` (esa es la convencion, no un bug).
+
+Al cancelar una guia el dialogo avisa que **no se reembolsa el saldo debitado**,
+que es lo que ocurre hoy segun `.claude/alerts/guias-duplicadas-doble-cobro.md`.
 
 ## Deuda conocida
 

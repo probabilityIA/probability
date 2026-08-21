@@ -32,6 +32,23 @@ class Shipment {
   final String? customerPhone;
   final String? customerDni;
   final String? orderNumber;
+  final String? destinationCity;
+  final String? destinationState;
+  final String? carrierStatus;
+  final String? carrierStatusDetail;
+  final double? carrierCost;
+  final double? appliedMargin;
+  final double? codCarrierFee;
+  final double? codProbabilityMargin;
+  final String? probabilityGuideUrl;
+
+  double get marginAmount {
+    if (appliedMargin != null) return appliedMargin!;
+    if (totalCost != null && carrierCost != null) return totalCost! - carrierCost!;
+    return 0;
+  }
+
+  bool get isCod => (codCarrierFee ?? 0) > 0 || (codProbabilityMargin ?? 0) > 0;
 
   Shipment({
     required this.id, required this.createdAt, required this.updatedAt, this.orderId,
@@ -41,6 +58,9 @@ class Shipment {
     this.weight, this.height, this.width, this.length, this.warehouseName, this.driverName,
     required this.isLastMile, required this.isTest, this.estimatedDelivery, this.deliveryNotes,
     this.customerName, this.customerEmail, this.customerPhone, this.customerDni, this.orderNumber,
+    this.destinationCity, this.destinationState, this.carrierStatus, this.carrierStatusDetail,
+    this.carrierCost, this.appliedMargin, this.codCarrierFee, this.codProbabilityMargin,
+    this.probabilityGuideUrl,
   });
 
   factory Shipment.fromJson(Map<String, dynamic> json) {
@@ -59,6 +79,13 @@ class Shipment {
       estimatedDelivery: json['estimated_delivery'], deliveryNotes: json['delivery_notes'],
       customerName: json['customer_name'], customerEmail: json['customer_email'],
       customerPhone: json['customer_phone'], customerDni: json['customer_dni'], orderNumber: json['order_number'],
+      destinationCity: json['destination_city'], destinationState: json['destination_state'],
+      carrierStatus: json['carrier_status'], carrierStatusDetail: json['carrier_status_detail'],
+      carrierCost: (json['carrier_cost'] as num?)?.toDouble(),
+      appliedMargin: (json['applied_margin'] as num?)?.toDouble(),
+      codCarrierFee: (json['cod_carrier_fee'] as num?)?.toDouble(),
+      codProbabilityMargin: (json['cod_probability_margin'] as num?)?.toDouble(),
+      probabilityGuideUrl: json['probability_guide_url'],
     );
   }
 }

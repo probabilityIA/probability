@@ -170,10 +170,46 @@ add('GET', '/products/:id', ({ params }) => ok(d.products.find((p) => p.id === N
 add('GET', '/customers', ({ url, paginate }) => ({ status: 200, payload: paginate(d.customers, url) }));
 add('GET', '/customers/:id', ({ params }) => ok(d.customers.find((c) => c.id === Number(params.id))));
 
-add('GET', '/shipments', ({ url, paginate }) => ({ status: 200, payload: paginate(d.shipments, url) }));
+add('GET', '/shipments', ({ url, paginate }) => {
+  let rows = d.shipments;
+  const status = url.searchParams.get('status');
+  if (status && status !== 'all') rows = rows.filter((s) => s.status === status);
+  const tracking = url.searchParams.get('tracking_number');
+  if (tracking) {
+    const q = tracking.toLowerCase();
+    rows = rows.filter((s) =>
+      (s.tracking_number || '').toLowerCase().includes(q) ||
+      (s.order_number || '').toLowerCase().includes(q) ||
+      (s.client_name || '').toLowerCase().includes(q));
+  }
+  const carrier = url.searchParams.get('carrier');
+  if (carrier) rows = rows.filter((s) => s.carrier === carrier);
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/shipments/origin-addresses', () => ok(d.warehouses.map((w) => ({
+  id: w.id, business_id: 1, alias: w.name, company: 'Probability Demo',
+  first_name: 'Sebastian', last_name: 'Camacho', email: 'bodega@probability.co',
+  phone: '3001234567', street: w.address, suburb: 'Centro', city_dane_code: '11001',
+  city: w.city, state: 'Colombia', postal_code: '110111', is_default: w.is_default,
+}))));
+add('GET', '/shipments/track/:tracking', ({ params }) => {
+  const shipment = d.shipments.find((s) => s.tracking_number === params.tracking);
+  if (!shipment) return { status: 404, payload: { success: false, error: 'guia no encontrada' } };
+  return ok({
+    tracking_number: shipment.tracking_number,
+    carrier: shipment.carrier,
+    status: shipment.status,
+    events: [
+      { date: shipment.created_at, status: 'created', description: 'Guia generada' },
+      { date: d.daysAgo(2), status: 'in_transit', description: 'En camino al destino' },
+      ...(shipment.status === 'delivered'
+        ? [{ date: shipment.delivered_at, status: 'delivered', description: 'Entregada al destinatario' }]
+        : []),
+    ],
+  });
+});
 add('GET', '/shipments/:id', ({ params }) => ok(d.shipments.find((s) => s.id === Number(params.id))));
 add('POST', '/shipments/:id/cancel', () => ok(null, 'Guia cancelada'));
-add('GET', '/shipments/origin-addresses', () => ok(d.warehouses.map((w) => ({ id: w.id, name: w.name, address: w.address, city: w.city }))));
 
 add('GET', '/invoices', ({ url, paginate }) => ({ status: 200, payload: paginate(d.invoices, url) }));
 add('GET', '/invoices/:id', ({ params }) => ok(d.invoices.find((i) => i.id === Number(params.id))));

@@ -238,27 +238,70 @@ const orders = Array.from({ length: 64 }, (_, i) => {
   };
 });
 
+const CARRIER_STATUS = {
+  created: 'Guia generada',
+  in_transit: 'En transito',
+  delivered: 'Entregada al destinatario',
+  returned: 'Devuelta al remitente',
+};
+
 const shipments = orders
   .filter((o) => o.has_shipment)
-  .map((o, i) => ({
-    id: i + 1,
-    business_id: 1,
-    order_id: o.id,
-    order_number: o.order_number,
-    guide_number: `GU${between(100000000, 999999999)}`,
-    carrier: pick(CARRIERS),
-    status: pick(['created', 'in_transit', 'delivered', 'returned']),
-    destination_city: o.shipping_city,
-    recipient: o.customer_name,
-    total_cost: o.shipping_cost,
-    carrier_cost: Math.round(o.shipping_cost * 0.85),
-    applied_margin: Math.round(o.shipping_cost * 0.15),
-    is_cod: o.is_cod,
-    cod_total: o.cod_total,
-    cod_carrier_fee: o.is_cod ? Math.round(o.cod_total * 0.03) : 0,
-    guide_url: 'https://example.com/guia.pdf',
-    created_at: o.created_at,
-  }));
+  .map((o, i) => {
+    const carrier = CARRIERS[i % CARRIERS.length];
+    const status = ['created', 'in_transit', 'delivered', 'returned'][i % 4];
+    const carrierCost = Math.round(o.shipping_cost * 0.82);
+    const insurance = Math.round(o.shipping_cost * 0.08);
+    const margin = o.shipping_cost - carrierCost;
+    const codFee = o.is_cod ? Math.round(o.cod_total * 0.03) : 0;
+    const codMargin = o.is_cod ? 1500 : 0;
+    return {
+      id: i + 1,
+      created_at: o.created_at,
+      updated_at: o.updated_at,
+      order_id: o.id,
+      order_number: o.order_number,
+      tracking_number: o.tracking_number,
+      tracking_url: 'https://example.com/tracking',
+      carrier,
+      carrier_code: carrier.toUpperCase().replace(/\s/g, ''),
+      carrier_key: carrier.toUpperCase().replace(/\s/g, ''),
+      guide_id: o.guide_id,
+      guide_url: 'https://example.com/guia.pdf',
+      probability_guide_url: 'https://example.com/guia-probability.pdf',
+      status,
+      carrier_status: status,
+      carrier_status_detail: CARRIER_STATUS[status],
+      shipped_at: status === 'created' ? null : daysAgo(between(0, 10)),
+      delivered_at: status === 'delivered' ? daysAgo(between(0, 5)) : null,
+      shipping_cost: o.shipping_cost,
+      insurance_cost: insurance,
+      total_cost: o.shipping_cost,
+      carrier_cost: carrierCost,
+      applied_margin: margin,
+      cod_carrier_fee: codFee,
+      cod_probability_margin: codMargin,
+      weight: o.weight,
+      height: between(10, 60),
+      width: between(10, 50),
+      length: between(10, 70),
+      warehouse_name: 'Bodega principal',
+      driver_name: '',
+      is_last_mile: false,
+      is_test: false,
+      estimated_delivery: daysAgo(between(-5, 0)),
+      delivery_notes: null,
+      client_name: o.customer_name,
+      customer_name: o.customer_name,
+      customer_email: o.customer_email,
+      customer_phone: o.customer_phone,
+      customer_dni: o.customer_dni,
+      destination_address: o.shipping_street,
+      destination_city: o.shipping_city,
+      destination_state: o.shipping_state,
+      destination_suburb: 'Centro',
+    };
+  });
 
 const invoices = orders
   .filter((o) => o.has_invoice)
