@@ -2,6 +2,7 @@ package tiendanube
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
@@ -48,6 +49,26 @@ func New(
 	if rabbitMQ != nil {
 		pushConsumer := tiendanubequeue.NewInventoryPushConsumer(rabbitMQ, uc, logger)
 		pushConsumer.Start(context.Background())
+	}
+
+	baseURL := config.Get("WEBHOOK_BASE_URL")
+	if baseURL == "" {
+		baseURL = config.Get("URL_BASE_SWAGGER")
+	}
+	if baseURL != "" {
+		coreIntegration.OnIntegrationCreated(integrationcore.IntegrationTypeTiendanube, func(obsCtx context.Context, integration *integrationcore.PublicIntegration) {
+			go func() {
+				bgCtx := context.Background()
+				integrationID := fmt.Sprintf("%d", integration.ID)
+				if _, err := uc.CreateWebhooks(bgCtx, integrationID, baseURL); err != nil {
+					logger.Error(bgCtx).Err(err).Str("integration_id", integrationID).Msg("Error al crear webhooks automaticamente para Tiendanube")
+					return
+				}
+				logger.Info(bgCtx).Str("integration_id", integrationID).Msg("Webhooks creados automaticamente para Tiendanube")
+			}()
+		})
+	} else {
+		logger.Warn(context.Background()).Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER configuradas, no se crearan webhooks automaticamente para Tiendanube")
 	}
 
 	return tncore.New(uc)

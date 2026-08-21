@@ -7,7 +7,9 @@ import { updateIntegrationAction, testConnectionRawAction, getActiveIntegrationT
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { TiendanubeWebhookManager } from './TiendanubeWebhookManager';
 import {
+    BoltIcon,
     KeyIcon,
     Cog6ToothIcon,
     ShoppingBagIcon,
@@ -309,15 +311,19 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                     <div className="rounded-lg p-3" style={{ backgroundColor: GREEN_SOFT, border: `1px solid ${GREEN_BORDER}` }}>
                         <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
                             <InformationCircleIcon className="w-4 h-4" style={{ color: GREEN }} />
-                            Como obtener tus credenciales
+                            Sobre estas credenciales
                         </h4>
-                        <ol className="text-[11px] text-gray-600 dark:text-gray-300 space-y-1 list-decimal list-inside ml-1">
-                            <li>Ingresa al panel de administracion de tu tienda en <strong>Tiendanube</strong></li>
-                            <li>Ve a <strong>Aplicaciones</strong> y luego a <strong>Credenciales de API</strong></li>
-                            <li>Genera un nuevo <strong>Access Token</strong> y copialo</li>
-                        </ol>
+                        <p className="text-[11px] text-gray-600 dark:text-gray-300">
+                            El Access Token y el Store ID los entrega Tiendanube al autorizar la app, no se generan a
+                            mano. Solo editalos si necesitas reemplazarlos por unos obtenidos de otra forma; para
+                            reconectar la tienda es preferible volver a ejecutar el flujo de autorizacion.
+                        </p>
                     </div>
                 </div>
+            </SectionCard>
+
+            <SectionCard icon={<BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Webhooks">
+                <TiendanubeWebhookManager integrationId={integrationId} />
             </SectionCard>
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">

@@ -61,3 +61,19 @@ type StockTarget struct {
 	VariantID int64
 	Found     bool
 }
+
+type WebhookItem struct {
+	ID        string
+	Address   string
+	Topic     string
+	Format    string
+	CreatedAt string
+	UpdatedAt string
+}
+
+type CreateWebhooksResult struct {
+	WebhookURL       string
+	ExistingWebhooks []WebhookItem
+	CreatedWebhooks  []string
+	FailedWebhooks   []string
+}

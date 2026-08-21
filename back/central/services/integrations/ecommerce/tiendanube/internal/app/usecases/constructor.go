@@ -26,6 +26,10 @@ type ITiendanubeUseCase interface {
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 	CompareInventory(ctx context.Context, integrationID string, businessID uint, page, pageSize int, skus ...string) (*inventorycompare.Page, error)
 	LoadInventoryCompare(ctx context.Context, integrationID string, businessID uint, opts inventorycompare.LoadOptions) (*inventorycompare.Page, error)
+
+	CreateWebhooks(ctx context.Context, integrationID, baseURL string) (*domain.CreateWebhooksResult, error)
+	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookItem, error)
+	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 }
 
 type tiendanubeUseCase struct {

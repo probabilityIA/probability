@@ -11,3 +11,8 @@ var (
 	ErrMissingBaseURLTest  = errors.New("tiendanube: integration type has no base_url_test configured")
 	ErrRateLimited         = errors.New("tiendanube: rate limited")
 )
+
+var (
+	ErrWebhookCreationFailed = errors.New("tiendanube: no se pudieron registrar los webhooks")
+	ErrMissingWebhookBaseURL = errors.New("tiendanube: falta la URL base publica para registrar webhooks")
+)

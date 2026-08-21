@@ -16,6 +16,9 @@ type ITiendanubeClient interface {
 	CreateProduct(ctx context.Context, cred Credential, input CreateProductInput) (int64, int64, error)
 	UpdateProduct(ctx context.Context, cred Credential, productID int64, input UpdateProductInput) error
 	UpdateVariant(ctx context.Context, cred Credential, productID, variantID int64, input UpdateVariantInput) error
+	ListWebhooks(ctx context.Context, cred Credential) ([]WebhookItem, error)
+	CreateWebhook(ctx context.Context, cred Credential, event, webhookURL string) (string, error)
+	DeleteWebhook(ctx context.Context, cred Credential, webhookID string) error
 }
 
 type IIntegrationService interface {
