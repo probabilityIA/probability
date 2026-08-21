@@ -563,87 +563,67 @@ add('GET', '/resources', ({ url, paginate }) => ({ status: 200, payload: paginat
   url,
 ) }));
 
-add('GET', '/notification-configs', ({ url, paginate }) => ({ status: 200, payload: paginate([
-  { id: 1, event_code: 'order.created', event_name: 'Orden creada', channel: 'whatsapp', is_active: true, template: 'orden_creada' },
-  { id: 2, event_code: 'order.shipped', event_name: 'Orden enviada', channel: 'whatsapp', is_active: true, template: 'orden_enviada' },
-  { id: 3, event_code: 'order.delivered', event_name: 'Orden entregada', channel: 'whatsapp', is_active: false, template: 'orden_entregada' },
-  { id: 4, event_code: 'wallet.low_balance', event_name: 'Saldo bajo', channel: 'email', is_active: true, template: 'saldo_bajo' },
-], url) }));
+const NOTIFICATION_EVENTS = [
+  { id: 1, code: 'order.created', name: 'Orden creada', category: 'orders', type: 'order' },
+  { id: 2, code: 'order.confirmed', name: 'Orden confirmada', category: 'orders', type: 'order' },
+  { id: 3, code: 'order.shipped', name: 'Orden enviada', category: 'shipments', type: 'shipment' },
+  { id: 4, code: 'order.delivered', name: 'Orden entregada', category: 'shipments', type: 'shipment' },
+  { id: 5, code: 'order.cancelled', name: 'Orden cancelada', category: 'orders', type: 'order' },
+  { id: 6, code: 'wallet.low_balance', name: 'Saldo bajo en billetera', category: 'wallet', type: 'wallet' },
+  { id: 7, code: 'invoice.issued', name: 'Factura emitida', category: 'invoicing', type: 'invoice' },
+];
 
-add('GET', '/storefront/catalog', ({ url, paginate }) => {
-  let rows = d.products.filter((p) => p.is_active).map((p, i) => ({
-    id: p.id,
-    sku: p.sku,
-    name: p.name,
-    description: p.description,
-    short_description: p.description.slice(0, 60),
-    price: p.price,
-    compare_at_price: p.compare_at_price,
-    currency: 'COP',
-    stock_quantity: p.stock,
-    image_url: null,
-    images: [],
-    category: p.category,
-    brand: 'Probability',
-    is_featured: i % 5 === 0,
-  }));
-  const search = url.searchParams.get('search');
-  if (search) {
-    const q = search.toLowerCase();
-    rows = rows.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
-  }
-  const featured = url.searchParams.get('featured');
-  if (featured === 'true') rows = rows.filter((p) => p.is_featured);
-  return { status: 200, payload: paginate(rows, url) };
-});
-add('GET', '/storefront/catalog/:id', ({ params }) => {
-  const p = d.products.find((x) => x.id === params.id);
-  if (!p) return { status: 404, payload: { success: false, error: 'producto no encontrado' } };
-  return ok({
-    id: p.id, sku: p.sku, name: p.name, description: p.description,
-    price: p.price, compare_at_price: p.compare_at_price, currency: 'COP',
-    stock_quantity: p.stock, image_url: null, images: [], category: p.category,
-    brand: 'Probability', is_featured: true,
+const NOTIFICATION_CHANNELS = [
+  { id: 2, code: 'Whastap', name: 'WhatsApp' },
+  { id: 29, code: 'email', name: 'Email' },
+];
+
+add('GET', '/notification-configs', ({ url, paginate }) => {
+  const rows = NOTIFICATION_EVENTS.map((event, i) => {
+    const channel = NOTIFICATION_CHANNELS[i % NOTIFICATION_CHANNELS.length];
+    const type = d.INTEGRATION_TYPES.find((t) => t.code === channel.code);
+    return {
+      id: i + 1,
+      business_id: 1,
+      integration_id: channel.id,
+      notification_type_id: channel.id,
+      notification_event_type_id: event.id,
+      enabled: i % 4 !== 2,
+      description: `Avisar al cliente cuando ocurre: ${event.name}`,
+      filters: null,
+      order_status_ids: [],
+      notification_type_name: channel.name,
+      notification_event_name: event.name,
+      event_type: event.type,
+      channels: [channel.name],
+      notification_type: {
+        id: channel.id,
+        code: channel.code,
+        name: channel.name,
+        integration_type_id: type ? type.id : channel.id,
+        integration_type_name: channel.name,
+        integration_type_icon: type ? type.image_url : null,
+        is_active: true,
+      },
+      notification_event_type: {
+        id: event.id,
+        code: event.code,
+        name: event.name,
+        category: event.category,
+        description: `Se dispara cuando ${event.name.toLowerCase()}`,
+        is_active: true,
+      },
+      created_at: d.daysAgo(200),
+      updated_at: d.daysAgo(i),
+    };
   });
-});
-add('GET', '/storefront/orders', ({ url, paginate }) => {
-  const rows = d.orders.slice(0, 14).map((o) => ({
-    id: o.id,
-    order_number: o.order_number,
-    status: o.status,
-    total_amount: o.total_amount,
-    currency: 'COP',
-    created_at: o.created_at,
-    items: o.order_items.map((it) => ({
-      id: it.id, product_name: it.name, sku: it.sku,
-      quantity: it.quantity, unit_price: it.unit_price, total_price: it.total_price,
-    })),
-  }));
   return { status: 200, payload: paginate(rows, url) };
 });
-
-add('GET', '/website-config', () => ok({
-  id: 1,
-  business_id: 1,
-  template: 'moderna',
-  show_hero: true,
-  hero_content: { title: 'Todo lo que necesitas, en un solo lugar', subtitle: 'Envios a todo el pais' },
-  show_featured_products: true,
-  show_full_catalog: true,
-  show_about: true,
-  about_content: { title: 'Sobre nosotros', text: 'Somos una tienda con mas de 5 anios acompaniando a nuestros clientes.' },
-  show_contact: true,
-  contact_content: { email: 'hola@probability.co', phone: '3001234567' },
-  show_location: true,
-  location_content: { address: 'Calle 13 # 68-50', city: 'Bogota' },
-  show_testimonials: false,
-  testimonials_content: [],
-  show_social_media: true,
-  social_media_content: { instagram: 'probabilityia', facebook: 'probabilityia' },
-  show_whatsapp: true,
-  whatsapp_content: { phone: '3001234567', message: 'Hola, quiero mas informacion' },
-}));
-add('PUT', '/website-config', ({ body }) => ok(body, 'Configuracion guardada'));
+add('PUT', '/notification-configs/:id', ({ body }) => ok(body, 'Configuracion actualizada'));
+add('POST', '/notification-configs/sync', () => ok(
+  { created: 3, updated: 2, deleted: 0 },
+  'Configuraciones sincronizadas',
+));
 
 add('GET', '/tickets', ({ url, paginate }) => ({ status: 200, payload: paginate(d.tickets, url) }));
 add('GET', '/tickets/:id', ({ params }) => ok(d.tickets.find((t) => t.id === Number(params.id))));

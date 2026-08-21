@@ -139,7 +139,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 16 | LISTA | rutas con progreso y paradas fallidas, detalle con linea de tiempo de paradas y acciones iniciar/completar, conductores con licencia y estado, vehiculos con tipo y capacidad |
 | 17 | LISTA | catalogo completo con los 29 logos reales agrupado por categoria, y acciones sobre cada integracion conectada (probar, sincronizar, activar/desactivar) |
 | 18 | LISTA | catalogo publico en grilla con destacados y agotados, y configuracion del sitio con interruptor por seccion que guarda contra el API |
-| 19 | siguiente | notificaciones: eventos, canales y plantillas |
+| 19 | LISTA | eventos con su canal y logo, contador de activos, filtro por canal e interruptor por evento que guarda contra el API |
+| 20 | siguiente | IAM, suscripcion y tickets |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 

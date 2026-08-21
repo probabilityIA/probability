@@ -1,198 +1,251 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/app_tokens.dart';
+import '../../../../../shared/utils/formatters.dart';
+import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/notification_config_provider.dart';
 
-class NotificationConfigScreen extends StatefulWidget {
-  final int? businessId;
+const Map<String, String> notificationCategoryLabels = {
+  'order': 'Ordenes',
+  'shipment': 'Envios',
+  'wallet': 'Billetera',
+  'invoice': 'Facturacion',
+};
 
+class NotificationConfigScreen extends StatefulWidget {
   const NotificationConfigScreen({super.key, this.businessId});
 
+  final int? businessId;
+
   @override
-  State<NotificationConfigScreen> createState() =>
-      _NotificationConfigScreenState();
+  State<NotificationConfigScreen> createState() => _NotificationConfigScreenState();
 }
 
 class _NotificationConfigScreenState extends State<NotificationConfigScreen> {
+  int? _saving;
+  String _channel = '';
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadConfigs();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
-  void _loadConfigs() {
-    context.read<NotificationConfigProvider>().fetchConfigs();
+  @override
+  void didUpdateWidget(NotificationConfigScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.businessId != widget.businessId) _refresh();
   }
 
-  IconData _channelIcon(String? channel) {
-    switch (channel?.toLowerCase()) {
-      case 'whatsapp':
-        return Icons.chat;
-      case 'email':
-        return Icons.email_outlined;
-      case 'sms':
-        return Icons.sms_outlined;
-      case 'push':
-        return Icons.notifications_outlined;
-      default:
-        return Icons.notifications_outlined;
+  void _refresh() {
+    context.read<NotificationConfigProvider>().fetchConfigs(
+          filter: ConfigFilter(businessId: widget.businessId),
+        );
+  }
+
+  Future<void> _toggle(NotificationConfig config, bool value) async {
+    setState(() => _saving = config.id);
+
+    final provider = context.read<NotificationConfigProvider>();
+    final result = await provider.updateConfig(
+      config.id,
+      UpdateConfigDTO(enabled: value),
+      businessId: widget.businessId,
+    );
+
+    if (!mounted) return;
+    setState(() => _saving = null);
+
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error ?? 'No se pudo guardar')),
+      );
     }
+    _refresh();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Configuracion de Notificaciones')),
-      body: Consumer<NotificationConfigProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (provider.error != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+    return Consumer<NotificationConfigProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading && provider.configs.isEmpty) {
+          return const AppListSkeleton();
+        }
+        if (provider.error != null && provider.configs.isEmpty) {
+          return AppErrorState(message: provider.error!, onRetry: _refresh);
+        }
+        if (provider.configs.isEmpty) {
+          return AppEmptyState(
+            icon: Icons.notifications_none_rounded,
+            title: 'Sin notificaciones configuradas',
+            message: 'Conecta un canal como WhatsApp para avisarle a tus clientes.',
+            actionLabel: 'Actualizar',
+            onAction: _refresh,
+          );
+        }
+
+        final channels = <String>{
+          ...provider.configs
+              .map((c) => c.notificationTypeName ?? '')
+              .where((c) => c.isNotEmpty),
+        }.toList()
+          ..sort();
+
+        final rows = _channel.isEmpty
+            ? provider.configs
+            : provider.configs
+                .where((c) => (c.notificationTypeName ?? '') == _channel)
+                .toList();
+
+        final active = provider.configs.where((c) => c.enabled).length;
+
+        return RefreshIndicator(
+          onRefresh: () async => _refresh(),
+          color: AppColors.primary,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: AppSpacing.page,
+            children: [
+              AppCard(
+                child: Row(
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(provider.error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _loadConfigs,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: AppRadius.mdAll,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_active_outlined,
+                        size: 21,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$active de ${provider.configs.length} eventos activos',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Cada evento avisa al cliente por su canal',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            );
-          }
-          if (provider.configs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.notifications_off_outlined,
-                      size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text('No hay configuraciones',
-                      style:
-                          TextStyle(fontSize: 16, color: Colors.grey.shade600)),
-                ],
+              const SizedBox(height: 16),
+              if (channels.length > 1) ...[
+                AppFilterChips(
+                  options: [
+                    (value: '', label: 'Todos'),
+                    ...channels.map((c) => (value: c, label: c)),
+                  ],
+                  selected: _channel,
+                  onSelected: (value) => setState(() => _channel = value),
+                ),
+                const SizedBox(height: 14),
+              ],
+              AppCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < rows.length; i++) ...[
+                      if (i > 0) const Divider(height: 1),
+                      _ConfigTile(
+                        config: rows[i],
+                        saving: _saving == rows[i].id,
+                        onChanged: (value) => _toggle(rows[i], value),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _loadConfigs(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.configs.length,
-              itemBuilder: (context, index) {
-                final config = provider.configs[index];
-                return _NotificationConfigCard(
-                  config: config,
-                  channelIcon: _channelIcon(
-                      config.notificationType?.code ?? config.eventType),
-                );
-              },
-            ),
-          );
-        },
-      ),
+              const SizedBox(height: 26),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class _NotificationConfigCard extends StatelessWidget {
-  final NotificationConfig config;
-  final IconData channelIcon;
-
-  const _NotificationConfigCard({
+class _ConfigTile extends StatelessWidget {
+  const _ConfigTile({
     required this.config,
-    required this.channelIcon,
+    required this.saving,
+    required this.onChanged,
   });
+
+  final NotificationConfig config;
+  final bool saving;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final typeName = config.notificationTypeName ??
-        config.notificationType?.name ??
-        'Tipo ${config.notificationTypeId}';
-    final eventName = config.notificationEventName ??
-        config.notificationEventType?.eventName ??
-        'Evento ${config.notificationEventTypeId}';
+    final theme = Theme.of(context);
+    final channel = config.notificationTypeName ?? 'Canal';
+    final category = config.eventType ?? '';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: config.enabled
-                  ? Colors.blue.shade100
-                  : Colors.grey.shade200,
-              child: Icon(channelIcon,
-                  color: config.enabled
-                      ? Colors.blue.shade700
-                      : Colors.grey.shade500),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(typeName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Text(eventName,
-                      style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade600)),
-                  if (config.description != null &&
-                      config.description!.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(config.description!,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      child: Row(
+        children: [
+          BrandLogo(name: channel, size: 36, radius: 10, padding: 5),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  config.notificationEventName ?? 'Evento',
+                  style: theme.textTheme.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Text(channel, style: theme.textTheme.labelSmall),
+                    if (category.isNotEmpty) ...[
+                      const SizedBox(width: 6),
+                      AppStatusChip(
+                        dense: true,
+                        label: notificationCategoryLabels[category] ?? category,
+                        tone: AppStatusTone.neutral,
+                      ),
+                    ],
                   ],
-                  if (config.channels != null &&
-                      config.channels!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 4,
-                      children: config.channels!
-                          .map((ch) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: Colors.indigo.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(ch,
-                                    style: const TextStyle(
-                                        fontSize: 10, color: Colors.indigo)),
-                              ))
-                          .toList(),
-                    ),
-                  ],
-                ],
-              ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Actualizado ${AppFormat.relative(AppFormat.parseDate(config.updatedAt))}',
+                  style: theme.textTheme.labelSmall,
+                ),
+              ],
             ),
-            Switch(
-              value: config.enabled,
-              onChanged: null, // Read-only display
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 8),
+          if (saving)
+            const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Switch(value: config.enabled, onChanged: onChanged),
+        ],
       ),
     );
   }
