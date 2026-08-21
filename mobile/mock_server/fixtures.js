@@ -545,38 +545,71 @@ add('POST', '/integrations/:id/set-default', ({ params }) => ok(
   'Integracion marcada como predeterminada',
 ));
 
-add('GET', '/users', ({ url, paginate }) => ({ status: 200, payload: paginate(d.users, url) }));
-add('GET', '/roles', ({ url, paginate }) => ({ status: 200, payload: paginate([
-  { id: 1, name: 'Administrador', level: 1, scope: 'business', users_count: 3 },
-  { id: 2, name: 'Operador', level: 2, scope: 'business', users_count: 5 },
-  { id: 3, name: 'Bodega', level: 3, scope: 'business', users_count: 2 },
-  { id: 4, name: 'Contabilidad', level: 3, scope: 'business', users_count: 2 },
-], url) }));
-add('GET', '/permissions', ({ url, paginate }) => ({ status: 200, payload: paginate(
-  ['orders', 'products', 'customers', 'shipments', 'inventory'].flatMap((r, i) =>
-    ['read', 'create', 'update', 'delete'].map((a, j) => ({ id: i * 4 + j + 1, resource: r, action: a, name: `${r}.${a}` }))),
-  url,
-) }));
-add('GET', '/resources', ({ url, paginate }) => ({ status: 200, payload: paginate(
-  ['orders', 'products', 'customers', 'shipments', 'inventory', 'warehouses', 'invoicing', 'wallet']
-    .map((r, i) => ({ id: i + 1, code: r, name: r })),
-  url,
-) }));
-
-const NOTIFICATION_EVENTS = [
-  { id: 1, code: 'order.created', name: 'Orden creada', category: 'orders', type: 'order' },
-  { id: 2, code: 'order.confirmed', name: 'Orden confirmada', category: 'orders', type: 'order' },
-  { id: 3, code: 'order.shipped', name: 'Orden enviada', category: 'shipments', type: 'shipment' },
-  { id: 4, code: 'order.delivered', name: 'Orden entregada', category: 'shipments', type: 'shipment' },
-  { id: 5, code: 'order.cancelled', name: 'Orden cancelada', category: 'orders', type: 'order' },
-  { id: 6, code: 'wallet.low_balance', name: 'Saldo bajo en billetera', category: 'wallet', type: 'wallet' },
-  { id: 7, code: 'invoice.issued', name: 'Factura emitida', category: 'invoicing', type: 'invoice' },
-];
-
-const NOTIFICATION_CHANNELS = [
-  { id: 2, code: 'Whastap', name: 'WhatsApp' },
-  { id: 29, code: 'email', name: 'Email' },
-];
+add('GET', '/users', ({ url, paginate }) => {
+  const rows = d.users.map((u, i) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    phone: u.phone,
+    avatar_url: i === 0 ? 'avatars/1766115229_planeta-kaiosama.webp' : null,
+    is_active: u.is_active,
+    is_super_user: i === 0,
+    business_id: 1,
+    business_name: 'Probability Demo',
+    role_id: (i % 4) + 1,
+    role_name: u.role,
+    scope_id: 1,
+    business_role_assignments: [
+      { business_id: 1, business_name: 'Probability Demo', role_id: (i % 4) + 1, role_name: u.role },
+    ],
+  }));
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/roles', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate([
+    { id: 1, name: 'Administrador', code: 'admin', description: 'Acceso total al negocio', level: 1, scope_id: 1, is_system: true, business_type_id: 1, count: 3 },
+    { id: 2, name: 'Operador', code: 'operator', description: 'Gestiona ordenes y envios', level: 2, scope_id: 1, is_system: false, business_type_id: 1, count: 5 },
+    { id: 3, name: 'Bodega', code: 'warehouse', description: 'Alista pedidos y ajusta stock', level: 3, scope_id: 1, is_system: false, business_type_id: 1, count: 2 },
+    { id: 4, name: 'Contabilidad', code: 'accounting', description: 'Facturacion y reportes', level: 3, scope_id: 1, is_system: false, business_type_id: 1, count: 2 },
+  ], url),
+}));
+add('GET', '/permissions', ({ url, paginate }) => {
+  const resources = ['orders', 'products', 'customers', 'shipments', 'inventory', 'invoicing', 'wallet', 'routes'];
+  const actions = ['read', 'create', 'update', 'delete'];
+  const rows = resources.flatMap((resource, i) =>
+    actions.map((action, j) => ({
+      id: i * 4 + j + 1,
+      resource,
+      action,
+      description: `Permite ${action} en ${resource}`,
+      scope_id: 1,
+      business_type_id: 1,
+      business_type_name: 'Ecommerce',
+    })),
+  );
+  const resource = url.searchParams.get('resource');
+  return {
+    status: 200,
+    payload: paginate(resource ? rows.filter((r) => r.resource === resource) : rows, url),
+  };
+});
+add('GET', '/resources', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate(
+    ['orders', 'products', 'customers', 'shipments', 'inventory', 'invoicing', 'wallet', 'routes']
+      .map((code, i) => ({ id: i + 1, code, name: code, description: `Recurso ${code}`, is_active: true })),
+    url,
+  ),
+}));
+add('GET', '/actions', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate(
+    ['read', 'create', 'update', 'delete', 'export']
+      .map((code, i) => ({ id: i + 1, code, name: code, description: `Accion ${code}`, is_active: true })),
+    url,
+  ),
+}));
 
 add('GET', '/notification-configs', ({ url, paginate }) => {
   const rows = NOTIFICATION_EVENTS.map((event, i) => {
