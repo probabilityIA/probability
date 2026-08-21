@@ -141,12 +141,14 @@ class EnvioClickRate {
   final double? minimumInsurance;
   final double? extraInsurance;
   final bool? cod;
+  final double? codCarrierFee;
+  final double? codProbabilityMargin;
 
   EnvioClickRate({
     required this.idRate, required this.idProduct, required this.product,
     required this.idCarrier, required this.carrier, required this.flete,
     required this.deliveryDays, required this.quotationType, this.minimumInsurance,
-    this.extraInsurance, this.cod,
+    this.extraInsurance, this.cod, this.codCarrierFee, this.codProbabilityMargin,
   });
 
   factory EnvioClickRate.fromJson(Map<String, dynamic> json) {
@@ -156,6 +158,8 @@ class EnvioClickRate {
       deliveryDays: json['deliveryDays'] ?? 0, quotationType: json['quotationType'] ?? '',
       minimumInsurance: json['minimumInsurance']?.toDouble(), extraInsurance: json['extraInsurance']?.toDouble(),
       cod: json['cod'],
+      codCarrierFee: (json['codCarrierFee'] as num?)?.toDouble(),
+      codProbabilityMargin: (json['codProbabilityMargin'] as num?)?.toDouble(),
     );
   }
 }

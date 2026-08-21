@@ -10,7 +10,7 @@ class ShipmentProvider extends ChangeNotifier {
   final ApiClient _apiClient;
   List<Shipment> _shipments = [];
   List<OriginAddress> _originAddresses = [];
-  final List<EnvioClickRate> _quotes = [];
+  List<EnvioClickRate> _quotes = [];
   Pagination? _pagination;
   bool _isLoading = false;
   String? _error;
@@ -100,7 +100,25 @@ class ShipmentProvider extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>?> quoteShipment(EnvioClickQuoteRequest req) async {
-    try { return await _useCases.quoteShipment(req); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
+    _error = null;
+    try {
+      final result = await _useCases.quoteShipment(req);
+      final payload = result['data'] is Map ? result['data'] : result;
+      final rawRates = payload is Map ? payload['rates'] : null;
+      _quotes = rawRates is List
+          ? rawRates
+              .whereType<Map>()
+              .map((e) => EnvioClickRate.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+          : <EnvioClickRate>[];
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _error = parseError(e);
+      _quotes = <EnvioClickRate>[];
+      notifyListeners();
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>?> generateGuide(EnvioClickQuoteRequest req) async {

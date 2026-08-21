@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
+import '../utils/brand_assets.dart';
+import '../utils/formatters.dart';
 
-/// A [CircleAvatar] that loads a network image with graceful error handling.
-///
-/// When [imageUrl] is null, empty, or the image fails to load, the avatar
-/// displays a fallback: either the first letter of [fallbackText] or a
-/// generic [Icons.person] icon.
 class NetworkAvatar extends StatelessWidget {
-  final String? imageUrl;
-  final String? fallbackText;
-  final IconData fallbackIcon;
-  final double radius;
-  final Color? backgroundColor;
-  final Color? foregroundColor;
-
   const NetworkAvatar({
     super.key,
     this.imageUrl,
@@ -23,65 +13,91 @@ class NetworkAvatar extends StatelessWidget {
     this.foregroundColor,
   });
 
-  bool get _hasValidUrl =>
-      imageUrl != null && imageUrl!.trim().isNotEmpty;
+  final String? imageUrl;
+  final String? fallbackText;
+  final IconData fallbackIcon;
+  final double radius;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+
+  String? get _resolvedUrl => BrandAssets.mediaUrl(imageUrl);
 
   @override
   Widget build(BuildContext context) {
-    final bgColor =
-        backgroundColor ?? Theme.of(context).colorScheme.primary;
-    final fgColor =
-        foregroundColor ?? Theme.of(context).colorScheme.onPrimary;
+    final scheme = Theme.of(context).colorScheme;
+    final background = backgroundColor ?? scheme.primaryContainer;
+    final foreground = foregroundColor ?? scheme.primary;
+    final url = _resolvedUrl;
 
     return ClipOval(
       child: Container(
         width: radius * 2,
         height: radius * 2,
-        color: bgColor,
-        child: _hasValidUrl
-            ? Image.network(
-                imageUrl!,
+        color: background,
+        child: url == null
+            ? _Fallback(
+                text: fallbackText,
+                icon: fallbackIcon,
+                color: foreground,
+                radius: radius,
+              )
+            : Image.network(
+                url,
                 width: radius * 2,
                 height: radius * 2,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildFallback(fgColor);
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: SizedBox(
-                      width: radius * 0.8,
-                      height: radius * 0.8,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: fgColor,
-                      ),
-                    ),
+                filterQuality: FilterQuality.medium,
+                webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                errorBuilder: (context, error, stackTrace) => _Fallback(
+                  text: fallbackText,
+                  icon: fallbackIcon,
+                  color: foreground,
+                  radius: radius,
+                ),
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return _Fallback(
+                    text: fallbackText,
+                    icon: fallbackIcon,
+                    color: foreground,
+                    radius: radius,
                   );
                 },
-              )
-            : _buildFallback(fgColor),
+              ),
       ),
     );
   }
+}
 
-  Widget _buildFallback(Color color) {
-    final text = fallbackText ?? '';
-    if (text.isNotEmpty) {
-      return Center(
-        child: Text(
-          text[0].toUpperCase(),
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: radius * 0.8,
-          ),
-        ),
-      );
+class _Fallback extends StatelessWidget {
+  const _Fallback({
+    required this.text,
+    required this.icon,
+    required this.color,
+    required this.radius,
+  });
+
+  final String? text;
+  final IconData icon;
+  final Color color;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final clean = (text ?? '').trim();
+    if (clean.isEmpty) {
+      return Center(child: Icon(icon, color: color, size: radius));
     }
     return Center(
-      child: Icon(fallbackIcon, color: color, size: radius),
+      child: Text(
+        AppFormat.initials(clean),
+        style: TextStyle(
+          fontFamily: 'Inter',
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: radius * 0.66,
+        ),
+      ),
     );
   }
 }

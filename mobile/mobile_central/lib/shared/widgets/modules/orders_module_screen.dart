@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/modules/orders/ui/screens/order_list_screen.dart';
 import '../../../services/modules/orderstatus/ui/screens/orderstatus_list_screen.dart';
 import '../../../services/modules/shipments/ui/screens/shipment_list_screen.dart';
+import '../../../services/modules/shipments/ui/screens/shipping_quote_screen.dart';
 import 'module_tabs_scaffold.dart';
 
 class OrdersModuleScreen extends StatelessWidget {
@@ -15,10 +16,11 @@ class OrdersModuleScreen extends StatelessWidget {
       title: 'Ordenes',
       subtitle: 'Pedidos de todos los canales',
       initialTab: initialTab,
-      tabs: const ['Ordenes', 'Envios', 'Estados'],
+      tabs: const ['Ordenes', 'Envios', 'Cotizar', 'Estados'],
       builder: (context, businessId) => [
         OrderListScreen(key: ValueKey('orders_$businessId'), businessId: businessId),
         ShipmentListScreen(key: ValueKey('shipments_$businessId'), businessId: businessId),
+        ShippingQuoteScreen(key: ValueKey('quote_$businessId'), businessId: businessId),
         const OrderStatusListScreen(),
       ],
     );

@@ -82,9 +82,14 @@ class AppRouter {
                 const OrdersModuleScreen(initialTab: 1),
           ),
           GoRoute(
-            path: '/orders/statuses',
+            path: '/orders/quote',
             builder: (context, state) =>
                 const OrdersModuleScreen(initialTab: 2),
+          ),
+          GoRoute(
+            path: '/orders/statuses',
+            builder: (context, state) =>
+                const OrdersModuleScreen(initialTab: 3),
           ),
           GoRoute(
             path: '/customers',

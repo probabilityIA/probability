@@ -75,6 +75,29 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
   con `--dart-define=API_BASE_URL=http://localhost:5199/api/v1`.
 - Verificacion visual con Playwright sobre `http://localhost:5100`.
 
+## Cola de tareas pendientes (pedidas fuera de fase)
+
+1. **Icono de la app** con el logo de Probability (el mismo `logo.png` del front),
+   generando los mipmaps de Android y los assets de iOS. Debe quedar listo
+   **antes** de compilar el APK.
+2. **APK de produccion en el escritorio** al cerrar la fase 20 (ver abajo).
+
+## Entrega final (al cerrar la fase 20)
+
+Compilar el APK apuntando a **produccion** y dejarlo en el escritorio:
+
+```bash
+cd mobile/mobile_central
+flutter build apk --release \
+  --dart-define=APP_ENV=production \
+  --dart-define=API_BASE_URL=https://www.probabilityia.com.co/api/v1
+cp build/app/outputs/flutter-apk/app-release.apk ~/Desktop/probability-<fecha>.apk
+```
+
+`Environment.apiBaseUrl` ya resuelve a `https://www.probabilityia.com.co/api/v1`
+cuando `APP_ENV=production`, asi que el `--dart-define` de la URL es redundante
+pero se deja explicito para que el APK no dependa del default.
+
 ## Estado de avance
 
 | Fase | Estado | Notas |
@@ -87,7 +110,8 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
 | 6 | LISTA | detalle con header de canal, items tipados, totales con bloque COD, cliente, envio, trazabilidad, copiar numero y cancelar orden |
 | 7 | LISTA | lista de guias con logo de transportadora, filtros por estado, busqueda y scroll infinito; detalle con desglose de costo, contra entrega, destino, paquete y cancelacion |
 | 8 | LISTA | primer endpoint exclusivo de la app en Go: `GET /api/v1/mobile/orders/:id/full`; el detalle de orden ya muestra guia y factura |
-| 9 | siguiente | cotizador de envios y generacion de guia |
+| 9 | LISTA | cotizador con formula portada de rate-pricing.ts, 7 pruebas que la fijan, desglose por tarifa y aviso cuando la tarifa no soporta contra entrega |
+| 10 | siguiente | productos: lista, detalle, variantes, precios |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 
@@ -118,6 +142,15 @@ Cumple las reglas del repo:
 
 Cliente Dart en `lib/services/modules/mobile/`, con su provider
 `OrderFullProvider`.
+
+## La formula de tarifas
+
+`lib/shared/utils/rate_pricing.dart` es un port literal de
+`front/central/src/shared/utils/rate-pricing.ts`. **Ninguna pantalla suma
+tarifas a mano**, igual que en el front. `test/shared/utils/rate_pricing_test.dart`
+fija el comportamiento con 7 casos, incluidos los dos errores que la regla marca
+como clasicos: omitir el seguro minimo y sumar el margen COD a una tarifa que no
+soporta contra entrega.
 
 ## Reglas de negocio respetadas en guias
 
