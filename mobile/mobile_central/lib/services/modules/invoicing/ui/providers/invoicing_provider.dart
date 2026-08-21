@@ -44,6 +44,7 @@ class InvoicingProvider extends ChangeNotifier {
         pageSize: _pageSize,
         businessId: businessId ?? _businessIdFilter,
         status: _statusFilter,
+        invoiceNumber: _invoiceNumberFilter,
       );
       final response = await _useCases.getInvoices(filters);
       _invoices = response.data;
@@ -120,15 +121,26 @@ class InvoicingProvider extends ChangeNotifier {
     _page = page;
   }
 
-  void setFilters({String? status, int? businessId}) {
+  String? _invoiceNumberFilter;
+
+  void setFilters({String? status, int? businessId, String? invoiceNumber}) {
     _statusFilter = status;
     _businessIdFilter = businessId;
+    _invoiceNumberFilter = invoiceNumber;
     _page = 1;
+  }
+
+  Invoice? invoiceById(int id) {
+    for (final invoice in _invoices) {
+      if (invoice.id == id) return invoice;
+    }
+    return null;
   }
 
   void resetFilters() {
     _statusFilter = null;
     _businessIdFilter = null;
+    _invoiceNumberFilter = null;
     _page = 1;
   }
 }

@@ -1,323 +1,257 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/app_tokens.dart';
+import '../../../../../shared/utils/formatters.dart';
+import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/invoicing_provider.dart';
+import 'invoice_detail_screen.dart';
+
+const Map<String, String> invoiceStatusLabels = {
+  'issued': 'Emitida',
+  'pending': 'Pendiente',
+  'failed': 'Fallida',
+  'cancelled': 'Cancelada',
+  'draft': 'Borrador',
+};
+
+String invoiceStatusLabel(String code) => invoiceStatusLabels[code] ?? code;
 
 class InvoiceListScreen extends StatefulWidget {
-  final int? businessId;
-
   const InvoiceListScreen({super.key, this.businessId});
+
+  final int? businessId;
 
   @override
   State<InvoiceListScreen> createState() => _InvoiceListScreenState();
 }
 
 class _InvoiceListScreenState extends State<InvoiceListScreen> {
-  int _currentPage = 1;
-  String? _statusFilter;
+  final _searchController = TextEditingController();
+  Timer? _debounce;
+  String _status = '';
 
-  static const _statusOptions = [
-    null,
-    'pending',
-    'completed',
-    'failed',
-    'cancelled',
+  static const List<({String value, String label})> _statusOptions = [
+    (value: '', label: 'Todas'),
+    (value: 'issued', label: 'Emitidas'),
+    (value: 'pending', label: 'Pendientes'),
+    (value: 'failed', label: 'Fallidas'),
+    (value: 'cancelled', label: 'Canceladas'),
   ];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadInvoices();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
-  void _loadInvoices() {
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
     final provider = context.read<InvoicingProvider>();
-    provider.setPage(_currentPage);
-    provider.setFilters(status: _statusFilter);
-    provider.fetchInvoices();
+    provider.setFilters(
+      status: _status.isEmpty ? null : _status,
+      invoiceNumber: _searchController.text.trim().isEmpty
+          ? null
+          : _searchController.text.trim(),
+    );
+    provider.fetchInvoices(businessId: widget.businessId);
   }
 
-  void _goToPage(int page) {
-    setState(() => _currentPage = page);
-    final provider = context.read<InvoicingProvider>();
-    provider.setPage(page);
-    provider.fetchInvoices();
-  }
-
-  void _onStatusChanged(String? status) {
-    setState(() {
-      _statusFilter = status;
-      _currentPage = 1;
+  void _onSearch(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) _refresh();
     });
-    _loadInvoices();
-  }
-
-  Color _statusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'success':
-        return Colors.green;
-      case 'pending':
-      case 'processing':
-        return Colors.orange;
-      case 'failed':
-      case 'error':
-        return Colors.red;
-      case 'cancelled':
-        return Colors.grey;
-      default:
-        return Colors.blue;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Facturas')),
-      body: Consumer<InvoicingProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (provider.error != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+          child: AppSearchField(
+            controller: _searchController,
+            hintText: 'Numero de factura, orden o cliente',
+            onChanged: _onSearch,
+          ),
+        ),
+        AppFilterChips(
+          options: _statusOptions,
+          selected: _status,
+          onSelected: (value) {
+            setState(() => _status = value);
+            _refresh();
+          },
+        ),
+        const SizedBox(height: 4),
+        Expanded(
+          child: Consumer<InvoicingProvider>(
+            builder: (context, provider, _) {
+              if (provider.isLoading && provider.invoices.isEmpty) {
+                return const AppListSkeleton();
+              }
+              if (provider.error != null && provider.invoices.isEmpty) {
+                return AppErrorState(message: provider.error!, onRetry: _refresh);
+              }
+              if (provider.invoices.isEmpty) {
+                return AppEmptyState(
+                  icon: Icons.description_outlined,
+                  title: 'Sin facturas',
+                  message: 'Cuando factures una orden vas a ver aqui el documento y su estado en la DIAN.',
+                  actionLabel: 'Actualizar',
+                  onAction: _refresh,
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async => _refresh(),
+                color: AppColors.primary,
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: AppSpacing.page,
+                  itemCount: provider.invoices.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final invoice = provider.invoices[index];
+                    return InvoiceCard(
+                      invoice: invoice,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => InvoiceDetailScreen(invoiceId: invoice.id),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class InvoiceCard extends StatelessWidget {
+  const InvoiceCard({super.key, required this.invoice, this.onTap});
+
+  final Invoice invoice;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              BrandLogo(
+                name: invoice.providerName ?? 'Facturador',
+                imageUrl: invoice.providerLogoUrl,
+                size: 40,
+                radius: 11,
+                padding: 6,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(provider.error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _loadInvoices,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
+                    Text(
+                      invoice.invoiceNumber,
+                      style: theme.textTheme.titleSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${invoice.providerName ?? ''}  ·  ${invoice.orderNumber ?? ''}',
+                      style: theme.textTheme.labelSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _loadInvoices(),
-            child: Column(
-              children: [
-                // Status filter chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: _statusOptions.map((status) {
-                      final isSelected = _statusFilter == status;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(status ?? 'Todos'),
-                          selected: isSelected,
-                          onSelected: (_) => _onStatusChanged(status),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                Expanded(
-                  child: provider.invoices.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.receipt_long_outlined,
-                                  size: 64, color: Colors.grey.shade400),
-                              const SizedBox(height: 16),
-                              Text('No hay facturas',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey.shade600)),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: provider.invoices.length,
-                          itemBuilder: (context, index) {
-                            final invoice = provider.invoices[index];
-                            return _InvoiceCard(
-                              invoice: invoice,
-                              statusColor: _statusColor(invoice.status),
-                            );
-                          },
-                        ),
-                ),
-                if (provider.pagination != null &&
-                    provider.pagination!.lastPage > 1)
-                  _PaginationBar(
-                    currentPage: provider.pagination!.currentPage,
-                    totalPages: provider.pagination!.lastPage,
-                    total: provider.pagination!.total,
-                    onPageChanged: _goToPage,
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _InvoiceCard extends StatelessWidget {
-  final Invoice invoice;
-  final Color statusColor;
-
-  const _InvoiceCard({required this.invoice, required this.statusColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.receipt_outlined, size: 18, color: Colors.blue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    invoice.invoiceNumber.isNotEmpty
-                        ? invoice.invoiceNumber
-                        : 'Sin numero',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 15),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    invoice.status,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.person_outline,
-                    size: 14, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(invoice.customerName,
-                      style:
-                          TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ],
-            ),
-            if (invoice.orderNumber != null) ...[
-              const SizedBox(height: 4),
-              Row(
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Icon(Icons.tag, size: 14, color: Colors.grey.shade500),
-                  const SizedBox(width: 4),
-                  Text('Orden: ${invoice.orderNumber}',
-                      style:
-                          TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                  Text(
+                    AppFormat.money(invoice.totalAmount),
+                    style: theme.textTheme.titleSmall?.copyWith(fontSize: 15),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    AppFormat.relative(AppFormat.parseDate(invoice.createdAt)),
+                    style: theme.textTheme.labelSmall,
+                  ),
                 ],
               ),
             ],
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '\$${invoice.totalAmount.toStringAsFixed(0)} ${invoice.currency}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  invoice.createdAt.length > 10
-                      ? invoice.createdAt.substring(0, 10)
-                      : invoice.createdAt,
-                  style:
-                      TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PaginationBar extends StatelessWidget {
-  final int currentPage;
-  final int totalPages;
-  final int total;
-  final ValueChanged<int> onPageChanged;
-
-  const _PaginationBar({
-    required this.currentPage,
-    required this.totalPages,
-    required this.total,
-    required this.onPageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('$total resultados',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ),
+          const SizedBox(height: 11),
           Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: currentPage > 1
-                    ? () => onPageChanged(currentPage - 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
+              AppStatusChip(
+                dense: true,
+                label: invoiceStatusLabel(invoice.status),
+                tone: AppStatusChip.toneFromCode(invoice.status),
               ),
-              Text('$currentPage / $totalPages',
-                  style: const TextStyle(fontSize: 13)),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: currentPage < totalPages
-                    ? () => onPageChanged(currentPage + 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  invoice.customerName,
+                  style: theme.textTheme.labelSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                ),
               ),
             ],
           ),
+          if ((invoice.errorMessage ?? '').isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+              decoration: BoxDecoration(
+                color: AppColors.errorSoft,
+                borderRadius: AppRadius.smAll,
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 14, color: AppColors.error),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      invoice.errorMessage!,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFFB91C1C),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

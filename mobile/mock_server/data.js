@@ -368,24 +368,66 @@ const shipments = orders
     };
   });
 
+const INVOICE_PROVIDERS = [
+  { id: 8, code: 'siigo', name: 'Siigo' },
+  { id: 7, code: 'factus', name: 'Factus' },
+  { id: 9, code: 'alegra', name: 'Alegra' },
+];
+
+const INVOICE_STATUSES = ['issued', 'pending', 'failed', 'cancelled'];
+
 const invoices = orders
   .filter((o) => o.has_invoice)
-  .map((o, i) => ({
-    id: i + 1,
-    business_id: 1,
-    order_id: o.id,
-    order_number: o.order_number,
-    invoice_number: `FE-${2400 + i}`,
-    cufe: `${between(10000000, 99999999)}abcdef`,
-    provider: pick(['Siigo', 'Factus', 'Alegra']),
-    status: pick(['issued', 'pending', 'failed', 'cancelled']),
-    customer_name: o.customer_name,
-    subtotal: o.subtotal,
-    tax: o.tax,
-    total: o.total,
-    issued_at: o.created_at,
-    created_at: o.created_at,
-  }));
+  .map((o, i) => {
+    const provider = INVOICE_PROVIDERS[i % INVOICE_PROVIDERS.length];
+    const type = INTEGRATION_TYPES.find((t) => t.code === provider.code);
+    const status = INVOICE_STATUSES[i % INVOICE_STATUSES.length];
+    return {
+      id: i + 1,
+      order_id: o.id,
+      order_number: o.order_number,
+      business_id: 1,
+      integration_id: o.integration_id,
+      invoicing_provider_id: provider.id,
+      invoice_number: `FE-${2400 + i}`,
+      external_id: `${between(100000, 999999)}`,
+      status,
+      total_amount: o.total_amount,
+      subtotal: o.subtotal,
+      tax: o.tax,
+      discount: 0,
+      currency: 'COP',
+      customer_name: o.customer_name,
+      customer_email: o.customer_email,
+      customer_dni: o.customer_dni,
+      invoice_url: status === 'issued' ? 'https://example.com/factura.pdf' : null,
+      pdf_url: status === 'issued' ? 'https://example.com/factura.pdf' : null,
+      xml_url: status === 'issued' ? 'https://example.com/factura.xml' : null,
+      cufe: status === 'issued' ? `${between(10000000, 99999999)}abcdef0123456789` : null,
+      issued_at: status === 'issued' ? o.created_at : null,
+      cancelled_at: status === 'cancelled' ? daysAgo(between(0, 10)) : null,
+      error_message: status === 'failed'
+        ? 'El cliente no tiene tipo de documento valido para la DIAN'
+        : null,
+      provider_name: provider.name,
+      provider_logo_url: type ? type.image_url : null,
+      provider_image_url: type ? type.image_url : null,
+      created_at: o.created_at,
+      updated_at: o.updated_at,
+      items: o.order_items.map((it, idx) => ({
+        id: idx + 1,
+        invoice_id: i + 1,
+        product_sku: it.sku,
+        product_name: it.name,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        total_price: it.total_price,
+        tax: Math.round(it.total_price * 0.19),
+        tax_rate: 19,
+        discount: 0,
+      })),
+    };
+  });
 
 const walletMovements = Array.from({ length: 30 }, (_, i) => {
   const isCredit = rnd() > 0.55;
@@ -599,6 +641,7 @@ module.exports = {
   orders,
   shipments,
   invoices,
+  INVOICE_PROVIDERS,
   walletMovements,
   inventoryMovements,
   inventoryLevels,

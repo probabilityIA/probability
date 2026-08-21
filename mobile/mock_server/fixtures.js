@@ -333,8 +333,44 @@ add('GET', '/shipments/track/:tracking', ({ params }) => {
 add('GET', '/shipments/:id', ({ params }) => ok(d.shipments.find((s) => s.id === Number(params.id))));
 add('POST', '/shipments/:id/cancel', () => ok(null, 'Guia cancelada'));
 
-add('GET', '/invoices', ({ url, paginate }) => ({ status: 200, payload: paginate(d.invoices, url) }));
-add('GET', '/invoices/:id', ({ params }) => ok(d.invoices.find((i) => i.id === Number(params.id))));
+add('GET', '/invoices', ({ url, paginate }) => {
+  let rows = d.invoices;
+  const status = url.searchParams.get('status');
+  if (status && status !== 'all') rows = rows.filter((i) => i.status === status);
+  const number = url.searchParams.get('invoice_number') || url.searchParams.get('order_number');
+  if (number) {
+    const q = number.toLowerCase();
+    rows = rows.filter((i) =>
+      i.invoice_number.toLowerCase().includes(q) ||
+      (i.order_number || '').toLowerCase().includes(q) ||
+      i.customer_name.toLowerCase().includes(q));
+  }
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/invoices/:id', ({ params }) => ok(
+  d.invoices.find((i) => i.id === Number(params.id)),
+));
+add('POST', '/invoices/:id/cancel', () => ok(null, 'Factura cancelada'));
+add('POST', '/invoices/:id/retry', () => ok(null, 'Reintento encolado'));
+add('GET', '/invoices/:id/sync-logs', ({ params }) => ok([
+  { id: 1, invoice_id: Number(params.id), operation_type: 'create', status: 'success', started_at: d.daysAgo(2), completed_at: d.daysAgo(2), duration_ms: 1240, retry_count: 0, max_retries: 3 },
+  { id: 2, invoice_id: Number(params.id), operation_type: 'check_status', status: 'success', started_at: d.daysAgo(1), completed_at: d.daysAgo(1), duration_ms: 480, retry_count: 0, max_retries: 3 },
+]));
+add('GET', '/invoicing/configs', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate(d.INVOICE_PROVIDERS.map((p, i) => ({
+    id: i + 1,
+    business_id: 1,
+    integration_id: p.id,
+    provider_name: p.name,
+    auto_invoice: i === 0,
+    enabled: true,
+    integration_names: ['Shopify', 'WooCommerce'],
+    last_invoice_date: d.daysAgo(i),
+    created_at: d.daysAgo(200),
+    updated_at: d.daysAgo(i),
+  })), url),
+}));
 
 add('GET', '/pay/wallet/balance', () => ok({ balance: 2480500, currency: 'COP', updated_at: d.daysAgo(0) }));
 add('GET', '/pay/wallet/history', ({ url, paginate }) => ({ status: 200, payload: paginate(d.walletMovements, url) }));
