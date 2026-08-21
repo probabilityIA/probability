@@ -352,23 +352,55 @@ add('GET', '/invoices/:id', ({ params }) => ok(d.invoices.find((i) => i.id === N
 add('GET', '/pay/wallet/balance', () => ok({ balance: 2480500, currency: 'COP', updated_at: d.daysAgo(0) }));
 add('GET', '/pay/wallet/history', ({ url, paginate }) => ({ status: 200, payload: paginate(d.walletMovements, url) }));
 
-add('GET', '/inventory/movements', ({ url, paginate }) => ({ status: 200, payload: paginate(d.inventoryMovements, url) }));
-add('GET', '/inventory/movement-types', () => ok([
-  { code: 'entry', name: 'Entrada' },
-  { code: 'exit', name: 'Salida' },
-  { code: 'adjustment', name: 'Ajuste' },
-  { code: 'transfer', name: 'Traslado' },
-]));
+add('GET', '/inventory/movements', ({ url, paginate }) => {
+  let rows = d.inventoryMovements;
+  const warehouseId = url.searchParams.get('warehouse_id');
+  if (warehouseId) rows = rows.filter((m) => m.warehouse_id === Number(warehouseId));
+  const typeCode = url.searchParams.get('movement_type_code');
+  if (typeCode) rows = rows.filter((m) => m.movement_type_code === typeCode);
+  const productId = url.searchParams.get('product_id');
+  if (productId) rows = rows.filter((m) => m.product_id === productId);
+  rows = [...rows].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/inventory/movement-types', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate(d.MOVEMENT_TYPES.map((t) => ({ ...t, is_active: true })), url),
+}));
 add('GET', '/inventory/warehouse/:id', ({ url, paginate, params }) => {
-  const rows = d.products.map((p) => ({
-    product_id: p.id, sku: p.sku, name: p.name, stock: p.stock,
-    warehouse_id: Number(params.id), reserved: 0, available: p.stock,
-  }));
+  let rows = d.inventoryLevels.filter((l) => l.warehouse_id === Number(params.id));
+  const lowStock = url.searchParams.get('low_stock');
+  if (lowStock === 'true') rows = rows.filter((l) => l.available_qty <= (l.reorder_point || 0));
   return { status: 200, payload: paginate(rows, url) };
 });
 add('GET', '/inventory/product/:id', ({ params }) => ok(
-  d.warehouses.map((w) => ({ warehouse_id: w.id, warehouse_name: w.name, stock: 10 + w.id * 7, product_id: Number(params.id) })),
+  d.inventoryLevels.filter((l) => l.product_id === params.id),
 ));
+add('POST', '/inventory/adjust', ({ body }) => {
+  const level = d.inventoryLevels.find(
+    (l) => l.product_id === body.product_id && l.warehouse_id === Number(body.warehouse_id),
+  );
+  const previous = level ? level.quantity : 0;
+  const next = previous + Number(body.quantity || 0);
+  if (level) {
+    level.quantity = next;
+    level.available_qty = next - level.reserved_qty;
+  }
+  return ok({
+    id: d.inventoryMovements.length + 1,
+    product_id: body.product_id,
+    warehouse_id: Number(body.warehouse_id),
+    movement_type_code: 'adjustment',
+    movement_type_name: 'Ajuste por conteo',
+    quantity: Number(body.quantity || 0),
+    previous_qty: previous,
+    new_qty: next,
+    reason: body.reason,
+    notes: body.notes || null,
+    created_at: new Date().toISOString(),
+  }, 'Ajuste registrado');
+});
+add('POST', '/inventory/transfer', () => ok(null, 'Traslado registrado'));
 
 add('GET', '/warehouses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.warehouses, url) }));
 add('GET', '/warehouses/:id', ({ params }) => ok(d.warehouses.find((w) => w.id === Number(params.id))));

@@ -353,21 +353,71 @@ const walletMovements = Array.from({ length: 30 }, (_, i) => {
   };
 });
 
-const inventoryMovements = Array.from({ length: 36 }, (_, i) => {
+const MOVEMENT_TYPES = [
+  { id: 1, code: 'purchase_entry', name: 'Entrada por compra', direction: 'in' },
+  { id: 2, code: 'sale_exit', name: 'Salida por venta', direction: 'out' },
+  { id: 3, code: 'adjustment', name: 'Ajuste por conteo', direction: 'both' },
+  { id: 4, code: 'transfer_in', name: 'Traslado entrante', direction: 'in' },
+  { id: 5, code: 'transfer_out', name: 'Traslado saliente', direction: 'out' },
+  { id: 6, code: 'return_entry', name: 'Devolucion de cliente', direction: 'in' },
+];
+
+const inventoryLevels = [];
+products.forEach((product, pi) => {
+  warehouses.slice(0, 3).forEach((warehouse, wi) => {
+    const quantity = between(0, 180);
+    const reserved = Math.min(quantity, between(0, 12));
+    inventoryLevels.push({
+      id: inventoryLevels.length + 1,
+      product_id: product.id,
+      warehouse_id: warehouse.id,
+      location_id: null,
+      business_id: 1,
+      quantity,
+      reserved_qty: reserved,
+      available_qty: quantity - reserved,
+      min_stock: 10,
+      max_stock: 300,
+      reorder_point: 20,
+      product_name: product.name,
+      product_sku: product.sku,
+      warehouse_name: warehouse.name,
+      warehouse_code: warehouse.code,
+      created_at: product.created_at,
+      updated_at: daysAgo(between(0, 20)),
+    });
+  });
+});
+
+const inventoryMovements = Array.from({ length: 60 }, (_, i) => {
   const product = products[i % products.length];
+  const warehouse = warehouses[i % 3];
+  const type = MOVEMENT_TYPES[i % MOVEMENT_TYPES.length];
+  const quantity = between(1, 60);
+  const previous = between(0, 300);
+  const isOut = type.direction === 'out';
   return {
     id: i + 1,
     product_id: product.id,
     product_name: product.name,
-    sku: product.sku,
-    warehouse_id: warehouses[i % 3].id,
-    warehouse_name: warehouses[i % 3].name,
-    type: pick(['entry', 'exit', 'adjustment', 'transfer']),
-    quantity: between(1, 60),
-    stock_after: between(0, 300),
+    product_sku: product.sku,
+    warehouse_id: warehouse.id,
+    warehouse_name: warehouse.name,
+    location_id: null,
+    business_id: 1,
+    movement_type_id: type.id,
+    movement_type_code: type.code,
+    movement_type_name: type.name,
+    quantity: isOut ? -quantity : quantity,
+    previous_qty: previous,
+    new_qty: isOut ? Math.max(0, previous - quantity) : previous + quantity,
+    reference_type: isOut ? 'order' : 'purchase',
+    reference_id: `REF-${2000 + i}`,
     reason: pick(['Compra a proveedor', 'Venta', 'Ajuste por conteo', 'Traslado entre bodegas', 'Devolucion']),
-    user_name: pick(FIRST),
+    notes: null,
+    created_by_id: 1,
     created_at: daysAgo(between(0, 30)),
+    updated_at: daysAgo(between(0, 30)),
   };
 });
 
@@ -501,6 +551,8 @@ module.exports = {
   invoices,
   walletMovements,
   inventoryMovements,
+  inventoryLevels,
+  MOVEMENT_TYPES,
   drivers,
   vehicles,
   deliveryRoutes,

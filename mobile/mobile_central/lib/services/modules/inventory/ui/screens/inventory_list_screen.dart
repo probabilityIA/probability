@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/inventory_provider.dart';
-import '../../domain/entities.dart';
+import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/app_tokens.dart';
+import '../../../../../shared/widgets/ui/ui.dart';
 import '../../../warehouses/ui/providers/warehouse_provider.dart';
+import '../../domain/entities.dart';
+import '../providers/inventory_provider.dart';
+import '../widgets/inventory_widgets.dart';
+import 'stock_adjust_sheet.dart';
 
 class InventoryListScreen extends StatefulWidget {
-  final int? businessId;
-
   const InventoryListScreen({super.key, this.businessId});
+
+  final int? businessId;
 
   @override
   State<InventoryListScreen> createState() => _InventoryListScreenState();
@@ -15,28 +20,13 @@ class InventoryListScreen extends StatefulWidget {
 
 class _InventoryListScreenState extends State<InventoryListScreen> {
   final _searchController = TextEditingController();
-  int? _selectedWarehouseId;
-  bool _lowStockOnly = false;
+  int? _warehouseId;
+  String _view = 'stock';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadWarehouses();
-    });
-  }
-
-  @override
-  void didUpdateWidget(InventoryListScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.businessId != widget.businessId) {
-      _searchController.clear();
-      setState(() {
-        _selectedWarehouseId = null;
-        _lowStockOnly = false;
-      });
-      _loadWarehouses();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
   @override
@@ -45,569 +35,227 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
     super.dispose();
   }
 
-  void _loadWarehouses() {
-    context
-        .read<WarehouseProvider>()
-        .fetchWarehouses(businessId: widget.businessId);
+  Future<void> _bootstrap() async {
+    final warehouses = context.read<WarehouseProvider>();
+    if (warehouses.warehouses.isEmpty) {
+      await warehouses.fetchWarehouses(businessId: widget.businessId);
+    }
+    if (!mounted) return;
+    final first = warehouses.warehouses.isNotEmpty ? warehouses.warehouses.first.id : null;
+    setState(() => _warehouseId = _warehouseId ?? first);
+    _refresh();
   }
 
-  void _fetchInventory() {
-    if (_selectedWarehouseId == null) return;
+  void _refresh() {
     final provider = context.read<InventoryProvider>();
-    provider.setFilters(
-      search: _searchController.text.isNotEmpty ? _searchController.text : null,
-      lowStock: _lowStockOnly ? true : null,
+    if (_view == 'stock') {
+      if (_warehouseId != null) {
+        provider.fetchWarehouseInventory(_warehouseId!, businessId: widget.businessId);
+      }
+    } else {
+      provider.fetchMovements(
+        params: GetMovementsParams(
+          page: 1,
+          pageSize: 30,
+          businessId: widget.businessId,
+          warehouseId: _warehouseId,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openAdjust(InventoryLevel level) async {
+    final changed = await showStockAdjustSheet(
+      context,
+      level: level,
+      businessId: widget.businessId,
     );
-    provider.fetchWarehouseInventory(_selectedWarehouseId!,
-        businessId: widget.businessId);
+    if (changed == true) _refresh();
   }
 
-  void _onClearSearch() {
-    _searchController.clear();
-    final provider = context.read<InventoryProvider>();
-    provider.setFilters(search: null);
-    provider.setPage(1);
-    if (_selectedWarehouseId != null) {
-      provider.fetchWarehouseInventory(_selectedWarehouseId!,
-          businessId: widget.businessId);
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        _WarehousePicker(
+          selected: _warehouseId,
+          onSelected: (id) {
+            setState(() => _warehouseId = id);
+            _refresh();
+          },
+        ),
+        const SizedBox(height: 10),
+        AppFilterChips(
+          options: const [
+            (value: 'stock', label: 'Existencias'),
+            (value: 'movements', label: 'Movimientos'),
+          ],
+          selected: _view,
+          onSelected: (value) {
+            setState(() => _view = value);
+            _refresh();
+          },
+        ),
+        const SizedBox(height: 4),
+        Expanded(
+          child: _view == 'stock' ? _buildStock() : _buildMovements(),
+        ),
+      ],
+    );
   }
 
-  void _onWarehouseChanged(int? warehouseId) {
-    setState(() {
-      _selectedWarehouseId = warehouseId;
-      _lowStockOnly = false;
-    });
-    _searchController.clear();
-    final provider = context.read<InventoryProvider>();
-    provider.resetFilters();
-    if (warehouseId != null) {
-      provider.fetchWarehouseInventory(warehouseId,
-          businessId: widget.businessId);
-    }
-  }
+  Widget _buildStock() {
+    return Consumer<InventoryProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading && provider.inventoryLevels.isEmpty) {
+          return const AppListSkeleton();
+        }
+        if (provider.error != null && provider.inventoryLevels.isEmpty) {
+          return AppErrorState(message: provider.error!, onRetry: _refresh);
+        }
+        if (provider.inventoryLevels.isEmpty) {
+          return AppEmptyState(
+            icon: Icons.inventory_2_outlined,
+            title: 'Sin existencias',
+            message: 'Esta bodega no tiene productos con stock registrado.',
+            actionLabel: 'Actualizar',
+            onAction: _refresh,
+          );
+        }
 
-  bool _isLowStock(InventoryLevel level) {
-    if (level.reorderPoint != null) return level.availableQty <= level.reorderPoint!;
-    if (level.minStock != null) return level.availableQty <= level.minStock!;
-    return false;
-  }
+        final query = _searchController.text.trim().toLowerCase();
+        final rows = query.isEmpty
+            ? provider.inventoryLevels
+            : provider.inventoryLevels
+                .where((level) =>
+                    (level.productName ?? '').toLowerCase().contains(query) ||
+                    (level.productSku ?? '').toLowerCase().contains(query))
+                .toList();
 
-  void _showAdjustStockForm({String? productId}) {
-    if (_selectedWarehouseId == null) return;
-
-    final productIdCtrl = TextEditingController(text: productId ?? '');
-    final quantityCtrl = TextEditingController();
-    final reasonCtrl = TextEditingController();
-    final notesCtrl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    bool isSaving = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+        return RefreshIndicator(
+          onRefresh: () async => _refresh(),
+          color: AppColors.primary,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+                child: AppSearchField(
+                  controller: _searchController,
+                  hintText: 'Producto o SKU',
+                  onChanged: (_) => setState(() {}),
+                ),
               ),
-              child: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Ajustar stock',
-                              style: Theme.of(ctx).textTheme.titleLarge,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: productIdCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'ID del producto *',
-                          border: OutlineInputBorder(),
-                          hintText: 'UUID del producto',
-                        ),
-                        readOnly: productId != null,
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Requerido'
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: quantityCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Cantidad *',
-                          border: OutlineInputBorder(),
-                          helperText:
-                              'Positivo para agregar, negativo para quitar',
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                            signed: true),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Requerido';
-                          if (int.tryParse(v.trim()) == null) {
-                            return 'Ingrese un numero valido';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: reasonCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Razon *',
-                          border: OutlineInputBorder(),
-                          hintText: 'Conteo fisico, correccion, etc.',
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Requerido'
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: notesCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Notas',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton(
-                        onPressed: isSaving
-                            ? null
-                            : () async {
-                                if (!formKey.currentState!.validate()) return;
-                                setModalState(() => isSaving = true);
-                                final provider =
-                                    context.read<InventoryProvider>();
-                                final dto = AdjustStockDTO(
-                                  productId: productIdCtrl.text.trim(),
-                                  warehouseId: _selectedWarehouseId!,
-                                  quantity:
-                                      int.parse(quantityCtrl.text.trim()),
-                                  reason: reasonCtrl.text.trim(),
-                                  notes: notesCtrl.text.trim().isNotEmpty
-                                      ? notesCtrl.text.trim()
-                                      : null,
-                                );
-                                final result = await provider.adjustStock(
-                                    dto,
-                                    businessId: widget.businessId);
-                                setModalState(() => isSaving = false);
-                                if (result != null && ctx.mounted) {
-                                  Navigator.pop(ctx);
-                                  provider.fetchWarehouseInventory(
-                                      _selectedWarehouseId!,
-                                      businessId: widget.businessId);
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content:
-                                              Text('Stock ajustado')),
-                                    );
-                                  }
-                                } else if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(provider.error ??
-                                          'Error al ajustar stock'),
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.error,
-                                    ),
-                                  );
-                                }
-                              },
-                        child: isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text('Ajustar stock'),
-                      ),
-                    ],
+              Expanded(
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: AppSpacing.page,
+                  itemCount: rows.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) => InventoryLevelCard(
+                    level: rows[index],
+                    onTap: () => _openAdjust(rows[index]),
                   ),
                 ),
               ),
-            );
-          },
+            ],
+          ),
         );
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Inventario')),
-      floatingActionButton: _selectedWarehouseId != null
-          ? FloatingActionButton(
-              onPressed: () => _showAdjustStockForm(),
-              child: const Icon(Icons.tune),
-            )
-          : null,
-      body: Column(
-        children: [
-          // Warehouse selector
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Consumer<WarehouseProvider>(
-              builder: (context, whProvider, _) {
-                if (whProvider.isLoading && whProvider.warehouses.isEmpty) {
-                  return const LinearProgressIndicator();
-                }
-                return DropdownButtonFormField<int>(
-                  initialValue: _selectedWarehouseId,
-                  decoration: const InputDecoration(
-                    labelText: 'Seleccionar bodega',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.warehouse),
-                  ),
-                  hint: const Text('Selecciona una bodega'),
-                  items: whProvider.warehouses
-                      .map((wh) => DropdownMenuItem(
-                            value: wh.id,
-                            child: Text('${wh.name} (${wh.code})'),
-                          ))
-                      .toList(),
-                  onChanged: (v) => _onWarehouseChanged(v),
-                );
-              },
-            ),
-          ),
-
-          if (_selectedWarehouseId != null) ...[
-            // Search bar + low stock filter
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Buscar por producto o SKU...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: _onClearSearch,
-                              )
-                            : null,
-                        border: const OutlineInputBorder(),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                      onSubmitted: (_) => _fetchInventory(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _fetchInventory,
-                    icon: const Icon(Icons.search),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  FilterChip(
-                    label: const Text('Solo stock bajo'),
-                    selected: _lowStockOnly,
-                    onSelected: (v) {
-                      setState(() => _lowStockOnly = v);
-                      final provider = context.read<InventoryProvider>();
-                      provider.setFilters(lowStock: v ? true : null);
-                      provider.setPage(1);
-                      provider.fetchWarehouseInventory(_selectedWarehouseId!,
-                          businessId: widget.businessId);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // Content
-          Expanded(
-            child: _selectedWarehouseId == null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.inventory_2_outlined,
-                            size: 48, color: theme.disabledColor),
-                        const SizedBox(height: 16),
-                        const Text('Selecciona una bodega para ver inventario'),
-                      ],
-                    ),
-                  )
-                : Consumer<InventoryProvider>(
-                    builder: (context, provider, _) {
-                      return _buildContent(provider, theme);
-                    },
-                  ),
-          ),
-
-          // Pagination
-          if (_selectedWarehouseId != null)
-            Consumer<InventoryProvider>(
-              builder: (context, provider, _) {
-                if (provider.pagination != null && !provider.isLoading) {
-                  return _buildPagination(provider);
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent(InventoryProvider provider, ThemeData theme) {
-    if (provider.isLoading && provider.inventoryLevels.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (provider.error != null && provider.inventoryLevels.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            Text(provider.error!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => provider.fetchWarehouseInventory(
-                  _selectedWarehouseId!,
-                  businessId: widget.businessId),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (provider.inventoryLevels.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory_outlined,
-                size: 48, color: theme.disabledColor),
-            const SizedBox(height: 16),
-            const Text('No hay inventario en esta bodega'),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () => provider.fetchWarehouseInventory(
-          _selectedWarehouseId!,
-          businessId: widget.businessId),
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        itemCount: provider.inventoryLevels.length,
-        itemBuilder: (context, index) {
-          final level = provider.inventoryLevels[index];
-          final lowStock = _isLowStock(level);
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product info + adjust button
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              level.productName ?? level.productId,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14),
-                            ),
-                            if (level.productSku != null &&
-                                level.productSku!.isNotEmpty)
-                              Text(
-                                'SKU: ${level.productSku}',
-                                style: theme.textTheme.bodySmall
-                                    ?.copyWith(fontFamily: 'monospace'),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (lowStock)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Stock bajo',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red,
-                            ),
-                          ),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'OK',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(width: 4),
-                      IconButton(
-                        icon: const Icon(Icons.tune, size: 20),
-                        tooltip: 'Ajustar stock',
-                        onPressed: () => _showAdjustStockForm(
-                            productId: level.productId),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Quantities row
-                  Row(
-                    children: [
-                      _buildQtyChip('Cantidad', level.quantity, theme),
-                      const SizedBox(width: 8),
-                      _buildQtyChip(
-                        'Reservado',
-                        level.reservedQty,
-                        theme,
-                        color: level.reservedQty > 0 ? Colors.orange : null,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQtyChip('Disponible', level.availableQty, theme,
-                          bold: true),
-                    ],
-                  ),
-                  if (level.minStock != null || level.maxStock != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Min: ${level.minStock ?? "-"} / Max: ${level.maxStock ?? "-"}',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.disabledColor),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+  Widget _buildMovements() {
+    return Consumer<InventoryProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading && provider.movements.isEmpty) {
+          return const AppListSkeleton();
+        }
+        if (provider.movements.isEmpty) {
+          return AppEmptyState(
+            icon: Icons.swap_vert_rounded,
+            title: 'Sin movimientos',
+            message: 'Aun no hay entradas ni salidas registradas en esta bodega.',
+            actionLabel: 'Actualizar',
+            onAction: _refresh,
           );
-        },
-      ),
-    );
-  }
+        }
 
-  Widget _buildQtyChip(String label, int value, ThemeData theme,
-      {Color? color, bool bold = false}) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(label, style: theme.textTheme.labelSmall),
-          const SizedBox(height: 2),
-          Text(
-            value.toString(),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: bold ? FontWeight.bold : FontWeight.w500,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPagination(InventoryProvider provider) {
-    final pagination = provider.pagination!;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Pag. ${pagination.currentPage} de ${pagination.lastPage}  (${pagination.total} total)',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          Row(
+        return RefreshIndicator(
+          onRefresh: () async => _refresh(),
+          color: AppColors.primary,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: AppSpacing.page,
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: pagination.hasPrev
-                    ? () {
-                        provider.setPage(pagination.currentPage - 1);
-                        provider.fetchWarehouseInventory(
-                            _selectedWarehouseId!,
-                            businessId: widget.businessId);
-                      }
-                    : null,
+              AppCard(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < provider.movements.length; i++) ...[
+                      if (i > 0) const Divider(height: 1),
+                      StockMovementTile(movement: provider.movements[i]),
+                    ],
+                  ],
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: pagination.hasNext
-                    ? () {
-                        provider.setPage(pagination.currentPage + 1);
-                        provider.fetchWarehouseInventory(
-                            _selectedWarehouseId!,
-                            businessId: widget.businessId);
-                      }
-                    : null,
+              const SizedBox(height: 14),
+              Center(
+                child: Text(
+                  '${provider.movements.length} de ${provider.movementsPagination?.total ?? provider.movements.length} movimientos',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+}
+
+class _WarehousePicker extends StatelessWidget {
+  const _WarehousePicker({required this.selected, required this.onSelected});
+
+  final int? selected;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<WarehouseProvider>(
+      builder: (context, provider, _) {
+        if (provider.warehouses.isEmpty) return const SizedBox.shrink();
+
+        return SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: provider.warehouses.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final warehouse = provider.warehouses[index];
+              final active = warehouse.id == selected;
+              return ChoiceChip(
+                label: Text(warehouse.name),
+                selected: active,
+                onSelected: (_) => onSelected(warehouse.id),
+                avatar: Icon(
+                  Icons.warehouse_outlined,
+                  size: 15,
+                  color: active ? AppColors.primaryDark : AppColors.textMuted,
+                ),
+                labelStyle: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: active ? AppColors.primaryDark : AppColors.textSecondary,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

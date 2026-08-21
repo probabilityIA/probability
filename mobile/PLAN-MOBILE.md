@@ -113,7 +113,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 8 | LISTA | primer endpoint exclusivo de la app en Go: `GET /api/v1/mobile/orders/:id/full`; el detalle de orden ya muestra guia y factura |
 | 9 | LISTA | cotizador con formula portada de rate-pricing.ts, 7 pruebas que la fijan, desglose por tarifa y aviso cuando la tarifa no soporta contra entrega |
 | 10 | LISTA | lista con miniatura, precio, stock y filtros; detalle con precios, margen calculado, inventario, dimensiones y canales donde esta publicado con su logo |
-| 11 | siguiente | inventario: stock por bodega, movimientos y ajustes |
+| 11 | LISTA | existencias por bodega con barra de ocupacion y alerta de reposicion, historial de movimientos con entrada/salida, y hoja de ajuste que escribe contra el API |
+| 12 | siguiente | bodegas: lista, detalle y ocupacion |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 
