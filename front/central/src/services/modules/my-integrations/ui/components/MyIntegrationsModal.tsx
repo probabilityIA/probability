@@ -33,7 +33,7 @@ interface MyIntegrationsModalProps {
     businessId?: number | null;
 }
 
-const WIDE_FORM_TYPE_IDS = [1, 3, 4, 8, 16, 33];
+const WIDE_FORM_TYPE_IDS = [1, 3, 4, 8, 16, 17, 33];
 
 const HUB_KEYFRAMES = `
 @keyframes cyber-dash { to { stroke-dashoffset: -24; } }
