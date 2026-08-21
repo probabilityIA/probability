@@ -18,6 +18,7 @@ import { useSearchParams } from 'next/navigation';
 import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
 import { MercadoLibreOAuthCallback } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { JumpsellerOAuthCallback } from '@/services/integrations/ecommerce/jumpseller/ui';
+import { TiendanubeOAuthCallback } from '@/services/integrations/ecommerce/tiendanube/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useIntegrationsBusiness } from '@/shared/contexts/integrations-business-context';
@@ -39,6 +40,7 @@ export default function IntegrationsPage() {
     const isOAuthCallback = searchParams.get('shopify_oauth');
     const isMeliOAuthCallback = searchParams.get('meli_oauth');
     const isJumpsellerOAuthCallback = searchParams.get('jumpseller_oauth');
+    const isTiendanubeOAuthCallback = searchParams.get('tiendanube_oauth');
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -105,6 +107,10 @@ export default function IntegrationsPage() {
 
     if (isJumpsellerOAuthCallback) {
         return <JumpsellerOAuthCallback />;
+    }
+
+    if (isTiendanubeOAuthCallback) {
+        return <TiendanubeOAuthCallback />;
     }
 
     const handleSuccess = () => {

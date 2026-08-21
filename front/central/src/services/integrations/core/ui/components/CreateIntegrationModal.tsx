@@ -23,7 +23,7 @@ import { MiPaqueteConfigForm } from '@/services/integrations/transport/mipaquete
 import { ShipitConfigForm } from '@/services/integrations/transport/shipit/ui';
 import { ShopifyIntegrationForm } from '@/services/integrations/ecommerce/shopify/ui';
 import { VTEXConfigForm } from '@/services/integrations/ecommerce/vtex/ui';
-import { TiendanubeConfigForm } from '@/services/integrations/ecommerce/tiendanube/ui';
+import { TiendanubeOAuthForm } from '@/services/integrations/ecommerce/tiendanube/ui';
 import { MagentoConfigForm } from '@/services/integrations/ecommerce/magento/ui';
 import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
@@ -342,10 +342,8 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
 
             case INTEGRATION_TYPE_IDS.TIENDANUBE:
                 return (
-                    <TiendanubeConfigForm
-                        onSuccess={onSuccess}
+                    <TiendanubeOAuthForm
                         onCancel={onBack}
-                        integrationTypeBaseURLTest={integrationType.base_url_test}
                     />
                 );
 
