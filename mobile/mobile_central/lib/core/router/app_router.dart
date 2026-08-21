@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../services/auth/login/ui/providers/login_provider.dart';
 import '../../services/auth/login/ui/screens/login_screen.dart';
 import '../../services/auth/business/ui/screens/business_list_screen.dart';
+import '../../services/auth/login/ui/screens/forgot_password_screen.dart';
+import '../../services/auth/profile/ui/screens/profile_screen.dart';
 
 // Module screens (standalone)
 import '../../services/modules/customers/ui/screens/customer_list_screen.dart';
@@ -39,8 +41,9 @@ class AppRouter {
     redirect: (context, state) {
       final isLoggedIn = loginProvider.isLoggedIn;
       final isLoginRoute = state.matchedLocation == '/login';
+      final isPublicRoute = isLoginRoute || state.matchedLocation == '/forgot-password';
 
-      if (!isLoggedIn && !isLoginRoute) return '/login';
+      if (!isLoggedIn && !isPublicRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/dashboard';
       return null;
     },
@@ -49,6 +52,10 @@ class AppRouter {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // Todas las rutas autenticadas dentro del ShellRoute con Drawer
@@ -198,6 +205,10 @@ class AppRouter {
           GoRoute(
             path: '/more',
             builder: (context, state) => const ModulesScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
           ),
 
           // ── Otros ──

@@ -51,6 +51,27 @@ add('POST', '/auth/login', ({ body }) => ok({
 add('POST', '/auth/change-password', () => ok(null, 'Contrasena actualizada'));
 add('POST', '/auth/generate-password', () => ({ status: 200, payload: { success: true, message: 'ok', password: 'Temporal123*' } }));
 
+add('POST', '/auth/recovery-channels', ({ body }) => ok([
+  { channel: 'email', masked: (body.email || 'demo@probability.co').replace(/^(.{2}).*(@.*)$/, '$1****$2'), available: true },
+  { channel: 'whatsapp', masked: '+57 300 *** 4567', available: true },
+]));
+
+add('POST', '/auth/forgot-password', ({ body }) => ok(
+  { channel: body.channel || 'email' },
+  'Codigo enviado',
+));
+
+add('POST', '/auth/verify-otp', ({ body }) => {
+  if ((body.code || '') !== '123456') {
+    return { status: 400, payload: { success: false, error: 'Codigo invalido o vencido' } };
+  }
+  return ok({ token: 'mock-reset-token' }, 'Codigo verificado');
+});
+
+add('POST', '/auth/reset-password', () => ok(null, 'Contrasena restablecida'));
+
+add('GET', '/auth/verify', () => ok({ valid: true }));
+
 add('GET', '/auth/roles-permissions', () => ({
   status: 200,
   payload: {

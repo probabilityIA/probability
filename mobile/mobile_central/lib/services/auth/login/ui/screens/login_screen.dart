@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../../core/config/environment.dart';
 import '../../../../../shared/theme/app_colors.dart';
@@ -112,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () => context.push('/forgot-password'),
                         child: const Text('\u00BFOlvidaste tu contrase\u00F1a?'),
                       ),
                     ),

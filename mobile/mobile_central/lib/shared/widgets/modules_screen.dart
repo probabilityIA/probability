@@ -21,7 +21,7 @@ class ModulesScreen extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.person_outline, size: 22),
           tooltip: 'Perfil',
-          onPressed: () {},
+          onPressed: () => context.go('/profile'),
         ),
       ],
       body: ListView(
