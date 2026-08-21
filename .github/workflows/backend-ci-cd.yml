@@ -264,7 +264,24 @@ jobs:
             docker rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL 2>/dev/null || true
 
             # Pull image con versión específica (garantiza que es la imagen recién construida)
-            docker pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL
+            # Con reintentos: containerd falla de forma transitoria con
+            # "unable to lease content: lease does not exist" y sin retry el deploy
+            # aborta dejando el backend caído.
+            pull_backend_image() {
+              local attempt
+              for attempt in 1 2 3; do
+                if docker pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL; then
+                  return 0
+                fi
+                echo "⚠️  Pull falló (intento $attempt/3), reintentando..."
+                docker rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL 2>/dev/null || true
+                sleep $((attempt * 5))
+              done
+              echo "❌ Error: no se pudo descargar la imagen $VERSION_FULL tras 3 intentos"
+              echo "   El backend NO fue modificado y sigue corriendo la versión anterior."
+              return 1
+            }
+            pull_backend_image
 
             # Tag la imagen con versión como latest localmente
             docker tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL \
@@ -302,16 +319,9 @@ jobs:
             pkill -9 -f "rootlessport.*3050" || true
             sleep 2
 
-            # 3. Pull de la nueva imagen específica
-            echo "📦 Pulling nueva imagen $VERSION_FULL..."
-            docker pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL
-
-            # 4. Tag como latest localmente
-            echo "🏷️  Tageando como latest..."
-            docker tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL \
-                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
-
-            # 5. Levantar solo el servicio back-central (contenedor: central_reserve_prod)
+            # 3. Levantar solo el servicio back-central (contenedor: central_reserve_prod)
+            # La imagen ya fue descargada y tageada como latest antes de tocar el
+            # contenedor: acá no se hace red, solo arrancar.
             echo "🚀 Levantando backend con nueva imagen..."
             docker compose -f docker-compose.yaml up -d back-central
 
