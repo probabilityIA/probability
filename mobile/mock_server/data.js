@@ -632,6 +632,22 @@ const deliveryRoutes = Array.from({ length: 10 }, (_, i) => {
   };
 });
 
+const INTEGRATION_CATEGORY_LABELS = {
+  ecommerce: 'Tiendas',
+  invoicing: 'Facturacion',
+  messaging: 'Mensajeria',
+  shipping: 'Transporte',
+  payment: 'Pagos',
+};
+
+const INTEGRATION_CATEGORY_IDS = {
+  ecommerce: 1,
+  invoicing: 2,
+  messaging: 3,
+  shipping: 4,
+  payment: 5,
+};
+
 const typeByCode = (code) => INTEGRATION_TYPES.find((t) => t.code === code);
 
 const CONNECTED = [
@@ -730,6 +746,8 @@ module.exports = {
   deliveryRoutes,
   integrations,
   INTEGRATION_TYPES,
+  INTEGRATION_CATEGORY_LABELS,
+  INTEGRATION_CATEGORY_IDS,
   tickets,
   users,
   businesses,

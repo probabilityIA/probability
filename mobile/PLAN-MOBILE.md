@@ -137,7 +137,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 14 | LISTA | facturas con logo del facturador (Siigo, Factus, Alegra), estado, motivo de rechazo de la DIAN, detalle con items, CUFE, reintento y cancelacion |
 | 15 | LISTA | saldo con alerta de saldo bajo, KPIs de recargado y gastado en guias, movimientos tipificados por concepto real y hoja de recarga |
 | 16 | LISTA | rutas con progreso y paradas fallidas, detalle con linea de tiempo de paradas y acciones iniciar/completar, conductores con licencia y estado, vehiculos con tipo y capacidad |
-| 17 | siguiente | integraciones: catalogo y conexion |
+| 17 | LISTA | catalogo completo con los 29 logos reales agrupado por categoria, y acciones sobre cada integracion conectada (probar, sincronizar, activar/desactivar) |
+| 18 | siguiente | tienda online: storefront y configuracion del sitio |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 

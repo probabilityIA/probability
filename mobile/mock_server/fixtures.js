@@ -507,13 +507,42 @@ add('GET', '/integration-categories', () => ok([
   { code: 'transport', name: 'Transporte' },
   { code: 'pay', name: 'Pagos' },
 ]));
-add('GET', '/integration-types', ({ url, paginate }) => ({
-  status: 200,
-  payload: paginate(d.INTEGRATION_TYPES.map((t) => ({ ...t, is_active: true })), url),
-}));
-add('GET', '/integration-types/active', () => ok(d.INTEGRATION_TYPES.map((t) => ({ ...t, is_active: true }))));
+add('GET', '/integration-types', ({ url, paginate }) => {
+  let rows = d.INTEGRATION_TYPES.map((t) => ({
+    ...t,
+    description: `Conecta tu cuenta de ${t.name} con Probability`,
+    is_active: true,
+    in_development: false,
+    category_id: d.INTEGRATION_CATEGORY_IDS[t.category] || 1,
+    category: { code: t.category, name: d.INTEGRATION_CATEGORY_LABELS[t.category] || t.category },
+    created_at: d.daysAgo(300),
+    updated_at: d.daysAgo(10),
+  }));
+  const categoryId = url.searchParams.get('category_id');
+  if (categoryId) rows = rows.filter((t) => String(t.category_id) === categoryId);
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/integration-types/active', () => ok(
+  d.INTEGRATION_TYPES.map((t) => ({ ...t, is_active: true })),
+));
 add('GET', '/integration-types/:id', ({ params }) => ok(
   d.INTEGRATION_TYPES.find((t) => t.id === Number(params.id)),
+));
+add('GET', '/integration-categories', () => ok(
+  Object.entries(d.INTEGRATION_CATEGORY_LABELS).map(([code, name], i) => ({
+    id: i + 1,
+    code,
+    name,
+    is_active: true,
+  })),
+));
+add('POST', '/integrations/:id/activate', () => ok(null, 'Integracion activada'));
+add('POST', '/integrations/:id/deactivate', () => ok(null, 'Integracion desactivada'));
+add('POST', '/integrations/:id/test', () => ok({ connected: true }, 'Conexion exitosa'));
+add('POST', '/integrations/:id/sync', () => ok({ queued: true }, 'Sincronizacion encolada'));
+add('POST', '/integrations/:id/set-default', ({ params }) => ok(
+  d.integrations.find((i) => i.id === Number(params.id)),
+  'Integracion marcada como predeterminada',
 ));
 
 add('GET', '/users', ({ url, paginate }) => ({ status: 200, payload: paginate(d.users, url) }));

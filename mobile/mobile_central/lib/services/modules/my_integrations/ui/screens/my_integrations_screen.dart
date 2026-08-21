@@ -6,6 +6,7 @@ import '../../../../../shared/utils/formatters.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/my_integrations_provider.dart';
+import '../widgets/integration_actions_sheet.dart';
 
 class MyIntegrationsScreen extends StatefulWidget {
   const MyIntegrationsScreen({super.key, this.businessId});
@@ -91,7 +92,13 @@ class _MyIntegrationsScreenState extends State<MyIntegrationsScreen> {
                   padding: AppSpacing.page,
                   itemCount: rows.length,
                   separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _IntegrationCard(integration: rows[index]),
+                  itemBuilder: (context, index) => _IntegrationCard(
+                    integration: rows[index],
+                    onTap: () async {
+                      await showIntegrationActionsSheet(context, integration: rows[index]);
+                      if (context.mounted) _load();
+                    },
+                  ),
                 ),
               ),
             ],
@@ -103,9 +110,10 @@ class _MyIntegrationsScreenState extends State<MyIntegrationsScreen> {
 }
 
 class _IntegrationCard extends StatelessWidget {
-  const _IntegrationCard({required this.integration});
+  const _IntegrationCard({required this.integration, this.onTap});
 
   final MyIntegration integration;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +122,7 @@ class _IntegrationCard extends StatelessWidget {
 
     return AppCard(
       padding: const EdgeInsets.all(14),
-      onTap: () {},
+      onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
