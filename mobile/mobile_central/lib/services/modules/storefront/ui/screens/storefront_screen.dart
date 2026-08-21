@@ -1,249 +1,201 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/app_tokens.dart';
+import '../../../../../shared/utils/formatters.dart';
+import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/storefront_provider.dart';
 
 class StorefrontScreen extends StatefulWidget {
-  final int? businessId;
-
   const StorefrontScreen({super.key, this.businessId});
+
+  final int? businessId;
 
   @override
   State<StorefrontScreen> createState() => _StorefrontScreenState();
 }
 
 class _StorefrontScreenState extends State<StorefrontScreen> {
-  int _currentPage = 1;
+  final _searchController = TextEditingController();
+  Timer? _debounce;
+  bool _onlyFeatured = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCatalog();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    context.read<StorefrontProvider>().fetchCatalog(businessId: widget.businessId);
+  }
+
+  void _onSearch(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() {});
     });
-  }
-
-  void _loadCatalog() {
-    final provider = context.read<StorefrontProvider>();
-    provider.setCatalogPage(_currentPage);
-    provider.fetchCatalog();
-  }
-
-  void _goToPage(int page) {
-    setState(() => _currentPage = page);
-    final provider = context.read<StorefrontProvider>();
-    provider.setCatalogPage(page);
-    provider.fetchCatalog();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tienda')),
-      body: Consumer<StorefrontProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (provider.error != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(provider.error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _loadCatalog,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          if (provider.catalogProducts.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.storefront_outlined,
-                      size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text('No hay productos en el catalogo',
-                      style:
-                          TextStyle(fontSize: 16, color: Colors.grey.shade600)),
-                ],
-              ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _loadCatalog(),
-            child: Column(
-              children: [
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.7,
-                    ),
-                    itemCount: provider.catalogProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = provider.catalogProducts[index];
-                      return _ProductCard(product: product);
-                    },
-                  ),
-                ),
-                if (provider.catalogPagination != null &&
-                    provider.catalogPagination!.lastPage > 1)
-                  _PaginationBar(
-                    currentPage: provider.catalogPagination!.currentPage,
-                    totalPages: provider.catalogPagination!.lastPage,
-                    total: provider.catalogPagination!.total,
-                    onPageChanged: _goToPage,
-                  ),
-              ],
-            ),
+    return Consumer<StorefrontProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading && provider.catalogProducts.isEmpty) {
+          return const AppListSkeleton();
+        }
+        if (provider.error != null && provider.catalogProducts.isEmpty) {
+          return AppErrorState(message: provider.error!, onRetry: _refresh);
+        }
+        if (provider.catalogProducts.isEmpty) {
+          return AppEmptyState(
+            icon: Icons.storefront_outlined,
+            title: 'Catalogo vacio',
+            message: 'Publica productos para que aparezcan en tu tienda online.',
+            actionLabel: 'Actualizar',
+            onAction: _refresh,
           );
-        },
-      ),
+        }
+
+        final query = _searchController.text.trim().toLowerCase();
+        final rows = provider.catalogProducts.where((product) {
+          final matchesQuery = query.isEmpty ||
+              product.name.toLowerCase().contains(query) ||
+              product.sku.toLowerCase().contains(query);
+          final matchesFeatured = !_onlyFeatured || product.isFeatured;
+          return matchesQuery && matchesFeatured;
+        }).toList();
+
+        return RefreshIndicator(
+          onRefresh: () async => _refresh(),
+          color: AppColors.primary,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                child: AppSearchField(
+                  controller: _searchController,
+                  hintText: 'Buscar en el catalogo',
+                  onChanged: _onSearch,
+                ),
+              ),
+              AppFilterChips(
+                options: const [
+                  (value: 'all', label: 'Todo el catalogo'),
+                  (value: 'featured', label: 'Destacados'),
+                ],
+                selected: _onlyFeatured ? 'featured' : 'all',
+                onSelected: (value) => setState(() => _onlyFeatured = value == 'featured'),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: rows.isEmpty
+                    ? const AppEmptyState(
+                        icon: Icons.search_off_rounded,
+                        title: 'Sin resultados',
+                        message: 'Ningun producto coincide con el filtro.',
+                      )
+                    : GridView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: AppSpacing.page,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 11,
+                          crossAxisSpacing: 11,
+                          mainAxisExtent: 196,
+                        ),
+                        itemCount: rows.length,
+                        itemBuilder: (context, index) => _CatalogCard(product: rows[index]),
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class _ProductCard extends StatelessWidget {
-  final StorefrontProduct product;
+class _CatalogCard extends StatelessWidget {
+  const _CatalogCard({required this.product});
 
-  const _ProductCard({required this.product});
+  final StorefrontProduct product;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    final theme = Theme.of(context);
+    final soldOut = product.stockQuantity <= 0;
+
+    return AppCard(
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            flex: 3,
-            child: product.imageUrl.isNotEmpty
-                ? Image.network(
-                    product.imageUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey.shade200,
-                      child: Icon(Icons.image_not_supported,
-                          size: 40, color: Colors.grey.shade400),
-                    ),
-                  )
-                : Container(
-                    color: Colors.grey.shade200,
-                    child: Center(
-                      child: Icon(Icons.inventory_2_outlined,
-                          size: 40, color: Colors.grey.shade400),
-                    ),
-                  ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: AppRadius.mdAll,
+              ),
+              child: Stack(
                 children: [
-                  Text(
-                    product.name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  const Center(
+                    child: Icon(Icons.image_outlined, size: 28, color: AppColors.textDisabled),
                   ),
-                  const Spacer(),
-                  if (product.compareAtPrice != null &&
-                      product.compareAtPrice! > product.price)
-                    Text(
-                      '\$${product.compareAtPrice!.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                        decoration: TextDecoration.lineThrough,
+                  if (product.isFeatured)
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: AppRadius.pillAll,
+                        ),
+                        child: const Text(
+                          'Destacado',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
-                  Text(
-                    '\$${product.price.toStringAsFixed(0)} ${product.currency}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PaginationBar extends StatelessWidget {
-  final int currentPage;
-  final int totalPages;
-  final int total;
-  final ValueChanged<int> onPageChanged;
-
-  const _PaginationBar({
-    required this.currentPage,
-    required this.totalPages,
-    required this.total,
-    required this.onPageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('$total productos',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          const SizedBox(height: 10),
+          Text(
+            product.name,
+            style: theme.textTheme.titleSmall?.copyWith(fontSize: 13),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 5),
           Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: currentPage > 1
-                    ? () => onPageChanged(currentPage - 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
+              Text(
+                AppFormat.money(product.price),
+                style: theme.textTheme.titleSmall?.copyWith(color: AppColors.primary),
               ),
-              Text('$currentPage / $totalPages',
-                  style: const TextStyle(fontSize: 13)),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: currentPage < totalPages
-                    ? () => onPageChanged(currentPage + 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
-              ),
+              const Spacer(),
+              if (soldOut)
+                const AppStatusChip(dense: true, label: 'Agotado', tone: AppStatusTone.error)
+              else
+                Text('${product.stockQuantity} uds', style: theme.textTheme.labelSmall),
             ],
           ),
         ],

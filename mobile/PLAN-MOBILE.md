@@ -138,7 +138,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 15 | LISTA | saldo con alerta de saldo bajo, KPIs de recargado y gastado en guias, movimientos tipificados por concepto real y hoja de recarga |
 | 16 | LISTA | rutas con progreso y paradas fallidas, detalle con linea de tiempo de paradas y acciones iniciar/completar, conductores con licencia y estado, vehiculos con tipo y capacidad |
 | 17 | LISTA | catalogo completo con los 29 logos reales agrupado por categoria, y acciones sobre cada integracion conectada (probar, sincronizar, activar/desactivar) |
-| 18 | siguiente | tienda online: storefront y configuracion del sitio |
+| 18 | LISTA | catalogo publico en grilla con destacados y agotados, y configuracion del sitio con interruptor por seccion que guarda contra el API |
+| 19 | siguiente | notificaciones: eventos, canales y plantillas |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 
