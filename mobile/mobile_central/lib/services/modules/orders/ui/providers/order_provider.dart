@@ -82,6 +82,20 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<List<Order>> ordersByCustomerEmail(String email, {int? businessId}) async {
+    try {
+      final response = await _useCases.getOrders(GetOrdersParams(
+        page: 1,
+        pageSize: 20,
+        businessId: businessId,
+        customerEmail: email,
+      ));
+      return response.data;
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<Order?> getOrderById(String id) async {
     try {
       return await _useCases.getOrderById(id);

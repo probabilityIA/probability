@@ -27,6 +27,11 @@ class CustomerProvider extends ChangeNotifier {
 
   CustomerUseCases get _useCases => CustomerUseCases(CustomerApiRepository(_apiClient));
 
+  bool _isLoadingMore = false;
+
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMore => _pagination?.hasNext ?? false;
+
   Future<void> fetchCustomers({int? businessId}) async {
     _isLoading = true;
     _error = null;
@@ -48,6 +53,30 @@ class CustomerProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> loadMore({int? businessId}) async {
+    if (_isLoading || _isLoadingMore || !hasMore) return;
+    _isLoadingMore = true;
+    notifyListeners();
+    final previous = _customers;
+    final currentPage = _page;
+    _page = currentPage + 1;
+    try {
+      await fetchCustomers(businessId: businessId);
+      _customers = [...previous, ..._customers];
+    } catch (_) {
+      _page = currentPage;
+    }
+    _isLoadingMore = false;
+    notifyListeners();
+  }
+
+  CustomerInfo? customerById(int id) {
+    for (final customer in _customers) {
+      if (customer.id == id) return customer;
+    }
+    return null;
   }
 
   Future<CustomerInfo?> createCustomer(CreateCustomerDTO data) async {

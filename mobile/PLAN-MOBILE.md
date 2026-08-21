@@ -133,7 +133,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 10 | LISTA | lista con miniatura, precio, stock y filtros; detalle con precios, margen calculado, inventario, dimensiones y canales donde esta publicado con su logo |
 | 11 | LISTA | existencias por bodega con barra de ocupacion y alerta de reposicion, historial de movimientos con entrada/salida, y hoja de ajuste que escribe contra el API |
 | 12 | LISTA | lista de bodegas con estado, predeterminada y despacho; detalle con direccion, codigo DANE, contacto con aviso de datos faltantes y ubicaciones internas |
-| 13 | siguiente | clientes: lista, detalle, direcciones e historico |
+| 13 | LISTA | directorio con busqueda y scroll infinito; detalle con KPIs de compras, contacto copiable y las ordenes reales del cliente |
+| 14 | siguiente | facturacion: facturas, notas credito y estado DIAN |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 

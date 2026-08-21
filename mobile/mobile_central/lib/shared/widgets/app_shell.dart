@@ -51,7 +51,7 @@ class _BottomBar extends StatelessWidget {
     for (var i = 0; i < appBottomTabs.length; i++) {
       if (appBottomTabs[i].matches(location)) return i;
     }
-    return 0;
+    return appBottomTabs.length - 1;
   }
 
   @override

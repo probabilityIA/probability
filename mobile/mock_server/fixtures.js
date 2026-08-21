@@ -146,6 +146,8 @@ add('GET', '/orders', ({ url, paginate }) => {
       (o.customer_email || '').toLowerCase().includes(q) ||
       (o.tracking_number || '').toLowerCase().includes(q));
   }
+  const customerEmail = url.searchParams.get('customer_email');
+  if (customerEmail) rows = rows.filter((o) => o.customer_email === customerEmail);
   const integrationType = url.searchParams.get('integration_type');
   if (integrationType) rows = rows.filter((o) => o.integration_type === integrationType);
   const isCod = url.searchParams.get('is_cod');
@@ -273,37 +275,22 @@ add('GET', '/products/:id/integrations', ({ params }) => {
   }));
 });
 
-add('GET', '/customers', ({ url, paginate }) => ({ status: 200, payload: paginate(d.customers, url) }));
-add('GET', '/customers/:id', ({ params }) => ok(d.customers.find((c) => c.id === Number(params.id))));
-
-add('POST', '/shipments/quote', ({ body }) => {
-  const cod = Number(body.codValue || 0) > 0;
-  const rates = [
-    { carrier: 'Interrapidisimo', product: 'Estandar', flete: 11200, minimumInsurance: 6530, extraInsurance: 3800, days: 3, cod: true, codCarrierFee: 3400, codProbabilityMargin: 1500 },
-    { carrier: 'Coordinadora', product: 'Mercancia', flete: 13900, minimumInsurance: 2100, extraInsurance: 2600, days: 2, cod: true, codCarrierFee: 4100, codProbabilityMargin: 1500 },
-    { carrier: 'Servientrega', product: 'Hoy', flete: 18400, minimumInsurance: 1500, extraInsurance: 2200, days: 1, cod: false, codCarrierFee: 0, codProbabilityMargin: 0 },
-    { carrier: 'Envia', product: 'Estandar', flete: 9800, minimumInsurance: 3200, extraInsurance: 2900, days: 4, cod: true, codCarrierFee: 2900, codProbabilityMargin: 1500 },
-    { carrier: 'TCC', product: 'Nacional', flete: 15100, minimumInsurance: 1800, extraInsurance: 2400, days: 3, cod: false, codCarrierFee: 0, codProbabilityMargin: 0 },
-  ];
-  return ok({
-    cod,
-    rates: rates.map((r, i) => ({
-      idRate: 1000 + i,
-      idProduct: 10 + i,
-      product: r.product,
-      idCarrier: 1 + i,
-      carrier: r.carrier,
-      flete: r.flete,
-      deliveryDays: r.days,
-      quotationType: 'normal',
-      minimumInsurance: r.minimumInsurance,
-      extraInsurance: r.extraInsurance,
-      cod: r.cod,
-      codCarrierFee: r.codCarrierFee,
-      codProbabilityMargin: r.codProbabilityMargin,
-    })),
-  });
+add('GET', '/customers', ({ url, paginate }) => {
+  let rows = d.customers;
+  const search = url.searchParams.get('search') || url.searchParams.get('name');
+  if (search) {
+    const q = search.toLowerCase();
+    rows = rows.filter((c) =>
+      c.name.toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q) ||
+      (c.phone || '').includes(q) ||
+      (c.dni || '').includes(q));
+  }
+  return { status: 200, payload: paginate(rows, url) };
 });
+add('GET', '/customers/:id', ({ params }) => ok(
+  d.customers.find((c) => c.id === Number(params.id)),
+));
 
 add('GET', '/shipments', ({ url, paginate }) => {
   let rows = d.shipments;

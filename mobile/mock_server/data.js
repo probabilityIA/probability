@@ -79,20 +79,25 @@ const INTEGRATION_TYPES = [
 
 const customers = Array.from({ length: 48 }, (_, i) => {
   const name = `${pick(FIRST)} ${pick(LAST)}`;
+  const orderCount = between(1, 24);
   return {
     id: i + 1,
     business_id: 1,
     name,
     email: `${name.toLowerCase().replace(/\s/g, '.')}${i}@correo.com`,
     phone: `30${between(0, 9)}${between(1000000, 9999999)}`,
+    dni: `${between(10000000, 99999999)}`,
     document_type: 'CC',
     document_number: `${between(10000000, 99999999)}`,
     city: pick(CITIES),
     address: `Calle ${between(1, 180)} # ${between(1, 90)}-${between(1, 90)}`,
-    total_orders: between(1, 24),
+    order_count: orderCount,
+    total_orders: orderCount,
     total_spent: between(80000, 4200000),
+    last_order_at: daysAgo(between(0, 120)),
     is_active: rnd() > 0.1,
     created_at: daysAgo(between(5, 400)),
+    updated_at: daysAgo(between(0, 30)),
   };
 });
 
