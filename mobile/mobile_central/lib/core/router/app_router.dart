@@ -26,6 +26,7 @@ import '../../shared/widgets/modules/invoicing_module_screen.dart';
 // Shared
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/business_selector_wrapper.dart';
+import '../../shared/widgets/modules_screen.dart';
 
 class AppRouter {
   final LoginProvider loginProvider;
@@ -192,6 +193,11 @@ class AppRouter {
           GoRoute(
             path: '/businesses',
             builder: (context, state) => const BusinessListScreen(),
+          ),
+
+          GoRoute(
+            path: '/more',
+            builder: (context, state) => const ModulesScreen(),
           ),
 
           // ── Otros ──

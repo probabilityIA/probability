@@ -80,7 +80,27 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
 | Fase | Estado | Notas |
 |---|---|---|
 | 1 | LISTA | tokens de marca, tema, tipografia Inter empaquetada, logo, componentes base, login rediseniado y verificado en navegador |
-| 2 | siguiente | shell, navegacion, selector de negocio |
+| 2 | LISTA | bottom nav de 5 destinos, drawer agrupado con logo, AppScaffold comun, pantalla "Mas", ModuleTabsScaffold compartido por los 8 modulos con pestanias, gate de negocio para super admin |
+| 3 | siguiente | auth completo: perfil, cambio de clave, recuperacion, sesion |
+
+## Logos de marca
+
+Los logos de integraciones salen de `integration_type.image_url`, igual que en el
+front. Es una llave de S3 (`integration-types/xxx.png`) que
+`BrandAssets.mediaUrl` convierte en URL absoluta contra
+`https://probability-media-assets.s3.us-east-1.amazonaws.com`.
+Los de transportadoras salen del mapa `BrandAssets.carrierLogos`, portado de
+`front/central/src/shared/utils/carrier-logos.ts`.
+
+Widget unico: `BrandLogo(name:, imageUrl:)`. Si no hay imagen o falla la carga
+cae a una insignia con iniciales y color derivado del nombre.
+
+**Nota web:** el bucket de S3 no manda `Access-Control-Allow-Origin`, asi que en
+Flutter **web** la carga por XHR falla por CORS. `BrandLogo` usa
+`webHtmlElementStrategy: WebHtmlElementStrategy.fallback`, que cae a un `<img>`
+del DOM y muestra la imagen igual. En Android/iOS no existe CORS y carga
+directo, asi que esto no afecta a la app real. Si se quiere limpiar los errores
+de consola en web, hay que habilitar CORS en el bucket.
 
 ## Como levantar el entorno
 

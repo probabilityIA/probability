@@ -8,6 +8,7 @@ class MyIntegration {
   final String? integrationTypeName;
   final String? integrationTypeCode;
   final String? categoryCode;
+  final String? imageUrl;
   final String name;
   final bool isActive;
   final Map<String, dynamic>? credentials;
@@ -23,6 +24,7 @@ class MyIntegration {
     this.integrationTypeName,
     this.integrationTypeCode,
     this.categoryCode,
+    this.imageUrl,
     required this.name,
     required this.isActive,
     this.credentials,
@@ -37,9 +39,10 @@ class MyIntegration {
       deletedAt: json['deleted_at'],
       businessId: json['business_id'] ?? 0,
       integrationTypeId: json['integration_type_id'] ?? 0,
-      integrationTypeName: json['integration_type_name'],
-      integrationTypeCode: json['integration_type_code'],
-      categoryCode: json['category_code'],
+      integrationTypeName: json['integration_type_name'] ?? json['integration_type']?['name'],
+      integrationTypeCode: json['integration_type_code'] ?? json['integration_type']?['code'],
+      categoryCode: json['category_code'] ?? json['category'],
+      imageUrl: json['integration_type']?['image_url'] ?? json['image_url'],
       name: json['name'] ?? '',
       isActive: json['is_active'] ?? false,
       credentials: json['credentials'] != null

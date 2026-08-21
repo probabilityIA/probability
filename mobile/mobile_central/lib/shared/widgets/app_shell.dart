@@ -2,340 +2,311 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth/login/ui/providers/login_provider.dart';
+import '../navigation/app_modules.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_tokens.dart';
+import '../utils/formatters.dart';
+import 'app_shell_scope.dart';
 import 'network_avatar.dart';
+import 'ui/ui.dart';
 
-/// Main navigation shell for the app.
-/// Provides a Scaffold with a persistent Drawer accessible via hamburger icon.
-/// The child screens provide their own AppBar content; this shell only adds the Drawer.
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
+  const AppShell({super.key, required this.child});
+
   final Widget child;
 
-  const AppShell({super.key, required this.child});
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _openDrawer() => _scaffoldKey.currentState?.openDrawer();
 
   @override
   Widget build(BuildContext context) {
-    return _AppShellScaffold(child: child);
+    final location = GoRouterState.of(context).matchedLocation;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: AppColors.background,
+      drawer: AppNavigationDrawer(location: location),
+      body: AppShellScope(
+        openDrawer: _openDrawer,
+        location: location,
+        child: widget.child,
+      ),
+      bottomNavigationBar: _BottomBar(location: location),
+    );
   }
 }
 
-class _AppShellScaffold extends StatefulWidget {
-  final Widget child;
-  const _AppShellScaffold({required this.child});
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({required this.location});
 
-  @override
-  State<_AppShellScaffold> createState() => _AppShellScaffoldState();
-}
+  final String location;
 
-class _AppShellScaffoldState extends State<_AppShellScaffold> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  int get _index {
+    for (var i = 0; i < appBottomTabs.length; i++) {
+      if (appBottomTabs[i].matches(location)) return i;
+    }
+    return 0;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: const _AppDrawer(),
-      body: Stack(
-        children: [
-          // Child content fills the entire screen
-          widget.child,
-          // Hamburger button floating top-left
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 8,
-            child: Material(
-              color: Theme.of(context).colorScheme.surface.withAlpha(220),
-              borderRadius: BorderRadius.circular(12),
-              elevation: 2,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => _scaffoldKey.currentState?.openDrawer(),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Icon(
-                    Icons.menu,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: AppBorders.hairline),
+      ),
+      child: SafeArea(
+        top: false,
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (index) {
+            final tab = appBottomTabs[index];
+            if (!tab.matches(location)) context.go(tab.route);
+          },
+          destinations: appBottomTabs
+              .map((tab) => NavigationDestination(
+                    icon: Icon(tab.icon),
+                    selectedIcon: Icon(tab.activeIcon),
+                    label: tab.label,
+                  ))
+              .toList(),
+        ),
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Drawer
-// ---------------------------------------------------------------------------
+class AppNavigationDrawer extends StatelessWidget {
+  const AppNavigationDrawer({super.key, required this.location});
 
-class _AppDrawer extends StatelessWidget {
-  const _AppDrawer();
+  final String location;
 
   @override
   Widget build(BuildContext context) {
-    final loginProvider = context.watch<LoginProvider>();
-    final currentLocation = GoRouterState.of(context).matchedLocation;
-    final colorScheme = Theme.of(context).colorScheme;
+    final login = context.watch<LoginProvider>();
 
     return Drawer(
-      child: SafeArea(
-        child: Column(
-          children: [
-            // ── Header ──────────────────────────────────────────────
-            _DrawerHeader(loginProvider: loginProvider),
-            const Divider(height: 1),
-
-            // ── Navigation items ────────────────────────────────────
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _NavTile(
-                    icon: Icons.dashboard_outlined,
-                    label: 'Dashboard',
-                    route: '/dashboard',
-                    currentRoute: currentLocation,
-                  ),
-                  _NavTile(
-                    icon: Icons.shopping_cart_outlined,
-                    label: 'Ordenes',
-                    route: '/orders',
-                    currentRoute: currentLocation,
-                    activeOnPrefix: true,
-                  ),
-                  _NavTile(
-                    icon: Icons.people_outline,
-                    label: 'Clientes',
-                    route: '/customers',
-                    currentRoute: currentLocation,
-                  ),
-                  _NavTile(
-                    icon: Icons.receipt_long_outlined,
-                    label: 'Facturacion',
-                    route: '/invoicing',
-                    currentRoute: currentLocation,
-                  ),
-                  _NavTile(
-                    icon: Icons.inventory_2_outlined,
-                    label: 'Inventario',
-                    route: '/inventory',
-                    currentRoute: currentLocation,
-                    activeOnPrefix: true,
-                  ),
-                  _NavTile(
-                    icon: Icons.route_outlined,
-                    label: 'Ultima Milla',
-                    route: '/delivery',
-                    currentRoute: currentLocation,
-                    activeOnPrefix: true,
-                  ),
-                  _NavTile(
-                    icon: Icons.hub_outlined,
-                    label: 'Integraciones',
-                    route: '/integrations',
-                    currentRoute: currentLocation,
-                    activeOnPrefix: true,
-                  ),
-                  _NavTile(
-                    icon: Icons.notifications_outlined,
-                    label: 'Notificaciones',
-                    route: '/notifications',
-                    currentRoute: currentLocation,
-                  ),
-                  _NavTile(
-                    icon: Icons.storefront_outlined,
-                    label: 'Tienda',
-                    route: '/storefront',
-                    currentRoute: currentLocation,
-                    activeOnPrefix: true,
-                  ),
-                  _NavTile(
-                    icon: Icons.wallet_outlined,
-                    label: 'Billetera',
-                    route: '/wallet',
-                    currentRoute: currentLocation,
-                  ),
-                  _NavTile(
-                    icon: Icons.payment_outlined,
-                    label: 'Pagos',
-                    route: '/pay',
-                    currentRoute: currentLocation,
-                  ),
-                  if (_canAccessIAM(loginProvider)) ...[
-                    _NavTile(
-                      icon: Icons.admin_panel_settings_outlined,
-                      label: 'Administracion',
-                      route: '/iam',
-                      currentRoute: currentLocation,
-                      activeOnPrefix: true,
+      child: Column(
+        children: [
+          _DrawerHeader(login: login),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 16),
+              children: [
+                _DrawerItem(module: AppModules.dashboard, location: location),
+                for (final group in AppModules.groups) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 18, 12, 8),
+                    child: Text(
+                      group.title.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            letterSpacing: 0.8,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDisabled,
+                          ),
                     ),
-                    _NavTile(
-                      icon: Icons.business_outlined,
-                      label: 'Negocios',
-                      route: '/businesses',
-                      currentRoute: currentLocation,
-                    ),
-                  ],
+                  ),
+                  for (final module in group.modules)
+                    _DrawerItem(module: module, location: location),
                 ],
-              ),
+              ],
             ),
-
-            // ── Footer: Logout ──────────────────────────────────────
-            const Divider(height: 1),
-            ListTile(
-              leading: Icon(Icons.logout, color: colorScheme.error),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
+            child: ListTile(
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+              leading: const Icon(Icons.logout_rounded, size: 20, color: AppColors.error),
               title: Text(
-                'Cerrar Sesion',
-                style: TextStyle(color: colorScheme.error),
+                'Cerrar sesion',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppColors.error),
               ),
               onTap: () {
-                Navigator.pop(context); // close drawer
-                loginProvider.logout();
+                Navigator.pop(context);
+                context.read<LoginProvider>().logout();
                 context.go('/login');
               },
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Returns true when the IAM section should be visible.
-  bool _canAccessIAM(LoginProvider provider) {
-    if (provider.isSuperAdmin) return true;
-    // Show IAM section if the user has any IAM-related permission.
-    const iamResources = [
-      'Usuarios', 'Users', 'Empleados',
-      'Roles', 'Roles y Permisos',
-      'Permisos', 'Permissions',
-      'Empresas',
-    ];
-    for (final res in iamResources) {
-      if (provider.hasPermission(res, 'Read')) return true;
-    }
-    return false;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Drawer header — user info + super admin badge
-// ---------------------------------------------------------------------------
-
-class _DrawerHeader extends StatelessWidget {
-  final LoginProvider loginProvider;
-
-  const _DrawerHeader({required this.loginProvider});
-
-  @override
-  Widget build(BuildContext context) {
-    final user = loginProvider.user;
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withAlpha(80),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar
-          NetworkAvatar(
-            imageUrl: user?.avatarUrl,
-            fallbackText: user?.name ?? '?',
-            radius: 30,
-            backgroundColor: colorScheme.primary,
-            foregroundColor: colorScheme.onPrimary,
           ),
-          const SizedBox(height: 12),
-
-          // Name
-          Text(
-            user?.name ?? '',
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-
-          // Email
-          Text(
-            user?.email ?? '',
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          // Super Admin badge
-          if (loginProvider.isSuperAdmin) ...[
-            const SizedBox(height: 8),
-            Chip(
-              avatar: Icon(Icons.shield_outlined,
-                  size: 16, color: colorScheme.primary),
-              label: const Text('Super Admin'),
-              labelStyle: textTheme.labelSmall,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader({required this.login});
 
-
-// ---------------------------------------------------------------------------
-// Navigation tile (single drawer item)
-// ---------------------------------------------------------------------------
-
-class _NavTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String route;
-  final String currentRoute;
-  final bool activeOnPrefix;
-
-  const _NavTile({
-    required this.icon,
-    required this.label,
-    required this.route,
-    required this.currentRoute,
-    this.activeOnPrefix = false,
-  });
-
-  bool get _isActive =>
-      activeOnPrefix ? currentRoute.startsWith(route) : currentRoute == route;
+  final LoginProvider login;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final user = login.user;
+    final business = login.businesses.isNotEmpty ? login.businesses.first : null;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-      child: ListTile(
-        dense: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 0, 16, 18),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: AppBorders.hairline),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            const AppLogo(height: 26),
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                NetworkAvatar(
+                  imageUrl: user?.avatarUrl,
+                  fallbackText: user?.name ?? '?',
+                  radius: 21,
+                  backgroundColor: AppColors.primarySoft,
+                  foregroundColor: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.name ?? 'Usuario',
+                        style: theme.textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        user?.email ?? '',
+                        style: theme.textTheme.labelSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (business != null || login.isSuperAdmin) ...[
+              const SizedBox(height: 14),
+              _BusinessPill(
+                name: login.isSuperAdmin ? 'Super admin' : (business?.name ?? ''),
+                isSuperAdmin: login.isSuperAdmin,
+              ),
+            ],
+          ],
         ),
-        selected: _isActive,
-        selectedTileColor: colorScheme.primaryContainer.withAlpha(120),
-        selectedColor: colorScheme.primary,
-        leading: Icon(icon, size: 22),
-        title: Text(label),
-        onTap: () {
-          Navigator.pop(context); // close drawer first
-          if (!_isActive) {
-            context.go(route);
-          }
-        },
+      ),
+    );
+  }
+}
+
+class _BusinessPill extends StatelessWidget {
+  const _BusinessPill({required this.name, required this.isSuperAdmin});
+
+  final String name;
+  final bool isSuperAdmin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: AppRadius.mdAll,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Text(
+              AppFormat.initials(name),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              name,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 13),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isSuperAdmin)
+            const Icon(Icons.unfold_more_rounded, size: 18, color: AppColors.textMuted),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({required this.module, required this.location});
+
+  final AppModule module;
+  final String location;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = module.isActive(location);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Material(
+        color: active ? AppColors.primarySoft : Colors.transparent,
+        borderRadius: AppRadius.mdAll,
+        child: InkWell(
+          borderRadius: AppRadius.mdAll,
+          onTap: () {
+            Navigator.pop(context);
+            if (!active) context.go(module.route);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                Icon(
+                  module.icon,
+                  size: 20,
+                  color: active ? AppColors.primary : AppColors.textMuted,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    module.label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: active ? AppColors.primaryDark : AppColors.textSecondary,
+                          fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

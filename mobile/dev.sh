@@ -46,8 +46,14 @@ case "${1:-start}" in
     echo "detenido"
     ;;
   restart-app)
-    echo "R" > "$CTL"
-    echo "hot restart enviado"
+    pkill -f "flutter_tools.snapshot run -d web-server" 2>/dev/null || true
+    pkill -f "flutter.sh run -d web-server" 2>/dev/null || true
+    sleep 2
+    start_web
+    ;;
+  wait)
+    until curl -sf "http://localhost:$WEB_PORT/main_module.bootstrap.js" > /dev/null 2>&1; do sleep 3; done
+    echo "app lista en http://localhost:$WEB_PORT"
     ;;
   reload)
     echo "r" > "$CTL"

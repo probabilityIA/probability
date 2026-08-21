@@ -183,16 +183,14 @@ add('GET', '/integration-categories', () => ok([
   { code: 'transport', name: 'Transporte' },
   { code: 'pay', name: 'Pagos' },
 ]));
-add('GET', '/integration-types', ({ url, paginate }) => ({ status: 200, payload: paginate([
-  { id: 1, code: 'shopify', name: 'Shopify', category: 'ecommerce', is_active: true },
-  { id: 2, code: 'woocommerce', name: 'WooCommerce', category: 'ecommerce', is_active: true },
-  { id: 3, code: 'mercadolibre', name: 'MercadoLibre', category: 'ecommerce', is_active: true },
-  { id: 4, code: 'siigo', name: 'Siigo', category: 'invoicing', is_active: true },
-  { id: 5, code: 'factus', name: 'Factus', category: 'invoicing', is_active: true },
-  { id: 6, code: 'whatsapp', name: 'WhatsApp', category: 'messaging', is_active: true },
-  { id: 7, code: 'envioclick', name: 'EnvioClick', category: 'transport', is_active: true },
-  { id: 8, code: 'bold', name: 'Bold', category: 'pay', is_active: true },
-], url) }));
+add('GET', '/integration-types', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate(d.INTEGRATION_TYPES.map((t) => ({ ...t, is_active: true })), url),
+}));
+add('GET', '/integration-types/active', () => ok(d.INTEGRATION_TYPES.map((t) => ({ ...t, is_active: true }))));
+add('GET', '/integration-types/:id', ({ params }) => ok(
+  d.INTEGRATION_TYPES.find((t) => t.id === Number(params.id)),
+));
 
 add('GET', '/users', ({ url, paginate }) => ({ status: 200, payload: paginate(d.users, url) }));
 add('GET', '/roles', ({ url, paginate }) => ({ status: 200, payload: paginate([

@@ -268,15 +268,80 @@ const deliveryRoutes = Array.from({ length: 10 }, (_, i) => ({
   created_at: daysAgo(between(0, 20)),
 }));
 
-const integrations = [
-  { id: 1, business_id: 1, name: 'Tienda Shopify', type: 'shopify', category: 'ecommerce', is_active: true, is_default: true, status: 'connected', last_sync_at: daysAgo(0), orders_synced: 1842 },
-  { id: 2, business_id: 1, name: 'WooCommerce principal', type: 'woocommerce', category: 'ecommerce', is_active: true, is_default: false, status: 'connected', last_sync_at: daysAgo(0), orders_synced: 634 },
-  { id: 3, business_id: 1, name: 'MercadoLibre CO', type: 'mercadolibre', category: 'ecommerce', is_active: true, is_default: false, status: 'error', last_sync_at: daysAgo(2), orders_synced: 221 },
-  { id: 4, business_id: 1, name: 'Siigo contabilidad', type: 'siigo', category: 'invoicing', is_active: true, is_default: true, status: 'connected', last_sync_at: daysAgo(1), orders_synced: 0 },
-  { id: 5, business_id: 1, name: 'WhatsApp Business', type: 'whatsapp', category: 'messaging', is_active: true, is_default: true, status: 'connected', last_sync_at: daysAgo(0), orders_synced: 0 },
-  { id: 6, business_id: 1, name: 'EnvioClick', type: 'envioclick', category: 'transport', is_active: true, is_default: true, status: 'connected', last_sync_at: daysAgo(0), orders_synced: 0 },
-  { id: 7, business_id: 1, name: 'Bold pagos', type: 'bold', category: 'pay', is_active: false, is_default: false, status: 'disconnected', last_sync_at: null, orders_synced: 0 },
+const INTEGRATION_TYPES = [
+  { id: 1, code: 'Shopify', name: 'Shopify', category: 'ecommerce', image_url: 'integration-types/1765744750_shopify.png' },
+  { id: 2, code: 'Whastap', name: 'WhatsApp', category: 'messaging', image_url: 'integration-types/1765744972_whatsap.png' },
+  { id: 3, code: 'Mercado Libre', name: 'Mercado Libre', category: 'ecommerce', image_url: 'integration-types/1771905467_mercado-libre-logo.png' },
+  { id: 4, code: 'woocommerce', name: 'WooCommerce', category: 'ecommerce', image_url: 'integration-types/1765745053_woocomerce.webp' },
+  { id: 7, code: 'factus', name: 'Factus', category: 'invoicing', image_url: 'integration-types/1771736455_factus.png' },
+  { id: 8, code: 'siigo', name: 'Siigo', category: 'invoicing', image_url: 'integration-types/1771738597_siigo.png' },
+  { id: 9, code: 'alegra', name: 'Alegra', category: 'invoicing', image_url: 'integration-types/1771738659_alegra.png' },
+  { id: 10, code: 'world_office', name: 'World Office', category: 'invoicing', image_url: 'integration-types/1771738901_worl-office.png' },
+  { id: 11, code: 'helisa', name: 'Helisa', category: 'invoicing', image_url: 'integration-types/1771739081_logo-helisa.png' },
+  { id: 12, code: 'envioclick', name: 'EnvioClick', category: 'shipping', image_url: 'integration-types/1771901154_envioclik.png' },
+  { id: 13, code: 'enviame', name: 'Enviame', category: 'shipping', image_url: 'integration-types/1771905179_enviame.png' },
+  { id: 15, code: 'mipaquete', name: 'MiPaquete', category: 'shipping', image_url: 'integration-types/1771905337_mipaquete.png' },
+  { id: 16, code: 'vtex', name: 'VTEX', category: 'ecommerce', image_url: 'integration-types/1771905400_vtex.png' },
+  { id: 17, code: 'tiendanube', name: 'Tiendanube', category: 'ecommerce', image_url: 'integration-types/1771905372_tiendanube.png' },
+  { id: 18, code: 'magento', name: 'Magento', category: 'ecommerce', image_url: 'integration-types/1771905298_magneto.png' },
+  { id: 19, code: 'amazon', name: 'Amazon', category: 'ecommerce', image_url: 'integration-types/1771905134_amazon.png' },
+  { id: 20, code: 'falabella', name: 'Falabella', category: 'ecommerce', image_url: 'integration-types/1771905254_falabella.png' },
+  { id: 21, code: 'exito', name: 'Exito', category: 'ecommerce', image_url: 'integration-types/1771905220_exito.png' },
+  { id: 22, code: 'nequi', name: 'Nequi', category: 'payment', image_url: 'integration-types/1772147410_nequi.png' },
+  { id: 23, code: 'bold_pay', name: 'Bold', category: 'payment', image_url: 'integration-types/1777354669_bold.png' },
+  { id: 24, code: 'wompi', name: 'Wompi', category: 'payment', image_url: 'integration-types/1772147507_logowompi.png' },
+  { id: 25, code: 'stripe', name: 'Stripe', category: 'payment', image_url: 'integration-types/1772147475_stripe.png' },
+  { id: 26, code: 'payu', name: 'PayU', category: 'payment', image_url: 'integration-types/1772147440_payu.png' },
+  { id: 27, code: 'epayco', name: 'ePayco', category: 'payment', image_url: 'integration-types/1772147322_epayco.png' },
+  { id: 28, code: 'melipago', name: 'MercadoPago', category: 'payment', image_url: 'integration-types/1772147377_mercado-pago.png' },
+  { id: 33, code: 'jumpseller', name: 'Jumpseller', category: 'ecommerce', image_url: 'integration-types/1784241131_jumpseller.png' },
+  { id: 34, code: 'shipit', name: 'Shipit', category: 'shipping', image_url: 'integration-types/1785346702_shipit.png' },
+  { id: 35, code: 'tiktok', name: 'TikTok', category: 'ecommerce', image_url: 'integration-types/tiktok.png' },
+  { id: 42, code: 'bancolombia_qr', name: 'Bancolombia QR', category: 'payment', image_url: 'integration-types/bancolombia.png' },
 ];
+
+const typeByCode = (code) => INTEGRATION_TYPES.find((t) => t.code === code);
+
+const CONNECTED = [
+  { id: 1, code: 'Shopify', name: 'Tienda Shopify', status: 'connected', synced: 1842, days: 0 },
+  { id: 2, code: 'woocommerce', name: 'WooCommerce principal', status: 'connected', synced: 634, days: 0 },
+  { id: 3, code: 'Mercado Libre', name: 'MercadoLibre CO', status: 'error', synced: 221, days: 2 },
+  { id: 4, code: 'siigo', name: 'Siigo contabilidad', status: 'connected', synced: 0, days: 1 },
+  { id: 5, code: 'Whastap', name: 'WhatsApp Business', status: 'connected', synced: 0, days: 0 },
+  { id: 6, code: 'envioclick', name: 'EnvioClick', status: 'connected', synced: 0, days: 0 },
+  { id: 7, code: 'bold_pay', name: 'Bold pagos', status: 'disconnected', synced: 0, days: null },
+  { id: 8, code: 'tiendanube', name: 'Tiendanube CO', status: 'connected', synced: 96, days: 1 },
+];
+
+const integrations = CONNECTED.map((row) => {
+  const type = typeByCode(row.code);
+  return {
+    id: row.id,
+    business_id: 1,
+    name: row.name,
+    code: row.code,
+    category: type.category,
+    category_code: type.category,
+    integration_type_id: type.id,
+    integration_type_name: type.name,
+    integration_type_code: type.code,
+    integration_type: {
+      id: type.id,
+      code: type.code,
+      name: type.name,
+      category: type.category,
+      image_url: type.image_url,
+    },
+    image_url: type.image_url,
+    is_active: row.status !== 'disconnected',
+    is_default: row.id <= 2,
+    status: row.status,
+    last_sync_at: row.days === null ? null : daysAgo(row.days),
+    orders_synced: row.synced,
+    created_at: daysAgo(120),
+    updated_at: daysAgo(row.days === null ? 30 : row.days),
+  };
+});
 
 const tickets = Array.from({ length: 14 }, (_, i) => ({
   id: i + 1,
@@ -327,6 +392,7 @@ module.exports = {
   vehicles,
   deliveryRoutes,
   integrations,
+  INTEGRATION_TYPES,
   tickets,
   users,
   businesses,
