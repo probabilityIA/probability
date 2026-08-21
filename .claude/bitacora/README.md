@@ -47,3 +47,4 @@ No hace falta entrada para un fix trivial o un cambio de UI.
 | 2026-08-17 | [WooCommerce: las ordenes entraban sin direccion de envio](2026-08-17-woocommerce-direccion-en-billing.md) | Fix desplegado, 53 ordenes corregidas en produccion |
 | 2026-08-17 | [MercadoLibre: sin JSON crudo, sin direccion y notificaciones de envio rotas](2026-08-17-meli-json-crudo-y-envios.md) | Cerrado: direccion, packs duplicados, estados y etiqueta corregidos y desplegados |
 | 2026-08-19 | [Siigo no tiene endpoint de remisiones en su API](2026-08-19-siigo-sin-endpoint-de-remisiones.md) | Cerrado: no es implementable por API, documentado |
+| 2026-08-20 | [Tiendanube devuelve 404 cuando el listado esta vacio](2026-08-20-tiendanube-404-last-page-is-0.md) | Cerrado: 404 de paginacion tratado como lista vacia, verificado en la tienda real |

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -51,6 +52,9 @@ func (c *TiendanubeClient) GetOrders(ctx context.Context, cred domain.Credential
 
 		raw, _, err := c.do(ctx, cred, http.MethodGet, "/orders", query, nil)
 		if err != nil {
+			if errors.Is(err, domain.ErrResourceNotFound) {
+				break
+			}
 			return nil, err
 		}
 
