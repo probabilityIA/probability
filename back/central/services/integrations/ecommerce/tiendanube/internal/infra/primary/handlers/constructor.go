@@ -9,6 +9,9 @@ import (
 
 type IHandler interface {
 	HandleWebhook(c *gin.Context)
+	HandleStoreRedact(c *gin.Context)
+	HandleCustomersRedact(c *gin.Context)
+	HandleCustomersDataRequest(c *gin.Context)
 	SyncProducts(c *gin.Context)
 	ReconcileProducts(c *gin.Context)
 	ApplyProducts(c *gin.Context)
@@ -34,6 +37,9 @@ func (h *tiendanubeHandler) RegisterRoutes(router *gin.RouterGroup, logger log.I
 	tn := router.Group("/tiendanube")
 	{
 		tn.POST("/webhook", h.HandleWebhook)
+		tn.POST("/webhook/store-redact", h.HandleStoreRedact)
+		tn.POST("/webhook/customers-redact", h.HandleCustomersRedact)
+		tn.POST("/webhook/customers-data-request", h.HandleCustomersDataRequest)
 		tn.POST("/products/sync", middleware.JWT(), h.SyncProducts)
 		tn.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
 		tn.POST("/products/apply", middleware.JWT(), h.ApplyProducts)

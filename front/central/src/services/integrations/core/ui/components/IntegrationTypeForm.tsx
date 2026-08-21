@@ -26,6 +26,11 @@ import { JumpsellerTypeCredentialsForm } from '@/services/integrations/ecommerce
 import type { JumpsellerPlatformCredentials } from '@/services/integrations/ecommerce/jumpseller/ui';
 import { ShipitTypeCredentialsForm } from '@/services/integrations/transport/shipit/ui';
 import type { ShipitPlatformCredentials } from '@/services/integrations/transport/shipit/ui';
+import {
+    TiendanubeTypeCredentialsForm,
+    EMPTY_TIENDANUBE_PLATFORM_CREDENTIALS,
+} from '@/services/integrations/ecommerce/tiendanube/ui';
+import type { TiendanubePlatformCredentials } from '@/services/integrations/ecommerce/tiendanube/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
 const WHATSAPP_TYPE_ID = 2;
@@ -33,6 +38,7 @@ const BOLD_TYPE_ID = 23;
 const MERCADO_LIBRE_TYPE_ID = 3;
 const JUMPSELLER_TYPE_ID = 33;
 const SHIPIT_TYPE_ID = 34;
+const TIENDANUBE_TYPE_ID = 17;
 
 const EMPTY_MELI_CREDENTIALS: MercadoLibrePlatformCredentials = {
     client_id: '',
@@ -77,24 +83,45 @@ interface IntegrationTypeFormProps {
     onCancel?: () => void;
 }
 
+function summarizeJSON(raw: string): string {
+    try {
+        const parsed = JSON.parse(raw || '{}');
+        const keys = parsed && typeof parsed === 'object' ? Object.keys(parsed) : [];
+        if (keys.length === 0) return 'vacio';
+        return `${keys.length} campo(s)`;
+    } catch {
+        return 'JSON invalido';
+    }
+}
+
 function SectionCard({
     icon: Icon,
     title,
+    subtitle,
     bg = CARD_BG,
+    action,
     children,
 }: {
     icon: React.ComponentType<{ style?: React.CSSProperties }>;
     title: string;
+    subtitle?: string;
     bg?: string;
+    action?: React.ReactNode;
     children: React.ReactNode;
 }) {
     return (
         <div className="rounded-xl p-4 dark:bg-gray-800/60" style={{ backgroundColor: bg, border: `1px solid ${CARD_BORDER}` }}>
-            <div className="flex items-center gap-2 mb-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: ACCENT_SOFT }}>
-                    <Icon style={{ color: ACCENT, width: 16, height: 16 }} />
-                </span>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
+            <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md shrink-0" style={{ backgroundColor: ACCENT_SOFT }}>
+                        <Icon style={{ color: ACCENT, width: 16, height: 16 }} />
+                    </span>
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
+                        {subtitle && <p className="text-[11px] text-gray-400 dark:text-gray-500">{subtitle}</p>}
+                    </div>
+                </div>
+                {action}
             </div>
             {children}
         </div>
@@ -153,6 +180,11 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     const [meliCredentials, setMeliCredentials] = useState<MercadoLibrePlatformCredentials>(EMPTY_MELI_CREDENTIALS);
     const [jumpsellerCredentials, setJumpsellerCredentials] = useState<JumpsellerPlatformCredentials>(EMPTY_JUMPSELLER_CREDENTIALS);
     const [shipitCredentials, setShipitCredentials] = useState<ShipitPlatformCredentials>(EMPTY_SHIPIT_CREDENTIALS);
+    const [tiendanubeCredentials, setTiendanubeCredentials] = useState<TiendanubePlatformCredentials>(
+        EMPTY_TIENDANUBE_PLATFORM_CREDENTIALS,
+    );
+    const [tiendanubeWebhookUrls, setTiendanubeWebhookUrls] = useState<Record<string, string>>({});
+    const [showSchemas, setShowSchemas] = useState(false);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -182,6 +214,10 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 base_url_test: integrationType.base_url_test || '',
                 platform_credentials: '{}',
             });
+            const hasSchemas =
+                Object.keys(integrationType.config_schema || {}).length > 0 ||
+                Object.keys(integrationType.credentials_schema || {}).length > 0;
+            setShowSchemas(hasSchemas);
             if (integrationType.image_url) {
                 setImagePreview(integrationType.image_url);
             }
@@ -250,6 +286,22 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     email: String(d.email || ''),
                                     access_token: String(d.access_token || ''),
                                 });
+                            } else if (integrationType.id === TIENDANUBE_TYPE_ID) {
+                                const d = res.data as Record<string, unknown>;
+                                setTiendanubeCredentials({
+                                    client_id: String(d.client_id || ''),
+                                    client_secret: String(d.client_secret || ''),
+                                    redirect_uri: String(d.redirect_uri || ''),
+                                    app_url: String(d.app_url || ''),
+                                    user_agent: String(d.user_agent || ''),
+                                    test_client_id: String(d.test_client_id || ''),
+                                    test_client_secret: String(d.test_client_secret || ''),
+                                    test_redirect_uri: String(d.test_redirect_uri || ''),
+                                    test_store_id: String(d.test_store_id || ''),
+                                });
+                                if (res.webhook_urls) {
+                                    setTiendanubeWebhookUrls(res.webhook_urls);
+                                }
                             } else {
                                 setFormData((prev) => ({
                                     ...prev,
@@ -335,6 +387,18 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (shipitCredentials.email.trim()) sh.email = shipitCredentials.email.trim();
                 if (shipitCredentials.access_token.trim()) sh.access_token = shipitCredentials.access_token.trim();
                 if (Object.keys(sh).length > 0) platformCredentials = sh;
+            } else if (integrationType?.id === TIENDANUBE_TYPE_ID) {
+                const tn: Record<string, unknown> = {};
+                if (tiendanubeCredentials.client_id.trim()) tn.client_id = tiendanubeCredentials.client_id.trim();
+                if (tiendanubeCredentials.client_secret.trim()) tn.client_secret = tiendanubeCredentials.client_secret.trim();
+                if (tiendanubeCredentials.redirect_uri.trim()) tn.redirect_uri = tiendanubeCredentials.redirect_uri.trim();
+                if (tiendanubeCredentials.app_url.trim()) tn.app_url = tiendanubeCredentials.app_url.trim();
+                if (tiendanubeCredentials.user_agent.trim()) tn.user_agent = tiendanubeCredentials.user_agent.trim();
+                if (tiendanubeCredentials.test_client_id.trim()) tn.test_client_id = tiendanubeCredentials.test_client_id.trim();
+                if (tiendanubeCredentials.test_client_secret.trim()) tn.test_client_secret = tiendanubeCredentials.test_client_secret.trim();
+                if (tiendanubeCredentials.test_redirect_uri.trim()) tn.test_redirect_uri = tiendanubeCredentials.test_redirect_uri.trim();
+                if (tiendanubeCredentials.test_store_id.trim()) tn.test_store_id = tiendanubeCredentials.test_store_id.trim();
+                if (Object.keys(tn).length > 0) platformCredentials = tn;
             } else {
                 try {
                     const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
@@ -393,7 +457,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[1180px] space-y-5">
             {error && (
                 <Alert type="error" onClose={() => setError(null)}>
                     {error}
@@ -496,8 +560,22 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             </SectionCard>
 
             {integrationType?.id !== MERCADO_LIBRE_TYPE_ID && (
-                <SectionCard icon={CodeBracketIcon} title="Esquemas de datos">
-                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+                <SectionCard
+                    icon={CodeBracketIcon}
+                    title="Esquemas de datos"
+                    subtitle="Avanzado: define los campos que vera cada negocio"
+                    action={
+                        <button
+                            type="button"
+                            onClick={() => setShowSchemas((v) => !v)}
+                            className="shrink-0 rounded-lg border px-2.5 py-1 text-[12px] font-semibold text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700"
+                            style={{ borderColor: INPUT_BORDER }}
+                        >
+                            {showSchemas ? 'Ocultar' : 'Editar JSON'}
+                        </button>
+                    }
+                >
+                    <div className={`grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 ${showSchemas ? '' : 'hidden'}`}>
                         <div>
                             <label className={fieldLabel}>Config Schema (JSON)</label>
                             <textarea
@@ -530,6 +608,11 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                             </p>
                         </div>
                     </div>
+                    {!showSchemas && (
+                        <p className="text-[12px] text-gray-500 dark:text-gray-400 font-mono truncate">
+                            config: {summarizeJSON(formData.config_schema)} · credentials: {summarizeJSON(formData.credentials_schema)}
+                        </p>
+                    )}
                 </SectionCard>
             )}
 
@@ -623,6 +706,15 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         isEditing={!!integrationType}
                     />
                 </SectionCard>
+            ) : integrationType?.id === TIENDANUBE_TYPE_ID ? (
+                <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
+                    <TiendanubeTypeCredentialsForm
+                        credentials={tiendanubeCredentials}
+                        onChange={setTiendanubeCredentials}
+                        isEditing={!!integrationType}
+                        webhookUrls={tiendanubeWebhookUrls}
+                    />
+                </SectionCard>
             ) : (
                 <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
                     <div className="flex items-center justify-end mb-2">
@@ -695,7 +787,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </div>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="sticky bottom-0 -mx-1 flex justify-end space-x-3 border-t border-gray-200 bg-white/95 px-1 py-3 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
                 {onCancel && (
                     <Button type="button" onClick={onCancel} variant="outline">
                         Cancelar
