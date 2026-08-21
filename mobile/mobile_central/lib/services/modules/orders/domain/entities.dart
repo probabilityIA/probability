@@ -85,6 +85,51 @@ class FulfillmentStatusInfo {
   }
 }
 
+class OrderLineItem {
+  final String id;
+  final String sku;
+  final String name;
+  final int quantity;
+  final double unitPrice;
+  final double totalPrice;
+  final String? imageUrl;
+
+  OrderLineItem({
+    required this.id,
+    required this.sku,
+    required this.name,
+    required this.quantity,
+    required this.unitPrice,
+    required this.totalPrice,
+    this.imageUrl,
+  });
+
+  factory OrderLineItem.fromJson(Map<String, dynamic> json) {
+    final quantity = (json['quantity'] as num?)?.toInt() ?? 0;
+    final unitPrice = (json['unit_price'] as num?)?.toDouble() ?? 0;
+    final total = (json['total_price'] as num?)?.toDouble() ??
+        (json['total'] as num?)?.toDouble() ??
+        unitPrice * quantity;
+    return OrderLineItem(
+      id: json['id']?.toString() ?? '',
+      sku: json['sku']?.toString() ?? '',
+      name: json['name']?.toString() ?? json['product_name']?.toString() ?? '',
+      quantity: quantity,
+      unitPrice: unitPrice,
+      totalPrice: total,
+      imageUrl: json['image_url']?.toString(),
+    );
+  }
+
+  static List<OrderLineItem> listFrom(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => OrderLineItem.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+}
+
 class Order {
   final String id;
   final String createdAt;
@@ -183,6 +228,12 @@ class Order {
   final String occurredAt;
   final String importedAt;
   final List<String>? negativeFactors;
+
+  List<OrderLineItem> get lineItems {
+    final fromOrderItems = OrderLineItem.listFrom(orderItems);
+    if (fromOrderItems.isNotEmpty) return fromOrderItems;
+    return OrderLineItem.listFrom(items);
+  }
 
   Order({
     required this.id,

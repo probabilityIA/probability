@@ -84,7 +84,19 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
 | 3 | LISTA | recuperacion de clave en 4 pasos (canales/OTP/nueva clave), perfil, cambio de contrasena, sesion persistida completa |
 | 4 | LISTA | saludo, 4 KPIs accionables, accesos rapidos, ordenes por canal con logo, envios por estado y transportadora con logo, top productos, clientes y ciudades |
 | 5 | LISTA | listado con tarjeta de orden (logo de canal, estados, guia, COD), busqueda con debounce, filtros por estado, scroll infinito |
-| 6 | siguiente | ordenes: detalle y acciones (items, cliente, pagos, cambiar estado) |
+| 6 | LISTA | detalle con header de canal, items tipados, totales con bloque COD, cliente, envio, trazabilidad, copiar numero y cancelar orden |
+| 7 | siguiente | envios y guias: lista, detalle, tracking |
+
+## APIs exclusivas de la app (`/api/v1/mobile/...`)
+
+Regla acordada: cuando la app necesite varias llamadas para pintar una sola
+pantalla, se crea un endpoint agregado con `mobile` en la ruta. Hasta la fase 6
+**no hizo falta ninguno**: cada pantalla resuelve con un solo GET de los que ya
+existen.
+
+Candidato identificado para la fase 7:
+`GET /api/v1/mobile/orders/:id/full` -> orden + guia + factura + trazabilidad en
+una sola respuesta, para que el detalle no encadene 3 llamadas en red movil.
 
 ## Deuda conocida
 

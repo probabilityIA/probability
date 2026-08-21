@@ -10,11 +10,7 @@ class OrderCard extends StatelessWidget {
   final Order order;
   final VoidCallback? onTap;
 
-  int get _itemCount {
-    final raw = order.orderItems;
-    if (raw is List) return raw.length;
-    return 0;
-  }
+  int get _itemCount => order.lineItems.length;
 
   String get _channelName =>
       order.integrationName?.isNotEmpty == true ? order.integrationName! : order.integrationType;
