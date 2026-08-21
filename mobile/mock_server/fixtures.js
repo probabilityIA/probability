@@ -372,8 +372,28 @@ add('GET', '/invoicing/configs', ({ url, paginate }) => ({
   })), url),
 }));
 
-add('GET', '/pay/wallet/balance', () => ok({ balance: 2480500, currency: 'COP', updated_at: d.daysAgo(0) }));
-add('GET', '/pay/wallet/history', ({ url, paginate }) => ({ status: 200, payload: paginate(d.walletMovements, url) }));
+add('GET', '/pay/wallet/balance', () => ok({
+  ID: 'wallet-demo-1',
+  BusinessID: 1,
+  Balance: d.walletBalance,
+}));
+add('GET', '/pay/wallet/all', () => ok([
+  { ID: 'wallet-demo-1', BusinessID: 1, Balance: d.walletBalance },
+]));
+add('GET', '/pay/wallet/history', ({ url, paginate }) => {
+  const rows = [...d.walletMovements].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at),
+  );
+  const concept = url.searchParams.get('concept');
+  const filtered = concept ? rows.filter((r) => r.concept === concept) : rows;
+  return { status: 200, payload: paginate(filtered, url) };
+});
+add('POST', '/pay/wallet/recharge', ({ body }) => ok({
+  reference: `REC-${Math.floor(Math.random ? 0 : 0) + 90000}`,
+  amount: Number(body.amount || 0),
+  status: 'PENDING',
+  checkout_url: 'https://checkout.bold.co/demo',
+}, 'Recarga creada, completa el pago en la pasarela'));
 
 add('GET', '/inventory/movements', ({ url, paginate }) => {
   let rows = d.inventoryMovements;

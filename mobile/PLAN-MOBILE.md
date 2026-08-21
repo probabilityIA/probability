@@ -135,7 +135,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 12 | LISTA | lista de bodegas con estado, predeterminada y despacho; detalle con direccion, codigo DANE, contacto con aviso de datos faltantes y ubicaciones internas |
 | 13 | LISTA | directorio con busqueda y scroll infinito; detalle con KPIs de compras, contacto copiable y las ordenes reales del cliente |
 | 14 | LISTA | facturas con logo del facturador (Siigo, Factus, Alegra), estado, motivo de rechazo de la DIAN, detalle con items, CUFE, reintento y cancelacion |
-| 15 | siguiente | billetera: saldo, movimientos y recarga |
+| 15 | LISTA | saldo con alerta de saldo bajo, KPIs de recargado y gastado en guias, movimientos tipificados por concepto real y hoja de recarga |
+| 16 | siguiente | rutas y ultima milla: rutas, paradas, conductores y vehiculos |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 

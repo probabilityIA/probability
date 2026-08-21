@@ -429,20 +429,38 @@ const invoices = orders
     };
   });
 
-const walletMovements = Array.from({ length: 30 }, (_, i) => {
-  const isCredit = rnd() > 0.55;
-  const amount = between(15000, 480000);
+const WALLET_CONCEPTS = [
+  { type: 'USAGE', concept: 'GUIDE' },
+  { type: 'RECHARGE', concept: 'RECHARGE' },
+  { type: 'USAGE', concept: 'GUIDE' },
+  { type: 'USAGE', concept: 'SUBSCRIPTION' },
+  { type: 'RECHARGE', concept: 'REFUND' },
+  { type: 'USAGE', concept: 'OTHER' },
+  { type: 'RECHARGE', concept: 'ADJUSTMENT' },
+];
+
+const walletMovements = Array.from({ length: 40 }, (_, i) => {
+  const kind = WALLET_CONCEPTS[i % WALLET_CONCEPTS.length];
+  const isCredit = kind.type === 'RECHARGE';
+  const amount = isCredit ? between(50000, 600000) : between(9000, 48000);
   return {
-    id: i + 1,
+    id: `txn-${String(i + 1).padStart(4, '0')}`,
+    wallet_id: 'wallet-demo-1',
     business_id: 1,
-    type: isCredit ? 'credit' : 'debit',
-    concept: isCredit ? pick(['Recarga Bold', 'Ajuste manual', 'Recaudo contra entrega']) : pick(['Cobro de guia', 'Comision transportadora', 'Factura electronica']),
     amount,
-    balance_after: between(120000, 3200000),
-    reference: `MOV-${5000 + i}`,
+    type: kind.type,
+    concept: kind.concept,
+    status: 'COMPLETED',
+    reference: kind.concept === 'GUIDE' ? `GU${between(100000000, 999999999)}` : `REF-${5000 + i}`,
+    shipment_id: kind.concept === 'GUIDE' ? between(1, 30) : null,
     created_at: daysAgo(between(0, 45)),
   };
 });
+
+const walletBalance = walletMovements.reduce(
+  (acc, m) => acc + (m.type === 'RECHARGE' ? m.amount : -m.amount),
+  1800000,
+);
 
 const MOVEMENT_TYPES = [
   { id: 1, code: 'purchase_entry', name: 'Entrada por compra', direction: 'in' },
@@ -643,6 +661,7 @@ module.exports = {
   invoices,
   INVOICE_PROVIDERS,
   walletMovements,
+  walletBalance,
   inventoryMovements,
   inventoryLevels,
   MOVEMENT_TYPES,

@@ -26,7 +26,7 @@ class WalletApiRepository implements IWalletRepository {
       '/pay/wallet/balance',
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
-    return Wallet.fromJson(response.data);
+    return Wallet.fromJson(_unwrapMap(response.data));
   }
 
   @override
@@ -46,9 +46,21 @@ class WalletApiRepository implements IWalletRepository {
       '/pay/wallet/history',
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
-    final data = response.data;
-    if (data is List) return data;
-    return [];
+    return _unwrapList(response.data);
+  }
+
+  Map<String, dynamic> _unwrapMap(dynamic raw) {
+    if (raw is Map && raw['data'] is Map) {
+      return Map<String, dynamic>.from(raw['data']);
+    }
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return <String, dynamic>{};
+  }
+
+  List<dynamic> _unwrapList(dynamic raw) {
+    if (raw is List) return raw;
+    if (raw is Map && raw['data'] is List) return raw['data'] as List<dynamic>;
+    return const [];
   }
 
   @override

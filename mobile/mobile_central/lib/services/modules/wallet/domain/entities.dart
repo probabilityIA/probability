@@ -98,3 +98,42 @@ class BusinessSubscriptionStatus {
     );
   }
 }
+
+class WalletMovement {
+  final String id;
+  final double amount;
+  final String type;
+  final String concept;
+  final String status;
+  final String? reference;
+  final int? shipmentId;
+  final String createdAt;
+
+  WalletMovement({
+    required this.id,
+    required this.amount,
+    required this.type,
+    required this.concept,
+    required this.status,
+    this.reference,
+    this.shipmentId,
+    required this.createdAt,
+  });
+
+  bool get isCredit => type.toUpperCase() == 'RECHARGE';
+
+  double get signedAmount => isCredit ? amount : -amount;
+
+  factory WalletMovement.fromJson(Map<String, dynamic> json) {
+    return WalletMovement(
+      id: json['ID']?.toString() ?? json['id']?.toString() ?? '',
+      amount: (json['Amount'] ?? json['amount'] ?? 0).toDouble(),
+      type: json['Type']?.toString() ?? json['type']?.toString() ?? '',
+      concept: json['Concept']?.toString() ?? json['concept']?.toString() ?? '',
+      status: json['Status']?.toString() ?? json['status']?.toString() ?? '',
+      reference: json['Reference']?.toString() ?? json['reference']?.toString(),
+      shipmentId: json['ShipmentID'] ?? json['shipment_id'],
+      createdAt: json['CreatedAt']?.toString() ?? json['created_at']?.toString() ?? '',
+    );
+  }
+}
