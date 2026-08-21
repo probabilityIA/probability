@@ -456,14 +456,47 @@ add('GET', '/warehouses/:id/locations', ({ params }) => ok(
   d.warehouseLocations.filter((l) => l.warehouse_id === Number(params.id)),
 ));
 
-add('GET', '/routes', ({ url, paginate }) => ({ status: 200, payload: paginate(d.deliveryRoutes, url) }));
-add('GET', '/routes/:id', ({ params }) => ok(d.deliveryRoutes.find((r) => r.id === Number(params.id))));
-add('GET', '/routes/available-drivers', () => ok(d.drivers.filter((x) => x.is_available)));
-add('GET', '/routes/available-vehicles', () => ok(d.vehicles.filter((x) => x.is_available)));
-add('GET', '/routes/assignable-orders', ({ url, paginate }) => ({ status: 200, payload: paginate(d.orders.slice(0, 18), url) }));
+add('GET', '/routes', ({ url, paginate }) => {
+  let rows = d.deliveryRoutes;
+  const status = url.searchParams.get('status');
+  if (status && status !== 'all') rows = rows.filter((r) => r.status === status);
+  return { status: 200, payload: paginate(rows.map(({ stops, ...rest }) => rest), url) };
+});
+add('GET', '/routes/:id', ({ params }) => ok(
+  d.deliveryRoutes.find((r) => r.id === Number(params.id)),
+));
+add('POST', '/routes/:id/start', () => ok(null, 'Ruta iniciada'));
+add('POST', '/routes/:id/complete', () => ok(null, 'Ruta completada'));
+add('GET', '/routes/available-drivers', () => ok(
+  d.drivers.filter((x) => x.status === 'available'),
+));
+add('GET', '/routes/available-vehicles', () => ok(
+  d.vehicles.filter((x) => x.status === 'available'),
+));
+add('GET', '/routes/assignable-orders', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate(d.orders.slice(0, 18), url),
+}));
 
-add('GET', '/drivers', ({ url, paginate }) => ({ status: 200, payload: paginate(d.drivers, url) }));
-add('GET', '/vehicles', ({ url, paginate }) => ({ status: 200, payload: paginate(d.vehicles, url) }));
+add('GET', '/drivers', ({ url, paginate }) => {
+  let rows = d.drivers;
+  const status = url.searchParams.get('status');
+  if (status && status !== 'all') rows = rows.filter((x) => x.status === status);
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/drivers/:id', ({ params }) => ok(
+  d.drivers.find((x) => x.id === Number(params.id)),
+));
+
+add('GET', '/vehicles', ({ url, paginate }) => {
+  let rows = d.vehicles;
+  const status = url.searchParams.get('status');
+  if (status && status !== 'all') rows = rows.filter((x) => x.status === status);
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/vehicles/:id', ({ params }) => ok(
+  d.vehicles.find((x) => x.id === Number(params.id)),
+));
 
 add('GET', '/integrations', ({ url, paginate }) => ({ status: 200, payload: paginate(d.integrations, url) }));
 add('GET', '/integrations/:id', ({ params }) => ok(d.integrations.find((i) => i.id === Number(params.id))));

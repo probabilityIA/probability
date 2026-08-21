@@ -530,47 +530,107 @@ const inventoryMovements = Array.from({ length: 60 }, (_, i) => {
   };
 });
 
-const drivers = Array.from({ length: 8 }, (_, i) => ({
-  id: i + 1,
-  business_id: 1,
-  name: `${pick(FIRST)} ${pick(LAST)}`,
-  document_number: `${between(10000000, 99999999)}`,
-  phone: `31${between(0, 9)}${between(1000000, 9999999)}`,
-  license_number: `LIC-${between(10000, 99999)}`,
-  is_active: rnd() > 0.15,
-  is_available: rnd() > 0.4,
-  vehicle_id: (i % 5) + 1,
-  created_at: daysAgo(between(30, 400)),
-}));
+const drivers = Array.from({ length: 8 }, (_, i) => {
+  const first = FIRST[i % FIRST.length];
+  const last = LAST[i % LAST.length];
+  return {
+    id: i + 1,
+    business_id: 1,
+    first_name: first,
+    last_name: last,
+    identification: `${between(10000000, 99999999)}`,
+    phone: `31${between(0, 9)}${between(1000000, 9999999)}`,
+    email: `${first.toLowerCase()}.${last.toLowerCase()}@probability.co`,
+    license_type: pick(['B1', 'C1', 'A2']),
+    license_expiry: daysAgo(-between(30, 700)),
+    status: i % 5 === 0 ? 'inactive' : i % 3 === 0 ? 'on_route' : 'available',
+    photo_url: null,
+    warehouse_id: (i % 3) + 1,
+    notes: null,
+    created_at: daysAgo(between(30, 400)),
+    updated_at: daysAgo(between(0, 20)),
+  };
+});
 
 const vehicles = Array.from({ length: 5 }, (_, i) => ({
   id: i + 1,
   business_id: 1,
-  plate: `${['ABC', 'XYZ', 'JKL', 'PQR', 'MNO'][i]}${between(100, 999)}`,
+  license_plate: `${['ABC', 'XYZ', 'JKL', 'PQR', 'MNO'][i]}${between(100, 999)}`,
   brand: pick(['Chevrolet', 'Renault', 'Nissan', 'Yamaha']),
   model: `${between(2016, 2025)}`,
-  type: pick(['van', 'motorcycle', 'truck']),
-  capacity_kg: between(150, 3200),
-  is_active: true,
-  is_available: rnd() > 0.3,
+  year: between(2016, 2025),
+  color: pick(['Blanco', 'Gris', 'Negro', 'Azul']),
+  type: i === 4 ? 'motorcycle' : i === 3 ? 'truck' : 'van',
+  weight_capacity_kg: between(150, 3200),
+  status: i === 4 ? 'maintenance' : 'available',
+  photo_url: null,
+  insurance_expiry: daysAgo(-between(20, 400)),
+  registration_expiry: daysAgo(-between(20, 400)),
+  created_at: daysAgo(between(60, 500)),
+  updated_at: daysAgo(between(0, 25)),
 }));
 
-const deliveryRoutes = Array.from({ length: 10 }, (_, i) => ({
-  id: i + 1,
-  business_id: 1,
-  name: `Ruta ${pick(CITIES)} ${i + 1}`,
-  code: `RT-${300 + i}`,
-  status: pick(['draft', 'in_progress', 'completed']),
-  driver_id: (i % drivers.length) + 1,
-  driver_name: drivers[i % drivers.length].name,
-  vehicle_id: (i % vehicles.length) + 1,
-  vehicle_plate: vehicles[i % vehicles.length].plate,
-  stops_count: between(3, 14),
-  completed_stops: between(0, 3),
-  total_distance_km: between(8, 120),
-  scheduled_date: daysAgo(between(-3, 10)),
-  created_at: daysAgo(between(0, 20)),
-}));
+const ROUTE_STOP_STATUS = ['pending', 'in_transit', 'delivered', 'failed'];
+
+const deliveryRoutes = Array.from({ length: 10 }, (_, i) => {
+  const driver = drivers[i % drivers.length];
+  const vehicle = vehicles[i % vehicles.length];
+  const warehouse = warehouses[i % 3];
+  const totalStops = between(3, 12);
+  const completed = between(0, totalStops);
+  const failed = completed === totalStops ? 0 : between(0, 1);
+  const status = completed === 0 ? 'draft' : completed < totalStops ? 'in_progress' : 'completed';
+  return {
+    id: i + 1,
+    business_id: 1,
+    date: daysAgo(between(-2, 8)),
+    status,
+    driver_id: driver.id,
+    driver_name: `${driver.first_name} ${driver.last_name}`,
+    vehicle_id: vehicle.id,
+    vehicle_plate: vehicle.license_plate,
+    origin_warehouse_id: warehouse.id,
+    origin_address: warehouse.address,
+    origin_lat: null,
+    origin_lng: null,
+    total_stops: totalStops,
+    completed_stops: completed,
+    failed_stops: failed,
+    total_distance_km: between(8, 120),
+    total_duration_min: between(45, 380),
+    start_time: status === 'draft' ? null : daysAgo(between(0, 3)),
+    end_time: status === 'completed' ? daysAgo(between(0, 2)) : null,
+    actual_start_time: status === 'draft' ? null : daysAgo(between(0, 3)),
+    actual_end_time: status === 'completed' ? daysAgo(between(0, 2)) : null,
+    notes: null,
+    created_at: daysAgo(between(0, 20)),
+    updated_at: daysAgo(between(0, 5)),
+    stops: Array.from({ length: totalStops }, (_, j) => {
+      const order = orders[(i * 3 + j) % orders.length];
+      const stopStatus = j < completed ? 'delivered' : ROUTE_STOP_STATUS[j % ROUTE_STOP_STATUS.length];
+      return {
+        id: i * 100 + j + 1,
+        route_id: i + 1,
+        order_id: order.id,
+        sequence: j + 1,
+        status: stopStatus,
+        address: order.shipping_street,
+        city: order.shipping_city,
+        lat: null,
+        lng: null,
+        customer_name: order.customer_name,
+        customer_phone: order.customer_phone,
+        estimated_arrival: daysAgo(between(0, 2)),
+        actual_arrival: stopStatus === 'delivered' ? daysAgo(between(0, 2)) : null,
+        actual_departure: stopStatus === 'delivered' ? daysAgo(between(0, 2)) : null,
+        delivery_notes: null,
+        failure_reason: stopStatus === 'failed' ? 'Cliente no se encontraba en la direccion' : null,
+        created_at: daysAgo(between(0, 5)),
+        updated_at: daysAgo(between(0, 3)),
+      };
+    }),
+  };
+});
 
 const typeByCode = (code) => INTEGRATION_TYPES.find((t) => t.code === code);
 

@@ -17,6 +17,7 @@ class RouteInfo {
   final int totalStops;
   final int completedStops;
   final int failedStops;
+  final double? totalDistanceKm;
   final String? notes;
   final String createdAt;
   final String updatedAt;
@@ -36,6 +37,7 @@ class RouteInfo {
     required this.totalStops,
     required this.completedStops,
     required this.failedStops,
+    this.totalDistanceKm,
     this.notes,
     required this.createdAt,
     required this.updatedAt,
@@ -57,6 +59,7 @@ class RouteInfo {
       totalStops: json['total_stops'] ?? 0,
       completedStops: json['completed_stops'] ?? 0,
       failedStops: json['failed_stops'] ?? 0,
+      totalDistanceKm: (json['total_distance_km'] as num?)?.toDouble(),
       notes: json['notes'],
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',
@@ -135,7 +138,6 @@ class RouteDetail extends RouteInfo {
   final int? originWarehouseId;
   final double? originLat;
   final double? originLng;
-  final double? totalDistanceKm;
   final double? totalDurationMin;
   final List<RouteStopInfo> stops;
 
@@ -162,7 +164,7 @@ class RouteDetail extends RouteInfo {
     this.originWarehouseId,
     this.originLat,
     this.originLng,
-    this.totalDistanceKm,
+    super.totalDistanceKm,
     this.totalDurationMin,
     required this.stops,
   });

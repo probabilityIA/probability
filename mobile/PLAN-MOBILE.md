@@ -136,7 +136,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 13 | LISTA | directorio con busqueda y scroll infinito; detalle con KPIs de compras, contacto copiable y las ordenes reales del cliente |
 | 14 | LISTA | facturas con logo del facturador (Siigo, Factus, Alegra), estado, motivo de rechazo de la DIAN, detalle con items, CUFE, reintento y cancelacion |
 | 15 | LISTA | saldo con alerta de saldo bajo, KPIs de recargado y gastado en guias, movimientos tipificados por concepto real y hoja de recarga |
-| 16 | siguiente | rutas y ultima milla: rutas, paradas, conductores y vehiculos |
+| 16 | LISTA | rutas con progreso y paradas fallidas, detalle con linea de tiempo de paradas y acciones iniciar/completar, conductores con licencia y estado, vehiculos con tipo y capacidad |
+| 17 | siguiente | integraciones: catalogo y conexion |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 
