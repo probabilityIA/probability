@@ -192,6 +192,27 @@ incluida en `cod_total` (esa es la convencion, no un bug).
 Al cancelar una guia el dialogo avisa que **no se reembolsa el saldo debitado**,
 que es lo que ocurre hoy segun `.claude/alerts/guias-duplicadas-doble-cobro.md`.
 
+## Pendientes al cerrar las 20 fases
+
+1. **29 pruebas en rojo preexistentes** (ver deuda abajo). No las introdujo este
+   trabajo; conviene una fase de limpieza.
+2. **Pantallas que quedaron en modo lectura**: crear y editar productos,
+   clientes, bodegas, conductores, vehiculos y rutas. La app hoy consulta y
+   ejecuta acciones puntuales (ajustar stock, cancelar guia, reintentar factura,
+   activar integracion), pero los formularios de alta completos siguen en la
+   plataforma web.
+3. **Generar guia desde el cotizador**: la pantalla cotiza y deja elegir tarifa,
+   pero el boton final solo confirma la seleccion. Falta encadenar
+   `POST /shipments/generate` con la bodega de origen y la orden.
+4. **Conectar integracion desde la app**: el catalogo lista y filtra, pero el
+   alta de credenciales sigue siendo web (cada proveedor tiene su formulario).
+5. **Tickets y suscripcion**: quedaron fuera del alcance efectivo de la fase 20,
+   que se concentro en IAM. Los endpoints ya estan mockeados.
+6. **CORS del bucket S3**: en Flutter web los logos cargan por el fallback a
+   `<img>`. Habilitar CORS en `probability-media-assets` limpiaria los errores
+   de consola. No afecta a Android ni iOS.
+7. **Push notifications**: no se toco. La app no tiene FCM configurado.
+
 ## Deuda conocida
 
 - `flutter test`: **29 pruebas en rojo, todas preexistentes** (no las introdujo
