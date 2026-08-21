@@ -2,8 +2,34 @@
 
 ## Workflows
 
-Push a `main` dispara CI/CD en `.github/workflows/`. Build ARM64 -> ECR (4 tags) -> SSH EC2 -> deploy con 3 retries.
-No hacer SSH para verificar deploys: confiar en GitHub Actions.
+Push a `main` dispara CI/CD en `.github/workflows/`. Build ARM64 -> ECR (4 tags) -> **SSM** -> deploy con 3 retries.
+No entrar al servidor para verificar deploys: confiar en GitHub Actions.
+
+### Deploy por SSM (desde 2026-08-21, ya no hay SSH)
+
+El build sigue en GitHub Actions y empuja a ECR por HTTPS. Lo que cambio es el
+transporte del deploy: `scp`/`ssh` con `probability.pem` fueron reemplazados por
+S3 + `ssm send-command`.
+
+- `.github/scripts/ssm-deploy.sh` - helper compartido: sube los artefactos a
+  `s3://probability-deploy-artifacts/deploy/<run_id>/`, ejecuta el script remoto
+  como usuario `ubuntu`, transmite la salida, propaga el exit code y limpia S3.
+- `.github/scripts/deploy-<servicio>.sh` - la logica de cada deploy. Recibe
+  `VERSION_FULL`, `VERSION_SHORT` y `DEPLOY_DIR` (donde quedaron los artefactos).
+
+Para tocar un deploy se edita el `.sh`, no el YAML. El job del workflow solo
+prepara `artifacts/` y llama al helper.
+
+Gotchas que ya costaron tiempo:
+
+- El comando remoto lo interpreta **dash**, no bash: `set -euo pipefail` falla
+  con "Illegal option -o pipefail". Usar `set -e`.
+- El script hay que mandarlo como **array de lineas** en `Parameters.commands`
+  (`$cmd | split("\n")` con jq). Un solo string con `\n` no se interpreta.
+- `send-command` corre como root; los scripts esperan `ubuntu`, por eso el helper
+  usa `runuser -l ubuntu -c`.
+
+Secrets ya sin uso: `EC2_SSH_KEY`, `EC2_HOST`, `EC2_USER`.
 
 | Workflow | Paths | Puerto prod |
 |----------|-------|-------------|
@@ -22,7 +48,8 @@ NO usar `depends_on` en compose. Scripts: `front/central/docker/startup.sh`, `in
 ## Rollback Manual
 
 ```bash
-ssh -i ".../probability.pem" ubuntu@ec2-3-224-189-33.compute-1.amazonaws.com
+aws ssm start-session --profile probability --region us-east-1 --target i-0f3284d2a87127e57
+sudo su - ubuntu
 cd ~/probability/infra/compose-prod
 docker images | grep probability-backend
 docker tag <ECR_URL>/probability-backend:<VERSION_ANTERIOR> <ECR_URL>/probability-backend:latest
