@@ -8,7 +8,9 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { TiendanubeWebhookManager } from './TiendanubeWebhookManager';
+import { TiendanubeInventorySection, TiendanubeInventoryConfig } from './TiendanubeInventorySection';
 import {
+    ArchiveBoxIcon,
     BoltIcon,
     KeyIcon,
     Cog6ToothIcon,
@@ -61,6 +63,11 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
         name: initialData.name,
         store_id: initialData.config?.store_id || '',
         access_token: initialData.credentials?.access_token || '',
+    });
+
+    const [inventory, setInventory] = useState<TiendanubeInventoryConfig>({
+        enabled: initialData.config?.inventory_sync_enabled === true,
+        single_warehouse_id: Number(initialData.config?.inventory_single_warehouse_id) || 0,
     });
 
     useEffect(() => {
@@ -138,11 +145,15 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
 
         try {
             const config: TiendanubeConfig = {
+                ...(initialData.config || {}),
                 store_id: formData.store_id || undefined,
+                inventory_sync_enabled: inventory.enabled,
+                inventory_single_warehouse_id: inventory.single_warehouse_id || undefined,
             };
 
             const updateData: any = {
                 name: formData.name,
+                store_id: formData.store_id || undefined,
                 config: config,
             };
 
@@ -320,6 +331,14 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                         </p>
                     </div>
                 </div>
+            </SectionCard>
+
+            <SectionCard icon={<ArchiveBoxIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Inventario">
+                <TiendanubeInventorySection
+                    value={inventory}
+                    onChange={setInventory}
+                    businessId={selectedBusinessId}
+                />
             </SectionCard>
 
             <SectionCard icon={<BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Webhooks">
