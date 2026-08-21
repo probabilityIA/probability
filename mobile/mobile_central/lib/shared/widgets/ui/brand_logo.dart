@@ -36,7 +36,7 @@ class BrandLogo extends StatelessWidget {
   String? get _resolvedUrl {
     final direct = BrandAssets.mediaUrl(imageUrl);
     if (direct != null) return direct;
-    return BrandAssets.carrierLogo(name);
+    return BrandAssets.integrationLogo(name) ?? BrandAssets.carrierLogo(name);
   }
 
   @override

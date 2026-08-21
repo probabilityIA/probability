@@ -35,11 +35,64 @@ class BrandAssets {
     'RAPPI': 'https://static.vecteezy.com/system/resources/previews/067/941/720/non_2x/rappi-logo-rounded-hd-free-png.png',
   };
 
+
+  static const Map<String, String> integrationLogos = {
+    'SHOPIFY': 'integration-types/1765744750_shopify.png',
+    'WHATSAPP': 'integration-types/1765744972_whatsap.png',
+    'WHASTAP': 'integration-types/1765744972_whatsap.png',
+    'MERCADOLIBRE': 'integration-types/1771905467_mercado-libre-logo.png',
+    'MELI': 'integration-types/1771905467_mercado-libre-logo.png',
+    'WOOCOMMERCE': 'integration-types/1765745053_woocomerce.webp',
+    'WOOCORMERCE': 'integration-types/1765745053_woocomerce.webp',
+    'SOFTPYMES': 'integration-types/1769929713_sofpymes.png',
+    'FACTUS': 'integration-types/1771736455_factus.png',
+    'SIIGO': 'integration-types/1771738597_siigo.png',
+    'ALEGRA': 'integration-types/1771738659_alegra.png',
+    'WORLDOFFICE': 'integration-types/1771738901_worl-office.png',
+    'HELISA': 'integration-types/1771739081_logo-helisa.png',
+    'ENVIOCLICK': 'integration-types/1771901154_envioclik.png',
+    'ENVIAME': 'integration-types/1771905179_enviame.png',
+    'MIPAQUETE': 'integration-types/1771905337_mipaquete.png',
+    'VTEX': 'integration-types/1771905400_vtex.png',
+    'TIENDANUBE': 'integration-types/1771905372_tiendanube.png',
+    'MAGENTO': 'integration-types/1771905298_magneto.png',
+    'AMAZON': 'integration-types/1771905134_amazon.png',
+    'FALABELLA': 'integration-types/1771905254_falabella.png',
+    'EXITO': 'integration-types/1771905220_exito.png',
+    'NEQUI': 'integration-types/1772147410_nequi.png',
+    'BOLD': 'integration-types/1777354669_bold.png',
+    'BOLDPAY': 'integration-types/1777354669_bold.png',
+    'WOMPI': 'integration-types/1772147507_logowompi.png',
+    'STRIPE': 'integration-types/1772147475_stripe.png',
+    'PAYU': 'integration-types/1772147440_payu.png',
+    'EPAYCO': 'integration-types/1772147322_epayco.png',
+    'MELIPAGO': 'integration-types/1772147377_mercado-pago.png',
+    'MERCADOPAGO': 'integration-types/1772147377_mercado-pago.png',
+    'JUMPSELLER': 'integration-types/1784241131_jumpseller.png',
+    'SHIPIT': 'integration-types/1785346702_shipit.png',
+    'TIKTOK': 'integration-types/tiktok.png',
+    'BANCOLOMBIAQR': 'integration-types/bancolombia.png',
+  };
+
+  static String? integrationLogo(String? name) {
+    final key = _normalize(name);
+    if (key.isEmpty) return null;
+    final match = integrationLogos[key];
+    return match == null ? null : mediaUrl(match);
+  }
+
+  static String _normalize(String? value) {
+    final raw = (value ?? '').trim();
+    if (raw.isEmpty) return '';
+    return _stripDiacritics(raw.split(' - ').first)
+        .toUpperCase()
+        .replaceAll(RegExp(r'[\s\-_\.]'), '');
+  }
+
   static String? carrierLogo(String? carrier) {
     final raw = (carrier ?? '').trim();
     if (raw.isEmpty) return null;
-    final base = raw.split(' - ').first;
-    final key = _stripDiacritics(base).toUpperCase().replaceAll(RegExp(r'[\s\-_]'), '');
+    final key = _normalize(raw);
     return carrierLogos[key];
   }
 

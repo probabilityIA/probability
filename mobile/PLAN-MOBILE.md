@@ -82,7 +82,8 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
 | 1 | LISTA | tokens de marca, tema, tipografia Inter empaquetada, logo, componentes base, login rediseniado y verificado en navegador |
 | 2 | LISTA | bottom nav de 5 destinos, drawer agrupado con logo, AppScaffold comun, pantalla "Mas", ModuleTabsScaffold compartido por los 8 modulos con pestanias, gate de negocio para super admin |
 | 3 | LISTA | recuperacion de clave en 4 pasos (canales/OTP/nueva clave), perfil, cambio de contrasena, sesion persistida completa |
-| 4 | siguiente | dashboard: KPIs, accesos rapidos, resumen |
+| 4 | LISTA | saludo, 4 KPIs accionables, accesos rapidos, ordenes por canal con logo, envios por estado y transportadora con logo, top productos, clientes y ciudades |
+| 5 | siguiente | ordenes: listado con filtros, busqueda y scroll infinito |
 
 ## Deuda conocida
 
