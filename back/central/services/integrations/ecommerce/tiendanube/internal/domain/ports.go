@@ -19,6 +19,8 @@ type ITiendanubeClient interface {
 	ListWebhooks(ctx context.Context, cred Credential) ([]WebhookItem, error)
 	CreateWebhook(ctx context.Context, cred Credential, event, webhookURL string) (string, error)
 	DeleteWebhook(ctx context.Context, cred Credential, webhookID string) error
+	GetOrder(ctx context.Context, cred Credential, orderID string) (*TiendanubeOrder, []byte, error)
+	GetOrders(ctx context.Context, cred Credential, filters OrderFilters) ([]TiendanubeOrder, error)
 }
 
 type IIntegrationService interface {

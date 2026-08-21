@@ -27,6 +27,9 @@ type ITiendanubeUseCase interface {
 	CompareInventory(ctx context.Context, integrationID string, businessID uint, page, pageSize int, skus ...string) (*inventorycompare.Page, error)
 	LoadInventoryCompare(ctx context.Context, integrationID string, businessID uint, opts inventorycompare.LoadOptions) (*inventorycompare.Page, error)
 
+	SyncOrders(ctx context.Context, integrationID string, filters domain.OrderFilters) (int, error)
+	ProcessOrderEvent(ctx context.Context, integrationID, event, orderID string) error
+
 	CreateWebhooks(ctx context.Context, integrationID, baseURL string) (*domain.CreateWebhooksResult, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookItem, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
