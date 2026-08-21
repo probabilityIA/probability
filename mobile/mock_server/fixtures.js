@@ -238,8 +238,40 @@ add('GET', '/order-statuses', ({ url, paginate }) => ({ status: 200, payload: pa
 add('GET', '/payment-statuses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.PAYMENT_STATUSES, url) }));
 add('GET', '/fulfillment-statuses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.FULFILLMENT_STATUSES, url) }));
 
-add('GET', '/products', ({ url, paginate }) => ({ status: 200, payload: paginate(d.products, url) }));
-add('GET', '/products/:id', ({ params }) => ok(d.products.find((p) => p.id === Number(params.id))));
+add('GET', '/products', ({ url, paginate }) => {
+  let rows = d.products;
+  const name = url.searchParams.get('name');
+  if (name) {
+    const q = name.toLowerCase();
+    rows = rows.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+  }
+  const sku = url.searchParams.get('sku');
+  if (sku) rows = rows.filter((p) => p.sku.toLowerCase().includes(sku.toLowerCase()));
+  const status = url.searchParams.get('status');
+  if (status === 'in_stock') rows = rows.filter((p) => p.stock >= 20);
+  if (status === 'low_stock') rows = rows.filter((p) => p.stock > 0 && p.stock < 20);
+  if (status === 'out_of_stock') rows = rows.filter((p) => p.stock === 0);
+  if (status === 'inactive') rows = rows.filter((p) => !p.is_active);
+  return { status: 200, payload: paginate(rows, url) };
+});
+add('GET', '/products/:id', ({ params }) => ok(d.products.find((p) => p.id === params.id)));
+add('GET', '/products/:id/integrations', ({ params }) => {
+  const product = d.products.find((p) => p.id === params.id);
+  if (!product) return ok([]);
+  return ok(product.channels.map((code, index) => {
+    const type = d.INTEGRATION_TYPES.find((t) => t.code === code);
+    return {
+      id: index + 1,
+      product_id: product.id,
+      integration_id: type ? type.id : index + 1,
+      integration_type: code,
+      integration_name: type ? type.name : code,
+      external_product_id: `${1000 + index}${product.sku}`,
+      created_at: product.created_at,
+      updated_at: product.updated_at,
+    };
+  }));
+});
 
 add('GET', '/customers', ({ url, paginate }) => ({ status: 200, payload: paginate(d.customers, url) }));
 add('GET', '/customers/:id', ({ params }) => ok(d.customers.find((c) => c.id === Number(params.id))));

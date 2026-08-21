@@ -96,35 +96,6 @@ const customers = Array.from({ length: 48 }, (_, i) => {
   };
 });
 
-const products = Array.from({ length: 42 }, (_, i) => {
-  const name = `${PRODUCTS[i % PRODUCTS.length]} ${i > 15 ? `v${Math.floor(i / 16) + 1}` : ''}`.trim();
-  const price = between(18000, 890000);
-  return {
-    id: i + 1,
-    business_id: 1,
-    sku: `SKU-${String(1000 + i)}`,
-    name,
-    description: `${name} de alta calidad, garantia de 12 meses.`,
-    price,
-    cost: Math.round(price * 0.62),
-    stock: between(0, 320),
-    track_inventory: true,
-    is_active: rnd() > 0.08,
-    category: pick(['Tecnologia', 'Accesorios', 'Oficina', 'Audio']),
-    image_url: null,
-    weight: between(100, 4500),
-    created_at: daysAgo(between(10, 500)),
-    variants_count: between(0, 4),
-  };
-});
-
-const warehouses = [
-  { id: 1, business_id: 1, name: 'Bodega principal', code: 'BOG-01', city: 'Bogota', address: 'Calle 13 # 68-50', is_active: true, is_default: true, occupancy: 68 },
-  { id: 2, business_id: 1, name: 'Bodega norte', code: 'BOG-02', city: 'Bogota', address: 'Autopista Norte km 19', is_active: true, is_default: false, occupancy: 41 },
-  { id: 3, business_id: 1, name: 'Bodega Medellin', code: 'MDE-01', city: 'Medellin', address: 'Cra 48 # 20-114', is_active: true, is_default: false, occupancy: 83 },
-  { id: 4, business_id: 1, name: 'Punto de venta Cali', code: 'CLO-01', city: 'Cali', address: 'Av 6N # 25-30', is_active: false, is_default: false, occupancy: 12 },
-];
-
 const CHANNEL_TYPES = ['Shopify', 'woocommerce', 'Mercado Libre', 'Whastap', 'amazon', 'platform'];
 const CHANNEL_LABELS = {
   'Shopify': 'Shopify',
@@ -134,6 +105,51 @@ const CHANNEL_LABELS = {
   'amazon': 'Amazon',
   'platform': 'Manual',
 };
+
+const products = Array.from({ length: 42 }, (_, i) => {
+  const name = `${PRODUCTS[i % PRODUCTS.length]}${i > 15 ? ' v' + (Math.floor(i / 16) + 1) : ''}`;
+  const price = between(18000, 890000);
+  const cost = Math.round(price * 0.62);
+  const stock = between(0, 320);
+  const channels = CHANNEL_TYPES.filter((_, idx) => (i + idx) % 3 === 0);
+  return {
+    id: `prd-${String(i + 1).padStart(4, '0')}`,
+    created_at: daysAgo(between(10, 500)),
+    updated_at: daysAgo(between(0, 30)),
+    business_id: 1,
+    integration_id: (i % 6) + 1,
+    integration_type: CHANNEL_TYPES[i % CHANNEL_TYPES.length],
+    external_id: `${between(100000, 999999)}`,
+    sku: `SKU-${String(1000 + i)}`,
+    name,
+    description: `${name} de alta calidad, garantia de 12 meses.`,
+    price,
+    compare_at_price: rnd() > 0.7 ? Math.round(price * 1.25) : null,
+    cost_price: cost,
+    currency: 'COP',
+    stock,
+    stock_status: stock === 0 ? 'out_of_stock' : stock < 20 ? 'low_stock' : 'in_stock',
+    manage_stock: true,
+    weight: between(100, 4500),
+    height: between(5, 45),
+    width: between(5, 40),
+    length: between(5, 60),
+    image_url: null,
+    images: [],
+    thumbnail: null,
+    status: rnd() > 0.08 ? 'active' : 'draft',
+    is_active: rnd() > 0.08,
+    category: pick(['Tecnologia', 'Accesorios', 'Oficina', 'Audio']),
+    channels: channels.length > 0 ? channels : [CHANNEL_TYPES[0]],
+  };
+});
+
+const warehouses = [
+  { id: 1, business_id: 1, name: 'Bodega principal', code: 'BOG-01', city: 'Bogota', address: 'Calle 13 # 68-50', is_active: true, is_default: true, occupancy: 68 },
+  { id: 2, business_id: 1, name: 'Bodega norte', code: 'BOG-02', city: 'Bogota', address: 'Autopista Norte km 19', is_active: true, is_default: false, occupancy: 41 },
+  { id: 3, business_id: 1, name: 'Bodega Medellin', code: 'MDE-01', city: 'Medellin', address: 'Cra 48 # 20-114', is_active: true, is_default: false, occupancy: 83 },
+  { id: 4, business_id: 1, name: 'Punto de venta Cali', code: 'CLO-01', city: 'Cali', address: 'Av 6N # 25-30', is_active: false, is_default: false, occupancy: 12 },
+];
 
 const orders = Array.from({ length: 64 }, (_, i) => {
   const customer = customers[i % customers.length];

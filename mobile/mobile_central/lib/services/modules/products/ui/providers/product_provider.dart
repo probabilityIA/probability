@@ -28,20 +28,28 @@ class ProductProvider extends ChangeNotifier {
 
   ProductUseCases get _useCases => ProductUseCases(ProductApiRepository(_apiClient));
 
+  bool _isLoadingMore = false;
+  List<ProductIntegration> _integrations = [];
+
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMore => _pagination?.hasNext ?? false;
+  List<ProductIntegration> get integrations => _integrations;
+
+  GetProductsParams _params(int? businessId, int page) => GetProductsParams(
+        page: page,
+        pageSize: _pageSize,
+        businessId: businessId,
+        name: _nameFilter.isNotEmpty ? _nameFilter : null,
+        sku: _skuFilter.isNotEmpty ? _skuFilter : null,
+      );
+
   Future<void> fetchProducts({int? businessId}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final params = GetProductsParams(
-        page: _page,
-        pageSize: _pageSize,
-        businessId: businessId,
-        name: _nameFilter.isNotEmpty ? _nameFilter : null,
-        sku: _skuFilter.isNotEmpty ? _skuFilter : null,
-      );
-      final response = await _useCases.getProducts(params);
+      final response = await _useCases.getProducts(_params(businessId, _page));
       _products = response.data;
       _pagination = response.pagination;
     } catch (e) {
@@ -50,6 +58,40 @@ class ProductProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> loadMore({int? businessId}) async {
+    if (_isLoading || _isLoadingMore || !hasMore) return;
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final response = await _useCases.getProducts(_params(businessId, _page + 1));
+      _products = [..._products, ...response.data];
+      _pagination = response.pagination;
+      _page += 1;
+    } catch (e) {
+      _error = parseError(e);
+    }
+
+    _isLoadingMore = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchIntegrations(String productId) async {
+    try {
+      _integrations = await _useCases.getProductIntegrations(productId);
+    } catch (_) {
+      _integrations = [];
+    }
+    notifyListeners();
+  }
+
+  Product? productById(String id) {
+    for (final product in _products) {
+      if (product.id == id) return product;
+    }
+    return null;
   }
 
   Future<Product?> createProduct(CreateProductDTO data) async {
