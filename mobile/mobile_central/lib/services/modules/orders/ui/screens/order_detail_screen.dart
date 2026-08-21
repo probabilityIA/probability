@@ -6,7 +6,9 @@ import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/order_provider.dart';
+import '../../../mobile/ui/providers/order_full_provider.dart';
 import '../widgets/order_detail_sections.dart';
+import '../widgets/order_related_cards.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   const OrderDetailScreen({super.key, required this.orderId});
@@ -35,9 +37,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     });
 
     final provider = context.read<OrderProvider>();
-    final order = await provider.getOrderById(widget.orderId);
+    final fullProvider = context.read<OrderFullProvider>();
+
+    final results = await Future.wait([
+      provider.getOrderById(widget.orderId),
+      fullProvider.load(widget.orderId),
+    ]);
 
     if (!mounted) return;
+    final order = results.first as Order?;
     setState(() {
       _order = order;
       _error = order == null ? (provider.error ?? 'No se encontro la orden') : null;
@@ -171,9 +179,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           const SizedBox(height: 18),
           const AppSectionHeader(title: 'Cliente y entrega'),
           OrderCustomerCard(order: order),
-          const SizedBox(height: 18),
-          const AppSectionHeader(title: 'Envio'),
-          OrderShippingCard(order: order),
+          Consumer<OrderFullProvider>(
+            builder: (context, provider, _) {
+              final shipment = provider.orderFull?.shipment;
+              final invoice = provider.orderFull?.invoice;
+              return Column(
+                children: [
+                  const SizedBox(height: 18),
+                  const AppSectionHeader(
+                    title: 'Envio',
+                    subtitle: 'Guia asociada a la orden',
+                  ),
+                  if (shipment != null)
+                    OrderShipmentCard(shipment: shipment)
+                  else
+                    OrderShippingCard(order: order),
+                  if (invoice != null) ...[
+                    const SizedBox(height: 18),
+                    const AppSectionHeader(title: 'Facturacion'),
+                    OrderInvoiceCard(invoice: invoice),
+                  ],
+                ],
+              );
+            },
+          ),
           const SizedBox(height: 18),
           const AppSectionHeader(title: 'Trazabilidad'),
           AppCard(

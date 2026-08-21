@@ -86,7 +86,8 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
 | 5 | LISTA | listado con tarjeta de orden (logo de canal, estados, guia, COD), busqueda con debounce, filtros por estado, scroll infinito |
 | 6 | LISTA | detalle con header de canal, items tipados, totales con bloque COD, cliente, envio, trazabilidad, copiar numero y cancelar orden |
 | 7 | LISTA | lista de guias con logo de transportadora, filtros por estado, busqueda y scroll infinito; detalle con desglose de costo, contra entrega, destino, paquete y cancelacion |
-| 8 | siguiente | endpoint `/api/v1/mobile/orders/:id/full` + cotizador y generacion de guia |
+| 8 | LISTA | primer endpoint exclusivo de la app en Go: `GET /api/v1/mobile/orders/:id/full`; el detalle de orden ya muestra guia y factura |
+| 9 | siguiente | cotizador de envios y generacion de guia |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 
@@ -95,13 +96,28 @@ pantalla, se crea un endpoint agregado con `mobile` en la ruta. Hasta la fase 6
 **no hizo falta ninguno**: cada pantalla resuelve con un solo GET de los que ya
 existen.
 
-Estado tras la fase 7: **sigue sin hacer falta ninguno**. El detalle de guia no
-suma una llamada porque reusa el objeto que ya trajo el listado.
+### `GET /api/v1/mobile/orders/:id/full` (fase 8)
 
-Comprometido para la fase 8:
-`GET /api/v1/mobile/orders/:id/full` -> orden + guia + factura + trazabilidad en
-una sola respuesta. Ahi el ahorro es real: hoy el detalle de orden tendria que
-pegarle a `/orders/:id`, `/shipments?order_id=` y `/invoices?order_id=`.
+Modulo `back/central/services/modules/mobile/`, arquitectura hexagonal, montado
+en `services/modules/bundle.go`. Devuelve en una sola respuesta:
+
+```
+{ order, items[], shipment|null, invoice|null }
+```
+
+Ahorra 3 llamadas por apertura de detalle: antes hubiera necesitado
+`/orders/:id`, `/shipments?order_id=` y `/invoices?order_id=`.
+
+Cumple las reglas del repo:
+- repositorio propio, solo SELECT, sin importar repos de otros modulos
+- modelos desde `migration/shared/models`, sin `.Table()`
+- aislamiento multi-tenant: `business_id` sale del token; el super admin lo pasa
+  por query param, y ademas se valida que la orden pertenezca a ese negocio
+  antes de devolver nada (404 si no, para no filtrar existencia)
+- sin comentarios en el codigo Go
+
+Cliente Dart en `lib/services/modules/mobile/`, con su provider
+`OrderFullProvider`.
 
 ## Reglas de negocio respetadas en guias
 

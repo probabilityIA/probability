@@ -33,6 +33,7 @@ import 'services/modules/storefront/ui/providers/storefront_provider.dart';
 import 'services/modules/publicsite/ui/providers/publicsite_provider.dart';
 import 'services/modules/website_config/ui/providers/website_config_provider.dart';
 import 'services/modules/my_integrations/ui/providers/my_integrations_provider.dart';
+import 'services/modules/mobile/ui/providers/order_full_provider.dart';
 // Integration providers
 import 'services/integrations/core/ui/providers/integration_provider.dart';
 import 'shared/theme/app_theme.dart';
@@ -83,6 +84,9 @@ class _ProbabilityAppState extends State<ProbabilityApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: widget.loginProvider),
+        ChangeNotifierProvider(
+          create: (_) => OrderFullProvider(apiClient: widget.apiClient),
+        ),
         ChangeNotifierProvider(
           create: (_) => UserProvider(apiClient: widget.apiClient),
         ),

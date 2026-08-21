@@ -160,6 +160,80 @@ add('GET', '/orders/:id/raw', ({ params }) => ok({ raw: d.orders.find((o) => o.i
 add('PUT', '/orders/:id', ({ params, body }) => ok({ ...d.orders.find((o) => o.id === params.id), ...body }));
 add('POST', '/orders/:id/cancel', () => ok(null, 'Orden cancelada'));
 
+add('GET', '/mobile/orders/:id/full', ({ params }) => {
+  const order = d.orders.find((o) => o.id === params.id);
+  if (!order) return { status: 404, payload: { success: false, error: 'orden no encontrada' } };
+  const shipment = d.shipments.find((s) => s.order_id === order.id) || null;
+  const invoice = d.invoices.find((i) => i.order_id === order.id) || null;
+  return ok({
+    order: {
+      id: order.id,
+      order_number: order.order_number,
+      internal_number: order.internal_number,
+      integration_id: order.integration_id,
+      integration_type: order.integration_type,
+      platform: order.platform,
+      status: order.status,
+      status_id: order.status_id,
+      is_paid: order.is_paid,
+      is_cod: order.is_cod,
+      cod_total: order.cod_total,
+      subtotal: order.subtotal,
+      tax: order.tax,
+      discount: order.discount,
+      shipping_cost: order.shipping_cost,
+      total_amount: order.total_amount,
+      currency: order.currency,
+      customer_name: order.customer_name,
+      customer_email: order.customer_email,
+      customer_phone: order.customer_phone,
+      shipping_street: order.shipping_street,
+      shipping_city: order.shipping_city,
+      warehouse_name: order.warehouse_name,
+      user_name: order.user_name,
+      created_at: order.created_at,
+      updated_at: order.updated_at,
+    },
+    items: order.order_items.map((it, idx) => ({
+      id: idx + 1,
+      product_id: String(it.product_id),
+      sku: it.sku,
+      name: it.name,
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      total_price: it.total_price,
+    })),
+    shipment: shipment && {
+      id: shipment.id,
+      tracking_number: shipment.tracking_number,
+      tracking_url: shipment.tracking_url,
+      carrier: shipment.carrier,
+      guide_url: shipment.guide_url,
+      status: shipment.status,
+      carrier_status: shipment.carrier_status,
+      destination_city: shipment.destination_city,
+      insurance_cost: shipment.insurance_cost,
+      total_cost: shipment.total_cost,
+      carrier_cost: shipment.carrier_cost,
+      applied_margin: shipment.applied_margin,
+      cod_carrier_fee: shipment.cod_carrier_fee,
+      cod_probability_margin: shipment.cod_probability_margin,
+      created_at: shipment.created_at,
+    },
+    invoice: invoice && {
+      id: invoice.id,
+      invoice_number: invoice.invoice_number,
+      status: invoice.status,
+      total_amount: invoice.total,
+      currency: 'COP',
+      invoice_url: 'https://example.com/factura.pdf',
+      cufe: invoice.cufe,
+      issued_at: invoice.issued_at,
+      created_at: invoice.created_at,
+    },
+  });
+});
+
 add('GET', '/order-statuses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.ORDER_STATUSES, url) }));
 add('GET', '/payment-statuses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.PAYMENT_STATUSES, url) }));
 add('GET', '/fulfillment-statuses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.FULFILLMENT_STATUSES, url) }));
