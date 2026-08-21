@@ -1,11 +1,11 @@
 {
-    "name": "mobile_central",
-    "short_name": "mobile_central",
+    "name": "Probability Central",
+    "short_name": "Probability",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#5E17EB",
+    "description": "Operacion de Probability en el celular",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

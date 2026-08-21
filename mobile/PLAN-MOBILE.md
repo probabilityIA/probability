@@ -77,9 +77,10 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
 
 ## Cola de tareas pendientes (pedidas fuera de fase)
 
-1. **Icono de la app** con el logo de Probability (el mismo `logo.png` del front),
-   generando los mipmaps de Android y los assets de iOS. Debe quedar listo
-   **antes** de compilar el APK.
+1. ~~Icono de la app con el logo de Probability~~ **LISTO**: mipmaps de Android
+   (48 a 192 px), iconos de iOS, iconos y favicon de web, todos generados desde
+   `logo.png` sobre fondo blanco. Nombre visible "Probability" en Android e iOS,
+   manifest web con el violeta de marca.
 2. **APK de produccion en el escritorio** al cerrar la fase 20 (ver abajo).
 
 ## Entrega final (al cerrar la fase 20)
