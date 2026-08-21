@@ -34,6 +34,32 @@ class WarehouseProvider extends ChangeNotifier {
     _isLoading = false; notifyListeners();
   }
 
+  List<WarehouseLocation> _locations = [];
+  bool _isLoadingLocations = false;
+
+  List<WarehouseLocation> get locations => _locations;
+  bool get isLoadingLocations => _isLoadingLocations;
+
+  Warehouse? warehouseById(int id) {
+    for (final warehouse in _warehouses) {
+      if (warehouse.id == id) return warehouse;
+    }
+    return null;
+  }
+
+  Future<void> fetchLocations(int warehouseId, {int? businessId}) async {
+    _isLoadingLocations = true;
+    _locations = [];
+    notifyListeners();
+    try {
+      _locations = await _useCases.getLocations(warehouseId, businessId: businessId);
+    } catch (_) {
+      _locations = [];
+    }
+    _isLoadingLocations = false;
+    notifyListeners();
+  }
+
   Future<Warehouse?> createWarehouse(CreateWarehouseDTO data, {int? businessId}) async {
     try { return await _useCases.createWarehouse(data, businessId: businessId); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }

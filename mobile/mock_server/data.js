@@ -145,11 +145,55 @@ const products = Array.from({ length: 42 }, (_, i) => {
 });
 
 const warehouses = [
-  { id: 1, business_id: 1, name: 'Bodega principal', code: 'BOG-01', city: 'Bogota', address: 'Calle 13 # 68-50', is_active: true, is_default: true, occupancy: 68 },
-  { id: 2, business_id: 1, name: 'Bodega norte', code: 'BOG-02', city: 'Bogota', address: 'Autopista Norte km 19', is_active: true, is_default: false, occupancy: 41 },
-  { id: 3, business_id: 1, name: 'Bodega Medellin', code: 'MDE-01', city: 'Medellin', address: 'Cra 48 # 20-114', is_active: true, is_default: false, occupancy: 83 },
-  { id: 4, business_id: 1, name: 'Punto de venta Cali', code: 'CLO-01', city: 'Cali', address: 'Av 6N # 25-30', is_active: false, is_default: false, occupancy: 12 },
-];
+  { id: 1, name: 'Bodega principal', code: 'BOG-01', city: 'Bogota', state: 'Cundinamarca', address: 'Calle 13 # 68-50', is_active: true, is_default: true, is_fulfillment: true, phone: '3001234567', contact_name: 'Sebastian Camacho', contact_email: 'bodega@probability.co', dane: '11001' },
+  { id: 2, name: 'Bodega norte', code: 'BOG-02', city: 'Bogota', state: 'Cundinamarca', address: 'Autopista Norte km 19', is_active: true, is_default: false, is_fulfillment: true, phone: '3007654321', contact_name: 'Laura Gomez', contact_email: 'norte@probability.co', dane: '11001' },
+  { id: 3, name: 'Bodega Medellin', code: 'MDE-01', city: 'Medellin', state: 'Antioquia', address: 'Cra 48 # 20-114', is_active: true, is_default: false, is_fulfillment: true, phone: '3009876543', contact_name: 'Andres Torres', contact_email: 'mde@probability.co', dane: '05001' },
+  { id: 4, name: 'Punto de venta Cali', code: 'CLO-01', city: 'Cali', state: 'Valle del Cauca', address: 'Av 6N # 25-30', is_active: false, is_default: false, is_fulfillment: false, phone: '3005558899', contact_name: 'Camila Rojas', contact_email: 'cali@probability.co', dane: '76001' },
+].map((w) => ({
+  id: w.id,
+  business_id: 1,
+  name: w.name,
+  code: w.code,
+  address: w.address,
+  street: w.address,
+  city: w.city,
+  state: w.state,
+  country: 'Colombia',
+  zip_code: '110111',
+  postal_code: '110111',
+  suburb: 'Centro',
+  city_dane_code: w.dane,
+  phone: w.phone,
+  contact_name: w.contact_name,
+  contact_email: w.contact_email,
+  company: 'Probability Demo',
+  first_name: w.contact_name.split(' ')[0],
+  last_name: w.contact_name.split(' ')[1] || '',
+  email: w.contact_email,
+  is_active: w.is_active,
+  is_default: w.is_default,
+  is_fulfillment: w.is_fulfillment,
+  latitude: null,
+  longitude: null,
+  created_at: daysAgo(400),
+  updated_at: daysAgo(between(0, 30)),
+}));
+
+const warehouseLocations = warehouses.flatMap((w) =>
+  ['A', 'B', 'C'].map((zone, i) => ({
+    id: w.id * 10 + i,
+    warehouse_id: w.id,
+    name: `Pasillo ${zone}`,
+    code: `${w.code}-${zone}`,
+    type: i === 2 ? 'picking' : 'storage',
+    is_active: true,
+    is_fulfillment: i !== 2,
+    capacity: 200 + i * 120,
+    created_at: w.created_at,
+    updated_at: w.updated_at,
+  })),
+);
+
 
 const orders = Array.from({ length: 64 }, (_, i) => {
   const customer = customers[i % customers.length];
@@ -546,6 +590,7 @@ module.exports = {
   customers,
   products,
   warehouses,
+  warehouseLocations,
   orders,
   shipments,
   invoices,

@@ -402,8 +402,16 @@ add('POST', '/inventory/adjust', ({ body }) => {
 });
 add('POST', '/inventory/transfer', () => ok(null, 'Traslado registrado'));
 
-add('GET', '/warehouses', ({ url, paginate }) => ({ status: 200, payload: paginate(d.warehouses, url) }));
-add('GET', '/warehouses/:id', ({ params }) => ok(d.warehouses.find((w) => w.id === Number(params.id))));
+add('GET', '/warehouses', ({ url, paginate }) => ({
+  status: 200,
+  payload: paginate(d.warehouses, url),
+}));
+add('GET', '/warehouses/:id', ({ params }) => ok(
+  d.warehouses.find((w) => w.id === Number(params.id)),
+));
+add('GET', '/warehouses/:id/locations', ({ params }) => ok(
+  d.warehouseLocations.filter((l) => l.warehouse_id === Number(params.id)),
+));
 
 add('GET', '/routes', ({ url, paginate }) => ({ status: 200, payload: paginate(d.deliveryRoutes, url) }));
 add('GET', '/routes/:id', ({ params }) => ok(d.deliveryRoutes.find((r) => r.id === Number(params.id))));

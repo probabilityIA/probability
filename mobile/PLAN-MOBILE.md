@@ -82,6 +82,24 @@ Radios `8/12/16`, sombras suaves, sin elevaciones fuertes, tipografia Inter.
    `logo.png` sobre fondo blanco. Nombre visible "Probability" en Android e iOS,
    manifest web con el violeta de marca.
 2. **APK de produccion en el escritorio** al cerrar la fase 20 (ver abajo).
+3. **Bitacora**: documentar todo lo hecho hoy en `.claude/bitacora/` al terminar.
+4. **Pendientes anotados** en el plan y en alertas si aplica.
+5. **Commit + push** de la rama al terminar (autorizado por el usuario).
+6. **Apagar el equipo** al final.
+
+## Alcance tocado fuera de `mobile/`
+
+El usuario pidio que solo se afectara la app. Se cumple con una excepcion que el
+mismo usuario pidio antes: el endpoint exclusivo de la app.
+
+Fuera de `mobile/` solo hay:
+- `back/central/services/modules/mobile/**` -> **modulo nuevo**, no toca nada
+  existente.
+- `back/central/services/modules/bundle.go` -> **2 lineas agregadas** (el import
+  y `mobile.New(router, database)`).
+
+Ningun comportamiento del backend actual fue modificado. Todo vive en la rama
+`feat/mobile-app-flutter`, `main` esta intacta.
 
 ## Entrega final (al cerrar la fase 20)
 
@@ -114,7 +132,8 @@ pero se deja explicito para que el APK no dependa del default.
 | 9 | LISTA | cotizador con formula portada de rate-pricing.ts, 7 pruebas que la fijan, desglose por tarifa y aviso cuando la tarifa no soporta contra entrega |
 | 10 | LISTA | lista con miniatura, precio, stock y filtros; detalle con precios, margen calculado, inventario, dimensiones y canales donde esta publicado con su logo |
 | 11 | LISTA | existencias por bodega con barra de ocupacion y alerta de reposicion, historial de movimientos con entrada/salida, y hoja de ajuste que escribe contra el API |
-| 12 | siguiente | bodegas: lista, detalle y ocupacion |
+| 12 | LISTA | lista de bodegas con estado, predeterminada y despacho; detalle con direccion, codigo DANE, contacto con aviso de datos faltantes y ubicaciones internas |
+| 13 | siguiente | clientes: lista, detalle, direcciones e historico |
 
 ## APIs exclusivas de la app (`/api/v1/mobile/...`)
 
