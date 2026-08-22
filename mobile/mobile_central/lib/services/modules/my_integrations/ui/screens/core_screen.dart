@@ -10,8 +10,10 @@ import '../../domain/entities.dart';
 import '../../../../integrations/core/ui/providers/integration_provider.dart';
 import '../providers/my_integrations_provider.dart';
 import '../providers/sync_activity_provider.dart';
+import '../../domain/sync_entities.dart';
 import '../widgets/channel_sync_strip.dart';
-import '../widgets/orders_report.dart';
+import '../widgets/environment_panel.dart';
+import '../widgets/module_toolbar.dart';
 
 class CoreScreen extends StatefulWidget {
   const CoreScreen({super.key, this.businessId});
@@ -23,6 +25,8 @@ class CoreScreen extends StatefulWidget {
 }
 
 class _CoreScreenState extends State<CoreScreen> {
+  CoreView _view = CoreView.diagrama;
+
   @override
   void initState() {
     super.initState();
@@ -102,24 +106,32 @@ class _CoreScreenState extends State<CoreScreen> {
     if (done) _load();
   }
 
+  void _selectEnvironment(SyncEnvironment environment) {
+    final sync = context.read<SyncActivityProvider>();
+    sync.setEnvironment(environment);
+    if (environment == SyncEnvironment.ordersCompare ||
+        environment == SyncEnvironment.data ||
+        environment == SyncEnvironment.invoicing) {
+      setState(() => _view = CoreView.informe);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: AppScaffold(
-        title: 'Tus integraciones',
-        subtitle: 'El nucleo de tu operacion',
-        onBack: () => Navigator.of(context).maybePop(),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(44),
-          child: TabBar(
-            tabs: [
-              Tab(height: 42, text: 'Diagrama'),
-              Tab(height: 42, text: 'Informe'),
-            ],
-          ),
-        ),
-        body: Consumer<MyIntegrationsProvider>(
+    final sync = context.watch<SyncActivityProvider>();
+
+    return AppScaffold(
+      title: 'Tus integraciones',
+      subtitle: 'El nucleo de tu operacion',
+      onBack: () => Navigator.of(context).maybePop(),
+      bottom: ModuleToolbar(
+        view: _view,
+        environment: sync.environment,
+        running: sync.running,
+        onView: (value) => setState(() => _view = value),
+        onEnvironment: _selectEnvironment,
+      ),
+      body: Consumer<MyIntegrationsProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.integrations.isEmpty) {
             return const AppListSkeleton();
@@ -147,6 +159,18 @@ class _CoreScreenState extends State<CoreScreen> {
             );
           }
 
+          if (_view == CoreView.informe) {
+            return RefreshIndicator(
+              onRefresh: () async => _load(),
+              color: Theme.of(context).colorScheme.primary,
+              child: EnvironmentPanel(
+                environment: sync.environment,
+                integrations: visible,
+                statsFor: provider.statsFor,
+              ),
+            );
+          }
+
           final sales = visible
               .where((i) => (i.categoryCode ?? '') == 'ecommerce')
               .toList();
@@ -158,14 +182,12 @@ class _CoreScreenState extends State<CoreScreen> {
             totals = totals + provider.statsFor(item.id);
           }
 
-          return TabBarView(
-            children: [
-              RefreshIndicator(
+          return RefreshIndicator(
             onRefresh: () async => _load(),
             color: Theme.of(context).colorScheme.primary,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
               children: [
                 _CoreCard(totals: totals),
                 const SizedBox(height: 20),
@@ -195,19 +217,8 @@ class _CoreScreenState extends State<CoreScreen> {
                 ],
               ],
             ),
-              ),
-              RefreshIndicator(
-                onRefresh: () async => _load(),
-                color: Theme.of(context).colorScheme.primary,
-                child: OrdersReport(
-                  integrations: visible,
-                  statsFor: provider.statsFor,
-                ),
-              ),
-            ],
           );
         },
-        ),
       ),
     );
   }

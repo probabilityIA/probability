@@ -100,7 +100,7 @@ escribirlo. Si el stream resulta fragil sobre datos moviles, el plan B es
 poller de `sync-runs` cada 3 s mientras haya una corrida viva. Decidir con la
 prueba en el telefono, no antes.
 
-## Fase 1 - Barra de acciones y ambientes
+## Fase 1 - Barra de acciones y ambientes - HECHO
 
 Reemplaza el `DefaultTabController` de dos pestanas por lo que el front tiene
 en el encabezado del modal (`SyncActions`).
