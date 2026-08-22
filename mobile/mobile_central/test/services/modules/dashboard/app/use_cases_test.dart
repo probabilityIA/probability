@@ -31,6 +31,19 @@ class MockDashboardRepository implements IDashboardRepository {
     if (errorToThrow != null) throw errorToThrow!;
     return getStatsResult!;
   }
+  OrderEffectiveness effectivenessResult =
+      const OrderEffectiveness(delivered: 0, returned: 0);
+
+  @override
+  Future<OrderEffectiveness> getEffectiveness({
+    int? businessId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    if (errorToThrow != null) throw errorToThrow!;
+    return effectivenessResult;
+  }
+
 }
 
 // --- Helpers ---

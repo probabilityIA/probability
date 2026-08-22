@@ -125,7 +125,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _KpiGrid(stats: stats, channelLogos: _channelLogos(context)),
+                _KpiGrid(
+                  stats: stats,
+                  channelLogos: _channelLogos(context),
+                  effectiveness: provider.effectiveness,
+                ),
                 const SizedBox(height: 16),
                 const _QuickActions(),
                 if (stats.ordersByIntegrationType.isNotEmpty) ...[
@@ -220,10 +224,15 @@ class _Greeting extends StatelessWidget {
 }
 
 class _KpiGrid extends StatelessWidget {
-  const _KpiGrid({required this.stats, this.channelLogos = const {}});
+  const _KpiGrid({
+    required this.stats,
+    this.channelLogos = const {},
+    this.effectiveness,
+  });
 
   final DashboardStats stats;
   final Map<String, String?> channelLogos;
+  final OrderEffectiveness? effectiveness;
 
   double get _revenue =>
       stats.topProducts.fold<double>(0, (acc, p) => acc + p.totalSold);
@@ -246,6 +255,9 @@ class _KpiGrid extends StatelessWidget {
         value: AppFormat.number(stats.totalOrders),
         icon: Icons.receipt_long_outlined,
         onTap: () => context.go('/orders'),
+        footer: effectiveness == null || !effectiveness!.hasData
+            ? null
+            : _EffectivenessRows(data: effectiveness!),
       ),
       _ChannelsKpiTile(
         channels: stats.ordersByIntegrationType,
@@ -277,7 +289,7 @@ class _KpiGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 9,
         crossAxisSpacing: 9,
-        mainAxisExtent: 106,
+        mainAxisExtent: 124,
       ),
       itemCount: tiles.length,
       itemBuilder: (context, index) => tiles[index],
@@ -493,6 +505,85 @@ class _ChannelsKpiTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _EffectivenessRows extends StatelessWidget {
+  const _EffectivenessRows({required this.data});
+
+  final OrderEffectiveness data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _MetricPill(
+          label: 'EFECTIVIDAD',
+          rate: data.effectivenessRate,
+          count: data.delivered,
+          caption: 'entregadas',
+          color: AppColors.success,
+        ),
+        const SizedBox(height: 4),
+        _MetricPill(
+          label: 'DEVOLUCIONES',
+          rate: data.returnRate,
+          count: data.returned,
+          caption: 'devueltas',
+          color: AppColors.warning,
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricPill extends StatelessWidget {
+  const _MetricPill({
+    required this.label,
+    required this.rate,
+    required this.count,
+    required this.caption,
+    required this.color,
+  });
+
+  final String label;
+  final double rate;
+  final int count;
+  final String caption;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          '${(rate * 100).toStringAsFixed(1)}%',
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            '${AppFormat.number(count)} $caption',
+            style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

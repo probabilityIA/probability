@@ -19,4 +19,16 @@ class DashboardUseCases {
       endDate: endDate,
     );
   }
+
+  Future<OrderEffectiveness> getEffectiveness({
+    int? businessId,
+    String? startDate,
+    String? endDate,
+  }) {
+    return _repository.getEffectiveness(
+      businessId: businessId,
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
 }

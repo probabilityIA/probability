@@ -12,6 +12,7 @@ class AppKpiTile extends StatelessWidget {
     this.trendPositive = true,
     this.accent = AppColors.primary,
     this.onTap,
+    this.footer,
   });
 
   final String label;
@@ -21,6 +22,7 @@ class AppKpiTile extends StatelessWidget {
   final bool trendPositive;
   final Color accent;
   final VoidCallback? onTap;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +69,10 @@ class AppKpiTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          if (footer != null) ...[
+            const SizedBox(height: 6),
+            footer!,
+          ],
           if (trend != null) ...[
             const SizedBox(height: 4),
             Row(

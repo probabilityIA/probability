@@ -7,4 +7,10 @@ abstract class IDashboardRepository {
     String? startDate,
     String? endDate,
   });
+
+  Future<OrderEffectiveness> getEffectiveness({
+    int? businessId,
+    String? startDate,
+    String? endDate,
+  });
 }

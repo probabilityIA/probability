@@ -90,6 +90,8 @@ void main() {
   });
 
   _periodTests();
+
+  _effectivenessTests();
 }
 
 void _periodTests() {
@@ -127,6 +129,38 @@ void _periodTests() {
     test('las etiquetas son las esperadas', () {
       expect(DashboardPeriod.values.map((p) => p.label).toList(),
           ['Hoy', '7 dias', '30 dias', 'Todo']);
+    });
+  });
+}
+
+void _effectivenessTests() {
+  group('efectividad', () {
+    test('calcula sobre las ordenes con desenlace', () {
+      const e = OrderEffectiveness(delivered: 67, returned: 3);
+
+      expect(e.closed, 70);
+      expect((e.effectivenessRate * 100).toStringAsFixed(1), '95.7');
+      expect((e.returnRate * 100).toStringAsFixed(1), '4.3');
+    });
+
+    test('los dos porcentajes suman uno', () {
+      const e = OrderEffectiveness(delivered: 43155, returned: 188);
+      expect(e.effectivenessRate + e.returnRate, closeTo(1.0, 0.0001));
+    });
+
+    test('sin desenlace no hay dato y no divide por cero', () {
+      const e = OrderEffectiveness(delivered: 0, returned: 0);
+
+      expect(e.hasData, isFalse);
+      expect(e.effectivenessRate, 0);
+      expect(e.returnRate, 0);
+    });
+
+    test('todo devuelto da cero por ciento de efectividad', () {
+      const e = OrderEffectiveness(delivered: 0, returned: 5);
+
+      expect(e.effectivenessRate, 0);
+      expect(e.returnRate, 1);
     });
   });
 }

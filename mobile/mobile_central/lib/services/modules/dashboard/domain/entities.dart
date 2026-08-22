@@ -1,3 +1,16 @@
+class OrderEffectiveness {
+  const OrderEffectiveness({required this.delivered, required this.returned});
+
+  final int delivered;
+  final int returned;
+
+  int get closed => delivered + returned;
+  bool get hasData => closed > 0;
+
+  double get effectivenessRate => hasData ? delivered / closed : 0;
+  double get returnRate => hasData ? returned / closed : 0;
+}
+
 enum DashboardPeriod { today, week, month, all }
 
 extension DashboardPeriodX on DashboardPeriod {

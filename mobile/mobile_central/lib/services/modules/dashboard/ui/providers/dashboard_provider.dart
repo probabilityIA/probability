@@ -12,6 +12,7 @@ class DashboardProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   DashboardPeriod _period = DashboardPeriod.all;
+  OrderEffectiveness? _effectiveness;
 
   DashboardProvider({required ApiClient apiClient}) : _apiClient = apiClient;
 
@@ -19,6 +20,7 @@ class DashboardProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   DashboardPeriod get period => _period;
+  OrderEffectiveness? get effectiveness => _effectiveness;
 
   DashboardUseCases get _useCases =>
       DashboardUseCases(DashboardApiRepository(_apiClient));
@@ -46,6 +48,11 @@ class DashboardProvider extends ChangeNotifier {
         endDate: range?.end,
       );
       _stats = response.data;
+      _effectiveness = await _useCases.getEffectiveness(
+        businessId: businessId,
+        startDate: range?.start,
+        endDate: range?.end,
+      );
     } catch (e) {
       _error = parseError(e);
     }
