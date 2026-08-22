@@ -54,7 +54,7 @@ Por proveedor (prefijo distinto segun el canal):
 | Tiendanube | 17 | `/tiendanube` | sync, compare, reconcile, apply, associate |
 | Jumpseller | 33 | `/jumpseller` | sync, reconcile, apply, associate |
 
-## El comparativo guardado (regla central del modulo)
+## El comparativo guardado (regla central del modulo) - HECHO el lector
 
 El front **no obliga a correr nada para ver algo**. Al abrir cualquier ambiente
 muestra el comparativo anterior, guardado, y correr de nuevo es una accion

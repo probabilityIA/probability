@@ -2,6 +2,7 @@ import '../../../../shared/types/paginated_response.dart';
 import '../app/sync_providers.dart';
 import 'entities.dart';
 import 'orders_compare_entities.dart';
+import 'saved_comparison_entities.dart';
 import 'sync_entities.dart';
 
 abstract class IMyIntegrationsRepository {
@@ -52,4 +53,15 @@ abstract class IOrdersCompareRepository {
     List<String> externalIds, {
     int? businessId,
   });
+}
+
+abstract class ISavedComparisonRepository {
+  Future<FindingsReport> getFindings({int? businessId});
+
+  Future<DataSummary> getDataSummary({int? businessId});
+
+  Future<InventoryComparePage> compareInventory(
+    SyncProviderSpec spec,
+    InventoryCompareQuery query,
+  );
 }
