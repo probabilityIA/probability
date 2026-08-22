@@ -8,8 +8,13 @@ import '../../domain/entities.dart';
 import '../../app/sync_providers.dart';
 import '../../domain/sync_entities.dart';
 import '../providers/sync_activity_provider.dart';
+import '../../domain/saved_comparison_entities.dart';
 import '../providers/saved_comparison_provider.dart';
+import '../screens/finding_items_screen.dart';
+import '../screens/inventory_compare_screen.dart';
+import 'channel_cards.dart';
 import 'module_toolbar.dart';
+import 'products_environment.dart';
 import 'orders_compare_panel.dart';
 import 'orders_report.dart';
 import 'saved_comparison_views.dart';
@@ -20,18 +25,31 @@ class EnvironmentPanel extends StatelessWidget {
     required this.environment,
     required this.integrations,
     required this.statsFor,
+    required this.onAction,
+    required this.onRefresh,
     this.businessId,
   });
 
   final SyncEnvironment environment;
   final List<MyIntegration> integrations;
   final IntegrationStats Function(int) statsFor;
+  final ChannelActionHandler onAction;
+  final Future<void> Function() onRefresh;
   final int? businessId;
 
   @override
   Widget build(BuildContext context) {
     if (environment == SyncEnvironment.overview) {
-      return OrdersReport(integrations: integrations, statsFor: statsFor);
+      return _Overview(
+        integrations: integrations,
+        statsFor: statsFor,
+        onAction: onAction,
+        onRefresh: onRefresh,
+      );
+    }
+
+    if (environment == SyncEnvironment.products) {
+      return ProductsEnvironment(businessId: businessId);
     }
 
     if (environment == SyncEnvironment.ordersCompare) {
@@ -55,6 +73,76 @@ class EnvironmentPanel extends StatelessWidget {
       spec: spec,
       integrations: integrations,
       businessId: businessId,
+    );
+  }
+}
+
+class _Overview extends StatelessWidget {
+  const _Overview({
+    required this.integrations,
+    required this.statsFor,
+    required this.onAction,
+    required this.onRefresh,
+  });
+
+  final List<MyIntegration> integrations;
+  final IntegrationStats Function(int) statsFor;
+  final ChannelActionHandler onAction;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final sales = integrations
+        .where((i) => (i.categoryCode ?? '') == 'ecommerce')
+        .toList();
+    final others = integrations.where((i) => !sales.contains(i)).toList();
+
+    var totals = const IntegrationStats(integrationId: 0);
+    for (final item in integrations) {
+      totals = totals + statsFor(item.id);
+    }
+
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      color: Theme.of(context).colorScheme.primary,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+        children: [
+          CoreCard(totals: totals),
+          const SizedBox(height: 16),
+          OrdersReport(
+            integrations: integrations,
+            statsFor: statsFor,
+            embedded: true,
+          ),
+          const SizedBox(height: 16),
+          if (sales.isNotEmpty) ...[
+            const AppSectionHeader(title: 'Canales de venta'),
+            for (final item in sales) ...[
+              ChannelCard(
+                integration: item,
+                stats: statsFor(item.id),
+                onAction: onAction,
+              ),
+              const SizedBox(height: 10),
+            ],
+            const SizedBox(height: 6),
+          ],
+          if (others.isNotEmpty) ...[
+            const AppSectionHeader(title: 'Otras integraciones'),
+            for (final item in others) ...[
+              ChannelCard(
+                integration: item,
+                stats: statsFor(item.id),
+                compact: true,
+                onAction: onAction,
+              ),
+              const SizedBox(height: 10),
+            ],
+          ],
+        ],
+      ),
     );
   }
 }
@@ -107,6 +195,24 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
     }
   }
 
+  void _openFinding(Finding finding) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => FindingItemsScreen(
+        finding: finding,
+        businessId: widget.businessId,
+      ),
+    ));
+  }
+
+  void _openChannel(MyIntegration channel) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => InventoryCompareScreen(
+        channel: channel,
+        businessId: widget.businessId,
+      ),
+    ));
+  }
+
   List<MyIntegration> get _comparableChannels => widget.integrations
       .where((i) =>
           syncProviderFor(i.integrationTypeId)?.supportsCompareInventory == true)
@@ -151,7 +257,10 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
             message: saved.findingsError!,
           );
         }
-        return FindingsSummaryView(report: saved.findings);
+        return FindingsSummaryView(
+          report: saved.findings,
+          onOpenFinding: _openFinding,
+        );
 
       case SyncEnvironment.data:
         if (saved.loadingData && saved.dataSummary.isEmpty) {
@@ -172,6 +281,7 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
           provider: saved,
           onRefreshChannel: (channel) =>
               saved.loadInventorySnapshot(channel, live: true),
+          onOpenChannel: _openChannel,
         );
 
       default:

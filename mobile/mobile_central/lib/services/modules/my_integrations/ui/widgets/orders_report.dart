@@ -11,10 +11,12 @@ class OrdersReport extends StatelessWidget {
     super.key,
     required this.integrations,
     required this.statsFor,
+    this.embedded = false,
   });
 
   final List<MyIntegration> integrations;
   final IntegrationStats Function(int id) statsFor;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +31,28 @@ class OrdersReport extends StatelessWidget {
         statsFor(b.id).ordersCount.compareTo(statsFor(a.id).ordersCount));
     final maxOrders = rows.isEmpty ? 0 : statsFor(rows.first.id).ordersCount;
 
+    if (embedded) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: _body(context, theme, totals, rows, maxOrders),
+      );
+    }
+
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-      children: [
+      children: _body(context, theme, totals, rows, maxOrders),
+    );
+  }
+
+  List<Widget> _body(
+    BuildContext context,
+    ThemeData theme,
+    IntegrationStats totals,
+    List<MyIntegration> rows,
+    int maxOrders,
+  ) {
+    return [
         Text(
           'Cuantas ordenes entraron por cada origen y en que estado van.',
           style: theme.textTheme.labelSmall,
@@ -82,8 +102,7 @@ class OrdersReport extends StatelessWidget {
           'ordenes.',
           style: theme.textTheme.labelSmall,
         ),
-      ],
-    );
+    ];
   }
 }
 

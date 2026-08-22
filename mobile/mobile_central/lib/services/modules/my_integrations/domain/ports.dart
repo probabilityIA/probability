@@ -60,6 +60,23 @@ abstract class ISavedComparisonRepository {
 
   Future<DataSummary> getDataSummary({int? businessId});
 
+  Future<FindingItemsPage> getFindingItems({
+    required String code,
+    int? businessId,
+    int page,
+    int pageSize,
+    String? search,
+  });
+
+  Future<MatrixPage> getMatchMatrix({
+    int? businessId,
+    int page,
+    int pageSize,
+    String? search,
+    List<int> presentIn,
+    List<int> missingIn,
+  });
+
   Future<InventoryComparePage> compareInventory(
     SyncProviderSpec spec,
     InventoryCompareQuery query,

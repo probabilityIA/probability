@@ -4,8 +4,6 @@ import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_tokens.dart';
 import '../../domain/sync_entities.dart';
 
-enum CoreView { diagrama, informe }
-
 class EnvironmentSpec {
   const EnvironmentSpec({
     required this.environment,
@@ -72,33 +70,25 @@ EnvironmentSpec environmentSpec(SyncEnvironment environment) =>
 class ModuleToolbar extends StatelessWidget implements PreferredSizeWidget {
   const ModuleToolbar({
     super.key,
-    required this.view,
     required this.environment,
-    required this.onView,
     required this.onEnvironment,
     this.running = false,
   });
 
-  final CoreView view;
   final SyncEnvironment environment;
-  final ValueChanged<CoreView> onView;
   final ValueChanged<SyncEnvironment> onEnvironment;
   final bool running;
 
   @override
-  Size get preferredSize => const Size.fromHeight(90);
+  Size get preferredSize => const Size.fromHeight(48);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: _ViewSwitch(view: view, onView: onView),
-        ),
         SizedBox(
-          height: 42,
+          height: 44,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -116,93 +106,6 @@ class ModuleToolbar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ViewSwitch extends StatelessWidget {
-  const _ViewSwitch({required this.view, required this.onView});
-
-  final CoreView view;
-  final ValueChanged<CoreView> onView;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 34,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: AppRadius.smAll,
-      ),
-      child: Row(
-        children: [
-          _ViewTab(
-            label: 'Diagrama',
-            icon: Icons.share_rounded,
-            active: view == CoreView.diagrama,
-            onTap: () => onView(CoreView.diagrama),
-          ),
-          _ViewTab(
-            label: 'Informe',
-            icon: Icons.table_rows_rounded,
-            active: view == CoreView.informe,
-            onTap: () => onView(CoreView.informe),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ViewTab extends StatelessWidget {
-  const _ViewTab({
-    required this.label,
-    required this.icon,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: active ? AppColors.surface : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 14,
-                color: active ? scheme.primary : AppColors.textMuted,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: active ? scheme.primary : AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -45,9 +45,14 @@ class SavedStamp extends StatelessWidget {
 }
 
 class FindingsSummaryView extends StatelessWidget {
-  const FindingsSummaryView({super.key, required this.report});
+  const FindingsSummaryView({
+    super.key,
+    required this.report,
+    required this.onOpenFinding,
+  });
 
   final FindingsReport report;
+  final void Function(Finding) onOpenFinding;
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +79,10 @@ class FindingsSummaryView extends StatelessWidget {
           const SizedBox(height: 6),
           const AppSectionHeader(title: 'Que hay por revisar'),
           for (final finding in report.findings) ...[
-            _FindingCard(finding: finding),
+            _FindingCard(
+              finding: finding,
+              onTap: () => onOpenFinding(finding),
+            ),
             const SizedBox(height: 10),
           ],
         ],
@@ -142,9 +150,10 @@ class _ChannelFindingCard extends StatelessWidget {
 }
 
 class _FindingCard extends StatelessWidget {
-  const _FindingCard({required this.finding});
+  const _FindingCard({required this.finding, required this.onTap});
 
   final Finding finding;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +165,7 @@ class _FindingCard extends StatelessWidget {
     };
 
     return AppCard(
+      onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -197,6 +207,7 @@ class _FindingCard extends StatelessWidget {
               ],
             ),
           ),
+          const Icon(Icons.chevron_right_rounded, color: AppColors.textDisabled),
         ],
       ),
     );
@@ -209,11 +220,13 @@ class InventorySnapshotView extends StatelessWidget {
     required this.channels,
     required this.provider,
     required this.onRefreshChannel,
+    required this.onOpenChannel,
   });
 
   final List<MyIntegration> channels;
   final SavedComparisonProvider provider;
   final void Function(MyIntegration) onRefreshChannel;
+  final void Function(MyIntegration) onOpenChannel;
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +247,7 @@ class InventorySnapshotView extends StatelessWidget {
             channel: channel,
             snapshot: provider.snapshotFor(channel.id),
             onRefresh: () => onRefreshChannel(channel),
+            onTap: () => onOpenChannel(channel),
           ),
           const SizedBox(height: 10),
         ],
@@ -247,11 +261,13 @@ class _InventoryChannelCard extends StatelessWidget {
     required this.channel,
     required this.snapshot,
     required this.onRefresh,
+    required this.onTap,
   });
 
   final MyIntegration channel;
   final ChannelSnapshot snapshot;
   final VoidCallback onRefresh;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -260,6 +276,7 @@ class _InventoryChannelCard extends StatelessWidget {
     final totals = snapshot.page?.totals;
 
     return AppCard(
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -326,7 +343,25 @@ class _InventoryChannelCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 9),
-            SavedStamp(when: snapshot.checkedAt, live: !snapshot.isSaved),
+            Row(
+              children: [
+                Expanded(
+                  child: SavedStamp(
+                    when: snapshot.checkedAt,
+                    live: !snapshot.isSaved,
+                  ),
+                ),
+                Text(
+                  'Ver productos',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 17, color: AppColors.textDisabled),
+              ],
+            ),
           ],
         ],
       ),

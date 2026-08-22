@@ -379,3 +379,221 @@ class InventoryCompareQuery {
         if (skus != null && skus!.isNotEmpty) 'skus': skus,
       };
 }
+
+class FindingItem {
+  const FindingItem({
+    required this.sku,
+    this.name,
+    this.detail,
+    this.channels = const <String>[],
+    this.counterpartSku,
+    this.counterpartName,
+    this.channelQty,
+    this.ownQty,
+    this.fixSide,
+    this.pattern,
+    this.presentIn = const <String>[],
+    this.missingIn = const <String>[],
+  });
+
+  final String sku;
+  final String? name;
+  final String? detail;
+  final List<String> channels;
+  final String? counterpartSku;
+  final String? counterpartName;
+  final int? channelQty;
+  final int? ownQty;
+  final String? fixSide;
+  final String? pattern;
+  final List<String> presentIn;
+  final List<String> missingIn;
+
+  bool get isPaired => counterpartSku != null && counterpartSku!.isNotEmpty;
+
+  bool get isCrossChannel => presentIn.isNotEmpty || missingIn.isNotEmpty;
+
+  static List<String> _list(dynamic value) => value is List
+      ? value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
+      : const <String>[];
+
+  static String? _text(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString();
+    return text.isEmpty ? null : text;
+  }
+
+  static int? _qty(dynamic value) => value == null ? null : _int(value);
+
+  factory FindingItem.fromJson(Map<String, dynamic> json) => FindingItem(
+        sku: json['sku']?.toString() ?? '',
+        name: _text(json['name']),
+        detail: _text(json['detail']),
+        channels: _list(json['channels']),
+        counterpartSku: _text(json['counterpart_sku']),
+        counterpartName: _text(json['counterpart_name']),
+        channelQty: _qty(json['channel_qty']),
+        ownQty: _qty(json['own_qty']),
+        fixSide: _text(json['fix_side']),
+        pattern: _text(json['pattern']),
+        presentIn: _list(json['present_in']),
+        missingIn: _list(json['missing_in']),
+      );
+}
+
+class MatrixColumn {
+  const MatrixColumn({
+    required this.integrationId,
+    required this.name,
+    required this.code,
+    this.imageUrl,
+    this.isSales = false,
+  });
+
+  final int integrationId;
+  final String name;
+  final String code;
+  final String? imageUrl;
+  final bool isSales;
+
+  factory MatrixColumn.fromJson(Map<String, dynamic> json) => MatrixColumn(
+        integrationId: _int(json['integration_id']),
+        name: json['name']?.toString() ?? '',
+        code: json['code']?.toString() ?? '',
+        imageUrl: json['image_url']?.toString(),
+        isSales: json['is_sales'] == true,
+      );
+}
+
+class MatrixCell {
+  const MatrixCell({
+    required this.integrationId,
+    required this.present,
+    this.sku,
+    this.barcode,
+    this.externalId,
+    this.variantId,
+    this.skuMatches = false,
+    this.skuKnown = false,
+  });
+
+  final int integrationId;
+  final bool present;
+  final String? sku;
+  final String? barcode;
+  final String? externalId;
+  final String? variantId;
+  final bool skuMatches;
+  final bool skuKnown;
+
+  bool get mismatched => present && skuKnown && !skuMatches;
+
+  factory MatrixCell.fromJson(Map<String, dynamic> json) => MatrixCell(
+        integrationId: _int(json['integration_id']),
+        present: json['present'] == true,
+        sku: json['sku']?.toString(),
+        barcode: json['barcode']?.toString(),
+        externalId: json['external_id']?.toString(),
+        variantId: json['variant_id']?.toString(),
+        skuMatches: json['sku_matches'] == true,
+        skuKnown: json['sku_known'] == true,
+      );
+}
+
+class MatrixRow {
+  const MatrixRow({
+    required this.productId,
+    required this.sku,
+    this.name,
+    this.barcode,
+    this.imageUrl,
+    this.cells = const <MatrixCell>[],
+  });
+
+  final String productId;
+  final String sku;
+  final String? name;
+  final String? barcode;
+  final String? imageUrl;
+  final List<MatrixCell> cells;
+
+  int get presentCount => cells.where((cell) => cell.present).length;
+
+  MatrixCell? cellFor(int integrationId) {
+    for (final cell in cells) {
+      if (cell.integrationId == integrationId) return cell;
+    }
+    return null;
+  }
+
+  factory MatrixRow.fromJson(Map<String, dynamic> json) => MatrixRow(
+        productId: json['product_id']?.toString() ?? '',
+        sku: json['sku']?.toString() ?? '',
+        name: json['name']?.toString(),
+        barcode: json['barcode']?.toString(),
+        imageUrl: json['image_url']?.toString(),
+        cells: (json['cells'] as List<dynamic>?)
+                ?.whereType<Map<String, dynamic>>()
+                .map(MatrixCell.fromJson)
+                .toList() ??
+            const <MatrixCell>[],
+      );
+}
+
+class MatrixPage {
+  const MatrixPage({
+    this.columns = const <MatrixColumn>[],
+    this.rows = const <MatrixRow>[],
+    this.total = 0,
+    this.page = 1,
+    this.totalPages = 0,
+  });
+
+  final List<MatrixColumn> columns;
+  final List<MatrixRow> rows;
+  final int total;
+  final int page;
+  final int totalPages;
+
+  factory MatrixPage.fromJson(Map<String, dynamic> json) => MatrixPage(
+        columns: (json['columns'] as List<dynamic>?)
+                ?.whereType<Map<String, dynamic>>()
+                .map(MatrixColumn.fromJson)
+                .toList() ??
+            const <MatrixColumn>[],
+        rows: (json['data'] as List<dynamic>?)
+                ?.whereType<Map<String, dynamic>>()
+                .map(MatrixRow.fromJson)
+                .toList() ??
+            const <MatrixRow>[],
+        total: _int(json['total']),
+        page: _int(json['page']) == 0 ? 1 : _int(json['page']),
+        totalPages: _int(json['total_pages']),
+      );
+}
+
+class FindingItemsPage {
+  const FindingItemsPage({
+    this.items = const <FindingItem>[],
+    this.total = 0,
+    this.page = 1,
+    this.totalPages = 0,
+  });
+
+  final List<FindingItem> items;
+  final int total;
+  final int page;
+  final int totalPages;
+
+  factory FindingItemsPage.fromJson(Map<String, dynamic> json) =>
+      FindingItemsPage(
+        items: (json['data'] as List<dynamic>?)
+                ?.whereType<Map<String, dynamic>>()
+                .map(FindingItem.fromJson)
+                .toList() ??
+            const <FindingItem>[],
+        total: _int(json['total']),
+        page: _int(json['page']) == 0 ? 1 : _int(json['page']),
+        totalPages: _int(json['total_pages']),
+      );
+}

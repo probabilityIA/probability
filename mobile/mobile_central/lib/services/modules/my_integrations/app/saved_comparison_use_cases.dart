@@ -13,6 +13,38 @@ class SavedComparisonUseCases {
   Future<DataSummary> getDataSummary({int? businessId}) =>
       _repository.getDataSummary(businessId: businessId);
 
+  Future<FindingItemsPage> getFindingItems({
+    required String code,
+    int? businessId,
+    int page = 1,
+    int pageSize = 50,
+    String? search,
+  }) =>
+      _repository.getFindingItems(
+        code: code,
+        businessId: businessId,
+        page: page,
+        pageSize: pageSize,
+        search: search,
+      );
+
+  Future<MatrixPage> getMatchMatrix({
+    int? businessId,
+    int page = 1,
+    int pageSize = 20,
+    String? search,
+    List<int> presentIn = const <int>[],
+    List<int> missingIn = const <int>[],
+  }) =>
+      _repository.getMatchMatrix(
+        businessId: businessId,
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        presentIn: presentIn,
+        missingIn: missingIn,
+      );
+
   Future<InventoryComparePage> compareInventory(
     SyncProviderSpec spec,
     InventoryCompareQuery query,
