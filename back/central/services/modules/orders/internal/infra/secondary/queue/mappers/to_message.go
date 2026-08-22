@@ -58,6 +58,7 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		ShippingAddress:     BuildShippingAddress(order),
 		PaymentMethodName:   order.PaymentMethodName,
 		TrackingNumber:      derefString(order.TrackingNumber),
+		TrackingURL:         firstNonEmpty(derefString(order.TrackingLink), derefString(order.GuideLink)),
 		Carrier:             extractCarrier(order),
 		IsPaid:              order.IsPaid,
 		DeliveryProbability: derefFloat64(order.DeliveryProbability),
@@ -186,6 +187,15 @@ func derefString(p *string) string {
 		return ""
 	}
 	return *p
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func extractCodCarrierFee(order *entities.ProbabilityOrder) *float64 {

@@ -16,4 +16,5 @@ var (
 	ErrResourceNotFound      = errors.New("tiendanube: recurso no encontrado")
 	ErrWebhookCreationFailed = errors.New("tiendanube: no se pudieron registrar los webhooks")
 	ErrMissingWebhookBaseURL = errors.New("tiendanube: falta la URL base publica para registrar webhooks")
+	ErrMissingExternalOrder  = errors.New("tiendanube: la orden no tiene id externo")
 )

@@ -8,8 +8,25 @@ const (
 
 	AuthMethodOAuth = "oauth"
 
-	ConfigAuthMethod = "auth_method"
-	ConfigScope      = "scope"
+	ConfigAuthMethod        = "auth_method"
+	ConfigScope             = "scope"
+	ConfigStatusSyncEnabled = "status_sync_enabled"
+)
+
+const (
+	FulfillmentUnpacked   = "UNPACKED"
+	FulfillmentPacked     = "PACKED"
+	FulfillmentDispatched = "DISPATCHED"
+	FulfillmentDelivered  = "DELIVERED"
+)
+
+const (
+	TrackingDispatched     = "dispatched"
+	TrackingInTransit      = "in_transit"
+	TrackingOutForDelivery = "out_for_delivery"
+	TrackingDelivered      = "delivered"
+	TrackingAttemptFailed  = "delivery_attempt_failed"
+	TrackingReturned       = "returned_to_sender"
 )
 
 const (

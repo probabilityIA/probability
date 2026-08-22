@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
@@ -142,4 +144,34 @@ type OrderFilters struct {
 	Status        string
 	PaymentStatus string
 	Limit         int
+}
+
+type FulfillmentOrder struct {
+	ID     string
+	Number int
+	Status string
+}
+
+type TrackingInfo struct {
+	Code           string
+	URL            string
+	NotifyCustomer bool
+}
+
+type TrackingEvent struct {
+	Status              string
+	Description         string
+	Address             string
+	HappenedAt          time.Time
+	EstimatedDeliveryAt *time.Time
+}
+
+type OrderStatusUpdate struct {
+	ExternalOrderID string
+	Status          string
+	TrackingNumber  string
+	TrackingURL     string
+	Carrier         string
+	City            string
+	HappenedAt      time.Time
 }

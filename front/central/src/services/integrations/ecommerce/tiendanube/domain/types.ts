@@ -3,6 +3,7 @@ export interface TiendanubeConfig {
     store_id?: string;
     is_testing?: boolean;
     inventory_sync_enabled?: boolean;
+    status_sync_enabled?: boolean;
     inventory_single_warehouse_id?: number;
 }
 

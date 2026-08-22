@@ -142,3 +142,71 @@ orden de prueba y confirmar en el log que no aparece
 "Webhook de Tiendanube rechazado".
 
 El mock de `back/testing` no emite webhooks, asi que no se ve afectado.
+
+## Push-back de estado y guia hacia Tiendanube (implementado el mismo dia)
+
+Faltaba la vuelta completa: el cliente de ordenes de Tiendanube solo leia
+(`GetOrder`, `GetOrders`). Cuando Probability generaba la guia, el comprador
+seguia viendo su pedido "por empaquetar" en la tienda y el correo de seguimiento
+que Tiendanube manda solo nunca salia.
+
+La mitad ya existia: el modulo de ordenes publica cada cambio de estado al
+exchange fanout `orders.events`, y **Jumpseller y MercadoLibre ya se
+suscribian**. Tiendanube no.
+
+Lo implementado:
+
+- `shared/rabbitmq`: cola `orders.events.tiendanube`.
+- `tiendanube/internal/infra/primary/queue/order_status_consumer.go`: consume
+  `order.status_changed`, filtra por plataforma y llama al usecase.
+- `client/fulfillment.go`: `ListFulfillmentOrders`, `UpdateFulfillmentOrder`
+  (PATCH), `CreateTrackingEvent` (POST) y `CancelOrder`.
+- `usecases/update_status.go`: homologacion de estados y progresion.
+
+Endpoints usados (doc: https://tiendanube.github.io/api-documentation/resources/fulfillment-order):
+
+```
+GET   /orders/{id}/fulfillment-orders
+PATCH /orders/{id}/fulfillment-orders/{fo_id}     {"status":"DISPATCHED","tracking_info":{"code","url","notify_customer"}}
+POST  /orders/{id}/fulfillment-orders/{fo_id}/tracking-events
+POST  /orders/{id}/cancel
+```
+
+Homologacion:
+
+| Probability | Fulfillment | Evento de seguimiento |
+|---|---|---|
+| picking, packing, ready_to_ship | PACKED | - |
+| assigned_to_driver, picked_up, shipped | DISPATCHED | dispatched |
+| in_transit | DISPATCHED | in_transit |
+| out_for_delivery | DISPATCHED | out_for_delivery |
+| delivered | DELIVERED | delivered |
+| delivery_novelty, delivery_failed | DISPATCHED | delivery_attempt_failed |
+| rejected, return_in_transit, returned | DISPATCHED | returned_to_sender |
+| cancelled | - | `POST /orders/{id}/cancel` |
+
+Detalles que importan:
+
+- **La API no deja saltar pasos**, asi que `pasosHasta` aplica los intermedios en
+  orden: una orden en UNPACKED que pasa a `in_transit` recibe PACKED y luego
+  DISPATCHED. Nunca retrocede: si ya esta DISPATCHED y llega una novedad, solo se
+  registra el evento.
+- El `tracking_info` viaja en el paso **DISPATCHED** con `notify_customer: true`,
+  que es lo que dispara el aviso de Tiendanube al comprador. Sin numero de guia no
+  se manda el objeto.
+- El link de rastreo no venia en el evento: se agrego `tracking_url` al
+  `OrderSnapshot` del modulo de ordenes, tomando `tracking_link` y cayendo a
+  `guide_link`. Eso tambien le sirve a Jumpseller y MercadoLibre.
+- Apagado por defecto: requiere `status_sync_enabled` en el config de la
+  integracion, con interruptor nuevo en el formulario de edicion.
+- Un 404 al listar fulfillment orders se trata como "no hay nada que actualizar",
+  no como error.
+
+Tests en `update_status_test.go`: progresion de pasos, no retroceso, sync
+apagado, estado sin homologar, transito con evento, entrega, novedad sin patch,
+cancelacion, orden sin guia y orden sin id externo.
+
+**Sin probar contra la API real**: hace falta desplegar, activar el interruptor
+en la integracion 264 y mover una orden de la tienda de prueba por picking ->
+in_transit -> delivered, comprobando en el admin de Tiendanube que el pedido
+avanza, muestra la guia y lista los eventos de seguimiento.

@@ -21,6 +21,10 @@ type ITiendanubeClient interface {
 	DeleteWebhook(ctx context.Context, cred Credential, webhookID string) error
 	GetOrder(ctx context.Context, cred Credential, orderID string) (*TiendanubeOrder, []byte, error)
 	GetOrders(ctx context.Context, cred Credential, filters OrderFilters) ([]TiendanubeOrder, error)
+	ListFulfillmentOrders(ctx context.Context, cred Credential, orderID string) ([]FulfillmentOrder, error)
+	UpdateFulfillmentOrder(ctx context.Context, cred Credential, orderID, fulfillmentOrderID, status string, tracking *TrackingInfo) error
+	CreateTrackingEvent(ctx context.Context, cred Credential, orderID, fulfillmentOrderID string, event TrackingEvent) error
+	CancelOrder(ctx context.Context, cred Credential, orderID string) error
 }
 
 type IIntegrationService interface {
