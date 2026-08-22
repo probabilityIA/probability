@@ -14,6 +14,7 @@ class MyIntegrationsProvider extends ChangeNotifier {
   MyIntegration? _selectedIntegration;
   Pagination? _pagination;
   bool _isLoading = false;
+  Map<int, IntegrationStats> _stats = {};
   String? _error;
   int _page = 1;
   final int _pageSize = 20;
@@ -28,6 +29,10 @@ class MyIntegrationsProvider extends ChangeNotifier {
   MyIntegration? get selectedIntegration => _selectedIntegration;
   Pagination? get pagination => _pagination;
   bool get isLoading => _isLoading;
+  Map<int, IntegrationStats> get stats => _stats;
+
+  IntegrationStats statsFor(int integrationId) =>
+      _stats[integrationId] ?? IntegrationStats(integrationId: integrationId);
   String? get error => _error;
   int get page => _page;
 
@@ -87,5 +92,15 @@ class MyIntegrationsProvider extends ChangeNotifier {
     _categoryFilter = '';
     _activeFilter = null;
     _page = 1;
+  }
+
+  Future<void> fetchStats({int? businessId}) async {
+    try {
+      final rows = await _useCases.getStats(businessId: businessId);
+      _stats = {for (final r in rows) r.integrationId: r};
+      notifyListeners();
+    } catch (_) {
+      _stats = {};
+    }
   }
 }

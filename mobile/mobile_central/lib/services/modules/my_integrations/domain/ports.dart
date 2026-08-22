@@ -4,4 +4,5 @@ import 'entities.dart';
 abstract class IMyIntegrationsRepository {
   Future<PaginatedResponse<MyIntegration>> getIntegrations(GetMyIntegrationsParams? params);
   Future<MyIntegration> getIntegrationById(int id, {int? businessId});
+  Future<List<IntegrationStats>> getStats({int? businessId});
 }

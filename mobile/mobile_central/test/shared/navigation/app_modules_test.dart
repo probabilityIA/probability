@@ -48,6 +48,52 @@ void main() {
     });
   });
 
+  group('modulos por rol', () {
+    test('el catalogo de integraciones es solo del super admin', () {
+      final integraciones =
+          AppModules.all.firstWhere((m) => m.route == '/integrations');
+
+      expect(integraciones.superAdminOnly, isTrue);
+      expect(
+        AppModules.isRouteAllowed('/integrations', isSuperAdmin: false),
+        isFalse,
+      );
+      expect(
+        AppModules.isRouteAllowed('/integrations', isSuperAdmin: true),
+        isTrue,
+      );
+    });
+
+    test('el usuario normal no ve el catalogo en el menu', () {
+      final rutas = AppModules.visibleGroupsFor(isSuperAdmin: false)
+          .expand((g) => g.modules)
+          .map((m) => m.route)
+          .toList();
+
+      expect(rutas, isNot(contains('/integrations')));
+      expect(rutas, contains('/core'));
+    });
+
+    test('el super admin si lo ve', () {
+      final rutas = AppModules.visibleGroupsFor(isSuperAdmin: true)
+          .expand((g) => g.modules)
+          .map((m) => m.route)
+          .toList();
+
+      expect(rutas, contains('/integrations'));
+    });
+
+    test('tus integraciones esta disponible para todos', () {
+      expect(AppModules.isRouteAllowed('/core', isSuperAdmin: false), isTrue);
+      expect(AppModules.isRouteAllowed('/core', isSuperAdmin: true), isTrue);
+    });
+
+    test('ultima milla sigue bloqueada para ambos', () {
+      expect(AppModules.isRouteAllowed('/delivery', isSuperAdmin: true), isFalse);
+      expect(AppModules.isRouteAllowed('/delivery', isSuperAdmin: false), isFalse);
+    });
+  });
+
   group('barra inferior', () {
     test('son cuatro pestanias y ninguna es de envios', () {
       final labels = appBottomTabs.map((t) => t.label).toList();

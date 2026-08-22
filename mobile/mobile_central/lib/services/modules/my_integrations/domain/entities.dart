@@ -1,3 +1,56 @@
+class IntegrationStats {
+  const IntegrationStats({
+    required this.integrationId,
+    this.ordersCount = 0,
+    this.ordersInProgress = 0,
+    this.ordersDelivered = 0,
+    this.ordersCancelled = 0,
+    this.ordersReturned = 0,
+    this.productsCount = 0,
+    this.lastOrderAt,
+  });
+
+  final int integrationId;
+  final int ordersCount;
+  final int ordersInProgress;
+  final int ordersDelivered;
+  final int ordersCancelled;
+  final int ordersReturned;
+  final int productsCount;
+  final String? lastOrderAt;
+
+  bool get hasOrders => ordersCount > 0;
+
+  static int _int(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.round();
+    return 0;
+  }
+
+  factory IntegrationStats.fromJson(Map<String, dynamic> json) {
+    return IntegrationStats(
+      integrationId: _int(json['integration_id']),
+      ordersCount: _int(json['orders_count']),
+      ordersInProgress: _int(json['orders_in_progress']),
+      ordersDelivered: _int(json['orders_delivered']),
+      ordersCancelled: _int(json['orders_cancelled']),
+      ordersReturned: _int(json['orders_returned']),
+      productsCount: _int(json['products_count']),
+      lastOrderAt: json['last_order_at'],
+    );
+  }
+
+  IntegrationStats operator +(IntegrationStats other) => IntegrationStats(
+        integrationId: 0,
+        ordersCount: ordersCount + other.ordersCount,
+        ordersInProgress: ordersInProgress + other.ordersInProgress,
+        ordersDelivered: ordersDelivered + other.ordersDelivered,
+        ordersCancelled: ordersCancelled + other.ordersCancelled,
+        ordersReturned: ordersReturned + other.ordersReturned,
+        productsCount: productsCount + other.productsCount,
+      );
+}
+
 class MyIntegration {
   final int id;
   final String createdAt;

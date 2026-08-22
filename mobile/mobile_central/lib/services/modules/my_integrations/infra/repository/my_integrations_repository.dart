@@ -29,4 +29,17 @@ class MyIntegrationsApiRepository implements IMyIntegrationsRepository {
     final response = await _client.get('/integrations/$id', queryParameters: qp);
     return MyIntegration.fromJson(response.data['data'] ?? response.data);
   }
+
+  @override
+  Future<List<IntegrationStats>> getStats({int? businessId}) async {
+    final response = await _client.get(
+      '/integrations/stats',
+      queryParameters: <String, dynamic>{'business_id': ?businessId},
+    );
+    final data = response.data;
+    final items = (data is Map ? data['data'] : data) as List<dynamic>?;
+    return (items ?? [])
+        .map((e) => IntegrationStats.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 }

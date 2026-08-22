@@ -26,6 +26,7 @@ import '../../shared/widgets/modules/notifications_module_screen.dart';
 import '../../shared/widgets/modules/invoicing_module_screen.dart';
 
 // Shared
+import '../../services/modules/my_integrations/ui/screens/core_screen.dart';
 import '../../shared/navigation/app_modules.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/business_selector_wrapper.dart';
@@ -46,7 +47,11 @@ class AppRouter {
 
       if (!isLoggedIn && !isPublicRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/dashboard';
-      if (isLoggedIn && !AppModules.isRouteAvailable(state.matchedLocation)) {
+      if (isLoggedIn &&
+          !AppModules.isRouteAllowed(
+            state.matchedLocation,
+            isSuperAdmin: loginProvider.isSuperAdmin,
+          )) {
         return '/dashboard';
       }
       return null;
@@ -66,6 +71,13 @@ class AppRouter {
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
+          GoRoute(
+            path: '/core',
+            builder: (context, state) => _withBusiness(
+              (id) => CoreScreen(businessId: id),
+            ),
+          ),
+
           // Dashboard (página inicial)
           GoRoute(
             path: '/dashboard',

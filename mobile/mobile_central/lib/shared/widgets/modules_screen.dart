@@ -27,7 +27,9 @@ class ModulesScreen extends StatelessWidget {
       body: ListView(
         padding: AppSpacing.page,
         children: [
-          for (final group in AppModules.visibleGroups) ...[
+          for (final group in AppModules.visibleGroupsFor(
+            isSuperAdmin: context.watch<LoginProvider>().isSuperAdmin,
+          )) ...[
             AppSectionHeader(title: group.title),
             GridView.builder(
               shrinkWrap: true,

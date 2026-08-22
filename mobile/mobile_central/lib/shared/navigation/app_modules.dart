@@ -27,6 +27,7 @@ class AppModule {
     this.matchPrefix = false,
     this.resources = const [],
     this.stage = ModuleStage.prod,
+    this.superAdminOnly = false,
   });
 
   final String label;
@@ -36,6 +37,7 @@ class AppModule {
   final bool matchPrefix;
   final List<String> resources;
   final ModuleStage stage;
+  final bool superAdminOnly;
 
   bool get isVisible => stage.isVisible;
 
@@ -54,6 +56,11 @@ class AppModuleGroup {
 
   List<AppModule> get visibleModules =>
       modules.where((module) => module.isVisible).toList();
+
+  List<AppModule> visibleFor({required bool isSuperAdmin}) => modules
+      .where((module) => module.isVisible)
+      .where((module) => isSuperAdmin || !module.superAdminOnly)
+      .toList();
 }
 
 class AppModules {
@@ -167,9 +174,16 @@ class AppModules {
           label: 'Integraciones',
           route: '/integrations',
           icon: Icons.hub_outlined,
-          description: 'Tiendas, transporte y facturacion',
+          description: 'Catalogo de conectores',
           matchPrefix: true,
           resources: ['Integraciones', 'Integrations'],
+          superAdminOnly: true,
+        ),
+        AppModule(
+          label: 'Tus integraciones',
+          route: '/core',
+          icon: Icons.auto_awesome_outlined,
+          description: 'Lo que tienes conectado',
         ),
         AppModule(
           label: 'Tienda online',
@@ -213,13 +227,28 @@ class AppModules {
   static List<AppModule> get all =>
       groups.expand((group) => group.modules).toList();
 
-  static List<AppModuleGroup> get visibleGroups => groups
-      .map((group) => AppModuleGroup(
-            title: group.title,
-            modules: group.visibleModules,
-          ))
-      .where((group) => group.modules.isNotEmpty)
-      .toList();
+  static List<AppModuleGroup> get visibleGroups =>
+      visibleGroupsFor(isSuperAdmin: true);
+
+  static List<AppModuleGroup> visibleGroupsFor({required bool isSuperAdmin}) =>
+      groups
+          .map((group) => AppModuleGroup(
+                title: group.title,
+                modules: group.visibleFor(isSuperAdmin: isSuperAdmin),
+              ))
+          .where((group) => group.modules.isNotEmpty)
+          .toList();
+
+  static bool isRouteAllowed(String location, {required bool isSuperAdmin}) {
+    for (final module in all) {
+      if (module.owns(location)) {
+        if (!module.isVisible) return false;
+        if (module.superAdminOnly && !isSuperAdmin) return false;
+        return true;
+      }
+    }
+    return true;
+  }
 
   static bool isRouteAvailable(String location) {
     for (final module in all) {
