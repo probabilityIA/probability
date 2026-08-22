@@ -52,6 +52,8 @@ func (uc *jumpsellerUseCase) ReconcileProductsAsync(ctx context.Context, integra
 		"not_associated":      len(result.MatchedNotAssociated),
 		"only_in_probability": len(result.OnlyInProbability),
 		"only_in_channel":     len(result.OnlyInJumpseller),
+		"probability_no_sku":  result.ProbabilityNoSKU,
+		"jumpseller_no_sku":   result.JumpsellerNoSKU,
 		"match_rules":         result.MatchRules,
 	}
 

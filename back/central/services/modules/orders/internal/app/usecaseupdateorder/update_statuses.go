@@ -160,6 +160,16 @@ func (uc *UseCaseUpdateOrder) mapPaymentStatusID(ctx context.Context, dto *dtos.
 		return dto.PaymentStatusID
 	}
 
+	for _, p := range dto.Payments {
+		if p.Status == "completed" {
+			paidID, err := uc.repo.GetPaymentStatusIDByCode(ctx, "paid")
+			if err == nil && paidID != nil {
+				return paidID
+			}
+			break
+		}
+	}
+
 	if dto.IntegrationType == "shopify" && len(dto.PaymentDetails) > 0 {
 		var paymentDetails map[string]interface{}
 		if err := json.Unmarshal(dto.PaymentDetails, &paymentDetails); err != nil {
