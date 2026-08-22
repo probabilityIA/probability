@@ -68,6 +68,19 @@ Si por algo hay que escribir un `ListView` a mano, cumplir igual:
 - Tarjetas de listado con constructor `const` donde se pueda, y sin animaciones
   ni sombras costosas por item.
 
+## 4.1 Excepcion acotada: colecciones dentro de una pantalla de detalle
+
+Dos pantallas construyen su coleccion completa de golpe porque el API la
+devuelve entera y no existe endpoint paginado:
+
+- `route_detail_screen.dart` - las paradas de la ruta.
+- `order_detail_sections.dart` - los items de la orden.
+
+Se aceptan mientras sean colecciones acotadas. **Umbral: si una ruta puede pasar
+de ~80 paradas o una orden de ~80 items**, hay que pasar esa pantalla a
+`CustomScrollView` + `SliverList.builder` para dejar de construir todo de una.
+No agregar mas casos como estos.
+
 ## 5. Catalogos chicos
 
 Los catalogos de menos de 50 registros (roles, permisos, recursos, acciones,

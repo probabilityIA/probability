@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -7,67 +8,53 @@ import '../../infra/repository/user_repository.dart';
 import '../../../../../core/errors/error_parser.dart';
 
 class UserProvider extends ChangeNotifier {
-  final ApiClient _apiClient;
+  UserProvider({required ApiClient apiClient, UserUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases {
+    list = PagedListController<User>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
+  }
 
-  List<User> _users = [];
-  Pagination? _pagination;
-  bool _isLoading = false;
+  final ApiClient _apiClient;
+  final UserUseCases? _injectedUseCases;
+  late final PagedListController<User> list;
+
+  int? _businessId;
   String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
   String _nameFilter = '';
   String _emailFilter = '';
 
-  UserProvider({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  List<User> get users => _users;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  int get page => _page;
-  int get pageSize => _pageSize;
+  List<User> get users => list.loadedItems;
+  bool get isLoading => list.isLoading;
+  String? get error => _error ?? list.error;
 
   UserUseCases get _useCases =>
-      UserUseCases(UserApiRepository(_apiClient));
+      _injectedUseCases ?? UserUseCases(UserApiRepository(_apiClient));
 
-  Future<void> fetchUsers({int? businessId}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final params = GetUsersParams(
-        page: _page,
-        pageSize: _pageSize,
-        name: _nameFilter.isNotEmpty ? _nameFilter : null,
-        email: _emailFilter.isNotEmpty ? _emailFilter : null,
-        businessId: businessId,
-      );
-      final response = await _useCases.getUsers(params);
-      _users = response.data;
-      _pagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoading = false;
-    notifyListeners();
+  Future<PaginatedResponse<User>> _fetchPage(int page, int pageSize) {
+    return _useCases.getUsers(GetUsersParams(
+      page: page,
+      pageSize: pageSize,
+      name: _nameFilter.isNotEmpty ? _nameFilter : null,
+      email: _emailFilter.isNotEmpty ? _emailFilter : null,
+      businessId: _businessId,
+    ));
   }
 
-  void setPage(int page) {
-    _page = page;
+  Future<void> fetchUsers({int? businessId}) {
+    _businessId = businessId;
+    _error = null;
+    return list.refresh();
   }
 
   void setFilters({String? name, String? email}) {
     _nameFilter = name ?? _nameFilter;
     _emailFilter = email ?? _emailFilter;
-    _page = 1;
   }
 
   void resetFilters() {
     _nameFilter = '';
     _emailFilter = '';
-    _page = 1;
   }
 
   Future<User?> createUser(CreateUserDTO data) async {
@@ -112,5 +99,12 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
   }
 }

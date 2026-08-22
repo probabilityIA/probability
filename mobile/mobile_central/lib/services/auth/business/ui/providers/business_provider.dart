@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -10,24 +11,27 @@ class BusinessProvider extends ChangeNotifier {
   final ApiClient _apiClient;
   final BusinessUseCases? _injectedUseCases;
 
-  List<Business> _businesses = [];
   List<BusinessSimple> _businessesSimple = [];
   List<BusinessType> _businessTypes = [];
-  Pagination? _pagination;
   bool _isLoading = false;
   String? _error;
   int? _selectedBusinessId;
+  GetBusinessesParams? _params;
+
+  late final PagedListController<Business> list;
 
   BusinessProvider({required ApiClient apiClient, BusinessUseCases? useCases})
       : _apiClient = apiClient,
-        _injectedUseCases = useCases;
+        _injectedUseCases = useCases {
+    list = PagedListController<Business>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
+  }
 
-  List<Business> get businesses => _businesses;
+  List<Business> get businesses => list.loadedItems;
   List<BusinessSimple> get businessesSimple => _businessesSimple;
   List<BusinessType> get businessTypes => _businessTypes;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+  bool get isLoading => _isLoading || list.isLoading;
+  String? get error => _error ?? list.error;
   int? get selectedBusinessId => _selectedBusinessId;
 
   BusinessUseCases get _useCases =>
@@ -38,21 +42,20 @@ class BusinessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchBusinesses({GetBusinessesParams? params}) async {
-    _isLoading = true;
+  Future<PaginatedResponse<Business>> _fetchPage(int page, int pageSize) {
+    final base = _params;
+    return _useCases.getBusinesses(GetBusinessesParams(
+      page: page,
+      pageSize: pageSize,
+      name: base?.name,
+      businessTypeId: base?.businessTypeId,
+    ));
+  }
+
+  Future<void> fetchBusinesses({GetBusinessesParams? params}) {
+    _params = params;
     _error = null;
-    notifyListeners();
-
-    try {
-      final response = await _useCases.getBusinesses(params);
-      _businesses = response.data;
-      _pagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoading = false;
-    notifyListeners();
+    return list.refresh();
   }
 
   Future<void> fetchBusinessesSimple() async {

@@ -61,28 +61,36 @@ class _PermissionListScreenState extends State<PermissionListScreen> {
         return RefreshIndicator(
           onRefresh: () async => _refresh(),
           color: AppColors.primary,
-          child: ListView(
+          child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: AppSpacing.page,
-            children: [
-              for (final resource in resources) ...[
-                AppSectionHeader(title: resource),
-                AppCard(
-                  child: Wrap(
-                    spacing: 7,
-                    runSpacing: 7,
-                    children: grouped[resource]!
-                        .map((permission) => AppStatusChip(
-                              label: permissionActionLabels[permission.action] ?? permission.action ?? '-',
-                              tone: AppStatusTone.brand,
-                            ))
-                        .toList(),
+            cacheExtent: 600,
+            addAutomaticKeepAlives: false,
+            itemCount: resources.length,
+            itemBuilder: (context, index) {
+              final resource = resources[index];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppSectionHeader(title: resource),
+                  AppCard(
+                    child: Wrap(
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: grouped[resource]!
+                          .map((permission) => AppStatusChip(
+                                label: permissionActionLabels[permission.action] ??
+                                    permission.action ??
+                                    '-',
+                                tone: AppStatusTone.brand,
+                              ))
+                          .toList(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              const SizedBox(height: 12),
-            ],
+                  SizedBox(height: index == resources.length - 1 ? 28 : 16),
+                ],
+              );
+            },
           ),
         );
       },

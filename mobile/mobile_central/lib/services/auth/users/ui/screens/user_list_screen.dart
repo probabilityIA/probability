@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../shared/theme/app_colors.dart';
-import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/widgets/network_avatar.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
@@ -29,32 +27,14 @@ class _UserListScreenState extends State<UserListScreen> {
   Widget build(BuildContext context) {
     return Consumer<UserProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading && provider.users.isEmpty) {
-          return const AppListSkeleton();
-        }
-        if (provider.error != null && provider.users.isEmpty) {
-          return AppErrorState(message: provider.error!, onRetry: _refresh);
-        }
-        if (provider.users.isEmpty) {
-          return AppEmptyState(
-            icon: Icons.people_alt_outlined,
-            title: 'Sin usuarios',
-            message: 'Invita a tu equipo para que opere contigo.',
-            actionLabel: 'Actualizar',
-            onAction: _refresh,
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async => _refresh(),
-          color: AppColors.primary,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppSpacing.page,
-            itemCount: provider.users.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
-            itemBuilder: (context, index) => _UserCard(user: provider.users[index]),
-          ),
+        return PaginatedListView<User>(
+          controller: provider.list,
+          unitLabel: 'usuarios',
+          placeholderHeight: 82,
+          emptyIcon: Icons.people_alt_outlined,
+          emptyTitle: 'Sin usuarios',
+          emptyMessage: 'Invita a tu equipo para que opere contigo.',
+          itemBuilder: (context, user, index) => _UserCard(user: user),
         );
       },
     );
