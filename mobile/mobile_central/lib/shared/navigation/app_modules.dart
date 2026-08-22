@@ -285,13 +285,6 @@ const List<AppBottomTab> appBottomTabs = [
     prefixes: ['/orders'],
   ),
   AppBottomTab(
-    label: 'Envios',
-    route: '/orders/shipments',
-    icon: Icons.local_shipping_outlined,
-    activeIcon: Icons.local_shipping,
-    prefixes: ['/orders/shipments'],
-  ),
-  AppBottomTab(
     label: 'Inventario',
     route: '/inventory',
     icon: Icons.inventory_2_outlined,

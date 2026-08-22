@@ -66,7 +66,7 @@ class ShipmentCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    AppFormat.money(shipment.totalCost),
+                    AppFormat.money(shipment.listCost),
                     style: theme.textTheme.titleSmall?.copyWith(fontSize: 15),
                   ),
                   const SizedBox(height: 3),

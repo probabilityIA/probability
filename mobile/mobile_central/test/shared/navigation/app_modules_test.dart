@@ -49,11 +49,17 @@ void main() {
   });
 
   group('barra inferior', () {
-    test('la pestania de envios apunta a guias, no a ultima milla', () {
-      final envios = appBottomTabs.firstWhere((t) => t.label == 'Envios');
+    test('son cuatro pestanias y ninguna es de envios', () {
+      final labels = appBottomTabs.map((t) => t.label).toList();
 
-      expect(envios.route, '/orders/shipments');
-      expect(AppModules.isRouteAvailable(envios.route), isTrue);
+      expect(labels, ['Inicio', 'Ordenes', 'Inventario', 'Mas']);
+    });
+
+    test('las guias quedan bajo la pestania de ordenes', () {
+      final ordenes = appBottomTabs.firstWhere((t) => t.label == 'Ordenes');
+
+      expect(ordenes.matches('/orders/shipments'), isTrue);
+      expect(ordenes.matches('/orders/shipments/9'), isTrue);
     });
 
     test('ninguna pestania apunta a un modulo oculto', () {
@@ -78,11 +84,12 @@ void main() {
       }
 
       final ordenes = appBottomTabs.indexWhere((t) => t.label == 'Ordenes');
-      final envios = appBottomTabs.indexWhere((t) => t.label == 'Envios');
+      final inventario = appBottomTabs.indexWhere((t) => t.label == 'Inventario');
 
       expect(indexFor('/orders'), ordenes);
-      expect(indexFor('/orders/shipments'), envios);
-      expect(indexFor('/orders/shipments/9'), envios);
+      expect(indexFor('/orders/shipments'), ordenes);
+      expect(indexFor('/orders/shipments/9'), ordenes);
+      expect(indexFor('/inventory/stock'), inventario);
     });
   });
 }

@@ -42,6 +42,8 @@ class Shipment {
   final double? codProbabilityMargin;
   final String? probabilityGuideUrl;
 
+  double? get listCost => totalCost ?? shippingCost;
+
   double get marginAmount {
     if (appliedMargin != null) return appliedMargin!;
     if (totalCost != null && carrierCost != null) return totalCost! - carrierCost!;

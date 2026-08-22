@@ -214,9 +214,11 @@ reactivarlo se cambia una sola linea a `ModuleStage.beta` o `prod`.
 Al ocultarlo salieron dos cosas de paso:
 
 - La pestania inferior "Envios" apuntaba a `/delivery` (ultima milla), no a las
-  guias. Ahora apunta a `/orders/shipments`, que es el modulo real. La barra
-  inferior pasa a elegir la pestania **mas especifica** en vez de la primera que
-  coincide, porque `/orders` y `/orders/shipments` se solapan.
+  guias. Se **elimina** de la barra: las guias ya viven como pestania dentro de
+  Ordenes, y tenerlas dos veces confundia. La barra queda en cuatro: Inicio,
+  Ordenes, Inventario y Mas. Ademas pasa a elegir la pestania **mas especifica**
+  en vez de la primera que coincide, para que `/orders/shipments` marque
+  Ordenes.
 - `home_screen.dart` era codigo muerto (no lo referenciaba nadie) y contenia los
   accesos rapidos a Rutas, Conductores y Vehiculos. Se elimina.
 
