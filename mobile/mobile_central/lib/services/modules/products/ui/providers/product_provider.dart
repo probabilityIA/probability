@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -7,75 +8,52 @@ import '../../infra/repository/product_repository.dart';
 import '../../../../../core/errors/error_parser.dart';
 
 class ProductProvider extends ChangeNotifier {
-  final ApiClient _apiClient;
-
-  List<Product> _products = [];
-  Pagination? _pagination;
-  bool _isLoading = false;
-  String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
-  String _nameFilter = '';
-  String _skuFilter = '';
-
-  ProductProvider({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  List<Product> get products => _products;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  int get page => _page;
-
-  ProductUseCases get _useCases => ProductUseCases(ProductApiRepository(_apiClient));
-
-  bool _isLoadingMore = false;
-  List<ProductIntegration> _integrations = [];
-
-  bool get isLoadingMore => _isLoadingMore;
-  bool get hasMore => _pagination?.hasNext ?? false;
-  List<ProductIntegration> get integrations => _integrations;
-
-  GetProductsParams _params(int? businessId, int page) => GetProductsParams(
-        page: page,
-        pageSize: _pageSize,
-        businessId: businessId,
-        name: _nameFilter.isNotEmpty ? _nameFilter : null,
-        sku: _skuFilter.isNotEmpty ? _skuFilter : null,
-      );
-
-  Future<void> fetchProducts({int? businessId}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final response = await _useCases.getProducts(_params(businessId, _page));
-      _products = response.data;
-      _pagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoading = false;
-    notifyListeners();
+  ProductProvider({required ApiClient apiClient, ProductUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases {
+    list = PagedListController<Product>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
   }
 
-  Future<void> loadMore({int? businessId}) async {
-    if (_isLoading || _isLoadingMore || !hasMore) return;
-    _isLoadingMore = true;
-    notifyListeners();
+  final ApiClient _apiClient;
+  final ProductUseCases? _injectedUseCases;
+  late final PagedListController<Product> list;
 
-    try {
-      final response = await _useCases.getProducts(_params(businessId, _page + 1));
-      _products = [..._products, ...response.data];
-      _pagination = response.pagination;
-      _page += 1;
-    } catch (e) {
-      _error = parseError(e);
-    }
+  int? _businessId;
+  String? _error;
+  String _nameFilter = '';
+  String _skuFilter = '';
+  List<ProductIntegration> _integrations = [];
 
-    _isLoadingMore = false;
-    notifyListeners();
+  List<Product> get products => list.loadedItems;
+  bool get isLoading => list.isLoading;
+  bool get isLoadingMore => list.isLoadingMore;
+  bool get hasMore => list.hasMore;
+  String? get error => _error ?? list.error;
+  List<ProductIntegration> get integrations => _integrations;
+
+  ProductUseCases get _useCases =>
+      _injectedUseCases ?? ProductUseCases(ProductApiRepository(_apiClient));
+
+  Future<PaginatedResponse<Product>> _fetchPage(int page, int pageSize) {
+    return _useCases.getProducts(GetProductsParams(
+      page: page,
+      pageSize: pageSize,
+      businessId: _businessId,
+      name: _nameFilter.isNotEmpty ? _nameFilter : null,
+      sku: _skuFilter.isNotEmpty ? _skuFilter : null,
+    ));
+  }
+
+  Future<void> fetchProducts({int? businessId}) {
+    _businessId = businessId;
+    _error = null;
+    return list.refresh();
+  }
+
+  Future<void> loadMore({int? businessId}) {
+    if (businessId != null) _businessId = businessId;
+    return list.loadMore();
   }
 
   Future<void> fetchIntegrations(String productId) async {
@@ -88,7 +66,7 @@ class ProductProvider extends ChangeNotifier {
   }
 
   Product? productById(String id) {
-    for (final product in _products) {
+    for (final product in list.loadedItems) {
       if (product.id == id) return product;
     }
     return null;
@@ -126,19 +104,20 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  void setPage(int page) {
-    _page = page;
-  }
-
   void setFilters({String? name, String? sku}) {
     _nameFilter = name ?? _nameFilter;
     _skuFilter = sku ?? _skuFilter;
-    _page = 1;
   }
 
   void resetFilters() {
     _nameFilter = '';
     _skuFilter = '';
-    _page = 1;
+  }
+
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -7,73 +8,52 @@ import '../../infra/repository/customer_repository.dart';
 import '../../../../../core/errors/error_parser.dart';
 
 class CustomerProvider extends ChangeNotifier {
-  final ApiClient _apiClient;
-
-  List<CustomerInfo> _customers = [];
-  Pagination? _pagination;
-  bool _isLoading = false;
-  String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
-  String _searchFilter = '';
-
-  CustomerProvider({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  List<CustomerInfo> get customers => _customers;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  int get page => _page;
-
-  CustomerUseCases get _useCases => CustomerUseCases(CustomerApiRepository(_apiClient));
-
-  bool _isLoadingMore = false;
-
-  bool get isLoadingMore => _isLoadingMore;
-  bool get hasMore => _pagination?.hasNext ?? false;
-
-  Future<void> fetchCustomers({int? businessId}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final params = GetCustomersParams(
-        page: _page,
-        pageSize: _pageSize,
-        businessId: businessId,
-        search: _searchFilter.isNotEmpty ? _searchFilter : null,
-      );
-      final response = await _useCases.getCustomers(params);
-      _customers = response.data;
-      _pagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoading = false;
-    notifyListeners();
+  CustomerProvider({required ApiClient apiClient, CustomerUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases {
+    list = PagedListController<CustomerInfo>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
   }
 
-  Future<void> loadMore({int? businessId}) async {
-    if (_isLoading || _isLoadingMore || !hasMore) return;
-    _isLoadingMore = true;
-    notifyListeners();
-    final previous = _customers;
-    final currentPage = _page;
-    _page = currentPage + 1;
-    try {
-      await fetchCustomers(businessId: businessId);
-      _customers = [...previous, ..._customers];
-    } catch (_) {
-      _page = currentPage;
-    }
-    _isLoadingMore = false;
-    notifyListeners();
+  final ApiClient _apiClient;
+  final CustomerUseCases? _injectedUseCases;
+  late final PagedListController<CustomerInfo> list;
+
+  int? _businessId;
+  String? _error;
+  String _searchFilter = '';
+
+  List<CustomerInfo> get customers => list.loadedItems;
+  bool get isLoading => list.isLoading;
+  bool get isLoadingMore => list.isLoadingMore;
+  bool get hasMore => list.hasMore;
+  String? get error => _error ?? list.error;
+
+  CustomerUseCases get _useCases =>
+      _injectedUseCases ?? CustomerUseCases(CustomerApiRepository(_apiClient));
+
+  Future<PaginatedResponse<CustomerInfo>> _fetchPage(int page, int pageSize) {
+    return _useCases.getCustomers(GetCustomersParams(
+      page: page,
+      pageSize: pageSize,
+      businessId: _businessId,
+      search: _searchFilter.isNotEmpty ? _searchFilter : null,
+    ));
+  }
+
+  Future<void> fetchCustomers({int? businessId}) {
+    _businessId = businessId;
+    _error = null;
+    return list.refresh();
+  }
+
+  Future<void> loadMore({int? businessId}) {
+    if (businessId != null) _businessId = businessId;
+    return list.loadMore();
   }
 
   CustomerInfo? customerById(int id) {
-    for (final customer in _customers) {
+    for (final customer in list.loadedItems) {
       if (customer.id == id) return customer;
     }
     return null;
@@ -111,17 +91,18 @@ class CustomerProvider extends ChangeNotifier {
     }
   }
 
-  void setPage(int page) {
-    _page = page;
-  }
-
   void setSearch(String search) {
     _searchFilter = search;
-    _page = 1;
   }
 
   void resetFilters() {
     _searchFilter = '';
-    _page = 1;
+  }
+
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
   }
 }

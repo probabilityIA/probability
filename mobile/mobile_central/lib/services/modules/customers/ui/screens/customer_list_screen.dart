@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
-import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
@@ -20,37 +19,23 @@ class CustomerListScreen extends StatefulWidget {
 
 class _CustomerListScreenState extends State<CustomerListScreen> {
   final _searchController = TextEditingController();
-  final _scrollController = ScrollController();
   Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 320) {
-      context.read<CustomerProvider>().loadMore(businessId: widget.businessId);
-    }
-  }
-
   void _refresh() {
-    final provider = context.read<CustomerProvider>();
-    provider.setPage(1);
-    provider.fetchCustomers(businessId: widget.businessId);
+    context.read<CustomerProvider>().fetchCustomers(businessId: widget.businessId);
   }
 
   void _onSearch(String value) {
@@ -80,64 +65,25 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
           Expanded(
             child: Consumer<CustomerProvider>(
               builder: (context, provider, _) {
-                if (provider.isLoading && provider.customers.isEmpty) {
-                  return const AppListSkeleton();
-                }
-                if (provider.error != null && provider.customers.isEmpty) {
-                  return AppErrorState(message: provider.error!, onRetry: _refresh);
-                }
-                if (provider.customers.isEmpty) {
-                  return AppEmptyState(
-                    icon: Icons.people_alt_outlined,
-                    title: 'Sin clientes',
-                    message: 'Los clientes se crean solos cuando entran ordenes de tus canales.',
-                    actionLabel: 'Actualizar',
-                    onAction: _refresh,
-                  );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async => _refresh(),
-                  color: AppColors.primary,
-                  child: ListView.separated(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: AppSpacing.page,
-                    itemCount: provider.customers.length + 1,
-                    separatorBuilder: (context, index) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      if (index == provider.customers.length) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          child: Center(
-                            child: provider.isLoadingMore
-                                ? const SizedBox(
-                                    height: 22,
-                                    width: 22,
-                                    child: CircularProgressIndicator(strokeWidth: 2.2),
-                                  )
-                                : Text(
-                                    provider.hasMore
-                                        ? 'Desliza para cargar mas'
-                                        : '${provider.customers.length} de ${provider.pagination?.total ?? provider.customers.length} clientes',
-                                    style: Theme.of(context).textTheme.labelSmall,
-                                  ),
-                          ),
-                        );
-                      }
-                      final customer = provider.customers[index];
-                      return _CustomerCard(
-                        customer: customer,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => CustomerDetailScreen(
-                              customerId: customer.id,
-                              businessId: widget.businessId,
-                            ),
-                          ),
+                return PaginatedListView<CustomerInfo>(
+                  controller: provider.list,
+                  unitLabel: 'clientes',
+                  placeholderHeight: 112,
+                  emptyIcon: Icons.people_alt_outlined,
+                  emptyTitle: 'Sin clientes',
+                  emptyMessage: _searchController.text.isEmpty
+                      ? 'Los clientes se crean solos cuando entran ordenes de tus canales.'
+                      : 'Ningun cliente coincide con la busqueda.',
+                  itemBuilder: (context, customer, index) => _CustomerCard(
+                    customer: customer,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CustomerDetailScreen(
+                          customerId: customer.id,
+                          businessId: widget.businessId,
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 );
               },

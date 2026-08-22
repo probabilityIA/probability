@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -7,79 +8,52 @@ import '../../infra/repository/order_repository.dart';
 import '../../../../../core/errors/error_parser.dart';
 
 class OrderProvider extends ChangeNotifier {
-  final ApiClient _apiClient;
+  OrderProvider({required ApiClient apiClient, OrderUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases {
+    list = PagedListController<Order>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
+  }
 
-  List<Order> _orders = [];
-  Pagination? _pagination;
-  bool _isLoading = false;
+  final ApiClient _apiClient;
+  final OrderUseCases? _injectedUseCases;
+  late final PagedListController<Order> list;
+
+  int? _businessId;
   String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
   String _orderNumberFilter = '';
   String _statusFilter = '';
   int? _integrationIdFilter;
 
-  OrderProvider({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  List<Order> get orders => _orders;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  int get page => _page;
-  int get pageSize => _pageSize;
+  List<Order> get orders => list.loadedItems;
+  bool get isLoading => list.isLoading;
+  bool get isLoadingMore => list.isLoadingMore;
+  bool get hasMore => list.hasMore;
+  String? get error => _error ?? list.error;
 
   OrderUseCases get _useCases =>
-      OrderUseCases(OrderApiRepository(_apiClient));
+      _injectedUseCases ?? OrderUseCases(OrderApiRepository(_apiClient));
 
-  bool _isLoadingMore = false;
-
-  bool get isLoadingMore => _isLoadingMore;
-
-  bool get hasMore => _pagination?.hasNext ?? false;
-
-  GetOrdersParams _params(int? businessId, int page) => GetOrdersParams(
-        page: page,
-        pageSize: _pageSize,
-        businessId: businessId,
-        orderNumber: _orderNumberFilter.isNotEmpty ? _orderNumberFilter : null,
-        status: _statusFilter.isNotEmpty ? _statusFilter : null,
-        integrationId: _integrationIdFilter,
-      );
-
-  Future<void> fetchOrders({int? businessId}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final response = await _useCases.getOrders(_params(businessId, _page));
-      _orders = response.data;
-      _pagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoading = false;
-    notifyListeners();
+  Future<PaginatedResponse<Order>> _fetchPage(int page, int pageSize) {
+    return _useCases.getOrders(GetOrdersParams(
+      page: page,
+      pageSize: pageSize,
+      businessId: _businessId,
+      orderNumber: _orderNumberFilter.isNotEmpty ? _orderNumberFilter : null,
+      status: _statusFilter.isNotEmpty ? _statusFilter : null,
+      integrationId: _integrationIdFilter,
+    ));
   }
 
-  Future<void> loadMore({int? businessId}) async {
-    if (_isLoading || _isLoadingMore || !hasMore) return;
+  Future<void> fetchOrders({int? businessId}) {
+    _businessId = businessId;
+    _error = null;
+    return list.refresh();
+  }
 
-    _isLoadingMore = true;
-    notifyListeners();
-
-    try {
-      final response = await _useCases.getOrders(_params(businessId, _page + 1));
-      _orders = [..._orders, ...response.data];
-      _pagination = response.pagination;
-      _page += 1;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoadingMore = false;
-    notifyListeners();
+  Future<void> loadMore({int? businessId}) {
+    if (businessId != null) _businessId = businessId;
+    return list.loadMore();
   }
 
   Future<List<Order>> ordersByCustomerEmail(String email, {int? businessId}) async {
@@ -139,10 +113,6 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  void setPage(int page) {
-    _page = page;
-  }
-
   void setFilters({
     String? orderNumber,
     String? status,
@@ -151,13 +121,18 @@ class OrderProvider extends ChangeNotifier {
     _orderNumberFilter = orderNumber ?? _orderNumberFilter;
     _statusFilter = status ?? _statusFilter;
     _integrationIdFilter = integrationId ?? _integrationIdFilter;
-    _page = 1;
   }
 
   void resetFilters() {
     _orderNumberFilter = '';
     _statusFilter = '';
     _integrationIdFilter = null;
-    _page = 1;
+  }
+
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
   }
 }

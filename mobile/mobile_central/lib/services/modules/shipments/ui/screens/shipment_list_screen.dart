@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../shared/theme/app_colors.dart';
-import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
+import '../../domain/entities.dart';
 import '../providers/shipment_provider.dart';
 import '../widgets/shipment_card.dart';
 import 'shipment_detail_screen.dart';
@@ -19,7 +18,6 @@ class ShipmentListScreen extends StatefulWidget {
 
 class _ShipmentListScreenState extends State<ShipmentListScreen> {
   final _searchController = TextEditingController();
-  final _scrollController = ScrollController();
   Timer? _debounce;
   String _status = '';
 
@@ -35,7 +33,6 @@ class _ShipmentListScreenState extends State<ShipmentListScreen> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
@@ -48,23 +45,12 @@ class _ShipmentListScreenState extends State<ShipmentListScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 320) {
-      context.read<ShipmentProvider>().loadMoreShipments(businessId: widget.businessId);
-    }
-  }
-
   void _refresh() {
     final provider = context.read<ShipmentProvider>();
-    provider.setPage(1);
     provider.fetchShipments(businessId: widget.businessId);
   }
 
@@ -104,61 +90,21 @@ class _ShipmentListScreenState extends State<ShipmentListScreen> {
         Expanded(
           child: Consumer<ShipmentProvider>(
             builder: (context, provider, _) {
-              if (provider.isLoading && provider.shipments.isEmpty) {
-                return const AppListSkeleton();
-              }
-              if (provider.error != null && provider.shipments.isEmpty) {
-                return AppErrorState(message: provider.error!, onRetry: _refresh);
-              }
-              if (provider.shipments.isEmpty) {
-                return AppEmptyState(
-                  icon: Icons.local_shipping_outlined,
-                  title: 'Sin guias',
-                  message: 'Cuando generes guias para tus ordenes las vas a ver aqui.',
-                  actionLabel: 'Actualizar',
-                  onAction: _refresh,
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async => _refresh(),
-                color: AppColors.primary,
-                child: ListView.separated(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: AppSpacing.page,
-                  itemCount: provider.shipments.length + 1,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    if (index == provider.shipments.length) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        child: Center(
-                          child: provider.isLoadingMore
-                              ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2.2),
-                                )
-                              : Text(
-                                  provider.hasMore
-                                      ? 'Desliza para cargar mas'
-                                      : '${provider.shipments.length} de ${provider.pagination?.total ?? provider.shipments.length} guias',
-                                  style: Theme.of(context).textTheme.labelSmall,
-                                ),
-                        ),
-                      );
-                    }
-                    final shipment = provider.shipments[index];
-                    return ShipmentCard(
-                      shipment: shipment,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ShipmentDetailScreen(shipmentId: shipment.id),
-                        ),
-                      ),
-                    );
-                  },
+              return PaginatedListView<Shipment>(
+                controller: provider.list,
+                unitLabel: 'guias',
+                placeholderHeight: 150,
+                emptyIcon: Icons.local_shipping_outlined,
+                emptyTitle: 'Sin guias',
+                emptyMessage:
+                    'Cuando generes guias para tus ordenes las vas a ver aqui.',
+                itemBuilder: (context, shipment, index) => ShipmentCard(
+                  shipment: shipment,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ShipmentDetailScreen(shipmentId: shipment.id),
+                    ),
+                  ),
                 ),
               );
             },

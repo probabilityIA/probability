@@ -192,6 +192,26 @@ incluida en `cod_total` (esa es la convencion, no un bug).
 Al cancelar una guia el dialogo avisa que **no se reembolsa el saldo debitado**,
 que es lo que ocurre hoy segun `.claude/alerts/guias-duplicadas-doble-cobro.md`.
 
+## Pendiente nuevo: filtro de stock de productos
+
+Las pastillas "Con stock / Stock bajo / Agotados / Inactivos" del listado de
+productos filtraban en el cliente sobre la pagina cargada, y `GetProductsParams`
+**no tiene parametro de stock ni de estado**. Con paginacion real eso solo
+filtraba los 20 registros cargados, asi que se quitaron de la app. Para
+reponerlas hay que agregar el filtro al endpoint `GET /products` del backend
+(`stock_status` o equivalente) y volver a pasarlas como filtro de servidor.
+
+## Pendiente nuevo: los tests de providers prueban una copia
+
+23 de los 29 archivos `*_provider_test.dart` definen una clase
+`Testable<X>Provider` **dentro del propio test** y prueban esa copia, no el
+provider real. Los unicos 6 que prueban el provider de verdad son login,
+notification_config, invoicing, inventory, my_integrations y business. Es
+cobertura aparente: se puede romper un provider real sin que falle una sola
+prueba. Los cuatro providers de listado grandes (orders, shipments, products,
+customers) ya aceptan `useCases` inyectado para poder probarlos de verdad;
+`order_provider_paging_test.dart` es el ejemplo del patron.
+
 ## Pendientes al cerrar las 20 fases
 
 1. **29 pruebas en rojo preexistentes** (ver deuda abajo). No las introdujo este
