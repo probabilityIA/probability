@@ -58,32 +58,15 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   Widget build(BuildContext context) {
     return Consumer<VehicleProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading && provider.vehicles.isEmpty) {
-          return const AppListSkeleton();
-        }
-        if (provider.error != null && provider.vehicles.isEmpty) {
-          return AppErrorState(message: provider.error!, onRetry: _refresh);
-        }
-        if (provider.vehicles.isEmpty) {
-          return AppEmptyState(
-            icon: Icons.local_shipping_outlined,
-            title: 'Sin vehiculos',
-            message: 'Registra los vehiculos de tu flota para asignarlos a rutas.',
-            actionLabel: 'Actualizar',
-            onAction: _refresh,
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async => _refresh(),
-          color: AppColors.primary,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppSpacing.page,
-            itemCount: provider.vehicles.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
-            itemBuilder: (context, index) => _VehicleCard(vehicle: provider.vehicles[index]),
-          ),
+        return PaginatedListView<VehicleInfo>(
+          controller: provider.list,
+          unitLabel: 'vehiculos',
+          placeholderHeight: 86,
+          emptyIcon: Icons.local_shipping_outlined,
+          emptyTitle: 'Sin vehiculos',
+          emptyMessage:
+              'Registra los vehiculos de tu flota para asignarlos a rutas.',
+          itemBuilder: (context, vehicle, index) => _VehicleCard(vehicle: vehicle),
         );
       },
     );

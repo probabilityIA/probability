@@ -182,8 +182,9 @@ void main() {
       expect(provider.configs, isEmpty);
     });
 
-    test('has null pagination', () {
-      expect(provider.pagination, isNull);
+    test('has empty paged list', () {
+      expect(provider.list.itemCount, 0);
+      expect(provider.list.total, 0);
     });
 
     test('is not loading', () {
@@ -194,8 +195,8 @@ void main() {
       expect(provider.error, isNull);
     });
 
-    test('has default page 1', () {
-      expect(provider.page, 1);
+    test('has no more pages until it loads', () {
+      expect(provider.list.hasMore, isFalse);
     });
   });
 
@@ -211,8 +212,7 @@ void main() {
       expect(provider.invoices.length, 2);
       expect(provider.invoices[0].id, 1);
       expect(provider.invoices[1].id, 2);
-      expect(provider.pagination, isNotNull);
-      expect(provider.pagination!.total, 2);
+      expect(provider.list.total, 2);
       expect(provider.isLoading, false);
       expect(provider.error, isNull);
     });
@@ -387,26 +387,28 @@ void main() {
     });
   });
 
-  group('setPage', () {
-    test('updates page', () {
-      provider.setPage(3);
-      expect(provider.page, 3);
-    });
-  });
+  group('paginado', () {
+    test('refresh vuelve a la primera pagina', () async {
+      mockRepo.getInvoicesResult = PaginatedResponse<Invoice>(
+        data: [_makeInvoice(id: 1)],
+        pagination: _makePagination(total: 1),
+      );
 
-  group('setFilters', () {
-    test('resets page to 1', () {
-      provider.setPage(5);
+      await provider.fetchInvoices();
+
+      expect(provider.list.itemCount, 1);
+      expect(provider.list.hasMore, isFalse);
+    });
+
+    test('setFilters no rompe la coleccion', () async {
       provider.setFilters(status: 'pending');
-      expect(provider.page, 1);
+      expect(provider.list.itemCount, 0);
     });
-  });
 
-  group('resetFilters', () {
-    test('resets page to 1', () {
-      provider.setPage(5);
+    test('resetFilters limpia los filtros', () async {
+      provider.setFilters(status: 'pending');
       provider.resetFilters();
-      expect(provider.page, 1);
+      expect(provider.list.itemCount, 0);
     });
   });
 }

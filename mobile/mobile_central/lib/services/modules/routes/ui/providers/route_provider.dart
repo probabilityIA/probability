@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -7,47 +8,58 @@ import '../../infra/repository/route_repository.dart';
 import '../../../../../core/errors/error_parser.dart';
 
 class RouteProvider extends ChangeNotifier {
+  RouteProvider({required ApiClient apiClient}) : _apiClient = apiClient {
+    list = PagedListController<RouteInfo>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
+  }
+
   final ApiClient _apiClient;
-  List<RouteInfo> _routes = [];
+  late final PagedListController<RouteInfo> list;
+
   RouteDetail? _selectedRoute;
   List<DriverOption> _availableDrivers = [];
   List<VehicleOption> _availableVehicles = [];
   List<AssignableOrder> _assignableOrders = [];
-  Pagination? _pagination;
-  bool _isLoading = false;
+  bool _isLoadingDetail = false;
   String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
+  int? _businessId;
+  String? _statusFilter;
+  int? _driverFilter;
 
-  RouteProvider({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  List<RouteInfo> get routes => _routes;
+  List<RouteInfo> get routes => list.loadedItems;
   RouteDetail? get selectedRoute => _selectedRoute;
   List<DriverOption> get availableDrivers => _availableDrivers;
   List<VehicleOption> get availableVehicles => _availableVehicles;
   List<AssignableOrder> get assignableOrders => _assignableOrders;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+  bool get isLoading => list.isLoading || _isLoadingDetail;
+  String? get error => _error ?? list.error;
 
   RouteUseCases get _useCases => RouteUseCases(RouteApiRepository(_apiClient));
 
-  Future<void> fetchRoutes({int? businessId, String? status, int? driverId}) async {
-    _isLoading = true; _error = null; notifyListeners();
-    try {
-      final params = GetRoutesParams(page: _page, pageSize: _pageSize, businessId: businessId, status: status, driverId: driverId);
-      final response = await _useCases.getRoutes(params);
-      _routes = response.data; _pagination = response.pagination;
-    } catch (e) { _error = parseError(e); }
-    _isLoading = false; notifyListeners();
+  Future<PaginatedResponse<RouteInfo>> _fetchPage(int page, int pageSize) {
+    return _useCases.getRoutes(GetRoutesParams(
+      page: page,
+      pageSize: pageSize,
+      businessId: _businessId,
+      status: _statusFilter,
+      driverId: _driverFilter,
+    ));
+  }
+
+  Future<void> fetchRoutes({int? businessId, String? status, int? driverId}) {
+    _businessId = businessId;
+    _statusFilter = status;
+    _driverFilter = driverId;
+    _error = null;
+    return list.refresh();
   }
 
   Future<void> fetchRouteDetail(int id, {int? businessId}) async {
-    _isLoading = true; _error = null; notifyListeners();
+    _isLoadingDetail = true; _error = null; notifyListeners();
     try {
       _selectedRoute = await _useCases.getRouteById(id, businessId: businessId);
     } catch (e) { _error = parseError(e); }
-    _isLoading = false; notifyListeners();
+    _isLoadingDetail = false; notifyListeners();
   }
 
   Future<RouteInfo?> createRoute(CreateRouteDTO data, {int? businessId}) async {
@@ -84,5 +96,10 @@ class RouteProvider extends ChangeNotifier {
     } catch (e) { _error = parseError(e); notifyListeners(); }
   }
 
-  void setPage(int page) { _page = page; }
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
+  }
 }

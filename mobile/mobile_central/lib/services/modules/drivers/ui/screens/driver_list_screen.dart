@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../shared/theme/app_colors.dart';
-import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
 import '../../../../../shared/widgets/network_avatar.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
@@ -43,6 +41,12 @@ class _DriverListScreenState extends State<DriverListScreen> {
     context.read<DriverProvider>().fetchDrivers(businessId: widget.businessId);
   }
 
+  void _onStatus(String value) {
+    setState(() => _status = value);
+    context.read<DriverProvider>().setFilters(status: value);
+    _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -56,43 +60,22 @@ class _DriverListScreenState extends State<DriverListScreen> {
             (value: 'inactive', label: 'Inactivos'),
           ],
           selected: _status,
-          onSelected: (value) => setState(() => _status = value),
+          onSelected: _onStatus,
         ),
         const SizedBox(height: 4),
         Expanded(
           child: Consumer<DriverProvider>(
             builder: (context, provider, _) {
-              if (provider.isLoading && provider.drivers.isEmpty) {
-                return const AppListSkeleton();
-              }
-              if (provider.error != null && provider.drivers.isEmpty) {
-                return AppErrorState(message: provider.error!, onRetry: _refresh);
-              }
-
-              final rows = _status.isEmpty
-                  ? provider.drivers
-                  : provider.drivers.where((d) => d.status == _status).toList();
-
-              if (rows.isEmpty) {
-                return AppEmptyState(
-                  icon: Icons.badge_outlined,
-                  title: 'Sin conductores',
-                  message: 'Registra conductores para armar rutas con tu flota.',
-                  actionLabel: 'Actualizar',
-                  onAction: _refresh,
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async => _refresh(),
-                color: AppColors.primary,
-                child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: AppSpacing.page,
-                  itemCount: rows.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _DriverCard(driver: rows[index]),
-                ),
+              return PaginatedListView<DriverInfo>(
+                controller: provider.list,
+                unitLabel: 'conductores',
+                placeholderHeight: 86,
+                emptyIcon: Icons.badge_outlined,
+                emptyTitle: 'Sin conductores',
+                emptyMessage: _status.isEmpty
+                    ? 'Registra conductores para armar rutas con tu flota.'
+                    : 'Ningun conductor coincide con el filtro aplicado.',
+                itemBuilder: (context, driver, index) => _DriverCard(driver: driver),
               );
             },
           ),

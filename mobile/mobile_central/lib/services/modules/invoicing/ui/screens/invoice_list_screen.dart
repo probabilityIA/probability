@@ -96,41 +96,22 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
         Expanded(
           child: Consumer<InvoicingProvider>(
             builder: (context, provider, _) {
-              if (provider.isLoading && provider.invoices.isEmpty) {
-                return const AppListSkeleton();
-              }
-              if (provider.error != null && provider.invoices.isEmpty) {
-                return AppErrorState(message: provider.error!, onRetry: _refresh);
-              }
-              if (provider.invoices.isEmpty) {
-                return AppEmptyState(
-                  icon: Icons.description_outlined,
-                  title: 'Sin facturas',
-                  message: 'Cuando factures una orden vas a ver aqui el documento y su estado en la DIAN.',
-                  actionLabel: 'Actualizar',
-                  onAction: _refresh,
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async => _refresh(),
-                color: AppColors.primary,
-                child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: AppSpacing.page,
-                  itemCount: provider.invoices.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final invoice = provider.invoices[index];
-                    return InvoiceCard(
-                      invoice: invoice,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => InvoiceDetailScreen(invoiceId: invoice.id),
-                        ),
-                      ),
-                    );
-                  },
+              return PaginatedListView<Invoice>(
+                controller: provider.list,
+                unitLabel: 'facturas',
+                placeholderHeight: 132,
+                emptyIcon: Icons.description_outlined,
+                emptyTitle: 'Sin facturas',
+                emptyMessage: _status.isEmpty && _searchController.text.isEmpty
+                    ? 'Cuando factures una orden vas a ver aqui el documento y su estado en la DIAN.'
+                    : 'Ninguna factura coincide con el filtro aplicado.',
+                itemBuilder: (context, invoice, index) => InvoiceCard(
+                  invoice: invoice,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => InvoiceDetailScreen(invoiceId: invoice.id),
+                    ),
+                  ),
                 ),
               );
             },

@@ -1,7 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
-import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../../warehouses/ui/providers/warehouse_provider.dart';
 import '../../domain/entities.dart';
@@ -20,6 +21,7 @@ class InventoryListScreen extends StatefulWidget {
 
 class _InventoryListScreenState extends State<InventoryListScreen> {
   final _searchController = TextEditingController();
+  Timer? _debounce;
   int? _warehouseId;
   String _view = 'stock';
 
@@ -31,8 +33,18 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearch(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      context.read<InventoryProvider>().setFilters(search: value.trim());
+      _refresh();
+    });
   }
 
   Future<void> _bootstrap() async {
@@ -55,8 +67,6 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
     } else {
       provider.fetchMovements(
         params: GetMovementsParams(
-          page: 1,
-          pageSize: 30,
           businessId: widget.businessId,
           warehouseId: _warehouseId,
         ),
@@ -108,58 +118,33 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
   Widget _buildStock() {
     return Consumer<InventoryProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading && provider.inventoryLevels.isEmpty) {
-          return const AppListSkeleton();
-        }
-        if (provider.error != null && provider.inventoryLevels.isEmpty) {
-          return AppErrorState(message: provider.error!, onRetry: _refresh);
-        }
-        if (provider.inventoryLevels.isEmpty) {
-          return AppEmptyState(
-            icon: Icons.inventory_2_outlined,
-            title: 'Sin existencias',
-            message: 'Esta bodega no tiene productos con stock registrado.',
-            actionLabel: 'Actualizar',
-            onAction: _refresh,
-          );
-        }
-
-        final query = _searchController.text.trim().toLowerCase();
-        final rows = query.isEmpty
-            ? provider.inventoryLevels
-            : provider.inventoryLevels
-                .where((level) =>
-                    (level.productName ?? '').toLowerCase().contains(query) ||
-                    (level.productSku ?? '').toLowerCase().contains(query))
-                .toList();
-
-        return RefreshIndicator(
-          onRefresh: () async => _refresh(),
-          color: AppColors.primary,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-                child: AppSearchField(
-                  controller: _searchController,
-                  hintText: 'Producto o SKU',
-                  onChanged: (_) => setState(() {}),
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+              child: AppSearchField(
+                controller: _searchController,
+                hintText: 'Producto o SKU',
+                onChanged: _onSearch,
+              ),
+            ),
+            Expanded(
+              child: PaginatedListView<InventoryLevel>(
+                controller: provider.levels,
+                unitLabel: 'productos',
+                placeholderHeight: 104,
+                emptyIcon: Icons.inventory_2_outlined,
+                emptyTitle: 'Sin existencias',
+                emptyMessage: _searchController.text.trim().isEmpty
+                    ? 'Esta bodega no tiene productos con stock registrado.'
+                    : 'Ningun producto coincide con la busqueda.',
+                itemBuilder: (context, level, index) => InventoryLevelCard(
+                  level: level,
+                  onTap: () => _openAdjust(level),
                 ),
               ),
-              Expanded(
-                child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: AppSpacing.page,
-                  itemCount: rows.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => InventoryLevelCard(
-                    level: rows[index],
-                    onTap: () => _openAdjust(rows[index]),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
@@ -168,45 +153,17 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
   Widget _buildMovements() {
     return Consumer<InventoryProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading && provider.movements.isEmpty) {
-          return const AppListSkeleton();
-        }
-        if (provider.movements.isEmpty) {
-          return AppEmptyState(
-            icon: Icons.swap_vert_rounded,
-            title: 'Sin movimientos',
-            message: 'Aun no hay entradas ni salidas registradas en esta bodega.',
-            actionLabel: 'Actualizar',
-            onAction: _refresh,
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async => _refresh(),
-          color: AppColors.primary,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppSpacing.page,
-            children: [
-              AppCard(
-                child: Column(
-                  children: [
-                    for (var i = 0; i < provider.movements.length; i++) ...[
-                      if (i > 0) const Divider(height: 1),
-                      StockMovementTile(movement: provider.movements[i]),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              Center(
-                child: Text(
-                  '${provider.movements.length} de ${provider.movementsPagination?.total ?? provider.movements.length} movimientos',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+        return PaginatedListView<StockMovement>(
+          controller: provider.movementsList,
+          unitLabel: 'movimientos',
+          placeholderHeight: 72,
+          emptyIcon: Icons.swap_vert_rounded,
+          emptyTitle: 'Sin movimientos',
+          emptyMessage:
+              'Aun no hay entradas ni salidas registradas en esta bodega.',
+          itemBuilder: (context, movement, index) => AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: StockMovementTile(movement: movement),
           ),
         );
       },
