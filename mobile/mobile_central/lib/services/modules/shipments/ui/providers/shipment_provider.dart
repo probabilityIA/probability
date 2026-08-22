@@ -25,7 +25,10 @@ class ShipmentProvider extends ChangeNotifier {
   String? _error;
   int? _businessId;
   String _statusFilter = '';
-  String _searchFilter = '';
+  String _carrierFilter = '';
+  String _searchField = 'tracking_number';
+  String _searchTerm = '';
+  int _unfilteredTotal = 0;
 
   List<Shipment> get shipments => list.loadedItems;
   List<OriginAddress> get originAddresses => _originAddresses;
@@ -35,23 +38,43 @@ class ShipmentProvider extends ChangeNotifier {
   bool get hasMore => list.hasMore;
   String get statusFilter => _statusFilter;
   String? get error => _error ?? list.error;
+  int get unfilteredTotal => _unfilteredTotal;
+
+  bool get hasFilters =>
+      _searchTerm.isNotEmpty ||
+      _statusFilter.isNotEmpty ||
+      _carrierFilter.isNotEmpty;
 
   ShipmentUseCases get _useCases =>
       _injectedUseCases ?? ShipmentUseCases(ShipmentApiRepository(_apiClient));
 
-  void setShipmentFilters({String? status, String? search}) {
-    _statusFilter = status ?? _statusFilter;
-    _searchFilter = search ?? _searchFilter;
+  void setSearch({String? field, String? term}) {
+    if (field != null) _searchField = field;
+    if (term != null) _searchTerm = term.trim();
   }
 
-  Future<PaginatedResponse<Shipment>> _fetchPage(int page, int pageSize) {
-    return _useCases.getShipments(GetShipmentsParams(
+  void applyFilters({String? status, String? carrier}) {
+    _statusFilter = status ?? '';
+    _carrierFilter = carrier ?? '';
+  }
+
+  String? _termFor(String field) =>
+      _searchField == field && _searchTerm.isNotEmpty ? _searchTerm : null;
+
+  Future<PaginatedResponse<Shipment>> _fetchPage(int page, int pageSize) async {
+    final response = await _useCases.getShipments(GetShipmentsParams(
       page: page,
       pageSize: pageSize,
       businessId: _businessId,
       status: _statusFilter.isNotEmpty ? _statusFilter : null,
-      trackingNumber: _searchFilter.isNotEmpty ? _searchFilter : null,
+      carrier: _carrierFilter.isNotEmpty ? _carrierFilter : null,
+      trackingNumber: _termFor('tracking_number'),
+      customerName: _termFor('customer_name'),
+      orderId: _termFor('order_id'),
     ));
+
+    if (!hasFilters) _unfilteredTotal = response.pagination.total;
+    return response;
   }
 
   Future<void> fetchShipments({int? businessId}) {

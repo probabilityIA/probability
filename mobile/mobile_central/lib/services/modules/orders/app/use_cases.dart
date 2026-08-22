@@ -30,4 +30,8 @@ class OrderUseCases {
   Future<Map<String, dynamic>> getOrderRaw(String id) {
     return _repository.getOrderRaw(id);
   }
+
+  Future<List<OrderStatusOption>> getOrderStatuses({int? businessId}) {
+    return _repository.getOrderStatuses(businessId: businessId);
+  }
 }

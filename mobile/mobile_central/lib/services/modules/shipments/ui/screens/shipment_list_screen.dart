@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/filters/filter_models.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/shipment_provider.dart';
@@ -19,15 +20,53 @@ class ShipmentListScreen extends StatefulWidget {
 class _ShipmentListScreenState extends State<ShipmentListScreen> {
   final _searchController = TextEditingController();
   Timer? _debounce;
-  String _status = '';
+  String _field = 'tracking_number';
+  FilterSelection _selection = const FilterSelection();
 
-  static const List<({String value, String label})> _statusOptions = [
-    (value: '', label: 'Todas'),
-    (value: 'created', label: 'Generadas'),
-    (value: 'in_transit', label: 'En transito'),
-    (value: 'delivered', label: 'Entregadas'),
-    (value: 'returned', label: 'Devueltas'),
-    (value: 'cancelled', label: 'Canceladas'),
+  static const List<SearchField> _searchFields = [
+    SearchField(
+      key: 'tracking_number',
+      label: 'Guia',
+      hint: 'Numero de guia',
+    ),
+    SearchField(
+      key: 'customer_name',
+      label: 'Cliente',
+      hint: 'Nombre del cliente',
+    ),
+    SearchField(
+      key: 'order_id',
+      label: 'Orden',
+      hint: 'Id de la orden',
+    ),
+  ];
+
+  static const List<FilterDimension> _dimensions = [
+    FilterDimension(
+      key: 'status',
+      label: 'Estado',
+      icon: Icons.flag_outlined,
+      options: [
+        FilterOption(value: 'pending', label: 'Pendiente'),
+        FilterOption(value: 'created', label: 'Generada'),
+        FilterOption(value: 'in_transit', label: 'En transito'),
+        FilterOption(value: 'delivered', label: 'Entregada'),
+        FilterOption(value: 'returned', label: 'Devuelta'),
+        FilterOption(value: 'cancelled', label: 'Cancelada'),
+      ],
+    ),
+    FilterDimension(
+      key: 'carrier',
+      label: 'Transportadora',
+      icon: Icons.local_shipping_outlined,
+      options: [
+        FilterOption(value: 'Coordinadora', label: 'Coordinadora'),
+        FilterOption(value: 'Interrapidisimo', label: 'Interrapidisimo'),
+        FilterOption(value: 'Servientrega', label: 'Servientrega'),
+        FilterOption(value: 'Envia', label: 'Envia'),
+        FilterOption(value: 'TCC', label: 'TCC'),
+      ],
+    ),
   ];
 
   @override
@@ -39,7 +78,11 @@ class _ShipmentListScreenState extends State<ShipmentListScreen> {
   @override
   void didUpdateWidget(ShipmentListScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.businessId != widget.businessId) _refresh();
+    if (oldWidget.businessId != widget.businessId) {
+      setState(() => _selection = const FilterSelection());
+      _searchController.clear();
+      _refresh();
+    }
   }
 
   @override
@@ -50,67 +93,82 @@ class _ShipmentListScreenState extends State<ShipmentListScreen> {
   }
 
   void _refresh() {
-    final provider = context.read<ShipmentProvider>();
-    provider.fetchShipments(businessId: widget.businessId);
+    context.read<ShipmentProvider>().fetchShipments(
+          businessId: widget.businessId,
+        );
+  }
+
+  void _applySelection(FilterSelection selection) {
+    setState(() => _selection = selection);
+    context.read<ShipmentProvider>().applyFilters(
+          status: selection['status'],
+          carrier: selection['carrier'],
+        );
+    _refresh();
+  }
+
+  void _onField(String field) {
+    setState(() => _field = field);
+    context.read<ShipmentProvider>().setSearch(field: field);
+    if (_searchController.text.trim().isNotEmpty) _refresh();
   }
 
   void _onSearch(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (!mounted) return;
-      context.read<ShipmentProvider>().setShipmentFilters(search: value);
+      context.read<ShipmentProvider>().setSearch(field: _field, term: value);
       _refresh();
     });
   }
 
-  void _onStatus(String value) {
-    setState(() => _status = value);
-    context.read<ShipmentProvider>().setShipmentFilters(status: value);
-    _refresh();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-          child: AppSearchField(
-            controller: _searchController,
-            hintText: 'Numero de guia',
-            onChanged: _onSearch,
-          ),
-        ),
-        AppFilterChips(
-          options: _statusOptions,
-          selected: _status,
-          onSelected: _onStatus,
-        ),
-        const SizedBox(height: 4),
-        Expanded(
-          child: Consumer<ShipmentProvider>(
-            builder: (context, provider, _) {
-              return PaginatedListView<Shipment>(
+    return Consumer<ShipmentProvider>(
+      builder: (context, provider, _) {
+        final filtering =
+            _selection.isNotEmpty || _searchController.text.trim().isNotEmpty;
+
+        return Column(
+          children: [
+            AppFilterBar(
+              controller: _searchController,
+              searchFields: _searchFields,
+              selectedField: _field,
+              onFieldChanged: _onField,
+              onSearchChanged: _onSearch,
+              dimensions: _dimensions,
+              selection: _selection,
+              onSelectionChanged: _applySelection,
+              summary: filtering && !provider.list.isLoading
+                  ? '${provider.list.total} de ${provider.unfilteredTotal} guias'
+                  : null,
+            ),
+            Expanded(
+              child: PaginatedListView<Shipment>(
                 controller: provider.list,
                 unitLabel: 'guias',
                 placeholderHeight: 150,
                 emptyIcon: Icons.local_shipping_outlined,
                 emptyTitle: 'Sin guias',
-                emptyMessage:
-                    'Cuando generes guias para tus ordenes las vas a ver aqui.',
+                emptyMessage: filtering
+                    ? 'Ninguna guia coincide con los filtros aplicados.'
+                    : 'Cuando generes guias para tus ordenes las vas a ver aqui.',
                 itemBuilder: (context, shipment, index) => ShipmentCard(
                   shipment: shipment,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => ShipmentDetailScreen(shipmentId: shipment.id),
+                      builder: (_) =>
+                          ShipmentDetailScreen(shipmentId: shipment.id),
                     ),
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
+

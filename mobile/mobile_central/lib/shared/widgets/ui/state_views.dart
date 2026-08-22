@@ -47,34 +47,48 @@ class AppEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
-                borderRadius: AppRadius.lgAll,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: AppRadius.lgAll,
+                      ),
+                      child: Icon(icon, size: 28, color: AppColors.textDisabled),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(title,
+                        style: theme.textTheme.titleMedium,
+                        textAlign: TextAlign.center),
+                    if (message != null) ...[
+                      const SizedBox(height: 6),
+                      Text(message!,
+                          style: theme.textTheme.bodySmall,
+                          textAlign: TextAlign.center),
+                    ],
+                    if (actionLabel != null && onAction != null) ...[
+                      const SizedBox(height: 20),
+                      FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+                    ],
+                  ],
+                ),
               ),
-              child: Icon(icon, size: 28, color: AppColors.textDisabled),
             ),
-            const SizedBox(height: 18),
-            Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
-            if (message != null) ...[
-              const SizedBox(height: 6),
-              Text(message!, style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
-            ],
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 20),
-              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
-            ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -446,6 +446,19 @@ class Order {
   }
 }
 
+class OrderStatusOption {
+  const OrderStatusOption({required this.code, required this.name});
+
+  final String code;
+  final String name;
+
+  factory OrderStatusOption.fromJson(Map<String, dynamic> json) {
+    final code = (json['code'] ?? '').toString();
+    final name = (json['name'] ?? '').toString();
+    return OrderStatusOption(code: code, name: name.isEmpty ? code : name);
+  }
+}
+
 class GetOrdersParams {
   final int? page;
   final int? pageSize;

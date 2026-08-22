@@ -21,9 +21,28 @@ class OrderProvider extends ChangeNotifier {
 
   int? _businessId;
   String? _error;
-  String _orderNumberFilter = '';
+  String _searchField = 'order_number';
+  String _searchTerm = '';
   String _statusFilter = '';
-  int? _integrationIdFilter;
+  String _platformFilter = '';
+  bool? _isPaidFilter;
+  bool? _isCodFilter;
+
+  List<OrderStatusOption> _statusOptions = const [];
+  bool _loadingStatuses = false;
+
+  int _unfilteredTotal = 0;
+
+  List<OrderStatusOption> get statusOptions => _statusOptions;
+  String get searchField => _searchField;
+  int get unfilteredTotal => _unfilteredTotal;
+
+  bool get hasFilters =>
+      _searchTerm.isNotEmpty ||
+      _statusFilter.isNotEmpty ||
+      _platformFilter.isNotEmpty ||
+      _isPaidFilter != null ||
+      _isCodFilter != null;
 
   List<Order> get orders => list.loadedItems;
   bool get isLoading => list.isLoading;
@@ -34,15 +53,56 @@ class OrderProvider extends ChangeNotifier {
   OrderUseCases get _useCases =>
       _injectedUseCases ?? OrderUseCases(OrderApiRepository(_apiClient));
 
-  Future<PaginatedResponse<Order>> _fetchPage(int page, int pageSize) {
-    return _useCases.getOrders(GetOrdersParams(
+  String? _termFor(String field) =>
+      _searchField == field && _searchTerm.isNotEmpty ? _searchTerm : null;
+
+  Future<PaginatedResponse<Order>> _fetchPage(int page, int pageSize) async {
+    final response = await _useCases.getOrders(GetOrdersParams(
       page: page,
       pageSize: pageSize,
       businessId: _businessId,
-      orderNumber: _orderNumberFilter.isNotEmpty ? _orderNumberFilter : null,
+      orderNumber: _termFor('order_number'),
+      internalNumber: _termFor('internal_number'),
+      customerEmail: _termFor('customer_email'),
+      customerPhone: _termFor('customer_phone'),
       status: _statusFilter.isNotEmpty ? _statusFilter : null,
-      integrationId: _integrationIdFilter,
+      platform: _platformFilter.isNotEmpty ? _platformFilter : null,
+      isPaid: _isPaidFilter,
+      isCod: _isCodFilter,
     ));
+
+    if (!hasFilters) _unfilteredTotal = response.pagination.total;
+    return response;
+  }
+
+  Future<void> loadStatusOptions({int? businessId}) async {
+    if (_loadingStatuses || _statusOptions.isNotEmpty) return;
+    _loadingStatuses = true;
+    try {
+      _statusOptions =
+          await _useCases.getOrderStatuses(businessId: businessId ?? _businessId);
+      notifyListeners();
+    } catch (_) {
+      _statusOptions = const [];
+    }
+    _loadingStatuses = false;
+  }
+
+  void setSearch({String? field, String? term}) {
+    if (field != null) _searchField = field;
+    if (term != null) _searchTerm = term.trim();
+  }
+
+  void applyFilters({
+    String? status,
+    String? platform,
+    bool? isPaid,
+    bool? isCod,
+  }) {
+    _statusFilter = status ?? '';
+    _platformFilter = platform ?? '';
+    _isPaidFilter = isPaid;
+    _isCodFilter = isCod;
   }
 
   Future<void> fetchOrders({int? businessId}) {
@@ -113,20 +173,13 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  void setFilters({
-    String? orderNumber,
-    String? status,
-    int? integrationId,
-  }) {
-    _orderNumberFilter = orderNumber ?? _orderNumberFilter;
-    _statusFilter = status ?? _statusFilter;
-    _integrationIdFilter = integrationId ?? _integrationIdFilter;
-  }
-
   void resetFilters() {
-    _orderNumberFilter = '';
+    _searchField = 'order_number';
+    _searchTerm = '';
     _statusFilter = '';
-    _integrationIdFilter = null;
+    _platformFilter = '';
+    _isPaidFilter = null;
+    _isCodFilter = null;
   }
 
   @override

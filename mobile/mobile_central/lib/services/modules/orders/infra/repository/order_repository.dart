@@ -51,4 +51,21 @@ class OrderApiRepository implements IOrderRepository {
     final response = await _client.get('/orders/$id/raw');
     return response.data['data'] ?? response.data;
   }
+
+  @override
+  Future<List<OrderStatusOption>> getOrderStatuses({int? businessId}) async {
+    final response = await _client.get(
+      '/order-statuses',
+      queryParameters: {
+        if (businessId != null && businessId > 0) 'business_id': businessId,
+        'page_size': 100,
+      },
+    );
+    final data = response.data;
+    final items = (data is Map ? data['data'] : data) as List<dynamic>?;
+    return (items ?? [])
+        .map((e) => OrderStatusOption.fromJson(e as Map<String, dynamic>))
+        .where((s) => s.code.isNotEmpty)
+        .toList();
+  }
 }

@@ -86,6 +86,10 @@ class FakeOrderRepository implements IOrderRepository {
         occurredAt: '2026-01-01T00:00:00Z',
         importedAt: '2026-01-01T01:00:00Z',
       );
+  @override
+  Future<List<OrderStatusOption>> getOrderStatuses({int? businessId}) async =>
+      const [];
+
 }
 
 OrderProvider _provider(FakeOrderRepository repo) => OrderProvider(
@@ -166,7 +170,7 @@ void main() {
       await provider.loadMore();
       expect(provider.list.itemCount, 40);
 
-      provider.setFilters(status: 'delivered');
+      provider.applyFilters(status: 'delivered');
       await provider.fetchOrders();
 
       expect(provider.list.itemCount, 20);

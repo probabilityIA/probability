@@ -22,23 +22,30 @@ class CustomerProvider extends ChangeNotifier {
   int? _businessId;
   String? _error;
   String _searchFilter = '';
+  int _unfilteredTotal = 0;
 
   List<CustomerInfo> get customers => list.loadedItems;
   bool get isLoading => list.isLoading;
   bool get isLoadingMore => list.isLoadingMore;
   bool get hasMore => list.hasMore;
   String? get error => _error ?? list.error;
+  int get unfilteredTotal => _unfilteredTotal;
+  bool get hasFilters => _searchFilter.isNotEmpty;
 
   CustomerUseCases get _useCases =>
       _injectedUseCases ?? CustomerUseCases(CustomerApiRepository(_apiClient));
 
-  Future<PaginatedResponse<CustomerInfo>> _fetchPage(int page, int pageSize) {
-    return _useCases.getCustomers(GetCustomersParams(
+  Future<PaginatedResponse<CustomerInfo>> _fetchPage(
+      int page, int pageSize) async {
+    final response = await _useCases.getCustomers(GetCustomersParams(
       page: page,
       pageSize: pageSize,
       businessId: _businessId,
       search: _searchFilter.isNotEmpty ? _searchFilter : null,
     ));
+
+    if (!hasFilters) _unfilteredTotal = response.pagination.total;
+    return response;
   }
 
   Future<void> fetchCustomers({int? businessId}) {

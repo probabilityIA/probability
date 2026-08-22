@@ -21,8 +21,10 @@ class ProductProvider extends ChangeNotifier {
 
   int? _businessId;
   String? _error;
-  String _nameFilter = '';
-  String _skuFilter = '';
+  String _searchField = 'name';
+  String _searchTerm = '';
+  String _channelFilter = '';
+  int _unfilteredTotal = 0;
   List<ProductIntegration> _integrations = [];
 
   List<Product> get products => list.loadedItems;
@@ -31,18 +33,37 @@ class ProductProvider extends ChangeNotifier {
   bool get hasMore => list.hasMore;
   String? get error => _error ?? list.error;
   List<ProductIntegration> get integrations => _integrations;
+  int get unfilteredTotal => _unfilteredTotal;
+
+  bool get hasFilters => _searchTerm.isNotEmpty || _channelFilter.isNotEmpty;
 
   ProductUseCases get _useCases =>
       _injectedUseCases ?? ProductUseCases(ProductApiRepository(_apiClient));
 
-  Future<PaginatedResponse<Product>> _fetchPage(int page, int pageSize) {
-    return _useCases.getProducts(GetProductsParams(
+  String? _termFor(String field) =>
+      _searchField == field && _searchTerm.isNotEmpty ? _searchTerm : null;
+
+  Future<PaginatedResponse<Product>> _fetchPage(int page, int pageSize) async {
+    final response = await _useCases.getProducts(GetProductsParams(
       page: page,
       pageSize: pageSize,
       businessId: _businessId,
-      name: _nameFilter.isNotEmpty ? _nameFilter : null,
-      sku: _skuFilter.isNotEmpty ? _skuFilter : null,
+      name: _termFor('name'),
+      sku: _termFor('sku'),
+      integrationType: _channelFilter.isNotEmpty ? _channelFilter : null,
     ));
+
+    if (!hasFilters) _unfilteredTotal = response.pagination.total;
+    return response;
+  }
+
+  void setSearch({String? field, String? term}) {
+    if (field != null) _searchField = field;
+    if (term != null) _searchTerm = term.trim();
+  }
+
+  void applyFilters({String? channel}) {
+    _channelFilter = channel ?? '';
   }
 
   Future<void> fetchProducts({int? businessId}) {
@@ -104,14 +125,10 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  void setFilters({String? name, String? sku}) {
-    _nameFilter = name ?? _nameFilter;
-    _skuFilter = sku ?? _skuFilter;
-  }
-
   void resetFilters() {
-    _nameFilter = '';
-    _skuFilter = '';
+    _searchField = 'name';
+    _searchTerm = '';
+    _channelFilter = '';
   }
 
   @override
