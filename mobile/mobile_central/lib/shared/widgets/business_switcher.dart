@@ -21,8 +21,22 @@ Future<void> showBusinessSwitcher(BuildContext context) async {
   );
 }
 
-class _BusinessSheet extends StatelessWidget {
+class _BusinessSheet extends StatefulWidget {
   const _BusinessSheet();
+
+  @override
+  State<_BusinessSheet> createState() => _BusinessSheetState();
+}
+
+class _BusinessSheetState extends State<_BusinessSheet> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +48,19 @@ class _BusinessSheet extends StatelessWidget {
         constraints: BoxConstraints(maxHeight: maxHeight),
         child: Consumer<BusinessProvider>(
           builder: (context, provider, _) {
+            final all = provider.businessesSimple;
+            final query = _query.trim().toLowerCase();
+            final rows = query.isEmpty
+                ? all
+                : all
+                    .where((b) => b.name.toLowerCase().contains(query))
+                    .toList();
+
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
                   child: Row(
                     children: [
                       Expanded(
@@ -52,15 +74,33 @@ class _BusinessSheet extends StatelessWidget {
                           height: 16,
                           width: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else
+                        Text(
+                          query.isEmpty
+                              ? '${all.length} negocios'
+                              : '${rows.length} de ${all.length}',
+                          style: Theme.of(context).textTheme.labelSmall,
                         ),
                     ],
                   ),
                 ),
-                if (provider.businessesSimple.isEmpty && !provider.isLoading)
+                if (all.length > 6)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+                    child: AppSearchField(
+                      controller: _searchController,
+                      hintText: 'Buscar negocio',
+                      onChanged: (value) => setState(() => _query = value),
+                    ),
+                  ),
+                if (rows.isEmpty && !provider.isLoading)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
                     child: Text(
-                      provider.error ?? 'No hay negocios disponibles.',
+                      all.isEmpty
+                          ? (provider.error ?? 'No hay negocios disponibles.')
+                          : 'Ningun negocio coincide con la busqueda.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   )
@@ -69,11 +109,11 @@ class _BusinessSheet extends StatelessWidget {
                     child: ListView.separated(
                       shrinkWrap: true,
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-                      itemCount: provider.businessesSimple.length,
+                      itemCount: rows.length,
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 8),
                       itemBuilder: (context, index) {
-                        final business = provider.businessesSimple[index];
+                        final business = rows[index];
                         final active =
                             business.id == provider.selectedBusinessId;
                         return AppCard(
