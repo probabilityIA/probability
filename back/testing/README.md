@@ -90,6 +90,17 @@ El simulador está configurado para usar datos reales del business de pruebas en
 
 **Configuración:** Ver archivo `config.go` en `/integrations/shopify/internal/domain/`
 
+### Tiendanube (Puerto 9102)
+
+Ademas de productos, sirve ordenes para el comparativo de ordenes:
+
+- `GET /v1/:store_id/orders` - listado, con `page`, `per_page`, `created_at_min`, `created_at_max`, `status`
+- `GET /v1/:store_id/orders/:id` - detalle
+- `POST /mock/seed-orders` - vuelve a sembrar el set de ordenes
+
+Semilla: 6 ordenes, 3 que mueven inventario (pending, paid, paid) y 3 terminales
+(completed, cancelled, refunded) para probar la regla de "orden historica".
+
 ## 🔧 Agregar Nuevo Simulador
 
 1. Crear directorio: `integrations/nuevo-servicio/`

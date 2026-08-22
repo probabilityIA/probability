@@ -99,6 +99,7 @@ type ProbabilityOrderDTO struct {
 	// Control de flujo (no se persiste)
 	IsManualOrder       bool `json:"-"`
 	CodIncludesShipping bool `json:"-"`
+	SkipInventory       bool `json:"skip_inventory,omitempty"`
 
 	// Tablas relacionadas
 	OrderItems      []ProbabilityOrderItemDTO      `json:"order_items,omitempty"`

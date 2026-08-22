@@ -107,7 +107,7 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		return nil, err
 	}
 
-	uc.publishOrderEvents(ctx, order, dto.IsManualOrder)
+	uc.publishOrderEvents(ctx, order, dto.IsManualOrder, dto.SkipInventory)
 
 	return uc.mapOrderToResponse(order), nil
 }

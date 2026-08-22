@@ -73,6 +73,7 @@ type ProbabilityOrderDTO struct {
 	Payments           []ProbabilityPaymentDTO
 	Shipments          []ProbabilityShipmentDTO
 	ChannelMetadata    *ProbabilityChannelMetadataDTO
+	SkipInventory      bool
 }
 
 type ProbabilityOrderItemDTO struct {

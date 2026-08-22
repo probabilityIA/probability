@@ -12,7 +12,7 @@ import (
 // Orquesta la publicación a todos los canales necesarios:
 //   - Integration sync (notifica al módulo de integraciones)
 //   - RabbitMQ fanout (invoicing, inventory, score, whatsapp, events consumers)
-func (uc *UseCaseCreateOrder) publishOrderEvents(ctx context.Context, order *entities.ProbabilityOrder, isManualOrder bool) {
+func (uc *UseCaseCreateOrder) publishOrderEvents(ctx context.Context, order *entities.ProbabilityOrder, isManualOrder bool, skipInventory bool) {
 	// 1. Notificar sincronización exitosa a integraciones (solo órdenes de integración)
 	if !isManualOrder {
 		uc.publishSyncOrderCreated(ctx, order)
@@ -20,7 +20,7 @@ func (uc *UseCaseCreateOrder) publishOrderEvents(ctx context.Context, order *ent
 
 	// 2. Publicar evento de orden creada a RabbitMQ fanout
 	// (invoicing, inventory, score, whatsapp, events consumers)
-	uc.publishOrderCreatedEvent(ctx, order)
+	uc.publishOrderCreatedEvent(ctx, order, skipInventory)
 
 	// Score calculation handled by probability module via QueueOrdersToScore
 }
@@ -54,7 +54,7 @@ func (uc *UseCaseCreateOrder) publishSyncOrderCreated(ctx context.Context, order
 
 // publishOrderCreatedEvent publica el evento de orden creada al exchange fanout de RabbitMQ
 // (invoicing, inventory, score, whatsapp consumers)
-func (uc *UseCaseCreateOrder) publishOrderCreatedEvent(_ context.Context, order *entities.ProbabilityOrder) {
+func (uc *UseCaseCreateOrder) publishOrderCreatedEvent(_ context.Context, order *entities.ProbabilityOrder, skipInventory bool) {
 	if uc.rabbitEventPublisher == nil {
 		return
 	}
@@ -72,6 +72,9 @@ func (uc *UseCaseCreateOrder) publishOrderCreatedEvent(_ context.Context, order 
 
 	event := entities.NewOrderEvent(entities.OrderEventTypeCreated, order.ID, eventData)
 	event.BusinessID = order.BusinessID
+	if skipInventory {
+		event.Metadata["skip_inventory"] = true
+	}
 	if order.IntegrationID > 0 {
 		integrationID := order.IntegrationID
 		event.IntegrationID = &integrationID

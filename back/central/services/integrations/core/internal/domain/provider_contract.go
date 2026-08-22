@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"fmt"
+
+	"github.com/secamc93/probability/back/central/shared/orderscompare"
 )
 
 // ErrNotSupported indica que la operación no está soportada por esta integración.
@@ -30,7 +32,13 @@ type IIntegrationContract interface {
 
 	// Inventario — sincronizar stock hacia el canal de venta
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
+
+	// Comparativo de ordenes — leer las ordenes del canal e importar las seleccionadas
+	SupportsOrdersCompare() bool
+	ListChannelOrders(ctx context.Context, integrationID string, filters orderscompare.ChannelFilters) ([]orderscompare.ChannelOrder, error)
+	ImportChannelOrders(ctx context.Context, integrationID string, externalIDs []string) (orderscompare.ImportResult, error)
 }
+
 
 // BaseIntegration provee implementaciones por defecto que retornan ErrNotSupported.
 // Los providers deben embedear este struct y solo sobrescribir los métodos que soportan.
@@ -62,4 +70,13 @@ func (BaseIntegration) CreateWebhook(_ context.Context, _ string, _ string) (int
 }
 func (BaseIntegration) UpdateInventory(_ context.Context, _ string, _ string, _ int) error {
 	return ErrNotSupported
+}
+func (BaseIntegration) SupportsOrdersCompare() bool {
+	return false
+}
+func (BaseIntegration) ListChannelOrders(_ context.Context, _ string, _ orderscompare.ChannelFilters) ([]orderscompare.ChannelOrder, error) {
+	return nil, ErrNotSupported
+}
+func (BaseIntegration) ImportChannelOrders(_ context.Context, _ string, _ []string) (orderscompare.ImportResult, error) {
+	return orderscompare.ImportResult{}, ErrNotSupported
 }

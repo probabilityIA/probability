@@ -10,6 +10,7 @@ type SerializableProbabilityOrderDTO struct {
 	IntegrationType    string                          `json:"integration_type"`
 	Platform           string                          `json:"platform"`
 	ExternalID         string                          `json:"external_id"`
+	SkipInventory      bool                            `json:"skip_inventory,omitempty"`
 	OrderNumber        string                          `json:"order_number"`
 	InternalNumber     string                          `json:"internal_number"`
 	Subtotal           float64                         `json:"subtotal"`

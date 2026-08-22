@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/orderscompare"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -12,6 +13,8 @@ type IVTEXUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 
 	SyncOrders(ctx context.Context, integrationID string) error
+	ListChannelOrders(ctx context.Context, integrationID string, filters orderscompare.ChannelFilters) ([]orderscompare.ChannelOrder, error)
+	ImportChannelOrders(ctx context.Context, integrationID string, externalIDs []string) (orderscompare.ImportResult, error)
 	SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error
 	ProcessWebhook(ctx context.Context, payload *domain.VTEXWebhookPayload) error
 
