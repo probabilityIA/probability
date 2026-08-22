@@ -53,6 +53,8 @@ func (uc *tiendanubeUseCase) ReconcileProductsAsync(ctx context.Context, integra
 		"not_associated":      len(result.MatchedNotAssociated),
 		"only_in_probability": len(result.OnlyInProbability),
 		"only_in_channel":     len(result.OnlyInTiendanube),
+		"probability_no_sku":  result.ProbabilityNoSKU,
+		"tiendanube_no_sku":   result.TiendanubeNoSKU,
 		"match_rules":         result.MatchRules,
 	}
 
