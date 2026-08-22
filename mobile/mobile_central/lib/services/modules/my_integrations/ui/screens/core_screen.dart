@@ -7,7 +7,9 @@ import '../../../../../shared/utils/formatters.dart';
 import '../../../../../shared/utils/integration_visibility.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
+import '../../../../integrations/core/ui/providers/integration_provider.dart';
 import '../providers/my_integrations_provider.dart';
+import '../widgets/orders_report.dart';
 
 class CoreScreen extends StatefulWidget {
   const CoreScreen({super.key, this.businessId});
@@ -37,13 +39,79 @@ class _CoreScreenState extends State<CoreScreen> {
     provider.fetchStats(businessId: widget.businessId);
   }
 
+  Future<void> _runAction(MyIntegration item, _ChannelAction action) async {
+    final integrations = context.read<IntegrationProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (action == _ChannelAction.toggle) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(item.isActive ? 'Desactivar integracion' : 'Activar integracion'),
+          content: Text(
+            item.isActive
+                ? 'Dejara de sincronizar ordenes y productos hasta que la vuelvas a activar.'
+                : 'Volvera a sincronizar ordenes y productos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(item.isActive ? 'Desactivar' : 'Activar'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+
+    messenger.showSnackBar(
+      SnackBar(content: Text('${action.runningLabel}...')),
+    );
+
+    var done = false;
+    switch (action) {
+      case _ChannelAction.toggle:
+        done = item.isActive
+            ? await integrations.deactivateIntegration(item.id)
+            : await integrations.activateIntegration(item.id);
+      case _ChannelAction.test:
+        done = await integrations.testConnection(item.id) != null;
+      case _ChannelAction.sync:
+        done = await integrations.syncOrders(item.id) != null;
+    }
+
+    if (!mounted) return;
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(done ? action.doneLabel : 'No se pudo completar la accion'),
+      ),
+    );
+    if (done) _load();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      title: 'Tus integraciones',
-      subtitle: 'El nucleo de tu operacion',
-      onBack: () => Navigator.of(context).maybePop(),
-      body: Consumer<MyIntegrationsProvider>(
+    return DefaultTabController(
+      length: 2,
+      child: AppScaffold(
+        title: 'Tus integraciones',
+        subtitle: 'El nucleo de tu operacion',
+        onBack: () => Navigator.of(context).maybePop(),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(44),
+          child: TabBar(
+            tabs: [
+              Tab(height: 42, text: 'Diagrama'),
+              Tab(height: 42, text: 'Informe'),
+            ],
+          ),
+        ),
+        body: Consumer<MyIntegrationsProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.integrations.isEmpty) {
             return const AppListSkeleton();
@@ -82,7 +150,9 @@ class _CoreScreenState extends State<CoreScreen> {
             totals = totals + provider.statsFor(item.id);
           }
 
-          return RefreshIndicator(
+          return TabBarView(
+            children: [
+              RefreshIndicator(
             onRefresh: () async => _load(),
             color: Theme.of(context).colorScheme.primary,
             child: ListView(
@@ -97,6 +167,7 @@ class _CoreScreenState extends State<CoreScreen> {
                     _ChannelCard(
                       integration: item,
                       stats: provider.statsFor(item.id),
+                      onAction: _runAction,
                     ),
                     const SizedBox(height: 10),
                   ],
@@ -109,14 +180,26 @@ class _CoreScreenState extends State<CoreScreen> {
                       integration: item,
                       stats: provider.statsFor(item.id),
                       compact: true,
+                      onAction: _runAction,
                     ),
                     const SizedBox(height: 10),
                   ],
                 ],
               ],
             ),
+              ),
+              RefreshIndicator(
+                onRefresh: () async => _load(),
+                color: Theme.of(context).colorScheme.primary,
+                child: OrdersReport(
+                  integrations: visible,
+                  statsFor: provider.statsFor,
+                ),
+              ),
+            ],
           );
         },
+        ),
       ),
     );
   }
@@ -272,15 +355,50 @@ class _StatDot extends StatelessWidget {
   }
 }
 
+enum _ChannelAction {
+  toggle,
+  test,
+  sync;
+
+  String get runningLabel {
+    switch (this) {
+      case _ChannelAction.toggle:
+        return 'Cambiando estado';
+      case _ChannelAction.test:
+        return 'Probando conexion';
+      case _ChannelAction.sync:
+        return 'Sincronizando ordenes';
+    }
+  }
+
+  String get doneLabel {
+    switch (this) {
+      case _ChannelAction.toggle:
+        return 'Estado actualizado';
+      case _ChannelAction.test:
+        return 'La conexion funciona';
+      case _ChannelAction.sync:
+        return 'Sincronizacion lanzada';
+    }
+  }
+}
+
+typedef _ChannelActionHandler = Future<void> Function(
+  MyIntegration integration,
+  _ChannelAction action,
+);
+
 class _ChannelCard extends StatelessWidget {
   const _ChannelCard({
     required this.integration,
     required this.stats,
+    required this.onAction,
     this.compact = false,
   });
 
   final MyIntegration integration;
   final IntegrationStats stats;
+  final _ChannelActionHandler onAction;
   final bool compact;
 
   @override
@@ -329,6 +447,49 @@ class _ChannelCard extends StatelessWidget {
                 tone: integration.isActive
                     ? AppStatusTone.success
                     : AppStatusTone.neutral,
+              ),
+              const SizedBox(width: 2),
+              PopupMenuButton<_ChannelAction>(
+                icon: const Icon(Icons.tune_rounded, size: 19),
+                tooltip: 'Acciones',
+                onSelected: (action) => onAction(integration, action),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _ChannelAction.toggle,
+                    child: Row(
+                      children: [
+                        Icon(
+                          integration.isActive
+                              ? Icons.toggle_on_rounded
+                              : Icons.toggle_off_rounded,
+                          size: 19,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(integration.isActive ? 'Desactivar' : 'Activar'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: _ChannelAction.test,
+                    child: Row(
+                      children: [
+                        Icon(Icons.wifi_tethering_rounded, size: 19),
+                        SizedBox(width: 10),
+                        Text('Probar conexion'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: _ChannelAction.sync,
+                    child: Row(
+                      children: [
+                        Icon(Icons.sync_rounded, size: 19),
+                        SizedBox(width: 10),
+                        Text('Sincronizar ordenes'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
