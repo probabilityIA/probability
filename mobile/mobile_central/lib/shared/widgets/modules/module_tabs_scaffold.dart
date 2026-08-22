@@ -32,8 +32,6 @@ class ModuleTabsScaffold extends StatefulWidget {
 }
 
 class _ModuleTabsScaffoldState extends State<ModuleTabsScaffold> {
-  int? _businessId;
-
   @override
   void initState() {
     super.initState();
@@ -43,9 +41,6 @@ class _ModuleTabsScaffoldState extends State<ModuleTabsScaffold> {
       if (!login.isSuperAdmin) return;
       final biz = context.read<BusinessProvider>();
       if (biz.businessesSimple.isEmpty) biz.fetchBusinessesSimple();
-      if (biz.selectedBusinessId != null) {
-        setState(() => _businessId = biz.selectedBusinessId);
-      }
     });
   }
 
@@ -53,16 +48,13 @@ class _ModuleTabsScaffoldState extends State<ModuleTabsScaffold> {
   Widget build(BuildContext context) {
     final login = context.watch<LoginProvider>();
     final isSuperAdmin = login.isSuperAdmin;
+    final businessId = context.watch<BusinessProvider>().selectedBusinessId;
 
-    if (isSuperAdmin && _businessId == null) {
-      return AppScaffold(
-        title: widget.title,
-        subtitle: 'Selecciona un negocio para continuar',
-        body: _BusinessGate(onSelected: (id) => setState(() => _businessId = id)),
-      );
+    if (isSuperAdmin && businessId == null) {
+      return const AppScaffold(body: _BusinessGate());
     }
 
-    final children = widget.builder(context, isSuperAdmin ? _businessId : null);
+    final children = widget.builder(context, isSuperAdmin ? businessId : null);
     final singleTab = widget.tabs.length < 2;
 
     return DefaultTabController(
@@ -71,10 +63,7 @@ class _ModuleTabsScaffoldState extends State<ModuleTabsScaffold> {
       child: AppScaffold(
         title: widget.title,
         subtitle: widget.subtitle,
-        actions: [
-          ...widget.actions,
-          if (isSuperAdmin) _BusinessChip(businessId: _businessId, onClear: () => setState(() => _businessId = null)),
-        ],
+        actions: widget.actions,
         bottom: singleTab
             ? null
             : PreferredSize(
@@ -95,43 +84,8 @@ class _ModuleTabsScaffoldState extends State<ModuleTabsScaffold> {
   }
 }
 
-class _BusinessChip extends StatelessWidget {
-  const _BusinessChip({required this.businessId, required this.onClear});
-
-  final int? businessId;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<BusinessProvider>(
-      builder: (context, provider, _) {
-        final business = provider.businessesSimple
-            .where((b) => b.id == businessId)
-            .firstOrNull;
-        final name = business?.name ?? 'Negocio $businessId';
-        return Padding(
-          padding: const EdgeInsets.only(right: 4),
-          child: TextButton.icon(
-            onPressed: () {
-              context.read<BusinessProvider>().setSelectedBusinessId(null);
-              onClear();
-            },
-            icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-            label: Text(
-              name.length > 14 ? '${name.substring(0, 13)}...' : name,
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 class _BusinessGate extends StatelessWidget {
-  const _BusinessGate({required this.onSelected});
-
-  final ValueChanged<int> onSelected;
+  const _BusinessGate();
 
   @override
   Widget build(BuildContext context) {
@@ -157,10 +111,9 @@ class _BusinessGate extends StatelessWidget {
             final business = provider.businessesSimple[index];
             return AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-              onTap: () {
-                context.read<BusinessProvider>().setSelectedBusinessId(business.id);
-                onSelected(business.id);
-              },
+              onTap: () => context
+                  .read<BusinessProvider>()
+                  .setSelectedBusinessId(business.id),
               child: Row(
                 children: [
                   Container(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-import '../app_shell_scope.dart';
+import '../../theme/app_tokens.dart';
 import 'app_logo.dart';
 
 class AppScaffold extends StatelessWidget {
@@ -34,57 +34,75 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shell = AppShellScope.maybeOf(context);
-    final canOpenDrawer = showMenu && onBack == null && shell != null;
+    final isStacked = onBack != null;
 
-    return Scaffold(
-      backgroundColor: backgroundColor ?? AppColors.background,
-      appBar: AppBar(
-        toolbarHeight: subtitle == null ? 58 : 66,
-        leadingWidth: 56,
-        leading: onBack != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, size: 22),
-                onPressed: onBack,
-                tooltip: 'Volver',
-              )
-            : canOpenDrawer
-                ? IconButton(
-                    icon: const Icon(Icons.menu_rounded, size: 22),
-                    onPressed: shell.openDrawer,
-                    tooltip: 'Menu',
-                  )
-                : null,
-        automaticallyImplyLeading: false,
-        title: showLogo
-            ? const AppLogo(height: 24)
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title ?? '',
-                    style: theme.textTheme.titleLarge,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (subtitle != null)
+    if (isStacked) {
+      return Scaffold(
+        backgroundColor: backgroundColor ?? AppColors.background,
+        appBar: AppBar(
+          toolbarHeight: subtitle == null ? 58 : 66,
+          leadingWidth: 56,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, size: 22),
+            onPressed: onBack,
+            tooltip: 'Volver',
+          ),
+          automaticallyImplyLeading: false,
+          title: showLogo
+              ? const AppLogo(height: 24)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                     Text(
-                      subtitle!,
-                      style: theme.textTheme.labelMedium,
+                      title ?? '',
+                      style: theme.textTheme.titleLarge,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                ],
-              ),
-        actions: [...actions, const SizedBox(width: 4)],
-        bottom: bottom,
-      ),
+                    if (subtitle != null)
+                      Text(
+                        subtitle!,
+                        style: theme.textTheme.labelMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+          actions: [...actions, const SizedBox(width: 4)],
+          bottom: bottom,
+        ),
+        floatingActionButton: floatingActionButton,
+        body: SafeArea(top: false, bottom: padBottomForNav, child: body),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: backgroundColor ?? AppColors.background,
       floatingActionButton: floatingActionButton,
       body: SafeArea(
-        top: false,
         bottom: padBottomForNav,
-        child: body,
+        child: Column(
+          children: [
+            if (actions.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: actions,
+                ),
+              ),
+            if (bottom != null)
+              Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(bottom: AppBorders.hairline),
+                ),
+                child: bottom,
+              ),
+            Expanded(child: body),
+          ],
+        ),
       ),
     );
   }

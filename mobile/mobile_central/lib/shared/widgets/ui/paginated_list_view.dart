@@ -16,7 +16,7 @@ class PaginatedListView<T> extends StatefulWidget {
     required this.unitLabel,
     this.placeholderHeight = 92,
     this.separatorHeight = 10,
-    this.padding = AppSpacing.page,
+    this.padding = const EdgeInsets.fromLTRB(16, 4, 16, 88),
     this.header,
     this.onRefresh,
   });

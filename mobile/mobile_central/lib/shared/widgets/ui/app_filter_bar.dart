@@ -384,15 +384,6 @@ class _FilterSheetState extends State<_FilterSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 12, 6),
               child: Row(
