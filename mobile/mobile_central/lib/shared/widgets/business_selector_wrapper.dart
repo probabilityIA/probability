@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import '../../services/auth/business/ui/providers/business_provider.dart';
 import '../../services/auth/login/ui/providers/login_provider.dart';
 
-/// Widget que muestra un selector de negocio para super admins.
-/// Si el usuario es super admin y no ha seleccionado negocio, muestra el selector.
-/// Si el usuario es normal (tiene business_id en JWT), renderiza el child directamente.
 class BusinessSelectorWrapper extends StatefulWidget {
   final Widget Function(BuildContext context, int businessId) builder;
 
@@ -38,52 +35,62 @@ class _BusinessSelectorWrapperState extends State<BusinessSelectorWrapper> {
   @override
   Widget build(BuildContext context) {
     final login = context.watch<LoginProvider>();
-
-    // Usuario normal → no necesita selector
     if (!login.isSuperAdmin) {
       return widget.builder(context, 0);
     }
-
-    // Super admin → necesita seleccionar negocio
     return Consumer<BusinessProvider>(
       builder: (context, bizProvider, _) {
         final selectedId = bizProvider.selectedBusinessId;
         final businesses = bizProvider.businessesSimple;
         final hasError = bizProvider.error != null;
 
-        return Column(
-          children: [
-            // Selector de negocio (barra superior)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withAlpha(60),
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant,
+        return SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withAlpha(60),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                 ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.business,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildSelector(
+                        bizProvider,
+                        businesses,
+                        selectedId,
+                        hasError,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.business,
-                      size: 20, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildSelector(bizProvider, businesses, selectedId, hasError),
-                  ),
-                ],
-              ),
-            ),
 
-            // Contenido
-            Expanded(
-              child: selectedId == null
-                  ? _buildPlaceholder(hasError)
-                  : widget.builder(context, selectedId),
-            ),
-          ],
+              Expanded(
+                child: selectedId == null
+                    ? _buildPlaceholder(hasError)
+                    : widget.builder(context, selectedId),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -99,7 +106,8 @@ class _BusinessSelectorWrapperState extends State<BusinessSelectorWrapper> {
       return const Row(
         children: [
           SizedBox(
-            width: 16, height: 16,
+            width: 16,
+            height: 16,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           SizedBox(width: 8),
@@ -133,13 +141,17 @@ class _BusinessSelectorWrapperState extends State<BusinessSelectorWrapper> {
         value: selectedId,
         isExpanded: true,
         isDense: true,
-        hint: const Text('Selecciona un negocio',
-            style: TextStyle(fontSize: 13)),
+        hint: const Text(
+          'Selecciona un negocio',
+          style: TextStyle(fontSize: 13),
+        ),
         items: businesses.map<DropdownMenuItem<int>>((b) {
           return DropdownMenuItem<int>(
             value: b.id,
-            child: Text('${b.name} (ID: ${b.id})',
-                style: const TextStyle(fontSize: 13)),
+            child: Text(
+              '${b.name} (ID: ${b.id})',
+              style: const TextStyle(fontSize: 13),
+            ),
           );
         }).toList(),
         onChanged: (id) {

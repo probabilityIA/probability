@@ -13,7 +13,7 @@ class InvoicingApiRepository implements IInvoicingRepository {
     final response = await _client.get('/invoices', queryParameters: filters.toQueryParams());
     final data = response.data;
     final items = (data['data'] as List<dynamic>?)?.map((e) => Invoice.fromJson(e)).toList() ?? [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 
@@ -52,7 +52,7 @@ class InvoicingApiRepository implements IInvoicingRepository {
     final response = await _client.get('/invoicing/configs', queryParameters: filters.toQueryParams());
     final data = response.data;
     final items = (data['data'] as List<dynamic>?)?.map((e) => InvoicingConfig.fromJson(e)).toList() ?? [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

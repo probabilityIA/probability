@@ -20,7 +20,7 @@ class ResourceApiRepository implements IResourceRepository {
             ?.map((r) => Resource.fromJson(r))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: resources, pagination: pagination);
   }
 

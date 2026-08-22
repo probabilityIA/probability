@@ -19,7 +19,7 @@ class UserApiRepository implements IUserRepository {
             ?.map((u) => User.fromJson(u))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: users, pagination: pagination);
   }
 

@@ -12,7 +12,7 @@ class ShipmentApiRepository implements IShipmentRepository {
     final response = await _client.get('/shipments', queryParameters: params?.toQueryParams());
     final data = response.data;
     final items = (data['data'] as List<dynamic>?)?.map((e) => Shipment.fromJson(e)).toList() ?? [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

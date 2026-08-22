@@ -72,8 +72,8 @@ class PagedCollection<T> {
   }
 
   void setPage(int page, List<T> items, int total) {
-    _total = total;
     final start = (page - 1) * pageSize;
+    _total = total > 0 ? total : start + items.length;
     final needed = start + items.length;
 
     if (_slots.length < needed) {
@@ -83,7 +83,7 @@ class PagedCollection<T> {
       _slots[start + i] = items[i];
     }
 
-    if (_slots.length > _total) {
+    if (_total > 0 && _slots.length > _total) {
       _slots.length = _total;
     }
 

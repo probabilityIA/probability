@@ -19,7 +19,7 @@ class MyIntegrationsApiRepository implements IMyIntegrationsRepository {
             ?.map((e) => MyIntegration.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

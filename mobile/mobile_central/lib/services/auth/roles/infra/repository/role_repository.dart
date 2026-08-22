@@ -19,7 +19,7 @@ class RoleApiRepository implements IRoleRepository {
             ?.map((r) => Role.fromJson(r))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: roles, pagination: pagination);
   }
 

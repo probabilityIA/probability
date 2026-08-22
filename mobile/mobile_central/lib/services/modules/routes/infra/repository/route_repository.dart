@@ -15,7 +15,7 @@ class RouteApiRepository implements IRouteRepository {
     final response = await _client.get('/routes', queryParameters: params?.toQueryParams());
     final data = response.data;
     final items = (data['data'] as List<dynamic>?)?.map((e) => RouteInfo.fromJson(e)).toList() ?? [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

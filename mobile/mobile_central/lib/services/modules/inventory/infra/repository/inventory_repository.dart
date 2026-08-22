@@ -37,7 +37,7 @@ class InventoryApiRepository implements IInventoryRepository {
             ?.map((e) => InventoryLevel.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 
@@ -74,7 +74,7 @@ class InventoryApiRepository implements IInventoryRepository {
             ?.map((e) => StockMovement.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 
@@ -89,7 +89,7 @@ class InventoryApiRepository implements IInventoryRepository {
             ?.map((e) => MovementType.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 }

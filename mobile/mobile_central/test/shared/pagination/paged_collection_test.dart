@@ -87,6 +87,15 @@ void main() {
       expect(c.pagesInMemory, lessThanOrEqualTo(8));
     });
 
+    test('un total desconocido no vacia la lista', () {
+      final c = PagedCollection<String>(pageSize: 20, maxPagesInMemory: 8);
+      c.setPage(1, pageOf(1, 20, 55), 0);
+
+      expect(c.length, 20);
+      expect(c.peek(0), 'item-0');
+      expect(c.total, 20);
+    });
+
     test('reset limpia todo', () {
       final c = PagedCollection<String>(pageSize: 10, maxPagesInMemory: 2);
       c.setPage(1, pageOf(1, 10, 100), 100);

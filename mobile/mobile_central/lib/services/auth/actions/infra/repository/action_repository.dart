@@ -20,7 +20,7 @@ class ActionApiRepository implements IActionRepository {
             ?.map((a) => ActionEntity.fromJson(a))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: actions, pagination: pagination);
   }
 
