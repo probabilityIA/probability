@@ -16,7 +16,7 @@ Base de este plan: `origin/main` a `7eadafdc`, ya mezclado en la rama. Eso trae
 | Nucleo + tarjeta por canal con stats | hecho |
 | Informe = OrdersReport (Vista general) | hecho |
 | Acciones por canal: activar, probar, sincronizar ordenes | hecho |
-| Motor de sincronizacion (SSE + correlation_id) | **falta** |
+| Motor de sincronizacion (SSE + correlation_id) | hecho (Fase 0) |
 | Comparar productos / Actualizar productos / Sincronizar inventario | **falta** |
 | Comparar ordenes | **falta** (nuevo desde main) |
 | Crear / editar integracion | **falta** |
@@ -68,7 +68,7 @@ Por proveedor (prefijo distinto segun el canal):
 
 ---
 
-## Fase 0 - Motor de sincronizacion (cimiento, sin UI nueva)
+## Fase 0 - Motor de sincronizacion (cimiento, sin UI nueva) - HECHO
 
 Es el `sync-activity-context.tsx` del front (718 lineas), la pieza de la que
 cuelgan las fases 2, 4, 5 y 6. Sin esto cada accion queda sin progreso ni

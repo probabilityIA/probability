@@ -9,6 +9,8 @@ import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../../../../integrations/core/ui/providers/integration_provider.dart';
 import '../providers/my_integrations_provider.dart';
+import '../providers/sync_activity_provider.dart';
+import '../widgets/channel_sync_strip.dart';
 import '../widgets/orders_report.dart';
 
 class CoreScreen extends StatefulWidget {
@@ -33,10 +35,16 @@ class _CoreScreenState extends State<CoreScreen> {
     if (oldWidget.businessId != widget.businessId) _load();
   }
 
-  void _load() {
+  Future<void> _load() async {
     final provider = context.read<MyIntegrationsProvider>();
-    provider.fetchIntegrations(businessId: widget.businessId);
+    final sync = context.read<SyncActivityProvider>();
+    await provider.fetchIntegrations(businessId: widget.businessId);
+    if (!mounted) return;
     provider.fetchStats(businessId: widget.businessId);
+    await sync.configure(
+      integrations: provider.integrations,
+      businessId: widget.businessId,
+    );
   }
 
   Future<void> _runAction(MyIntegration item, _ChannelAction action) async {
@@ -515,6 +523,10 @@ class _ChannelCard extends StatelessWidget {
                     style: theme.textTheme.labelSmall,
                   ),
               ],
+            ),
+            ChannelSyncStrip(
+              integrationId: integration.id,
+              integrationTypeId: integration.integrationTypeId,
             ),
             if (stats.hasOrders) ...[
               const SizedBox(height: 10),
