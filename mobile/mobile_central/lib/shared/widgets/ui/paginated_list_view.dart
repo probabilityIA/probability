@@ -98,7 +98,7 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
         return RefreshIndicator(
           onRefresh: _refresh,
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
           child: ListView.separated(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),

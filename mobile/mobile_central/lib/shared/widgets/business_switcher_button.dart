@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/auth/business/ui/providers/business_provider.dart';
-import '../theme/app_colors.dart';
 import 'business_switcher.dart';
 
 class DraggableBusinessButton extends StatefulWidget {
@@ -158,20 +157,21 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = Radius.circular(height / 2);
+    final brand = Theme.of(context).colorScheme.primary;
 
     if (hidden) {
       return Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          color: brand,
           borderRadius: BorderRadius.horizontal(
             left: onRight ? radius : Radius.zero,
             right: onRight ? Radius.zero : radius,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.28),
+              color: brand.withValues(alpha: 0.28),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -191,11 +191,11 @@ class _Pill extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: brand,
         borderRadius: BorderRadius.all(radius),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.28),
+            color: brand.withValues(alpha: 0.28),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

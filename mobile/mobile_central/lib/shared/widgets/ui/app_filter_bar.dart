@@ -117,8 +117,9 @@ class _FilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final on = count > 0;
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: on ? AppColors.primarySoft : AppColors.surface,
+      color: on ? scheme.primaryContainer : AppColors.surface,
       borderRadius: AppRadius.mdAll,
       child: InkWell(
         borderRadius: AppRadius.mdAll,
@@ -130,7 +131,7 @@ class _FilterButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: AppRadius.mdAll,
             border: Border.all(
-              color: on ? AppColors.primary : AppColors.border,
+              color: on ? scheme.primary : AppColors.border,
             ),
           ),
           child: Stack(
@@ -139,7 +140,7 @@ class _FilterButton extends StatelessWidget {
               Icon(
                 Icons.tune_rounded,
                 size: 21,
-                color: on ? AppColors.primary : AppColors.textMuted,
+                color: on ? scheme.primary : AppColors.textMuted,
               ),
               if (on)
                 Positioned(
@@ -148,16 +149,16 @@ class _FilterButton extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: scheme.primary,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '$count',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: scheme.onPrimary,
                         height: 1.3,
                       ),
                     ),
@@ -302,8 +303,9 @@ class _ActiveChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: AppColors.primarySoft,
+      color: scheme.primaryContainer,
       borderRadius: AppRadius.pillAll,
       child: InkWell(
         borderRadius: AppRadius.pillAll,
@@ -315,15 +317,15 @@ class _ActiveChip extends StatelessWidget {
             children: [
               Text(
                 '${filter.dimensionLabel}: ${filter.valueLabel}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primaryDark,
+                  color: scheme.onPrimaryContainer,
                 ),
               ),
               const SizedBox(width: 5),
-              const Icon(Icons.close_rounded, size: 15, color: AppColors.primary),
+              Icon(Icons.close_rounded, size: 15, color: scheme.primary),
             ],
           ),
         ),
@@ -439,7 +441,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
                                 color: current == option.value
-                                    ? AppColors.primaryDark
+                                    ? theme.colorScheme.onPrimaryContainer
                                     : AppColors.textSecondary,
                               ),
                             ),

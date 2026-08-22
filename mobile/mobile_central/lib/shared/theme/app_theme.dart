@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
+import 'brand_color.dart';
 import 'app_tokens.dart';
 
 class AppTheme {
@@ -8,12 +9,12 @@ class AppTheme {
 
   static const String fontFamily = 'Inter';
 
-  static const ColorScheme _scheme = ColorScheme(
+  static ColorScheme _schemeFor(Color brand) => ColorScheme(
     brightness: Brightness.light,
-    primary: AppColors.primary,
-    onPrimary: Colors.white,
-    primaryContainer: AppColors.primarySoft,
-    onPrimaryContainer: AppColors.primaryDark,
+    primary: brand,
+    onPrimary: BrandColor.onBrand(brand),
+    primaryContainer: BrandColor.soft(brand),
+    onPrimaryContainer: BrandColor.dark(brand),
     secondary: AppColors.accent,
     onSecondary: AppColors.textPrimary,
     secondaryContainer: AppColors.accentSoft,
@@ -36,7 +37,7 @@ class AppTheme {
     scrim: Color(0x66000000),
     inverseSurface: AppColors.textPrimary,
     onInverseSurface: Colors.white,
-    inversePrimary: AppColors.primarySoft,
+    inversePrimary: BrandColor.soft(brand),
   );
 
   static TextTheme get _text {
@@ -59,12 +60,18 @@ class AppTheme {
     );
   }
 
-  static ThemeData get light {
+  static ThemeData get light => lightFor(AppColors.primary);
+
+  static ThemeData lightFor(Color brand) {
+    final scheme = _schemeFor(brand);
+    final primarySoft = BrandColor.soft(brand);
+    final primaryDark = BrandColor.dark(brand);
+
     final text = _text;
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: _scheme,
+      colorScheme: scheme,
       fontFamily: fontFamily,
       textTheme: text,
       scaffoldBackgroundColor: AppColors.background,
@@ -113,7 +120,7 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         hintStyle: text.bodyMedium?.copyWith(color: AppColors.textDisabled),
         labelStyle: text.bodyMedium?.copyWith(color: AppColors.textMuted),
-        floatingLabelStyle: text.labelLarge?.copyWith(color: AppColors.primary),
+        floatingLabelStyle: text.labelLarge?.copyWith(color: brand),
         prefixIconColor: AppColors.textMuted,
         suffixIconColor: AppColors.textMuted,
         border: OutlineInputBorder(
@@ -126,7 +133,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.mdAll,
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+          borderSide: BorderSide(color: brand, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadius.mdAll,
@@ -139,7 +146,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: brand,
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.surfaceMuted,
           disabledForegroundColor: AppColors.textDisabled,
@@ -163,7 +170,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: brand,
           textStyle: text.labelLarge,
           minimumSize: const Size(0, 40),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.smAll),
@@ -177,19 +184,19 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceMuted,
-        selectedColor: AppColors.primarySoft,
+        selectedColor: primarySoft,
         side: BorderSide.none,
         labelStyle: text.labelMedium!.copyWith(color: AppColors.textSecondary),
-        secondaryLabelStyle: text.labelMedium!.copyWith(color: AppColors.primaryDark),
+        secondaryLabelStyle: text.labelMedium!.copyWith(color: primaryDark),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         shape: RoundedRectangleBorder(borderRadius: AppRadius.pillAll),
         showCheckmark: false,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: brand,
         unselectedItemColor: AppColors.textDisabled,
-        selectedLabelStyle: text.labelSmall!.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+        selectedLabelStyle: text.labelSmall!.copyWith(color: brand, fontWeight: FontWeight.w600),
         unselectedLabelStyle: text.labelSmall,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
@@ -197,7 +204,7 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.primarySoft,
+        indicatorColor: primarySoft,
         indicatorShape: RoundedRectangleBorder(borderRadius: AppRadius.pillAll),
         height: 66,
         elevation: 0,
@@ -205,7 +212,7 @@ class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return text.labelSmall!.copyWith(
-            color: selected ? AppColors.primary : AppColors.textDisabled,
+            color: selected ? brand : AppColors.textDisabled,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           );
         }),
@@ -213,7 +220,7 @@ class AppTheme {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
             size: 22,
-            color: selected ? AppColors.primary : AppColors.textDisabled,
+            color: selected ? brand : AppColors.textDisabled,
           );
         }),
       ),
@@ -249,30 +256,30 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
       ),
       tabBarTheme: TabBarThemeData(
-        labelColor: AppColors.primary,
+        labelColor: brand,
         unselectedLabelColor: AppColors.textMuted,
         labelStyle: text.titleSmall,
         unselectedLabelStyle: text.titleSmall!.copyWith(fontWeight: FontWeight.w500),
-        indicatorColor: AppColors.primary,
+        indicatorColor: brand,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: AppColors.border,
         dividerHeight: 1,
-        overlayColor: WidgetStatePropertyAll(AppColors.primarySoft.withValues(alpha: 0.4)),
+        overlayColor: WidgetStatePropertyAll(primarySoft.withValues(alpha: 0.4)),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((s) =>
             s.contains(WidgetState.selected) ? Colors.white : Colors.white),
         trackColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? AppColors.primary : AppColors.borderStrong),
+            s.contains(WidgetState.selected) ? brand : AppColors.borderStrong),
         trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: brand,
         linearTrackColor: AppColors.surfaceMuted,
         circularTrackColor: AppColors.surfaceMuted,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
+        backgroundColor: brand,
         foregroundColor: Colors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
@@ -291,4 +298,6 @@ class AppTheme {
   }
 
   static ThemeData get dark => light;
+
+  static ThemeData darkFor(Color brand) => lightFor(brand);
 }

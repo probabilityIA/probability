@@ -36,6 +36,7 @@ import 'services/modules/my_integrations/ui/providers/my_integrations_provider.d
 import 'services/modules/mobile/ui/providers/order_full_provider.dart';
 // Integration providers
 import 'services/integrations/core/ui/providers/integration_provider.dart';
+import 'shared/theme/active_brand.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/utils/image_memory.dart';
 
@@ -176,13 +177,18 @@ class _ProbabilityAppState extends State<ProbabilityApp> {
           create: (_) => IntegrationProvider(apiClient: widget.apiClient),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'Probability Central',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
-        routerConfig: _appRouter.router,
-        debugShowCheckedModeBanner: false,
+      child: Builder(
+        builder: (context) {
+          final brand = ActiveBrand.watch(context);
+          return MaterialApp.router(
+            title: 'Probability Central',
+            theme: AppTheme.lightFor(brand),
+            darkTheme: AppTheme.darkFor(brand),
+            themeMode: ThemeMode.system,
+            routerConfig: _appRouter.router,
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }
