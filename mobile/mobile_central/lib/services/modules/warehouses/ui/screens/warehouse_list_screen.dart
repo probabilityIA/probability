@@ -38,44 +38,24 @@ class _WarehouseListScreenState extends State<WarehouseListScreen> {
   Widget build(BuildContext context) {
     return Consumer<WarehouseProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading && provider.warehouses.isEmpty) {
-          return const AppListSkeleton();
-        }
-        if (provider.error != null && provider.warehouses.isEmpty) {
-          return AppErrorState(message: provider.error!, onRetry: _refresh);
-        }
-        if (provider.warehouses.isEmpty) {
-          return AppEmptyState(
-            icon: Icons.warehouse_outlined,
-            title: 'Sin bodegas',
-            message: 'Crea la primera bodega para poder generar guias y controlar stock.',
-            actionLabel: 'Actualizar',
-            onAction: _refresh,
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async => _refresh(),
-          color: AppColors.primary,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppSpacing.page,
-            itemCount: provider.warehouses.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final warehouse = provider.warehouses[index];
-              return _WarehouseCard(
-                warehouse: warehouse,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => WarehouseDetailScreen(
-                      warehouseId: warehouse.id,
-                      businessId: widget.businessId,
-                    ),
-                  ),
+        return PaginatedListView<Warehouse>(
+          controller: provider.list,
+          unitLabel: 'bodegas',
+          placeholderHeight: 150,
+          emptyIcon: Icons.warehouse_outlined,
+          emptyTitle: 'Sin bodegas',
+          emptyMessage:
+              'Crea la primera bodega para poder generar guias y controlar stock.',
+          itemBuilder: (context, warehouse, index) => _WarehouseCard(
+            warehouse: warehouse,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => WarehouseDetailScreen(
+                  warehouseId: warehouse.id,
+                  businessId: widget.businessId,
                 ),
-              );
-            },
+              ),
+            ),
           ),
         );
       },

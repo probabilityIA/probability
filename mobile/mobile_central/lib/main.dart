@@ -37,9 +37,11 @@ import 'services/modules/mobile/ui/providers/order_full_provider.dart';
 // Integration providers
 import 'services/integrations/core/ui/providers/integration_provider.dart';
 import 'shared/theme/app_theme.dart';
+import 'shared/utils/image_memory.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  ImageMemory.applyLowEndBudget();
 
   final tokenStorage = TokenStorage();
   final apiClient = ApiClient();

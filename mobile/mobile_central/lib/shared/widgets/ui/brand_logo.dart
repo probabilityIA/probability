@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/image_memory.dart';
 import '../../utils/brand_assets.dart';
 import '../../utils/formatters.dart';
 
@@ -56,6 +57,8 @@ class BrandLogo extends StatelessWidget {
           : Image.network(
               url,
               fit: BoxFit.contain,
+              cacheWidth: ImageMemory.decodePixels(context, size),
+              cacheHeight: ImageMemory.decodePixels(context, size),
               filterQuality: FilterQuality.medium,
               webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
               errorBuilder: (context, error, stack) => _Fallback(name: name, size: size),

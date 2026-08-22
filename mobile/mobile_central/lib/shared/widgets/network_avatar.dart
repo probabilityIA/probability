@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../utils/image_memory.dart';
 import '../utils/brand_assets.dart';
 import '../utils/formatters.dart';
 
@@ -46,6 +48,8 @@ class NetworkAvatar extends StatelessWidget {
                 width: radius * 2,
                 height: radius * 2,
                 fit: BoxFit.cover,
+                cacheWidth: ImageMemory.decodePixels(context, radius * 2),
+                cacheHeight: ImageMemory.decodePixels(context, radius * 2),
                 filterQuality: FilterQuality.medium,
                 webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                 errorBuilder: (context, error, stackTrace) => _Fallback(

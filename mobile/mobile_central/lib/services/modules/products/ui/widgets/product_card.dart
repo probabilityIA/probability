@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../../shared/utils/image_memory.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
@@ -29,6 +31,8 @@ class ProductThumb extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
+          cacheWidth: ImageMemory.decodePixels(context, size),
+          cacheHeight: ImageMemory.decodePixels(context, size),
           webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
           errorBuilder: (context, error, stack) => _Placeholder(size: size),
         ),
