@@ -41,7 +41,7 @@ func (h *tiendanubeHandler) handlePrivacyWebhook(c *gin.Context, topic string) {
 		Str("store_id", payload.StoreID.String()).
 		Str("customer_id", payload.CustomerID.String()).
 		Int("orders_to_redact", len(payload.OrdersToRedact)).
-		Str("hmac", c.GetHeader("x-linkedstore-hmac-sha256")).
+		Bool("firma_valida", h.firmaPrivacidadValida(ctx, body, c.GetHeader(hmacHeaderName))).
 		Msg("Solicitud de privacidad recibida desde Tiendanube")
 
 	c.Status(http.StatusOK)

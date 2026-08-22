@@ -46,6 +46,16 @@ func (h *tiendanubeHandler) HandleWebhook(c *gin.Context) {
 		return
 	}
 
+	if err := h.verificarWebhook(ctx, body, c.GetHeader(hmacHeaderName), integrationID, payload.StoreID.String()); err != nil {
+		h.logger.Warn(ctx).Err(err).
+			Str("event", payload.Event).
+			Str("integration_id", integrationID).
+			Str("store_id", payload.StoreID.String()).
+			Msg("Webhook de Tiendanube rechazado: no supero la validacion de firma")
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+
 	c.Status(http.StatusOK)
 
 	event := strings.TrimSpace(payload.Event)
