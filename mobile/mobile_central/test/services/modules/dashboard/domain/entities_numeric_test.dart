@@ -88,4 +88,45 @@ void main() {
       expect(stats.shipmentsByStatus.single.count, 2);
     });
   });
+
+  _periodTests();
+}
+
+void _periodTests() {
+  group('periodo del dashboard', () {
+    final now = DateTime(2026, 8, 22, 15, 30);
+
+    test('todo no manda rango', () {
+      expect(DashboardPeriod.all.rangeFrom(now), isNull);
+    });
+
+    test('hoy es un solo dia', () {
+      final r = DashboardPeriod.today.rangeFrom(now)!;
+      expect(r.start, '2026-08-22');
+      expect(r.end, '2026-08-22');
+    });
+
+    test('7 dias incluye hoy', () {
+      final r = DashboardPeriod.week.rangeFrom(now)!;
+      expect(r.start, '2026-08-16');
+      expect(r.end, '2026-08-22');
+    });
+
+    test('30 dias incluye hoy', () {
+      final r = DashboardPeriod.month.rangeFrom(now)!;
+      expect(r.start, '2026-07-24');
+      expect(r.end, '2026-08-22');
+    });
+
+    test('el rango cruza el cambio de mes', () {
+      final r = DashboardPeriod.week.rangeFrom(DateTime(2026, 3, 2))!;
+      expect(r.start, '2026-02-24');
+      expect(r.end, '2026-03-02');
+    });
+
+    test('las etiquetas son las esperadas', () {
+      expect(DashboardPeriod.values.map((p) => p.label).toList(),
+          ['Hoy', '7 dias', '30 dias', 'Todo']);
+    });
+  });
 }

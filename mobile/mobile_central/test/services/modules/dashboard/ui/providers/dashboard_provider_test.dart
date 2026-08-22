@@ -6,6 +6,8 @@ import 'package:mobile_central/services/modules/dashboard/domain/ports.dart';
 // --- Manual Mock Repository ---
 
 class MockDashboardRepository implements IDashboardRepository {
+  String? lastStartDate;
+  String? lastEndDate;
   DashboardStatsResponse? getStatsResult;
   Exception? errorToThrow;
 
@@ -14,7 +16,14 @@ class MockDashboardRepository implements IDashboardRepository {
   int? capturedIntegrationId;
 
   @override
-  Future<DashboardStatsResponse> getStats({int? businessId, int? integrationId}) async {
+  Future<DashboardStatsResponse> getStats({
+    int? businessId,
+    int? integrationId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    lastStartDate = startDate;
+    lastEndDate = endDate;
     calls.add('getStats');
     capturedBusinessId = businessId;
     capturedIntegrationId = integrationId;

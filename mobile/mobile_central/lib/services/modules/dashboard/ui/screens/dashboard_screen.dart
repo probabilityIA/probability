@@ -7,6 +7,7 @@ import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../../../auth/business/ui/providers/business_provider.dart';
+import '../../../../integrations/core/ui/providers/integration_provider.dart';
 import '../../../../auth/login/ui/providers/login_provider.dart';
 import '../../domain/entities.dart';
 import '../providers/dashboard_provider.dart';
@@ -25,7 +26,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _load();
+      final integrations = context.read<IntegrationProvider>();
+      if (integrations.integrationTypes.isEmpty) {
+        integrations.fetchIntegrationTypes();
+      }
+    });
   }
 
   @override
@@ -36,6 +43,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _load() {
     context.read<DashboardProvider>().fetchStats(businessId: widget.businessId);
+  }
+
+  Map<String, String?> _channelLogos(BuildContext context) {
+    final types = context.watch<IntegrationProvider>().integrationTypes;
+    final map = <String, String?>{};
+    for (final type in types) {
+      map[type.name.toLowerCase()] = type.imageUrl;
+      map[type.code.toLowerCase()] = type.imageUrl;
+    }
+    return map;
   }
 
   String? _activeBusinessName(BuildContext context, LoginProvider login) {
@@ -99,8 +116,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   name: login.user?.name,
                   business: _activeBusinessName(context, login),
                 ),
-                const SizedBox(height: 14),
-                _KpiGrid(stats: stats),
+                const SizedBox(height: 12),
+                _PeriodPicker(
+                  selected: provider.period,
+                  onSelected: (period) {
+                    provider.setPeriod(period);
+                    _load();
+                  },
+                ),
+                const SizedBox(height: 12),
+                _KpiGrid(stats: stats, channelLogos: _channelLogos(context)),
                 const SizedBox(height: 16),
                 const _QuickActions(),
                 if (stats.ordersByIntegrationType.isNotEmpty) ...[
@@ -195,9 +220,10 @@ class _Greeting extends StatelessWidget {
 }
 
 class _KpiGrid extends StatelessWidget {
-  const _KpiGrid({required this.stats});
+  const _KpiGrid({required this.stats, this.channelLogos = const {}});
 
   final DashboardStats stats;
+  final Map<String, String?> channelLogos;
 
   double get _revenue =>
       stats.topProducts.fold<double>(0, (acc, p) => acc + p.totalSold);
@@ -221,12 +247,9 @@ class _KpiGrid extends StatelessWidget {
         icon: Icons.receipt_long_outlined,
         onTap: () => context.go('/orders'),
       ),
-      AppKpiTile(
-        label: 'Canales activos',
-        value: AppFormat.number(stats.ordersByIntegrationType.length),
-        icon: Icons.hub_outlined,
-        accent: const Color(0xFF0EA5E9),
-        onTap: () => context.go('/integrations'),
+      _ChannelsKpiTile(
+        channels: stats.ordersByIntegrationType,
+        logos: channelLogos,
       ),
       AppKpiTile(
         label: 'Vendido',
@@ -319,6 +342,152 @@ class _QuickAction extends StatelessWidget {
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PeriodPicker extends StatelessWidget {
+  const _PeriodPicker({required this.selected, required this.onSelected});
+
+  final DashboardPeriod selected;
+  final ValueChanged<DashboardPeriod> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 32,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        itemCount: DashboardPeriod.values.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 7),
+        itemBuilder: (context, index) {
+          final period = DashboardPeriod.values[index];
+          final on = period == selected;
+          return Material(
+            color: on ? scheme.primaryContainer : AppColors.surface,
+            borderRadius: AppRadius.pillAll,
+            child: InkWell(
+              borderRadius: AppRadius.pillAll,
+              onTap: on ? null : () => onSelected(period),
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.pillAll,
+                  border: Border.all(
+                    color: on ? scheme.primary : AppColors.border,
+                  ),
+                ),
+                child: Text(
+                  period.label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: on
+                        ? scheme.onPrimaryContainer
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ChannelsKpiTile extends StatelessWidget {
+  const _ChannelsKpiTile({required this.channels, required this.logos});
+
+  final List<OrderCountByIntegrationType> channels;
+  final Map<String, String?> logos;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const accent = Color(0xFF0EA5E9);
+    final sorted = [...channels]..sort((a, b) => b.count.compareTo(a.count));
+    final shown = sorted.take(4).toList();
+    final extra = sorted.length - shown.length;
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: AppRadius.lgAll,
+      child: InkWell(
+        borderRadius: AppRadius.lgAll,
+        onTap: () => context.go('/integrations'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.lgAll,
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.10),
+                      borderRadius: AppRadius.smAll,
+                    ),
+                    child: const Icon(Icons.hub_outlined, size: 15, color: accent),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      'Canales activos',
+                      style: theme.textTheme.labelMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    AppFormat.number(sorted.length),
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        for (final channel in shown)
+                          BrandLogo(
+                            name: channel.integrationType,
+                            imageUrl:
+                                logos[channel.integrationType.toLowerCase()],
+                            size: 22,
+                            radius: 6,
+                            padding: 3,
+                          ),
+                        if (extra > 0)
+                          Text('+$extra', style: theme.textTheme.labelSmall),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

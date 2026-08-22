@@ -1,3 +1,46 @@
+enum DashboardPeriod { today, week, month, all }
+
+extension DashboardPeriodX on DashboardPeriod {
+  String get label {
+    switch (this) {
+      case DashboardPeriod.today:
+        return 'Hoy';
+      case DashboardPeriod.week:
+        return '7 dias';
+      case DashboardPeriod.month:
+        return '30 dias';
+      case DashboardPeriod.all:
+        return 'Todo';
+    }
+  }
+
+  int? get days {
+    switch (this) {
+      case DashboardPeriod.today:
+        return 0;
+      case DashboardPeriod.week:
+        return 6;
+      case DashboardPeriod.month:
+        return 29;
+      case DashboardPeriod.all:
+        return null;
+    }
+  }
+
+  ({String start, String end})? rangeFrom(DateTime now) {
+    final span = days;
+    if (span == null) return null;
+    final end = DateTime(now.year, now.month, now.day);
+    final start = end.subtract(Duration(days: span));
+    return (start: _ymd(start), end: _ymd(end));
+  }
+}
+
+String _ymd(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
+
 int _asInt(dynamic value) {
   if (value is int) return value;
   if (value is num) return value.round();
