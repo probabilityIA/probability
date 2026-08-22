@@ -74,6 +74,8 @@ services:
     container_name: central_reserve_prod
     ports:
       - "127.0.0.1:3050:3050"
+    dns:
+      - 169.254.169.253
     environment:
       DB_HOST:             "${DB_HOST:-postgres}"
       DB_PORT:             "5432"
