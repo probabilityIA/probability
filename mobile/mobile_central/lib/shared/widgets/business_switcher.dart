@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../services/auth/business/ui/providers/business_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
-import '../utils/formatters.dart';
 import 'ui/ui.dart';
 
 Future<void> showBusinessSwitcher(BuildContext context) async {
@@ -86,27 +85,12 @@ class _BusinessSheet extends StatelessWidget {
                           },
                           child: Row(
                             children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: active
-                                      ? AppColors.primary
-                                      : AppColors.primarySoft,
-                                  borderRadius: AppRadius.smAll,
-                                ),
-                                child: Text(
-                                  AppFormat.initials(business.name),
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12.5,
-                                    color: active
-                                        ? Colors.white
-                                        : AppColors.primary,
-                                  ),
-                                ),
+                              BrandLogo(
+                                name: business.name,
+                                imageUrl: business.logoUrl,
+                                size: 38,
+                                radius: AppRadius.sm,
+                                padding: 4,
                               ),
                               const SizedBox(width: 12),
                               Expanded(

@@ -4,7 +4,6 @@ import '../../../services/auth/business/ui/providers/business_provider.dart';
 import '../../../services/auth/login/ui/providers/login_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
-import '../../utils/formatters.dart';
 import '../ui/ui.dart';
 
 typedef ModuleTabsBuilder = List<Widget> Function(BuildContext context, int? businessId);
@@ -116,23 +115,12 @@ class _BusinessGate extends StatelessWidget {
                   .setSelectedBusinessId(business.id),
               child: Row(
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: AppRadius.smAll,
-                    ),
-                    child: Text(
-                      AppFormat.initials(business.name),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                  BrandLogo(
+                    name: business.name,
+                    imageUrl: business.logoUrl,
+                    size: 40,
+                    radius: AppRadius.sm,
+                    padding: 4,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
