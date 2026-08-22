@@ -142,13 +142,24 @@ class _Filters extends StatelessWidget {
           controller: controller,
           searchFields: const [
             SearchField(
-              key: 'q',
-              label: 'Producto',
+              key: 'all',
+              label: 'Todo',
               hint: 'SKU, producto o codigo de barras',
             ),
+            SearchField(key: 'sku', label: 'SKU', hint: 'Buscar por SKU'),
+            SearchField(
+              key: 'name',
+              label: 'Producto',
+              hint: 'Buscar por nombre del producto',
+            ),
+            SearchField(
+              key: 'barcode',
+              label: 'Codigo de barras',
+              hint: 'Buscar por codigo de barras',
+            ),
           ],
-          selectedField: 'q',
-          onFieldChanged: (_) {},
+          selectedField: matrix.searchBy,
+          onFieldChanged: matrix.setSearchBy,
           onSearchChanged: matrix.setSearch,
           dimensions: _dimensions,
           selection: matrix.selection,

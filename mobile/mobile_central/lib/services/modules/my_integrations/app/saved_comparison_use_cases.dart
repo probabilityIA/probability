@@ -33,6 +33,7 @@ class SavedComparisonUseCases {
     int page = 1,
     int pageSize = 20,
     String? search,
+    String searchBy = 'all',
     List<int> presentIn = const <int>[],
     List<int> missingIn = const <int>[],
   }) =>
@@ -41,6 +42,7 @@ class SavedComparisonUseCases {
         page: page,
         pageSize: pageSize,
         search: search,
+        searchBy: searchBy,
         presentIn: presentIn,
         missingIn: missingIn,
       );

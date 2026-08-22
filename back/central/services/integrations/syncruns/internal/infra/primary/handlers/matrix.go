@@ -60,6 +60,7 @@ func (h *handler) MatchMatrix(c *gin.Context) {
 	query := domain.MatrixQuery{
 		BusinessID: businessID,
 		Search:     strings.TrimSpace(c.Query("q")),
+		SearchBy:   strings.TrimSpace(c.Query("search_by")),
 		All:        descarga,
 	}
 	query.Page, _ = strconv.Atoi(c.Query("page"))

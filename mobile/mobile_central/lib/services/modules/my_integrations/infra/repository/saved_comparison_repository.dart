@@ -64,6 +64,7 @@ class SavedComparisonApiRepository implements ISavedComparisonRepository {
     int page = 1,
     int pageSize = 20,
     String? search,
+    String searchBy = 'all',
     List<int> presentIn = const <int>[],
     List<int> missingIn = const <int>[],
   }) async {
@@ -74,6 +75,8 @@ class SavedComparisonApiRepository implements ISavedComparisonRepository {
         'page_size': pageSize,
         'business_id': ?businessId,
         if (search != null && search.isNotEmpty) 'q': search,
+        if (search != null && search.isNotEmpty && searchBy != 'all')
+          'search_by': searchBy,
         if (presentIn.isNotEmpty) 'present_in': presentIn.join(','),
         if (missingIn.isNotEmpty) 'missing_in': missingIn.join(','),
       },

@@ -73,6 +73,7 @@ abstract class ISavedComparisonRepository {
     int page,
     int pageSize,
     String? search,
+    String searchBy,
     List<int> presentIn,
     List<int> missingIn,
   });

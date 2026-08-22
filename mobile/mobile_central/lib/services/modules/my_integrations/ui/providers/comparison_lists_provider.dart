@@ -45,12 +45,14 @@ class ProductMatrixProvider extends ChangeNotifier {
 
   int? _businessId;
   String _search = '';
+  String _searchBy = 'all';
   List<MatrixColumn> _columns = const <MatrixColumn>[];
   final Set<int> _presentIn = <int>{};
   final Set<int> _missingIn = <int>{};
 
   List<MatrixColumn> get columns => _columns;
   String get search => _search;
+  String get searchBy => _searchBy;
   Set<int> get presentIn => Set.unmodifiable(_presentIn);
   Set<int> get missingIn => Set.unmodifiable(_missingIn);
   bool get hasFilters => _presentIn.isNotEmpty || _missingIn.isNotEmpty;
@@ -104,6 +106,7 @@ class ProductMatrixProvider extends ChangeNotifier {
       page: page,
       pageSize: pageSize,
       search: _search.isEmpty ? null : _search,
+      searchBy: _searchBy,
       presentIn: _presentIn.toList(),
       missingIn: _missingIn.toList(),
     );
@@ -129,6 +132,16 @@ class ProductMatrixProvider extends ChangeNotifier {
     final next = value.trim();
     if (next == _search) return Future<void>.value();
     _search = next;
+    return list.refresh();
+  }
+
+  Future<void> setSearchBy(String value) {
+    if (value == _searchBy) return Future<void>.value();
+    _searchBy = value;
+    if (_search.isEmpty) {
+      notifyListeners();
+      return Future<void>.value();
+    }
     return list.refresh();
   }
 

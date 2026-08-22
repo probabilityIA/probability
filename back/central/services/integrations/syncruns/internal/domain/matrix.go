@@ -30,9 +30,17 @@ type MatrixRow struct {
 	Cells     []MatrixCell
 }
 
+const (
+	MatrixSearchAll     = "all"
+	MatrixSearchSKU     = "sku"
+	MatrixSearchName    = "name"
+	MatrixSearchBarcode = "barcode"
+)
+
 type MatrixQuery struct {
 	BusinessID uint
 	Search     string
+	SearchBy   string
 	PresentIn  []uint
 	MissingIn  []uint
 	Page       int
@@ -48,6 +56,11 @@ func (q MatrixQuery) Offset() int {
 }
 
 func (q *MatrixQuery) Normalize() {
+	switch q.SearchBy {
+	case MatrixSearchSKU, MatrixSearchName, MatrixSearchBarcode:
+	default:
+		q.SearchBy = MatrixSearchAll
+	}
 	if q.Page < 1 {
 		q.Page = 1
 	}

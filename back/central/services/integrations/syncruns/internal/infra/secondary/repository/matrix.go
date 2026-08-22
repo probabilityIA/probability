@@ -66,7 +66,16 @@ func (r *repository) MatchMatrix(ctx context.Context, q domain.MatrixQuery) (*do
 		Where("p.business_id = ? AND p.deleted_at IS NULL AND p.is_active = true", q.BusinessID)
 	if q.Search != "" {
 		like := "%" + q.Search + "%"
-		base = base.Where("p.sku ILIKE ? OR p.name ILIKE ? OR p.barcode ILIKE ?", like, like, like)
+		switch q.SearchBy {
+		case domain.MatrixSearchSKU:
+			base = base.Where("p.sku ILIKE ?", like)
+		case domain.MatrixSearchName:
+			base = base.Where("p.name ILIKE ?", like)
+		case domain.MatrixSearchBarcode:
+			base = base.Where("p.barcode ILIKE ?", like)
+		default:
+			base = base.Where("p.sku ILIKE ? OR p.name ILIKE ? OR p.barcode ILIKE ?", like, like, like)
+		}
 	}
 	for _, id := range q.PresentIn {
 		if id > 0 {
