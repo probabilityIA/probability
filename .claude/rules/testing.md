@@ -15,7 +15,7 @@
 
 ## Reglas BACK
 
-1. Crear/modificar SOLO via API. `mcp__postgres-probability__query` = SOLO lectura (SELECT para verificar efectos y construir bodies).
+1. Crear/modificar SOLO via API. `mcp__postgres-probability__query` = SOLO lectura (SELECT para verificar efectos y construir bodies). Ese MCP va por el tunel SSM: si responde "connection refused", correr `./scripts/aws-tunnel.sh ensure`.
 2. Ejecutar endpoints en el orden del caso. Encadenar outputs entre pasos.
 3. HTTP con `mcp__fetch__fetch`. Fallback: `curl`. Nunca inventar respuestas.
 4. Analizar status code, campo `success`, forma del payload. Desviaciones = bug a registrar.

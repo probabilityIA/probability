@@ -4,18 +4,43 @@
 
 Siempre `--profile probability --region us-east-1`.
 
-## Puertos publicos: cerrados a proposito
+## Todo el acceso es por AWS CLI. No hay puertos publicos ni .pem
 
-El security group del RDS (`sg-05aaf5670000af0a6`) ya NO tiene 5432 abierto a
-`0.0.0.0/0`. Solo entra el SG del EC2 de produccion (`sg-03816f3607edc744b`).
+Desde 2026-08-21 la unica forma de llegar a produccion es el AWS CLI sobre SSM.
+Lo unico abierto a internet son **80 y 443** (nginx). Cerrados: 22, 3002, 3070 y
+5432. El RDS quedo con `PubliclyAccessible=false` y su security group solo acepta
+al SG del EC2 (`sg-03816f3607edc744b`).
 
-**Prohibido reabrir un puerto a `0.0.0.0/0` para "probar rapido".** Si algo no
-conecta, el camino es el tunel SSM de abajo, no un `authorize-security-group-ingress`.
-Cualquier excepcion se acuerda con el usuario y se revierte el mismo dia.
+**Prohibido reabrir un puerto a `0.0.0.0/0` para "probar rapido"**, y prohibido
+volver a poner `PubliclyAccessible=true`. Si algo no conecta, el camino es el
+tunel, no `authorize-security-group-ingress`. Cualquier excepcion se acuerda con
+el usuario y se revierte el mismo dia.
+
+```bash
+./scripts/aws-tunnel.sh ensure   # tunel al RDS en 127.0.0.1:5433 (idempotente)
+./scripts/aws-tunnel.sh status   # verifica que este arriba y prueba la conexion
+./scripts/aws-tunnel.sh shell    # shell interactiva en el EC2
+./scripts/aws-tunnel.sh stop
+```
+
+**El MCP `postgres-probability` apunta a `127.0.0.1:5433`, no al RDS.** Si una
+consulta falla con "connection refused", el tunel esta abajo: correr
+`./scripts/aws-tunnel.sh ensure` y reintentar. El tunel muere al cerrar la
+terminal, asi que al iniciar sesion hay que levantarlo.
+
+Requisito local: `session-manager-plugin` instalado (el script lo avisa si falta).
 
 Usuarios IAM con acceso al tunel: `terraform-github-admin`, `santiago.camacho`
 (politica `ProbabilityRdsTunnelSSM`: solo abrir el port-forwarding, sin permisos
 sobre RDS ni EC2).
+
+### Por que el contenedor necesita `dns: 169.254.169.253`
+
+El resolver de Docker reenvia a 8.8.8.8, que devolvia la IP **publica** del RDS y
+mandaba el trafico por el internet gateway. Los servicios que tocan la base
+(`back-central`, `back-testing`) llevan el DNS de la VPC en el compose para
+resolver `172.31.96.15` e ir por red privada. **Cualquier servicio nuevo que
+consulte la base necesita ese `dns:`**, o no conectara.
 
 ## Produccion (SSM, no SSH)
 

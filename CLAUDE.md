@@ -45,6 +45,13 @@ Tienda en `http://localhost:8088`, wp-admin admin/admin. Detalles: `wordpress/RE
 - NO hacer push como parte de flujos de trabajo
 - Informar al usuario que hay cambios listos, pero esperar instruccion para hacer push
 
+## Produccion - acceso solo por AWS CLI (SSM)
+
+No hay SSH ni `.pem`, y la base no es alcanzable desde internet. Lo unico abierto
+es 80/443. Para consultar la BD hay que levantar el tunel primero:
+`./scripts/aws-tunnel.sh ensure` (el MCP de postgres apunta a `127.0.0.1:5433`).
+Detalles y prohibiciones: `.claude/rules/infra-ops.md`.
+
 ## Produccion - iptables CRITICO
 
 Si el sitio deja de funcionar desde Internet (AWS/SGs siempre estan bien, el problema es siempre iptables):
