@@ -16,7 +16,7 @@ COPY package.json package-lock.json* pnpm-lock.yaml* ./
 # Instalar dependencias basado en el lock file disponible
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm install --frozen-lockfile; \
+    corepack enable && corepack prepare pnpm@10.15.0 --activate && pnpm install --frozen-lockfile; \
   elif [ -f package-lock.json ]; then \
     npm ci --legacy-peer-deps; \
   else \
@@ -54,7 +54,7 @@ RUN rm -rf .next
 # Build de Next.js (limpio, sin cache)
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm run build; \
+    corepack enable && corepack prepare pnpm@10.15.0 --activate && pnpm run build; \
   else \
     npm run build; \
   fi

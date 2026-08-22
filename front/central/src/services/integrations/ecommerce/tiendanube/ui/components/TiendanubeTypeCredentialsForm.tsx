@@ -137,6 +137,7 @@ export default function TiendanubeTypeCredentialsForm({
 
     const prodWebhook = url('production', '/tiendanube/webhook');
     const testWebhook = webhookUrls?.sandbox || '';
+    const callbackURL = apiOrigin ? `${apiOrigin}/tiendanube/callback` : '';
     const storeRedactURL = url('store_redact', '/tiendanube/webhook/store-redact');
     const customersRedactURL = url('customers_redact', '/tiendanube/webhook/customers-redact');
     const customersDataURL = url('customers_data_request', '/tiendanube/webhook/customers-data-request');
@@ -208,11 +209,15 @@ export default function TiendanubeTypeCredentialsForm({
                             type="text"
                             value={credentials.redirect_uri}
                             onChange={(e) => set({ redirect_uri: e.target.value })}
-                            placeholder="https://partners.tiendanube.com/applications/authentication/39928"
+                            placeholder={callbackURL || 'https://tu-dominio/api/v1/tiendanube/callback'}
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />
-                        <p className={fieldHint}>Debe ser identica a la registrada en la pestana Configuracion de tu App.</p>
+                        <p className={fieldHint}>
+                            Debe apuntar al callback de Probability y ser identica a la registrada en la pestana
+                            Configuracion de tu App. Si en el Partner Portal queda la URL de partners.tiendanube.com,
+                            al comerciante le aparece una pantalla con un comando curl en vez de volver a Probability.
+                        </p>
                     </div>
                     <div>
                         <label className={fieldLabel}>Pagina de la aplicacion</label>
@@ -241,6 +246,15 @@ export default function TiendanubeTypeCredentialsForm({
                             responde 400.
                         </p>
                     </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-800">
+                    <label className={fieldLabel}>URL de redireccion a registrar en el Partner Portal</label>
+                    <CopyField value={callbackURL} disabled={!callbackURL} />
+                    <p className={fieldHint}>
+                        Copiala en Configuracion &gt; URL de redireccion de tu App en partners.tiendanube.com. Sin
+                        esto el flujo OAuth no puede devolver el codigo a Probability.
+                    </p>
                 </div>
 
                 {authorizeURL && (

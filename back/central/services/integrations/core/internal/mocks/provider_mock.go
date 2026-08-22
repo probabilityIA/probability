@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/orderscompare"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -64,4 +65,16 @@ func (m *ProviderMock) CreateWebhook(ctx context.Context, integrationID string, 
 func (m *ProviderMock) UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error {
 	args := m.Called(ctx, integrationID, productExternalID, quantity)
 	return args.Error(0)
+}
+
+func (m *ProviderMock) SupportsOrdersCompare() bool {
+	return false
+}
+
+func (m *ProviderMock) ListChannelOrders(_ context.Context, _ string, _ orderscompare.ChannelFilters) ([]orderscompare.ChannelOrder, error) {
+	return nil, domain.ErrNotSupported
+}
+
+func (m *ProviderMock) ImportChannelOrders(_ context.Context, _ string, _ []string) (orderscompare.ImportResult, error) {
+	return orderscompare.ImportResult{}, domain.ErrNotSupported
 }

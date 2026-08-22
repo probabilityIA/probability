@@ -57,6 +57,11 @@ type IRepository interface {
 
 // IUseCase define la interfaz del caso de uso para obtener estadísticas del dashboard
 type IUseCase interface {
-	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint, weekStartDate *time.Time, startDate *time.Time, endDate *time.Time) (*DashboardStats, error)
+	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint, weekStartDate *time.Time, startDate *time.Time, endDate *time.Time, refresh bool) (*DashboardStats, error)
 	GetTopSellingDays(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]TopSellingDay, error)
+}
+
+type IStatsCache interface {
+	Get(ctx context.Context, key string) (*DashboardStats, bool)
+	Set(ctx context.Context, key string, stats *DashboardStats)
 }

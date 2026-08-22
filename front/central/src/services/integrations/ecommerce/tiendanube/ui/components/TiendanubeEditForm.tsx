@@ -7,7 +7,14 @@ import { updateIntegrationAction, testConnectionRawAction, getActiveIntegrationT
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { TiendanubeWebhookManager } from './TiendanubeWebhookManager';
+import { TiendanubeInventorySection, TiendanubeInventoryConfig } from './TiendanubeInventorySection';
+import { TiendanubeProductSyncModal } from './TiendanubeProductSyncModal';
+import { TiendanubeOrderSyncModal } from './TiendanubeOrderSyncModal';
 import {
+    ArchiveBoxIcon,
+    ArrowPathIcon,
+    BoltIcon,
     KeyIcon,
     Cog6ToothIcon,
     ShoppingBagIcon,
@@ -59,6 +66,25 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
         name: initialData.name,
         store_id: initialData.config?.store_id || '',
         access_token: initialData.credentials?.access_token || '',
+    });
+
+    const [productSyncOpen, setProductSyncOpen] = useState(false);
+    const [orderSyncOpen, setOrderSyncOpen] = useState(false);
+    const [ordersFrom, setOrdersFrom] = useState('');
+    const [ordersTo, setOrdersTo] = useState('');
+
+    const handleSyncOrders = () => {
+        if (!integrationId) return;
+        if (ordersFrom && ordersTo && ordersFrom > ordersTo) {
+            showToast('La fecha inicial no puede ser mayor que la fecha final', 'warning');
+            return;
+        }
+        setOrderSyncOpen(true);
+    };
+
+    const [inventory, setInventory] = useState<TiendanubeInventoryConfig>({
+        enabled: initialData.config?.inventory_sync_enabled === true,
+        single_warehouse_id: Number(initialData.config?.inventory_single_warehouse_id) || 0,
     });
 
     useEffect(() => {
@@ -136,11 +162,15 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
 
         try {
             const config: TiendanubeConfig = {
+                ...(initialData.config || {}),
                 store_id: formData.store_id || undefined,
+                inventory_sync_enabled: inventory.enabled,
+                inventory_single_warehouse_id: inventory.single_warehouse_id || undefined,
             };
 
             const updateData: any = {
                 name: formData.name,
+                store_id: formData.store_id || undefined,
                 config: config,
             };
 
@@ -309,15 +339,105 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                     <div className="rounded-lg p-3" style={{ backgroundColor: GREEN_SOFT, border: `1px solid ${GREEN_BORDER}` }}>
                         <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
                             <InformationCircleIcon className="w-4 h-4" style={{ color: GREEN }} />
-                            Como obtener tus credenciales
+                            Sobre estas credenciales
                         </h4>
-                        <ol className="text-[11px] text-gray-600 dark:text-gray-300 space-y-1 list-decimal list-inside ml-1">
-                            <li>Ingresa al panel de administracion de tu tienda en <strong>Tiendanube</strong></li>
-                            <li>Ve a <strong>Aplicaciones</strong> y luego a <strong>Credenciales de API</strong></li>
-                            <li>Genera un nuevo <strong>Access Token</strong> y copialo</li>
-                        </ol>
+                        <p className="text-[11px] text-gray-600 dark:text-gray-300">
+                            El Access Token y el Store ID los entrega Tiendanube al autorizar la app, no se generan a
+                            mano. Solo editalos si necesitas reemplazarlos por unos obtenidos de otra forma; para
+                            reconectar la tienda es preferible volver a ejecutar el flujo de autorizacion.
+                        </p>
                     </div>
                 </div>
+            </SectionCard>
+
+            <SectionCard icon={<ArrowPathIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizacion">
+                <div>
+                    <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Productos</h4>
+                    <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                        Compara el catalogo de Probability con el de tu tienda y decide que crear o actualizar en cada lado.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setProductSyncOpen(true)}
+                        className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
+                        style={{ backgroundColor: GREEN }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                    >
+                        <ArrowPathIcon className="w-3.5 h-3.5" />
+                        Sincronizar productos
+                    </button>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Ordenes</h4>
+                    <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                        Trae las ordenes de Tiendanube del periodo elegido. Sus estados (open, closed, cancelled) y el de
+                        pago se traducen automaticamente a los de Probability.
+                    </p>
+
+                    <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>Desde</label>
+                            <input
+                                type="date"
+                                value={ordersFrom}
+                                onChange={(e) => setOrdersFrom(e.target.value)}
+                                className={inputCls}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                        </div>
+                        <div>
+                            <label className={fieldLabel}>Hasta</label>
+                            <input
+                                type="date"
+                                value={ordersTo}
+                                onChange={(e) => setOrdersTo(e.target.value)}
+                                className={inputCls}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleSyncOrders}
+                        className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
+                        style={{ backgroundColor: GREEN }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                    >
+                        <ArrowPathIcon className="w-3.5 h-3.5" />
+                        Sincronizar ordenes
+                    </button>
+                </div>
+            </SectionCard>
+
+            <TiendanubeProductSyncModal
+                isOpen={productSyncOpen}
+                onClose={() => setProductSyncOpen(false)}
+                integrationId={integrationId}
+                businessId={selectedBusinessId}
+            />
+            <TiendanubeOrderSyncModal
+                isOpen={orderSyncOpen}
+                onClose={() => setOrderSyncOpen(false)}
+                integrationId={integrationId}
+                businessId={selectedBusinessId}
+                createdAtMin={ordersFrom}
+                createdAtMax={ordersTo}
+            />
+
+            <SectionCard icon={<ArchiveBoxIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Inventario">
+                <TiendanubeInventorySection
+                    value={inventory}
+                    onChange={setInventory}
+                    businessId={selectedBusinessId}
+                />
+            </SectionCard>
+
+            <SectionCard icon={<BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Webhooks">
+                <TiendanubeWebhookManager integrationId={integrationId} />
             </SectionCard>
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">

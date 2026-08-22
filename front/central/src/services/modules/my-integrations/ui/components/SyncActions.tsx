@@ -1,6 +1,6 @@
 'use client';
 
-import { RefreshCw, ArrowRightLeft, ArrowDownToLine, ReceiptText, LayoutGrid, Share2, Table2, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ArrowRightLeft, ArrowDownToLine, ReceiptText, LayoutGrid, Share2, Table2, ClipboardList, type LucideIcon } from 'lucide-react';
 import { useSyncActivity, type HubView, type SyncEnvironment } from '../sync-activity-context';
 
 interface EnvironmentAction {
@@ -29,6 +29,12 @@ const ACTIONS: EnvironmentAction[] = [
         label: 'Sincronizar inventario',
         icon: RefreshCw,
         hint: 'Cuanto stock tiene cada canal y cual quedaria distinto al de Probability',
+    },
+    {
+        key: 'orders_compare',
+        label: 'Comparar ordenes',
+        icon: ClipboardList,
+        hint: 'Que orden existe en el canal y no en Probability, y crearla aca',
     },
     {
         key: 'invoicing',
@@ -101,7 +107,10 @@ export function SyncActions() {
                 return (
                     <button
                         key={action.key}
-                        onClick={() => setEnvironment(active ? null : action.key)}
+                        onClick={() => {
+                            setEnvironment(active ? null : action.key);
+                            if (!active && action.key === 'orders_compare') setView('informe');
+                        }}
                         disabled={running || action.disabled}
                         title={action.hint}
                         className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${

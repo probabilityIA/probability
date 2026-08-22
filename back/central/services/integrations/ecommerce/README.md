@@ -16,7 +16,7 @@ Cada plataforma se implementa como un sub-modulo independiente con arquitectura 
 | MercadoLibre  | 3       | `ecommerce/meli`          | Completo     | Notificaciones IPN + Sync + RefreshToken  |
 | WooCommerce   | 4       | `ecommerce/woocommerce`   | Completo     | Webhook + Sync                            |
 | VTEX          | 16      | `ecommerce/vtex`          | Completo     | Webhook Hook v1 + Sync                    |
-| Tiendanube    | 17      | `ecommerce/tiendanube`    | Esqueleto    | Webhook (solo TestConnection)             |
+| Tiendanube    | 17      | `ecommerce/tiendanube`    | Completo     | OAuth + Webhook + Sync                    |
 | Magento       | 18      | `ecommerce/magento`       | Esqueleto    | Webhook (solo TestConnection)             |
 | Amazon        | 19      | `ecommerce/amazon`        | Esqueleto    | Notificacion SQS/SNS (solo TestConnection)|
 | Falabella     | 20      | `ecommerce/falabella`     | Esqueleto    | Webhook (solo TestConnection)             |
@@ -120,7 +120,10 @@ Todas las rutas se registran bajo el prefijo del router (tipicamente `/api/v1`).
 
 | Metodo | Ruta                   | Auth    | Descripcion                         |
 |--------|------------------------|---------|-------------------------------------|
-| POST   | `/tiendanube/webhook`  | Publica | Webhook (esqueleto)                 |
+| POST   | `/tiendanube/webhook`  | Publica | Webhook de eventos (requiere `integration_id`) |
+| GET    | `/tiendanube/callback` | Publica | Callback OAuth                      |
+| POST   | `/integrations/tiendanube/connect` | JWT | Inicia el flujo OAuth         |
+| GET    | `/integrations/tiendanube/verify-app` | JWT | Verifica credenciales de plataforma |
 
 ### Magento (`/magento`)
 
@@ -195,8 +198,8 @@ Todo proveedor implementa `IIntegrationContract` (definido en `integrations/core
 | Metodo                           | Shopify | MeLi | WooCommerce | VTEX | Tiendanube | Magento | Amazon | Falabella | Exito |
 |----------------------------------|---------|------|-------------|------|------------|---------|--------|-----------|-------|
 | `TestConnection`                 | SI      | SI   | SI          | SI   | SI         | SI      | TODO   | SI        | SI    |
-| `SyncOrdersByIntegrationID`      | SI      | SI   | SI          | SI   | TODO       | TODO    | TODO   | TODO      | TODO  |
-| `SyncOrdersByIntegrationIDWithParams` | -  | SI   | SI          | SI   | TODO       | TODO    | TODO   | TODO      | TODO  |
+| `SyncOrdersByIntegrationID`      | SI      | SI   | SI          | SI   | SI         | TODO    | TODO   | TODO      | TODO  |
+| `SyncOrdersByIntegrationIDWithParams` | -  | SI   | SI          | SI   | SI         | TODO    | TODO   | TODO      | TODO  |
 | `GetWebhookURL`                  | SI      | SI   | base        | base | base       | base    | base   | base      | base  |
 | `HandleWebhook / HandleNotification` | SI | SI   | SI          | SI   | TODO       | TODO    | TODO   | TODO      | TODO  |
 | `ListWebhooks`                   | SI      | N/A  | TODO        | TODO | TODO       | TODO    | TODO   | TODO      | TODO  |
@@ -269,7 +272,7 @@ Las credenciales se almacenan cifradas en la tabla `integrations` y se acceden v
 | MeLi (3)    | -                        | `access_token`, `refresh_token`, `app_id`, `client_secret` |
 | WooCommerce (4) | `store_url`           | `consumer_key`, `consumer_secret`                    |
 | VTEX (16)   | `store_url`              | `api_key`, `api_token`                               |
-| Tiendanube (17) | `store_url`           | `access_token`                                       |
+| Tiendanube (17) | `store_id` (lo entrega OAuth) | `access_token` (lo entrega OAuth)            |
 | Magento (18) | `store_url`             | `access_token`                                       |
 | Amazon (19) | `seller_id`              | `refresh_token`, `client_id`, `client_secret`        |
 | Falabella (20) | `user_id`              | `api_key`                                            |

@@ -328,14 +328,6 @@ export default function Dashboard() {
     // Estado para el filtro de rango de fechas global
     const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
 
-    // Debug: Log cuando dateRange cambia
-    useEffect(() => {
-        console.log('📅 dateRange changed:', {
-            start: dateRange.start?.toISOString().split('T')[0],
-            end: dateRange.end?.toISOString().split('T')[0],
-        });
-    }, [dateRange]);
-
     useEffect(() => {
         const userData = TokenStorage.getUser();
         if (userData) {
@@ -364,24 +356,19 @@ export default function Dashboard() {
         }
     }, [isSuperAdmin]);
 
-    // Cargar estadísticas SIN filtro de fechas (para Órdenes del día y Mensuales)
     const fetchStatsWithoutFilter = useCallback(async () => {
         try {
-            console.log('🔍 fetchStatsWithoutFilter called');
-
             const response = await getDashboardStatsAction(
                 selectedBusinessId,
-                undefined, // integrationId
+                undefined,
                 weekStartDate,
-                undefined, // sin startDate
-                undefined  // sin endDate
+                undefined,
+                undefined
             );
 
-            console.log('✅ Stats without filter loaded');
             setStatsWithoutFilter(response.data);
         } catch (err: any) {
             console.error('Error fetching dashboard stats (without filter):', err);
-            // Mostrar datos vacíos en lugar de error
             setStatsWithoutFilter(createEmptyStats());
         }
     }, [selectedBusinessId, weekStartDate]);
@@ -392,27 +379,19 @@ export default function Dashboard() {
             setLoading(true);
             setError(null);
 
-            // Debug: Log parameters
-            console.log('🔍 fetchStats called with:', {
-                selectedBusinessId,
-                weekStartDate,
-                dateRangeStart: dateRange.start?.toISOString().split('T')[0],
-                dateRangeEnd: dateRange.end?.toISOString().split('T')[0],
-            });
-
             const response = await getDashboardStatsAction(
                 selectedBusinessId,
-                undefined, // integrationId
+                undefined,
                 weekStartDate,
                 dateRange.start,
                 dateRange.end
             );
 
-            // Debug: Log response
-            console.log('✅ getDashboardStatsAction response:', response.data);
-
             setStats(response.data);
-            console.log('📊 Stats with filter updated');
+
+            if (!dateRange.start && !dateRange.end) {
+                setStatsWithoutFilter(response.data);
+            }
         } catch (err: any) {
             console.error('Error fetching dashboard stats:', err);
             setError(getActionError(err, 'Error al cargar las estadísticas'));
@@ -423,12 +402,13 @@ export default function Dashboard() {
         }
     }, [selectedBusinessId, weekStartDate, dateRange.start, dateRange.end]);
 
-    // Cargar datos sin filtro cuando cambian businessId o weekStartDate
     useEffect(() => {
+        if (!dateRange.start && !dateRange.end) {
+            return;
+        }
         fetchStatsWithoutFilter();
-    }, [fetchStatsWithoutFilter]);
+    }, [fetchStatsWithoutFilter, dateRange.start, dateRange.end]);
 
-    // Cargar datos con filtro cuando cambian businessId, weekStartDate o dateRange
     useEffect(() => {
         fetchStats();
     }, [fetchStats]);

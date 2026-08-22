@@ -28,7 +28,7 @@ Archivos 500+ lineas: CERO non-ASCII (acentos, box-drawing, emojis). Archivos co
 
 **Back:** Go 1.23 + Gin + GORM + RabbitMQ + Redis + JWT | `/back/central` API :3050
 **Front:** Next.js 16 + React 19 + TailwindCSS 4 | `/front/central` :3000 | `/front/website` Astro 5
-**Infra:** PostgreSQL 15 :5433 | Redis :6379 | RabbitMQ :5672 | Docker Compose (S3: AWS, sin MinIO local)
+**Infra:** PostgreSQL 17 (local :5434, tunel prod :5433) | Redis :6379 | RabbitMQ :5672 | Docker Compose (S3: AWS, sin MinIO local)
 
 Monorepo multi-tenant: ordenes, productos, pagos, envios desde Shopify, Amazon, MercadoLibre, WhatsApp.
 
@@ -44,6 +44,21 @@ Tienda en `http://localhost:8088`, wp-admin admin/admin. Detalles: `wordpress/RE
 - NO hacer push despues de commits
 - NO hacer push como parte de flujos de trabajo
 - Informar al usuario que hay cambios listos, pero esperar instruccion para hacer push
+
+## Entorno local primero
+
+Todo cambio se prueba contra la copia local de la base (business Demo) ANTES de
+tocar produccion. PostgreSQL local en `127.0.0.1:5434` (el 5433 es el tunel a
+produccion). Clonar: `./scripts/local-db-clone.sh 26`. Cambiar de base:
+`./scripts/dev-db-switch.sh local|prod|status`.
+Reglas y flujo: `.claude/rules/entorno-local.md`.
+
+## Produccion - acceso solo por AWS CLI (SSM)
+
+No hay SSH ni `.pem`, y la base no es alcanzable desde internet. Lo unico abierto
+es 80/443. Para consultar la BD hay que levantar el tunel primero:
+`./scripts/aws-tunnel.sh ensure` (el MCP de postgres apunta a `127.0.0.1:5433`).
+Detalles y prohibiciones: `.claude/rules/infra-ops.md`.
 
 ## Produccion - iptables CRITICO
 

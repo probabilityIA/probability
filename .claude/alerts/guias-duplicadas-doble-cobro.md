@@ -53,3 +53,55 @@ sobrante / cancelar la duplicada en el carrier):
 
 Fix en prod + reembolsos/cancelaciones de las 3 ordenes resueltos y verificados
 en `transaction`.
+
+## Evidencia en shipment_sync_logs (2026-08-21)
+
+Consulta: logs `provider='envioclick'`, `status='success'`,
+`request_url LIKE '%/api/v2/shipment%'` agrupados por `myShipmentReference`.
+Solo esa URL crea guia; `/api/v2/quotation` tambien se registra con
+`operation_type='generate'` y por eso el conteo crudo de "generate" engana
+(3 quotations + 1 shipment por guia normal).
+
+Ocho referencias con mas de una creacion real, cada una con `idOrder` distinto
+de EnvioClick (guias reales separadas):
+
+| Orden | Negocio | idOrder EnvioClick | Separacion |
+|---|---|---|---|
+| MYS-0118 | Mystic Rose | 4385504 / 4385509 | 1 min |
+| MYS-0157 | Mystic Rose | 4406107 / 4406110 | 1 min |
+| MYS-0232 | Mystic Rose | 4424912 / 4424915 | 1 min |
+| MYS-0302 | Mystic Rose | 4476735 / 4476740 | 1 min |
+| VIG-0010 | Viga | 4491102 / 4491506 | 1 h 38 |
+| FIS-0061 | LaPercha | 4501053 / 4576423 / 4593773 | dias |
+| FIS-0066 | LaPercha | 4580801 / 4584210 | 2 dias |
+| MYS-0718 | Mystic Rose | 4632833 / 4632845 | 1 min 44 |
+
+Las de dias (FIS-0061, FIS-0066) son regeneraciones legitimas tras cancelar.
+Las de minutos son el bug.
+
+Doble debito confirmado en `transaction` (USAGE/GUIDE) para MYS-0118 (21.539 x2),
+MYS-0157 (19.980 x2), MYS-0232 (15.598 x2), MYS-0302 (16.353 x2) y VIG-0010
+(25.051,15 + 25.420,90). Ninguna cancelacion reembolso.
+
+### MYS-0718 - caso nuevo del 18/08, el guard NO lo cubre
+
+shipment **43991**, usuario 20, dos POST `/api/v2/shipment` con 200:
+
+- 19:30:49 -> idOrder 4632833, tracker **2284436982**, PDF emitido
+- 19:32:33 -> idOrder 4632845, tracker **2284436983**, PDF emitido
+
+El shipment quedo con `tracking_number = 2284436983` y una sola transaccion de
+wallet (19.160 a las 19:32:34). La primera guia **no dejo transaccion ni se
+guardo en el shipment**: quedo huerfana en EnvioClick, con recoleccion
+programada y costo que Probability paga sin cobrar al negocio.
+
+Diferencia con los casos viejos: aqui no se creo un shipment nuevo, se repitio
+sobre el MISMO shipment. `shipmentHasActiveGuide` mira los shipments de la orden
+en BD; como la primera creacion no persistio tracking ni guide_url, el guard no
+vio nada y dejo pasar la segunda. Emparenta con
+`.claude/bitacora/2026-08-17-cotizacion-guia-generada-fantasma.md`.
+
+Falta: idempotencia real contra el proveedor (marcar el shipment "en generacion"
+antes de llamar a EnvioClick, o reconciliar por `myShipmentReference` con
+`GET /shipment` antes de crear). El guard actual no protege cuando la respuesta
+del carrier no alcanza a persistirse.

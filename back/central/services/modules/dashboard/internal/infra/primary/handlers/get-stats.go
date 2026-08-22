@@ -16,6 +16,7 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        business_id  query    int     false  "ID del business para filtrar (solo super admin)"
+// @Param        refresh      query    bool    false  "Ignora el cache y recalcula"
 // @Success      200  {object}  domain.DashboardStatsResponse
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /dashboard/stats [get]
@@ -100,7 +101,9 @@ func (h *DashboardHandlers) GetStats(c *gin.Context) {
 	}
 
 	// Obtener estadísticas del caso de uso
-	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID, integrationID, weekStartDate, startDate, endDate)
+	refresh := c.Query("refresh") == "true"
+
+	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID, integrationID, weekStartDate, startDate, endDate, refresh)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Error al obtener estadísticas del dashboard")
 		c.JSON(http.StatusInternalServerError, gin.H{

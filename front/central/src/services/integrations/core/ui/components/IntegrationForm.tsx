@@ -20,7 +20,7 @@ import { TuConfigForm, TuEditForm } from '@/services/integrations/transport/tu/u
 import { MiPaqueteConfigForm, MiPaqueteEditForm } from '@/services/integrations/transport/mipaquete/ui';
 import { ShipitConfigForm, ShipitEditForm } from '@/services/integrations/transport/shipit/ui';
 import { VTEXConfigForm, VTEXEditForm } from '@/services/integrations/ecommerce/vtex/ui';
-import { TiendanubeConfigForm, TiendanubeEditForm } from '@/services/integrations/ecommerce/tiendanube/ui';
+import { TiendanubeOAuthForm, TiendanubeEditForm } from '@/services/integrations/ecommerce/tiendanube/ui';
 import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecommerce/magento/ui';
 import { AmazonConfigForm, AmazonEditForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm, FalabellaEditForm } from '@/services/integrations/ecommerce/falabella/ui';
@@ -994,8 +994,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                     )}
 
                     {selectedType.id === INTEGRATION_TYPE_IDS.TIENDANUBE && (
-                        <TiendanubeConfigForm
-                            onSuccess={onSuccess}
+                        <TiendanubeOAuthForm
                             onCancel={onCancel}
                         />
                     )}

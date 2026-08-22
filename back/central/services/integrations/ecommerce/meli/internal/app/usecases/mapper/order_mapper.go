@@ -355,3 +355,7 @@ func withPackOrderIDs(orderRaw []byte, packOrderIDs []int64) []byte {
 	}
 	return out
 }
+
+func MapMeliStatus(meliStatus string) string {
+	return mapMeliOrderStatus(meliStatus)
+}
