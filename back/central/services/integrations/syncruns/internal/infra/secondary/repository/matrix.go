@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -73,8 +74,10 @@ func (r *repository) MatchMatrix(ctx context.Context, q domain.MatrixQuery) (*do
 			base = base.Where("p.name ILIKE ?", like)
 		case domain.MatrixSearchBarcode:
 			base = base.Where("p.barcode ILIKE ?", like)
-		default:
+		case domain.MatrixSearchAll:
 			base = base.Where("p.sku ILIKE ? OR p.name ILIKE ? OR p.barcode ILIKE ?", like, like, like)
+		default:
+			return nil, fmt.Errorf("search_by invalido: %s", q.SearchBy)
 		}
 	}
 	for _, id := range q.PresentIn {

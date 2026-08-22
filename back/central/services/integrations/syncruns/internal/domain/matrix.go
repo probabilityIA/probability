@@ -55,10 +55,17 @@ func (q MatrixQuery) Offset() int {
 	return (q.Page - 1) * q.PageSize
 }
 
-func (q *MatrixQuery) Normalize() {
-	switch q.SearchBy {
-	case MatrixSearchSKU, MatrixSearchName, MatrixSearchBarcode:
+func IsMatrixSearchBy(value string) bool {
+	switch value {
+	case MatrixSearchAll, MatrixSearchSKU, MatrixSearchName, MatrixSearchBarcode:
+		return true
 	default:
+		return false
+	}
+}
+
+func (q *MatrixQuery) Normalize() {
+	if q.SearchBy == "" {
 		q.SearchBy = MatrixSearchAll
 	}
 	if q.Page < 1 {

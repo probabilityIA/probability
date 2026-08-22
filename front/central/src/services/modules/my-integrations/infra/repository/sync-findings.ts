@@ -105,8 +105,11 @@ export interface MatrixRow {
     cells: MatrixCell[];
 }
 
+export type MatrixSearchBy = 'all' | 'sku' | 'name' | 'barcode';
+
 export interface MatrixFilters {
     search?: string;
+    searchBy?: MatrixSearchBy;
     presentIn?: number[];
     missingIn?: number[];
 }
@@ -124,7 +127,10 @@ const EMPTY_MATRIX: MatrixPage = { columns: [], rows: [], total: 0, page: 1, tot
 function matrixParams(businessId?: number, filters: MatrixFilters = {}): URLSearchParams {
     const params = new URLSearchParams();
     if (businessId) params.set('business_id', String(businessId));
-    if (filters.search) params.set('q', filters.search);
+    if (filters.search) {
+        params.set('q', filters.search);
+        if (filters.searchBy && filters.searchBy !== 'all') params.set('search_by', filters.searchBy);
+    }
     if (filters.presentIn?.length) params.set('present_in', filters.presentIn.join(','));
     if (filters.missingIn?.length) params.set('missing_in', filters.missingIn.join(','));
     return params;
