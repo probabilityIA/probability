@@ -64,13 +64,14 @@ func (uc *useCase) Apply(ctx context.Context, cmd dtos.ApplyCommand) (*dtos.Appl
 		uc.logger.Warn(ctx).Err(err).Uint("integration_id", integration.ID).
 			Msg("No se pudo releer el canal para clasificar el inventario de las ordenes a importar")
 	}
-	statusByExternal := make(map[string]string, len(channelOrders))
+	porExternal := make(map[string]orderscompare.ChannelOrder, len(channelOrders))
 	for _, order := range channelOrders {
-		statusByExternal[strings.ToLower(strings.TrimSpace(order.ExternalID))] = order.Status
+		porExternal[strings.ToLower(strings.TrimSpace(order.ExternalID))] = order
 	}
 
 	for _, id := range pending {
-		if skips, _ := orderscompare.SkipsInventory(statusByExternal[strings.ToLower(id)]); skips {
+		orden := porExternal[strings.ToLower(id)]
+		if skips, _ := orderscompare.SkipsInventoryFor(orden.Status, orden.FulfillmentStatus); skips {
 			result.WithoutInventory = append(result.WithoutInventory, id)
 		}
 	}

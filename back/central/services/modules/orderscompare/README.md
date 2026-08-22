@@ -81,7 +81,30 @@ ocurre es el movimiento de stock. En la UI esas filas salen marcadas con el
 motivo, y el `apply` devuelve `without_inventory` + `note`.
 
 La regla vive en un solo lugar: `shared/orderscompare/policy.go`
-(`SkipsInventory`). Si aparece un estado nuevo, se agrega ahi, no en el canal.
+(`SkipsInventoryFor`). Si aparece un estado nuevo, se agrega ahi, no en el canal.
+
+**El estado de la orden no siempre alcanza.** Hay canales donde la entrega no se
+refleja en el estado de la orden: MercadoLibre deja `order.status = paid` aunque
+el envio ya se entrego hace semanas, porque el dato vive en los tags y en el
+shipment. Por eso `ChannelOrder` tiene `FulfillmentStatus`: el canal lo llena con
+lo que sepa de la entrega y `SkipsInventoryFor` mira los dos. Un canal cuyo
+estado de orden ya distingue la entrega (WooCommerce con `completed`) lo deja
+vacio.
+
+## Cuidado con los identificadores compuestos
+
+El cruce se hace por `external_id`, asi que `ListChannelOrders` **tiene que
+devolver el mismo identificador con el que la orden queda guardada**, no el que
+al canal le resulte mas natural.
+
+El caso que ya mordio: en MercadoLibre un carrito llega como una orden por
+producto y `consolidatePack` las guarda como UNA orden de Probability con
+`external_id = pack_id`. Devolver el id de la orden hacia que la misma compra
+apareciera dos veces (una como "solo en Probability", otra como "falta aqui") y
+que crearla generara un duplicado sin los items de las hermanas. Hoy
+`ListChannelOrders` devuelve el `pack_id` cuando el pack trae mas de una orden, e
+`ImportChannelOrders` acepta tanto un id de orden como uno de pack y consolida
+antes de publicar.
 
 ## Como agregar un canal nuevo
 

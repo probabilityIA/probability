@@ -13,16 +13,17 @@ const (
 )
 
 type ChannelOrder struct {
-	ExternalID   string
-	Number       string
-	CustomerName string
-	Status       string
-	RawStatus    string
-	Total        float64
-	Currency     string
-	Items        int
-	CreatedAt    time.Time
-	URL          string
+	ExternalID        string
+	Number            string
+	CustomerName      string
+	Status            string
+	RawStatus         string
+	FulfillmentStatus string
+	Total             float64
+	Currency          string
+	Items             int
+	CreatedAt         time.Time
+	URL               string
 }
 
 type ChannelFilters struct {
@@ -54,6 +55,7 @@ type Row struct {
 	CustomerName   string    `json:"customer_name"`
 	ChannelStatus  string    `json:"channel_status"`
 	RawStatus      string    `json:"raw_status"`
+	Fulfillment    string    `json:"fulfillment_status,omitempty"`
 	LocalStatus    string    `json:"local_status,omitempty"`
 	OrderID        string    `json:"order_id,omitempty"`
 	OrderNumber    string    `json:"order_number,omitempty"`
@@ -108,6 +110,7 @@ func Build(channelOrders []ChannelOrder, locals []LocalOrder) Result {
 			CustomerName:  co.CustomerName,
 			ChannelStatus: co.Status,
 			RawStatus:     co.RawStatus,
+			Fulfillment:   co.FulfillmentStatus,
 			Total:         co.Total,
 			Currency:      co.Currency,
 			Items:         co.Items,
@@ -115,7 +118,7 @@ func Build(channelOrders []ChannelOrder, locals []LocalOrder) Result {
 			URL:           co.URL,
 		}
 
-		skips, reason := SkipsInventory(co.Status)
+		skips, reason := SkipsInventoryFor(co.Status, co.FulfillmentStatus)
 		row.MovesInventory = !skips
 		row.InventoryNote = reason
 

@@ -90,3 +90,30 @@ func TestPaginate(t *testing.T) {
 		t.Fatalf("esperaba pagina vacia, obtuve %d filas", len(vacia))
 	}
 }
+
+func TestSkipsInventoryForUsaElEstadoDeEntrega(t *testing.T) {
+	skips, reason := SkipsInventoryFor("paid", "delivered")
+	if !skips {
+		t.Fatal("una orden pagada pero ya entregada no puede reservar stock")
+	}
+	if reason == "" {
+		t.Fatal("falta el motivo")
+	}
+
+	if skips, _ := SkipsInventoryFor("paid", ""); skips {
+		t.Fatal("una orden pagada sin entregar si debe reservar stock")
+	}
+}
+
+func TestBuildMarcaSinInventarioPorEntrega(t *testing.T) {
+	channel := []ChannelOrder{{ExternalID: "P1", Status: "paid", FulfillmentStatus: "delivered", Total: 100}}
+
+	result := Build(channel, nil)
+
+	if result.Totals.WithoutInventory != 1 {
+		t.Fatalf("esperaba 1 sin inventario, obtuve %d", result.Totals.WithoutInventory)
+	}
+	if result.Rows[0].MovesInventory {
+		t.Fatal("la fila entregada no deberia mover inventario")
+	}
+}

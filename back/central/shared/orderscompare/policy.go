@@ -16,6 +16,13 @@ const (
 	ReasonAbandoned = "la orden esta abandonada en el canal: no llego a ser una venta"
 )
 
+func SkipsInventoryFor(status, fulfillment string) (bool, string) {
+	if skips, reason := SkipsInventory(status); skips {
+		return true, reason
+	}
+	return SkipsInventory(fulfillment)
+}
+
 func SkipsInventory(status string) (bool, string) {
 	s := strings.ToLower(strings.TrimSpace(status))
 	switch {
