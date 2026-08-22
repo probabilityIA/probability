@@ -88,7 +88,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	notification_config.New(router, database, redisClient, logger, rabbitMQ)
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)
-	dashboard.New(router, database, logger)
+	dashboard.New(router, database, redisClient, logger)
 	payBundle := pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
 	subscriptionsBundle := subscriptions.New(router, database, logger, payBundle, announcementsBundle)
 	integrationCore.SetEcommerceLimitChecker(subscriptionsBundle.UseCase.EcommerceChannelLimit)
