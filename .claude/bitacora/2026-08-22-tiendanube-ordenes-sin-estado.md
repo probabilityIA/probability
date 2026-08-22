@@ -210,3 +210,37 @@ cancelacion, orden sin guia y orden sin id externo.
 en la integracion 264 y mover una orden de la tienda de prueba por picking ->
 in_transit -> delivered, comprobando en el admin de Tiendanube que el pedido
 avanza, muestra la guia y lista los eventos de seguimiento.
+
+## Regla: el canal deja de mandar cuando la orden entra a la operacion
+
+Aplicada el 2026-08-22 tras el hallazgo del retroceso `picking -> paid`. Afecta a
+todos los canales, no solo a Tiendanube.
+
+`updateOrderStatus` (`usecaseupdateorder/update_statuses.go`) aceptaba cualquier
+estado que llegara del canal y solo dejaba un `Warn`. El comentario del codigo lo
+decia: *"NO aplica reglas de transicion - las integraciones pueden saltar
+estados"*. Con eso, cada `order/updated` devolvia la orden de `picking` a `paid`
+y la sacaba del flujo de bodega.
+
+La regla nueva vive en el dominio (`entities/order_status.go`):
+
+- `IsOperated()`: la orden ya entro a la operacion de Probability (picking,
+  packing, ready_to_ship, inventory_issue, assigned_to_driver, picked_up,
+  in_transit, out_for_delivery, delivered, delivery_novelty, delivery_failed,
+  rejected, return_in_transit, returned, completed, cancelled, refunded, shipped).
+- `CanChannelOverride(actual)`: el canal manda mientras la orden **no** este
+  operada; despues solo pasan `cancelled` y `refunded`.
+
+En la actualizacion desde integraciones:
+
+- Si el canal no puede mandar, no se toca `status` ni `status_id`, y se registra
+  un `Info` de una linea con el estado que se ignoro.
+- El `original_status` del canal **si** se guarda siempre: la orden conserva la
+  trazabilidad de lo que dice la tienda.
+- El estado de pago sigue su propio camino, asi que una orden en bodega que se
+  paga en el canal si actualiza `payment_status_id` e `is_paid`.
+
+Tests: `entities/order_status_channel_test.go` (11 casos de la regla pura) y
+cuatro casos nuevos en `usecaseupdateorder/update_statuses_test.go` (orden en
+bodega, en transito, cancelacion que pisa, reembolso que pisa y original_status
+que se guarda sin remapear el status_id).

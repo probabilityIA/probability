@@ -260,3 +260,81 @@ func TestUpdateOrderStatuses_SinCambios_RetornaFalse(t *testing.T) {
 
 	assert.False(t, changed)
 }
+
+func TestUpdateOrderStatus_OrdenEnBodega_IgnoraElEstadoDelCanal(t *testing.T) {
+	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "picking"}
+
+	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
+		Status:          "paid",
+		IntegrationType: "tiendanube",
+	})
+
+	assert.False(t, changed)
+	assert.Equal(t, "picking", order.Status,
+		"el canal no puede devolver a la orden a un estado previo a la operacion")
+}
+
+func TestUpdateOrderStatus_OrdenEnTransito_IgnoraElEstadoDelCanal(t *testing.T) {
+	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "in_transit"}
+
+	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
+		Status:          "processing",
+		IntegrationType: "shopify",
+	})
+
+	assert.False(t, changed)
+	assert.Equal(t, "in_transit", order.Status)
+}
+
+func TestUpdateOrderStatus_CancelacionDelCanal_PisaAunEnBodega(t *testing.T) {
+	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "picking"}
+
+	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
+		Status:          string(entities.OrderStatusCancelled),
+		IntegrationType: "tiendanube",
+	})
+
+	assert.True(t, changed)
+	assert.Equal(t, string(entities.OrderStatusCancelled), order.Status)
+}
+
+func TestUpdateOrderStatus_ReembolsoDelCanal_PisaEntregada(t *testing.T) {
+	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "delivered"}
+
+	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
+		Status:          string(entities.OrderStatusRefunded),
+		IntegrationType: "shopify",
+	})
+
+	assert.True(t, changed)
+	assert.Equal(t, string(entities.OrderStatusRefunded), order.Status)
+}
+
+func TestUpdateOrderStatus_OrdenEnBodega_RegistraOriginalStatusSinTocarStatusID(t *testing.T) {
+	mapeado := uint(2)
+	repo := &mockRepository{
+		GetOrderStatusIDByIntegrationTypeAndOriginalStatusFn: func(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error) {
+			return &mapeado, nil
+		},
+	}
+	uc := newTestUpdateUseCase(repo, nil, nil)
+
+	actual := uint(12)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "picking", StatusID: &actual, OriginalStatus: "open"}
+
+	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
+		Status:          "paid",
+		OriginalStatus:  "closed",
+		IntegrationType: "tiendanube",
+	})
+
+	assert.True(t, changed, "el original_status del canal si se guarda")
+	assert.Equal(t, "closed", order.OriginalStatus)
+	assert.Equal(t, "picking", order.Status)
+	require.NotNil(t, order.StatusID)
+	assert.Equal(t, uint(12), *order.StatusID, "el status_id operativo no se remapea")
+}

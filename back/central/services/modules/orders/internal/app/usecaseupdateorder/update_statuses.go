@@ -39,21 +39,34 @@ func (uc *UseCaseUpdateOrder) updateOrderStatuses(ctx context.Context, order *en
 func (uc *UseCaseUpdateOrder) updateOrderStatus(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
-	// Actualizar Status (sin validar transición — viene de integración externa)
+	currentStatus := entities.OrderStatus(order.Status)
+	targetStatus := entities.OrderStatus(dto.Status)
+
+	// El canal manda mientras la orden no haya entrado a la operación de
+	// Probability. Una vez está en bodega o última milla, solo pasan las
+	// cancelaciones y los reembolsos: lo demás retrocedería el estado operativo.
+	channelWins := dto.Status == "" || targetStatus.CanChannelOverride(currentStatus)
+
 	if dto.Status != "" && order.Status != dto.Status {
-		// Log si la transición no sería válida en el flujo interno
-		currentStatus := entities.OrderStatus(order.Status)
-		targetStatus := entities.OrderStatus(dto.Status)
-		if !currentStatus.CanTransitionTo(targetStatus) && targetStatus != entities.OrderStatusCancelled {
-			uc.logger.Warn().
+		if !channelWins {
+			uc.logger.Info().
 				Str("order_id", order.ID).
-				Str("from", order.Status).
-				Str("to", dto.Status).
+				Str("current", order.Status).
+				Str("channel_status", dto.Status).
 				Str("integration_type", dto.IntegrationType).
-				Msg("Integración realizó salto de estado que no cumple flujo v2 — aceptado por ser fuente externa")
+				Msg("La orden ya está en la operación de Probability; se ignora el estado que llega del canal")
+		} else {
+			if !currentStatus.CanTransitionTo(targetStatus) && targetStatus != entities.OrderStatusCancelled {
+				uc.logger.Warn().
+					Str("order_id", order.ID).
+					Str("from", order.Status).
+					Str("to", dto.Status).
+					Str("integration_type", dto.IntegrationType).
+					Msg("Integración realizó salto de estado que no cumple flujo v2 — aceptado por ser fuente externa")
+			}
+			order.Status = dto.Status
+			changed = true
 		}
-		order.Status = dto.Status
-		changed = true
 	}
 
 	// Actualizar OriginalStatus y mapear StatusID
@@ -61,11 +74,14 @@ func (uc *UseCaseUpdateOrder) updateOrderStatus(ctx context.Context, order *enti
 		order.OriginalStatus = dto.OriginalStatus
 		changed = true
 
-		// Buscar mapeo de estado cuando cambia el OriginalStatus
-		mappedStatusID := uc.mapOrderStatusID(ctx, dto)
-		if order.StatusID == nil || (mappedStatusID != nil && *order.StatusID != *mappedStatusID) || (mappedStatusID == nil && order.StatusID != nil) {
-			order.StatusID = mappedStatusID
-			changed = true
+		// El estado del canal se registra siempre, pero el StatusID solo se
+		// remapea cuando el canal aún puede mandar sobre esta orden.
+		if channelWins {
+			mappedStatusID := uc.mapOrderStatusID(ctx, dto)
+			if order.StatusID == nil || (mappedStatusID != nil && *order.StatusID != *mappedStatusID) || (mappedStatusID == nil && order.StatusID != nil) {
+				order.StatusID = mappedStatusID
+				changed = true
+			}
 		}
 	}
 
