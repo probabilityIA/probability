@@ -25,12 +25,16 @@ class FilterDimension {
     required this.label,
     required this.icon,
     required this.options,
+    this.imageUrl,
+    this.accent,
   });
 
   final String key;
   final String label;
   final IconData icon;
   final List<FilterOption> options;
+  final String? imageUrl;
+  final Color? accent;
 
   FilterOption? optionFor(String value) {
     for (final option in options) {
@@ -46,12 +50,16 @@ class ActiveFilter {
     required this.dimensionLabel,
     required this.value,
     required this.valueLabel,
+    this.imageUrl,
+    this.accent,
   });
 
   final String dimensionKey;
   final String dimensionLabel;
   final String value;
   final String valueLabel;
+  final String? imageUrl;
+  final Color? accent;
 }
 
 class FilterSelection {
@@ -97,6 +105,8 @@ class FilterSelection {
         dimensionLabel: dimension.label,
         value: value,
         valueLabel: option.label,
+        imageUrl: dimension.imageUrl,
+        accent: dimension.accent,
       ));
     }
     return out;

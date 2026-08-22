@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../shared/filters/filter_models.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/theme/channel_brand.dart';
@@ -110,65 +111,66 @@ class _Filters extends StatelessWidget {
   final TextEditingController controller;
   final void Function(Finding) onOpenFinding;
 
+  List<FilterDimension> get _dimensions => matrix.columns
+      .map((column) => FilterDimension(
+            key: 'ch_${column.integrationId}',
+            label: column.name,
+            icon: Icons.storefront_outlined,
+            imageUrl: column.imageUrl,
+            accent: channelBrand(column.name.isEmpty ? column.code : column.name)
+                .color,
+            options: [
+              FilterOption(value: 'present', label: 'Se vende en ${column.name}'),
+              FilterOption(
+                value: 'missing',
+                label: 'No se vende en ${column.name}',
+              ),
+            ],
+          ))
+      .toList();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final findings = saved.findings.findings;
     final comparedAt = saved.findings.lastComparedAt;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: controller,
-            textInputAction: TextInputAction.search,
-            decoration: const InputDecoration(
-              isDense: true,
-              hintText: 'SKU, producto o codigo de barras',
-              prefixIcon: Icon(Icons.search_rounded, size: 19),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppFilterBar(
+          controller: controller,
+          searchFields: const [
+            SearchField(
+              key: 'q',
+              label: 'Producto',
+              hint: 'SKU, producto o codigo de barras',
             ),
-            onSubmitted: matrix.setSearch,
+          ],
+          selectedField: 'q',
+          onFieldChanged: (_) {},
+          onSearchChanged: matrix.setSearch,
+          dimensions: _dimensions,
+          selection: matrix.selection,
+          onSelectionChanged: matrix.applySelection,
+        ),
+        if (findings.isNotEmpty)
+          SizedBox(
+            height: 30,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: findings.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 7),
+              itemBuilder: (context, index) => _FindingChip(
+                finding: findings[index],
+                onTap: () => onOpenFinding(findings[index]),
+              ),
+            ),
           ),
-          if (matrix.columns.isNotEmpty) ...[
-            const SizedBox(height: 9),
-            SizedBox(
-              height: 34,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final column in matrix.columns) ...[
-                    _ChannelFilterChip(
-                      column: column,
-                      state: matrix.stateFor(column.integrationId),
-                      onTap: () => matrix.cycleChannel(column.integrationId),
-                    ),
-                    const SizedBox(width: 7),
-                  ],
-                  if (matrix.hasFilters)
-                    _ClearChip(onTap: matrix.clearFilters),
-                ],
-              ),
-            ),
-          ],
-          if (findings.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 30,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: findings.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 7),
-                itemBuilder: (context, index) => _FindingChip(
-                  finding: findings[index],
-                  onTap: () => onOpenFinding(findings[index]),
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 9),
-          Row(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 9, 16, 7),
+          child: Row(
             children: [
               Expanded(
                 child: Text(
@@ -186,8 +188,8 @@ class _Filters extends StatelessWidget {
                 ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -196,120 +198,6 @@ class _Filters extends StatelessWidget {
     if (matrix.list.isLoading && total == 0) return 'Cargando productos';
     if (!matrix.hasFilters) return '${AppFormat.number(total)} productos';
     return '${AppFormat.number(total)} productos con el filtro';
-  }
-}
-
-class _ChannelFilterChip extends StatelessWidget {
-  const _ChannelFilterChip({
-    required this.column,
-    required this.state,
-    required this.onTap,
-  });
-
-  final MatrixColumn column;
-  final ChannelFilterState state;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final brand = channelBrand(column.name.isEmpty ? column.code : column.name);
-    final active = state != ChannelFilterState.off;
-    final missing = state == ChannelFilterState.missing;
-
-    final background = !active
-        ? AppColors.surface
-        : missing
-            ? AppColors.error.withValues(alpha: 0.10)
-            : brand.color.withValues(alpha: 0.14);
-    final border = !active
-        ? AppColors.border
-        : missing
-            ? AppColors.error
-            : brand.color;
-    final foreground = !active
-        ? AppColors.textSecondary
-        : missing
-            ? AppColors.error
-            : brand.color;
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 11),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: AppRadius.pillAll,
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: brand.color,
-              ),
-            ),
-            const SizedBox(width: 7),
-            Text(
-              column.name,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: foreground,
-              ),
-            ),
-            if (active) ...[
-              const SizedBox(width: 6),
-              Icon(
-                missing ? Icons.remove_circle_outline_rounded : Icons.check_rounded,
-                size: 13,
-                color: foreground,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ClearChip extends StatelessWidget {
-  const _ClearChip({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 11),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.close_rounded, size: 14, color: AppColors.textMuted),
-            SizedBox(width: 5),
-            Text(
-              'Limpiar',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -486,40 +374,41 @@ class _ChannelTag extends StatelessWidget {
       message: !present
           ? 'No esta publicado en ${column.name}'
           : mismatched
-              ? 'Publicado con el SKU ${cell?.sku ?? "distinto"}'
+              ? 'Publicado en ${column.name} con el SKU ${cell?.sku ?? "distinto"}'
               : 'Publicado en ${column.name}',
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: present ? color.withValues(alpha: 0.12) : Colors.transparent,
-          borderRadius: AppRadius.pillAll,
-          border: Border.all(
-            color: present ? color.withValues(alpha: 0.45) : AppColors.border,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              !present
-                  ? Icons.remove_rounded
-                  : mismatched
-                      ? Icons.error_outline_rounded
-                      : Icons.check_rounded,
-              size: 13,
-              color: color,
+      child: Opacity(
+        opacity: present ? 1 : 0.42,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+          decoration: BoxDecoration(
+            color: present ? color.withValues(alpha: 0.10) : Colors.transparent,
+            borderRadius: AppRadius.pillAll,
+            border: Border.all(
+              color: present ? color.withValues(alpha: 0.45) : AppColors.border,
             ),
-            const SizedBox(width: 5),
-            Text(
-              column.name,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BrandLogo(
+                name: column.name,
+                imageUrl: column.imageUrl,
+                size: 22,
+                radius: 999,
+                padding: 3,
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                !present
+                    ? Icons.remove_rounded
+                    : mismatched
+                        ? Icons.error_outline_rounded
+                        : Icons.check_rounded,
+                size: 14,
                 color: color,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

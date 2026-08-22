@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/filters/filter_models.dart';
 import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/saved_comparison_use_cases.dart';
@@ -60,16 +61,29 @@ class ProductMatrixProvider extends ChangeNotifier {
     return ChannelFilterState.off;
   }
 
-  Future<void> cycleChannel(int integrationId) {
-    switch (stateFor(integrationId)) {
-      case ChannelFilterState.off:
-        _presentIn.add(integrationId);
-      case ChannelFilterState.present:
-        _presentIn.remove(integrationId);
-        _missingIn.add(integrationId);
-      case ChannelFilterState.missing:
-        _missingIn.remove(integrationId);
+  FilterSelection get selection {
+    final values = <String, String>{};
+    for (final id in _presentIn) {
+      values['ch_$id'] = 'present';
     }
+    for (final id in _missingIn) {
+      values['ch_$id'] = 'missing';
+    }
+    return FilterSelection(values);
+  }
+
+  Future<void> applySelection(FilterSelection next) {
+    _presentIn.clear();
+    _missingIn.clear();
+    next.values.forEach((key, value) {
+      final id = int.tryParse(key.replaceFirst('ch_', ''));
+      if (id == null) return;
+      if (value == 'present') {
+        _presentIn.add(id);
+      } else if (value == 'missing') {
+        _missingIn.add(id);
+      }
+    });
     return list.refresh();
   }
 

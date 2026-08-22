@@ -110,9 +110,6 @@ class _CoreScreenState extends State<CoreScreen> {
     final sync = context.watch<SyncActivityProvider>();
 
     return AppScaffold(
-      title: 'Tus integraciones',
-      subtitle: 'El nucleo de tu operacion',
-      onBack: () => Navigator.of(context).maybePop(),
       bottom: ModuleToolbar(
         environment: sync.environment,
         running: sync.running,

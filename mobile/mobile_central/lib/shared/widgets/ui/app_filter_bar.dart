@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../filters/filter_models.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
+import 'brand_logo.dart';
 
 class AppFilterBar extends StatelessWidget {
   const AppFilterBar({
@@ -311,12 +312,24 @@ class _ActiveChip extends StatelessWidget {
         borderRadius: AppRadius.pillAll,
         onTap: onRemove,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(11, 6, 8, 6),
+          padding: const EdgeInsets.fromLTRB(9, 5, 8, 5),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (filter.imageUrl != null || filter.accent != null) ...[
+                BrandLogo(
+                  name: filter.dimensionLabel,
+                  imageUrl: filter.imageUrl,
+                  size: 18,
+                  radius: 5,
+                  padding: 2,
+                ),
+                const SizedBox(width: 6),
+              ],
               Text(
-                '${filter.dimensionLabel}: ${filter.valueLabel}',
+                filter.imageUrl != null || filter.accent != null
+                    ? filter.valueLabel
+                    : '${filter.dimensionLabel}: ${filter.valueLabel}',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
@@ -414,11 +427,27 @@ class _FilterSheetState extends State<_FilterSheet> {
                     children: [
                       Row(
                         children: [
-                          Icon(dimension.icon,
-                              size: 16, color: AppColors.textMuted),
-                          const SizedBox(width: 7),
-                          Text(dimension.label,
-                              style: theme.textTheme.titleSmall),
+                          if (dimension.imageUrl != null ||
+                              dimension.accent != null)
+                            BrandLogo(
+                              name: dimension.label,
+                              imageUrl: dimension.imageUrl,
+                              size: 22,
+                              radius: 6,
+                              padding: 3,
+                            )
+                          else
+                            Icon(dimension.icon,
+                                size: 16, color: AppColors.textMuted),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              dimension.label,
+                              style: theme.textTheme.titleSmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 9),
