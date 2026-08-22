@@ -18,7 +18,7 @@ import { getSyncProvider, GLOBAL_INVENTORY_EVENT_TYPES } from './providers';
 
 export type SyncNodeState = 'idle' | 'queued' | 'active' | 'scan' | 'done' | 'error';
 export type SyncMode = 'idle' | 'inventory' | 'products';
-export type SyncEnvironment = 'inventory' | 'products' | 'data' | 'invoicing';
+export type SyncEnvironment = 'inventory' | 'products' | 'data' | 'invoicing' | 'orders_compare';
 export type HubView = 'diagrama' | 'informe';
 
 export interface InventoryResult {

@@ -145,6 +145,7 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 		IntegrationType:             order.IntegrationType,
 		Platform:                    order.Platform,
 		ExternalID:                  order.ExternalID,
+		SkipInventory:      order.SkipInventory,
 		OrderNumber:                 order.OrderNumber,
 		InternalNumber:              order.InternalNumber,
 		Subtotal:                    order.Subtotal,

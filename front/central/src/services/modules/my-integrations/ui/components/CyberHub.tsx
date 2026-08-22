@@ -85,8 +85,10 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
             : finished
                 ? 'Sincronizacion completada'
                 : '';
-    const vaAlInforme = environment === 'inventory' || environment === 'data';
-    const etiquetaBoton = environment === 'inventory'
+    const vaAlInforme = environment === 'inventory' || environment === 'data' || environment === 'orders_compare';
+    const etiquetaBoton = environment === 'orders_compare'
+        ? 'Ver comparativo'
+        : environment === 'inventory'
         ? 'Comparar'
         : environment === 'data'
             ? 'Revisar'
@@ -244,7 +246,9 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                                         ? 'Comparar el stock de cada canal contra Probability'
                                         : environment === 'data'
                                             ? 'Ver que dato puede entrar a Probability desde cada canal'
-                                            : 'Elige arriba que quieres sincronizar'
+                                            : environment === 'orders_compare'
+                                                ? 'Cruzar las ordenes del canal contra las de Probability'
+                                                : 'Elige arriba que quieres sincronizar'
                             }
                             className="mt-1 flex h-9 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50/70 px-6 text-[12.5px] font-bold uppercase tracking-[0.12em] text-cyan-600 transition-all hover:scale-105 hover:bg-cyan-100 hover:shadow-[0_0_16px_rgba(34,211,238,0.55)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none dark:border-cyan-500/40 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
                         >

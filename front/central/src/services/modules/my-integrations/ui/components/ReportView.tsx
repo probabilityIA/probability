@@ -7,6 +7,7 @@ import { FindingItemsTable } from './FindingItemsTable';
 import { MatchMatrixTable } from './MatchMatrixTable';
 import { ChannelDataTable } from './ChannelDataTable';
 import { InventoryMatrixTable } from './InventoryMatrixTable';
+import { OrdersCompareTable } from './OrdersCompareTable';
 import { OrdersReport } from './OrdersReport';
 import { ChannelLogo } from './ChannelLogo';
 import type { FindingSeverity, FindingsReport } from '../../domain/types';
@@ -162,7 +163,9 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
                                 ? 'Compara el dato de cada canal contra Probability y decide que traer.'
                                 : environment === 'inventory'
                                     ? 'Compara el stock de cada canal contra Probability antes de enviarlo.'
-                                    : 'Facturacion desde el hub: proximamente.'}
+                                    : environment === 'orders_compare'
+                                        ? 'Cruza las ordenes del canal contra las de Probability y crea aca las que faltan.'
+                                        : 'Facturacion desde el hub: proximamente.'}
                     </p>
                 )}
 
@@ -216,6 +219,10 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
 
                     {environment === 'inventory' && (
                         <InventoryMatrixTable businessId={businessId} integrations={integrations} />
+                    )}
+
+                    {environment === 'orders_compare' && (
+                        <OrdersCompareTable businessId={businessId} integrations={orderSources} />
                     )}
 
                     {environment === 'invoicing' && (
