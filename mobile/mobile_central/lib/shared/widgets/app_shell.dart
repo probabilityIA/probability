@@ -48,10 +48,16 @@ class _BottomBar extends StatelessWidget {
   final String location;
 
   int get _index {
+    var best = appBottomTabs.length - 1;
+    var bestScore = 0;
     for (var i = 0; i < appBottomTabs.length; i++) {
-      if (appBottomTabs[i].matches(location)) return i;
+      final score = appBottomTabs[i].matchScore(location);
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
     }
-    return appBottomTabs.length - 1;
+    return best;
   }
 
   @override
@@ -100,7 +106,7 @@ class AppNavigationDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 16),
               children: [
                 _DrawerItem(module: AppModules.dashboard, location: location),
-                for (final group in AppModules.groups) ...[
+                for (final group in AppModules.visibleGroups) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 18, 12, 8),
                     child: Text(
@@ -303,6 +309,7 @@ class _DrawerItem extends StatelessWidget {
                         ),
                   ),
                 ),
+                if (module.stage.showsBadge) const ModuleStageBadge(),
               ],
             ),
           ),

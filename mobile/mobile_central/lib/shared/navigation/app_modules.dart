@@ -1,5 +1,23 @@
 import 'package:flutter/material.dart';
 
+enum ModuleStage { prod, beta, development }
+
+extension ModuleStageX on ModuleStage {
+  bool get isVisible => this != ModuleStage.development;
+  bool get showsBadge => this == ModuleStage.beta;
+
+  String get label {
+    switch (this) {
+      case ModuleStage.prod:
+        return 'Produccion';
+      case ModuleStage.beta:
+        return 'Beta';
+      case ModuleStage.development:
+        return 'En desarrollo';
+    }
+  }
+}
+
 class AppModule {
   const AppModule({
     required this.label,
@@ -8,6 +26,7 @@ class AppModule {
     this.description,
     this.matchPrefix = false,
     this.resources = const [],
+    this.stage = ModuleStage.prod,
   });
 
   final String label;
@@ -16,9 +35,15 @@ class AppModule {
   final String? description;
   final bool matchPrefix;
   final List<String> resources;
+  final ModuleStage stage;
+
+  bool get isVisible => stage.isVisible;
 
   bool isActive(String location) =>
       matchPrefix ? location.startsWith(route) : location == route;
+
+  bool owns(String location) =>
+      location == route || location.startsWith('$route/') || isActive(location);
 }
 
 class AppModuleGroup {
@@ -26,6 +51,9 @@ class AppModuleGroup {
 
   final String title;
   final List<AppModule> modules;
+
+  List<AppModule> get visibleModules =>
+      modules.where((module) => module.isVisible).toList();
 }
 
 class AppModules {
@@ -83,6 +111,7 @@ class AppModules {
           description: 'Rutas, conductores y vehiculos',
           matchPrefix: true,
           resources: ['Rutas', 'Routes'],
+          stage: ModuleStage.development,
         ),
       ],
     ),
@@ -184,6 +213,21 @@ class AppModules {
   static List<AppModule> get all =>
       groups.expand((group) => group.modules).toList();
 
+  static List<AppModuleGroup> get visibleGroups => groups
+      .map((group) => AppModuleGroup(
+            title: group.title,
+            modules: group.visibleModules,
+          ))
+      .where((group) => group.modules.isNotEmpty)
+      .toList();
+
+  static bool isRouteAvailable(String location) {
+    for (final module in all) {
+      if (module.owns(location)) return module.isVisible;
+    }
+    return true;
+  }
+
   static AppModule? byRoute(String location) {
     if (dashboard.isActive(location)) return dashboard;
     AppModule? best;
@@ -212,9 +256,17 @@ class AppBottomTab {
   final IconData activeIcon;
   final List<String> prefixes;
 
-  bool matches(String location) {
-    if (location == route) return true;
-    return prefixes.any((p) => location == p || location.startsWith('$p/'));
+  bool matches(String location) => matchScore(location) > 0;
+
+  int matchScore(String location) {
+    if (location == route) return route.length + 1;
+    var best = 0;
+    for (final prefix in prefixes) {
+      if (location == prefix || location.startsWith('$prefix/')) {
+        if (prefix.length > best) best = prefix.length;
+      }
+    }
+    return best;
   }
 }
 
@@ -234,10 +286,10 @@ const List<AppBottomTab> appBottomTabs = [
   ),
   AppBottomTab(
     label: 'Envios',
-    route: '/delivery',
+    route: '/orders/shipments',
     icon: Icons.local_shipping_outlined,
     activeIcon: Icons.local_shipping,
-    prefixes: ['/delivery'],
+    prefixes: ['/orders/shipments'],
   ),
   AppBottomTab(
     label: 'Inventario',

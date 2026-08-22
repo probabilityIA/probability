@@ -192,6 +192,38 @@ incluida en `cod_total` (esa es la convencion, no un bug).
 Al cancelar una guia el dialogo avisa que **no se reembolsa el saldo debitado**,
 que es lo que ocurre hoy segun `.claude/alerts/guias-duplicadas-doble-cobro.md`.
 
+## Estado de cada modulo: produccion, beta o desarrollo
+
+`lib/shared/navigation/app_modules.dart` marca cada modulo con `ModuleStage`:
+
+| Estado | Se ve en el menu | Insignia | Ruta alcanzable |
+|---|---|---|---|
+| `prod` | si | no | si |
+| `beta` | si | "BETA" | si |
+| `development` | **no** | - | **no** |
+
+Un modulo en `development` desaparece del drawer y de la pantilla "Mas", su
+grupo se oculta si se queda vacio, y el `redirect` del router manda a
+`/dashboard` cualquier ruta suya: no basta con esconder el boton, un enlace
+directo o una sesion restaurada tambien tienen que rebotar.
+
+**Ultima milla (`/delivery`) esta en `development`** y por eso no aparece. El
+codigo del modulo (rutas, conductores, vehiculos) queda intacto: para
+reactivarlo se cambia una sola linea a `ModuleStage.beta` o `prod`.
+
+Al ocultarlo salieron dos cosas de paso:
+
+- La pestania inferior "Envios" apuntaba a `/delivery` (ultima milla), no a las
+  guias. Ahora apunta a `/orders/shipments`, que es el modulo real. La barra
+  inferior pasa a elegir la pestania **mas especifica** en vez de la primera que
+  coincide, porque `/orders` y `/orders/shipments` se solapan.
+- `home_screen.dart` era codigo muerto (no lo referenciaba nadie) y contenia los
+  accesos rapidos a Rutas, Conductores y Vehiculos. Se elimina.
+
+Pendiente si se quiere llevar mas lejos: hoy el estado es una constante de la
+app. Si se necesita prender modulos por negocio o sin publicar version, el
+estado tendria que venir del backend como feature flag.
+
 ## Paginado dinamico y memoria (regla del proyecto)
 
 `.claude/rules/mobile-listados-memoria.md` fija el patron obligatorio: todo

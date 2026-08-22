@@ -27,7 +27,7 @@ class ModulesScreen extends StatelessWidget {
       body: ListView(
         padding: AppSpacing.page,
         children: [
-          for (final group in AppModules.groups) ...[
+          for (final group in AppModules.visibleGroups) ...[
             AppSectionHeader(title: group.title),
             GridView.builder(
               shrinkWrap: true,
@@ -102,6 +102,10 @@ class _ModuleTile extends StatelessWidget {
             child: Icon(module.icon, size: 19, color: AppColors.primary),
           ),
           const Spacer(),
+          if (module.stage.showsBadge) ...[
+            const ModuleStageBadge(),
+            const SizedBox(height: 6),
+          ],
           Text(
             module.label,
             style: theme.textTheme.titleSmall,

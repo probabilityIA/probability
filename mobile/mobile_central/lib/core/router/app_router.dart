@@ -26,6 +26,7 @@ import '../../shared/widgets/modules/notifications_module_screen.dart';
 import '../../shared/widgets/modules/invoicing_module_screen.dart';
 
 // Shared
+import '../../shared/navigation/app_modules.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/business_selector_wrapper.dart';
 import '../../shared/widgets/modules_screen.dart';
@@ -45,6 +46,9 @@ class AppRouter {
 
       if (!isLoggedIn && !isPublicRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/dashboard';
+      if (isLoggedIn && !AppModules.isRouteAvailable(state.matchedLocation)) {
+        return '/dashboard';
+      }
       return null;
     },
     routes: [
