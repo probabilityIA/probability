@@ -261,9 +261,30 @@ func TestUpdateOrderStatuses_SinCambios_RetornaFalse(t *testing.T) {
 	assert.False(t, changed)
 }
 
-func TestUpdateOrderStatus_OrdenEnBodega_IgnoraElEstadoDelCanal(t *testing.T) {
+func repoEntradaApagada() *mockRepository {
+	return &mockRepository{
+		IsChannelStatusInboundEnabledFn: func(ctx context.Context, integrationID uint) (bool, error) {
+			return false, nil
+		},
+	}
+}
+
+func TestUpdateOrderStatus_EntradaEncendida_SeAplicaComoSiempre(t *testing.T) {
 	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
-	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "picking"}
+	order := &entities.ProbabilityOrder{ID: "order-uuid", IntegrationID: 264, Status: "picking"}
+
+	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
+		Status:          "paid",
+		IntegrationType: "tiendanube",
+	})
+
+	assert.True(t, changed, "por defecto la entrada esta encendida y el canal manda")
+	assert.Equal(t, "paid", order.Status)
+}
+
+func TestUpdateOrderStatus_EntradaApagada_IgnoraElEstadoDelCanal(t *testing.T) {
+	uc := newTestUpdateUseCase(repoEntradaApagada(), nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", IntegrationID: 264, Status: "picking"}
 
 	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
 		Status:          "paid",
@@ -272,38 +293,25 @@ func TestUpdateOrderStatus_OrdenEnBodega_IgnoraElEstadoDelCanal(t *testing.T) {
 
 	assert.False(t, changed)
 	assert.Equal(t, "picking", order.Status,
-		"el canal no puede devolver a la orden a un estado previo a la operacion")
+		"con la entrada apagada el canal no mueve el estado operativo")
 }
 
-func TestUpdateOrderStatus_OrdenEnTransito_IgnoraElEstadoDelCanal(t *testing.T) {
-	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
-	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "in_transit"}
-
-	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
-		Status:          "processing",
-		IntegrationType: "shopify",
-	})
-
-	assert.False(t, changed)
-	assert.Equal(t, "in_transit", order.Status)
-}
-
-func TestUpdateOrderStatus_CancelacionDelCanal_PisaAunEnBodega(t *testing.T) {
-	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
-	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "picking"}
+func TestUpdateOrderStatus_EntradaApagada_CancelacionPisaIgual(t *testing.T) {
+	uc := newTestUpdateUseCase(repoEntradaApagada(), nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", IntegrationID: 264, Status: "picking"}
 
 	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
 		Status:          string(entities.OrderStatusCancelled),
 		IntegrationType: "tiendanube",
 	})
 
-	assert.True(t, changed)
+	assert.True(t, changed, "una cancelacion hecha en la tienda tiene que entrar igual")
 	assert.Equal(t, string(entities.OrderStatusCancelled), order.Status)
 }
 
-func TestUpdateOrderStatus_ReembolsoDelCanal_PisaEntregada(t *testing.T) {
-	uc := newTestUpdateUseCase(&mockRepository{}, nil, nil)
-	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "delivered"}
+func TestUpdateOrderStatus_EntradaApagada_ReembolsoPisaIgual(t *testing.T) {
+	uc := newTestUpdateUseCase(repoEntradaApagada(), nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", IntegrationID: 264, Status: "delivered"}
 
 	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
 		Status:          string(entities.OrderStatusRefunded),
@@ -314,17 +322,16 @@ func TestUpdateOrderStatus_ReembolsoDelCanal_PisaEntregada(t *testing.T) {
 	assert.Equal(t, string(entities.OrderStatusRefunded), order.Status)
 }
 
-func TestUpdateOrderStatus_OrdenEnBodega_RegistraOriginalStatusSinTocarStatusID(t *testing.T) {
+func TestUpdateOrderStatus_EntradaApagada_GuardaOriginalStatusSinTocarStatusID(t *testing.T) {
 	mapeado := uint(2)
-	repo := &mockRepository{
-		GetOrderStatusIDByIntegrationTypeAndOriginalStatusFn: func(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error) {
-			return &mapeado, nil
-		},
+	repo := repoEntradaApagada()
+	repo.GetOrderStatusIDByIntegrationTypeAndOriginalStatusFn = func(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error) {
+		return &mapeado, nil
 	}
 	uc := newTestUpdateUseCase(repo, nil, nil)
 
 	actual := uint(12)
-	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "picking", StatusID: &actual, OriginalStatus: "open"}
+	order := &entities.ProbabilityOrder{ID: "order-uuid", IntegrationID: 264, Status: "picking", StatusID: &actual, OriginalStatus: "open"}
 
 	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{
 		Status:          "paid",
@@ -337,4 +344,21 @@ func TestUpdateOrderStatus_OrdenEnBodega_RegistraOriginalStatusSinTocarStatusID(
 	assert.Equal(t, "picking", order.Status)
 	require.NotNil(t, order.StatusID)
 	assert.Equal(t, uint(12), *order.StatusID, "el status_id operativo no se remapea")
+}
+
+func TestUpdateOrderStatus_SinIntegracion_NoConsultaConfiguracion(t *testing.T) {
+	consultado := false
+	repo := &mockRepository{
+		IsChannelStatusInboundEnabledFn: func(ctx context.Context, integrationID uint) (bool, error) {
+			consultado = true
+			return false, nil
+		},
+	}
+	uc := newTestUpdateUseCase(repo, nil, nil)
+	order := &entities.ProbabilityOrder{ID: "order-uuid", Status: "pending"}
+
+	changed := uc.updateOrderStatus(context.Background(), order, &dtos.ProbabilityOrderDTO{Status: "confirmed"})
+
+	assert.True(t, changed)
+	assert.False(t, consultado, "una orden sin integracion no consulta la configuracion del canal")
 }

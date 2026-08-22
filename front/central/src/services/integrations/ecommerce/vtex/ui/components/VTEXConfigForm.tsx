@@ -104,6 +104,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
 
+    const [statusInboundEnabled, setStatusInboundEnabled] = useState<boolean>(initialData?.config?.status_inbound_enabled !== false);
     const [inventorySyncEnabled, setInventorySyncEnabled] = useState<boolean>(!!initialData?.config?.inventory_sync_enabled);
     const [statusSyncEnabled, setStatusSyncEnabled] = useState<boolean>(!!initialData?.config?.status_sync_enabled);
     const [isSeller, setIsSeller] = useState<boolean>(!!initialData?.config?.is_seller);
@@ -302,6 +303,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 is_seller: isSeller,
                 inventory_sync_enabled: inventorySyncEnabled,
                 status_sync_enabled: statusSyncEnabled,
+                status_inbound_enabled: statusInboundEnabled,
                 vtex_warehouse_mappings: cleanMappings,
             };
 
@@ -582,6 +584,13 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                         subtitle="Actualiza el estado de las ordenes en VTEX cuando cambian en Probability"
                         checked={statusSyncEnabled}
                         onToggle={() => setStatusSyncEnabled(!statusSyncEnabled)}
+                    />
+                    <ToggleRow
+                        icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
+                        title="Recibir estados desde VTEX"
+                        subtitle="Deja que VTEX mueva el estado de las ordenes aca. Las cancelaciones entran igual"
+                        checked={statusInboundEnabled}
+                        onToggle={() => setStatusInboundEnabled(!statusInboundEnabled)}
                     />
                     <ToggleRow
                         icon={<BuildingStorefrontIcon className="w-4 h-4" style={{ color: GREEN }} />}

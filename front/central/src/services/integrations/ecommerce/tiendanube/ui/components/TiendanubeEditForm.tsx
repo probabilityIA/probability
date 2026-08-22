@@ -15,6 +15,12 @@ import { TiendanubeProductSyncModal } from './TiendanubeProductSyncModal';
 import { TiendanubeOrderSyncModal } from './TiendanubeOrderSyncModal';
 import { TiendanubeInventorySyncModal } from './TiendanubeInventorySyncModal';
 import {
+    ChannelStatusSyncSection,
+    readChannelStatusSyncConfig,
+    writeChannelStatusSyncConfig,
+    type ChannelStatusSyncConfig,
+} from '@/services/integrations/core/ui/components/ChannelStatusSyncSection';
+import {
     ArchiveBoxIcon,
     ArrowPathIcon,
     BoltIcon,
@@ -97,7 +103,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
         single_warehouse_id: Number(initialData.config?.inventory_single_warehouse_id) || 0,
     });
 
-    const [statusSyncEnabled, setStatusSyncEnabled] = useState<boolean>(initialData.config?.status_sync_enabled === true);
+    const [statusSync, setStatusSync] = useState<ChannelStatusSyncConfig>(readChannelStatusSyncConfig(initialData.config));
     const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
     const [inventoryCompareOpen, setInventoryCompareOpen] = useState(false);
 
@@ -205,7 +211,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 store_id: formData.store_id || undefined,
                 inventory_sync_enabled: inventory.enabled,
                 inventory_single_warehouse_id: inventory.single_warehouse_id || undefined,
-                status_sync_enabled: statusSyncEnabled,
+                ...writeChannelStatusSyncConfig(statusSync),
             };
 
             const updateData: any = {
@@ -410,26 +416,16 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                            <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Devolver el estado y la guia a Tiendanube</h4>
-                            <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                                Cuando la orden avanza en Probability se actualiza el pedido en tu tienda: se empaca, se
-                                despacha con el numero de guia y el link de rastreo, y se registra cada evento del envio
-                                hasta la entrega. Tiendanube le notifica el seguimiento a tu cliente.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            role="switch"
-                            aria-checked={statusSyncEnabled}
-                            onClick={() => setStatusSyncEnabled((v) => !v)}
-                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${statusSyncEnabled ? '' : 'bg-gray-300 dark:bg-gray-600'}`}
-                            style={statusSyncEnabled ? { backgroundColor: GREEN } : undefined}
-                        >
-                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${statusSyncEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                        </button>
-                    </div>
+                    <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Estados de las ordenes</h4>
+                    <p className="mt-1 mb-3 text-[11px] text-gray-500 dark:text-gray-400">
+                        Define en que direccion viajan los cambios de estado entre Probability y tu tienda.
+                    </p>
+                    <ChannelStatusSyncSection
+                        channelName="Tiendanube"
+                        value={statusSync}
+                        onChange={setStatusSync}
+                        accentColor={GREEN}
+                    />
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">

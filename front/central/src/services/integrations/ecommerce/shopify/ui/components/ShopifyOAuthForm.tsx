@@ -16,6 +16,12 @@ import {
 } from '@heroicons/react/24/outline';
 import ShopifyWebhookManager from './ShopifyWebhookManager';
 import { ShopifyInventorySection, ShopifyInventoryConfig } from './ShopifyInventorySection';
+import {
+    ChannelStatusSyncSection,
+    readChannelStatusSyncConfig,
+    writeChannelStatusSyncConfig,
+    type ChannelStatusSyncConfig,
+} from '@/services/integrations/core/ui/components/ChannelStatusSyncSection';
 import { ShopifyLocationMappingSection, ShopifyLocationMapping } from './ShopifyLocationMappingSection';
 import { ShopifyInventorySyncModal } from './ShopifyInventorySyncModal';
 import { ShopifyProductSyncModal } from './ShopifyProductSyncModal';
@@ -239,6 +245,8 @@ export default function ShopifyOAuthForm({
     );
     const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
+    const [statusSync, setStatusSync] = useState<ChannelStatusSyncConfig>(readChannelStatusSyncConfig(initialData?.config));
+
     const [inventorySync, setInventorySync] = useState<ShopifyInventoryConfig>(() => {
         const c: any = initialData?.config || {};
         return {
@@ -316,6 +324,7 @@ export default function ShopifyOAuthForm({
 
             const mergedConfig = {
                 ...(initialData?.config || {}),
+                ...writeChannelStatusSyncConfig(statusSync),
                 inventory_sync_enabled: inventorySync.enabled,
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
@@ -693,6 +702,14 @@ export default function ShopifyOAuthForm({
                             channelName="Shopify"
                         />
                     )}
+
+                    <div className="mb-4">
+                        <ChannelStatusSyncSection
+                            channelName="Shopify"
+                            value={statusSync}
+                            onChange={setStatusSync}
+                        />
+                    </div>
 
                     <ShopifyInventorySection
                         value={inventorySync}

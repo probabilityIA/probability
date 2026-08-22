@@ -32,20 +32,36 @@ func (uc *UseCaseUpdateOrder) updateOrderStatuses(ctx context.Context, order *en
 	return hasChanges
 }
 
-// updateOrderStatus actualiza el estado general de la orden.
-// Este método es usado por integraciones (Shopify, etc.) que son fuente de verdad de su estado.
-// NO aplica reglas de transición — las integraciones pueden "saltar" estados.
-// Las reglas de transición estrictas solo aplican en PUT /orders/:id/status (usecaseupdatestatus).
+// channelStatusInboundEnabled indica si esta integración acepta que el canal
+// mueva el estado de sus órdenes. Por defecto sí: apagarlo es una decisión
+// explícita del negocio.
+func (uc *UseCaseUpdateOrder) channelStatusInboundEnabled(ctx context.Context, order *entities.ProbabilityOrder) bool {
+	if order.IntegrationID == 0 {
+		return true
+	}
+	habilitado, err := uc.repo.IsChannelStatusInboundEnabled(ctx, order.IntegrationID)
+	if err != nil {
+		uc.logger.Warn().
+			Err(err).
+			Str("order_id", order.ID).
+			Msg("No se pudo leer la configuración de entrada de estados; se acepta el estado del canal")
+		return true
+	}
+	return habilitado
+}
+
+// updateOrderStatus actualiza el estado general de la orden a partir de lo que
+// reporta la integración. No aplica las reglas de transición internas: las
+// estrictas viven en PUT /orders/:id/status (usecaseupdatestatus).
 func (uc *UseCaseUpdateOrder) updateOrderStatus(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	currentStatus := entities.OrderStatus(order.Status)
 	targetStatus := entities.OrderStatus(dto.Status)
 
-	// El canal manda mientras la orden no haya entrado a la operación de
-	// Probability. Una vez está en bodega o última milla, solo pasan las
-	// cancelaciones y los reembolsos: lo demás retrocedería el estado operativo.
-	channelWins := dto.Status == "" || targetStatus.CanChannelOverride(currentStatus)
+	// Cada integración decide si el canal puede mover el estado de sus órdenes.
+	// Con la entrada apagada solo pasan cancelaciones y reembolsos.
+	channelWins := uc.channelStatusInboundEnabled(ctx, order) || targetStatus.IsChannelOverride()
 
 	if dto.Status != "" && order.Status != dto.Status {
 		if !channelWins {
@@ -54,7 +70,7 @@ func (uc *UseCaseUpdateOrder) updateOrderStatus(ctx context.Context, order *enti
 				Str("current", order.Status).
 				Str("channel_status", dto.Status).
 				Str("integration_type", dto.IntegrationType).
-				Msg("La orden ya está en la operación de Probability; se ignora el estado que llega del canal")
+				Msg("La integración tiene apagada la entrada de estados; se ignora el estado que llega del canal")
 		} else {
 			if !currentStatus.CanTransitionTo(targetStatus) && targetStatus != entities.OrderStatusCancelled {
 				uc.logger.Warn().

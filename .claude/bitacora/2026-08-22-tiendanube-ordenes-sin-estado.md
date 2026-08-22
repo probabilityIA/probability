@@ -211,36 +211,39 @@ en la integracion 264 y mover una orden de la tienda de prueba por picking ->
 in_transit -> delivered, comprobando en el admin de Tiendanube que el pedido
 avanza, muestra la guia y lista los eventos de seguimiento.
 
-## Regla: el canal deja de mandar cuando la orden entra a la operacion
+## Dos interruptores por integracion para el estado de las ordenes
 
-Aplicada el 2026-08-22 tras el hallazgo del retroceso `picking -> paid`. Afecta a
-todos los canales, no solo a Tiendanube.
+El primer intento fue una regla global: una orden que ya estaba en `picking` o
+mas adelante ignoraba lo que dijera el canal. No sirve, porque cada negocio opera
+distinto:
 
-`updateOrderStatus` (`usecaseupdateorder/update_statuses.go`) aceptaba cualquier
-estado que llegara del canal y solo dejaba un `Warn`. El comentario del codigo lo
-decia: *"NO aplica reglas de transicion - las integraciones pueden saltar
-estados"*. Con eso, cada `order/updated` devolvia la orden de `picking` a `paid`
-y la sacaba del flujo de bodega.
+- **sin intermediarios** solo usa Probability para facturar; el estado siempre lo
+  manda el canal.
+- **Viga ropa deportiva** centraliza la operacion aca.
+- **MercadoLibre** es quien notifica el avance del envio.
+- **WooCommerce** se notifica desde Probability.
 
-La regla nueva vive en el dominio (`entities/order_status.go`):
+Asi que la direccion del flujo es configuracion, no regla fija. Cada integracion
+tiene ahora dos interruptores, **ambos encendidos por defecto**:
 
-- `IsOperated()`: la orden ya entro a la operacion de Probability (picking,
-  packing, ready_to_ship, inventory_issue, assigned_to_driver, picked_up,
-  in_transit, out_for_delivery, delivered, delivery_novelty, delivery_failed,
-  rejected, return_in_transit, returned, completed, cancelled, refunded, shipped).
-- `CanChannelOverride(actual)`: el canal manda mientras la orden **no** este
-  operada; despues solo pasan `cancelled` y `refunded`.
+| Config | Sentido | Efecto |
+|---|---|---|
+| `status_inbound_enabled` | canal -> Probability | apagado: el canal no mueve el estado operativo |
+| `status_sync_enabled` | Probability -> canal | apagado: no se escribe nada en el canal |
 
-En la actualizacion desde integraciones:
+Con la entrada apagada, `updateOrderStatus` no toca `status` ni `status_id`, pero
+el `original_status` se sigue guardando y el estado de pago sigue su camino. Las
+**cancelaciones y los reembolsos entran siempre**, incluso con la entrada
+apagada: si no, se despacha una orden que el comprador ya cancelo en la tienda.
 
-- Si el canal no puede mandar, no se toca `status` ni `status_id`, y se registra
-  un `Info` de una linea con el estado que se ignoro.
-- El `original_status` del canal **si** se guarda siempre: la orden conserva la
-  trazabilidad de lo que dice la tienda.
-- El estado de pago sigue su propio camino, asi que una orden en bodega que se
-  paga en el canal si actualiza `payment_status_id` e `is_paid`.
+Detalles de implementacion:
 
-Tests: `entities/order_status_channel_test.go` (11 casos de la regla pura) y
-cuatro casos nuevos en `usecaseupdateorder/update_statuses_test.go` (orden en
-bodega, en transito, cancelacion que pisa, reembolso que pisa y original_status
-que se guarda sin remapear el status_id).
+- El flag se lee de `integrations.config` con un SELECT replicado en el repo de
+  ordenes (`IsChannelStatusInboundEnabled`). Si falta la llave o falla la
+  consulta, se asume encendido: nunca se pierde un estado por un error de lectura.
+- La salida (`status_sync_enabled`) tambien pasa a encendida por defecto en
+  Tiendanube y Jumpseller, que antes exigian activarla a mano.
+- UI: componente compartido `ChannelStatusSyncSection` con los dos switches, ya
+  montado en Tiendanube, WooCommerce, MercadoLibre, Jumpseller y Shopify. VTEX
+  conserva sus `ToggleRow` y solo se le agrego el de entrada.
+

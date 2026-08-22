@@ -57,6 +57,7 @@ type IRepository interface {
 	CreateOrderError(ctx context.Context, orderError *entities.OrderError) error
 
 	GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error)
+	IsChannelStatusInboundEnabled(ctx context.Context, integrationID uint) (bool, error)
 	GetOrderStatusIDByCode(ctx context.Context, code string) (*uint, error)
 	GetPaymentStatusIDByCode(ctx context.Context, code string) (*uint, error)
 	GetFulfillmentStatusIDByCode(ctx context.Context, code string) (*uint, error)

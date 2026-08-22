@@ -30,13 +30,28 @@ func convertProbabilityStatus(status string) (orderStatus string, shipmentStatus
 	return "", "", domain.ErrStatusNotMapped
 }
 
+func statusSyncActivo(config map[string]interface{}) bool {
+	if config == nil {
+		return true
+	}
+	valor, existe := config["status_sync_enabled"]
+	if !existe {
+		return true
+	}
+	activo, ok := valor.(bool)
+	if !ok {
+		return true
+	}
+	return activo
+}
+
 func (uc *jumpsellerUseCase) UpdateOrderStatus(ctx context.Context, integrationID string, externalOrderID string, probabilityStatus string, tracking domain.UpdateOrderFields) error {
 	integration, cred, err := uc.resolveIntegration(ctx, integrationID)
 	if err != nil {
 		return err
 	}
 
-	if enabled, _ := integration.Config["status_sync_enabled"].(bool); !enabled {
+	if !statusSyncActivo(integration.Config) {
 		uc.logger.Info(ctx).
 			Str("integration_id", integrationID).
 			Msg("Sync de estados desactivado para la integracion Jumpseller, actualizacion omitida")

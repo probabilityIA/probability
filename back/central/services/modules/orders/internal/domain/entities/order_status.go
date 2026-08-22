@@ -223,48 +223,17 @@ func (s OrderStatus) CanTransitionTo(target OrderStatus) bool {
 	return false
 }
 
-// operatedStatuses son los estados que produce la operación de Probability
-// (bodega, última milla y desenlaces). Una vez la orden llega a alguno de ellos,
-// el canal de venta deja de ser fuente de verdad de su estado.
-var operatedStatuses = map[OrderStatus]bool{
-	OrderStatusPicking:          true,
-	OrderStatusPacking:          true,
-	OrderStatusReadyToShip:      true,
-	OrderStatusInventoryIssue:   true,
-	OrderStatusAssignedToDriver: true,
-	OrderStatusPickedUp:         true,
-	OrderStatusInTransit:        true,
-	OrderStatusOutForDelivery:   true,
-	OrderStatusDelivered:        true,
-	OrderStatusDeliveryNovelty:  true,
-	OrderStatusDeliveryFailed:   true,
-	OrderStatusRejected:         true,
-	OrderStatusReturnInTransit:  true,
-	OrderStatusReturned:         true,
-	OrderStatusCompleted:        true,
-	OrderStatusCancelled:        true,
-	OrderStatusRefunded:         true,
-	OrderStatusShipped:          true,
-}
-
 // channelOverrides son los estados que el canal puede imponer siempre, incluso
-// sobre una orden que ya avanzó en la operación.
+// cuando el negocio apagó la entrada de estados desde ese canal. Una cancelación
+// o un reembolso hechos en la tienda tienen que llegar igual: si no, se despacha
+// una orden que el comprador ya canceló.
 var channelOverrides = map[OrderStatus]bool{
 	OrderStatusCancelled: true,
 	OrderStatusRefunded:  true,
 }
 
-// IsOperated indica si la orden ya entró al flujo operativo de Probability.
-func (s OrderStatus) IsOperated() bool {
-	return operatedStatuses[s]
-}
-
-// CanChannelOverride indica si un estado que llega del canal puede pisar el
-// estado actual de la orden. El canal manda mientras la orden no haya entrado a
-// la operación; después solo pasan cancelaciones y reembolsos.
-func (s OrderStatus) CanChannelOverride(current OrderStatus) bool {
-	if !current.IsOperated() {
-		return true
-	}
+// IsChannelOverride indica si el estado es uno de los que el canal impone
+// siempre, sin importar la configuración de la integración.
+func (s OrderStatus) IsChannelOverride() bool {
 	return channelOverrides[s]
 }

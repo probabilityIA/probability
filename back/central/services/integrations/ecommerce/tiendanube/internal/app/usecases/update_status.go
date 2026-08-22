@@ -61,7 +61,7 @@ func (uc *tiendanubeUseCase) UpdateOrderStatus(ctx context.Context, integrationI
 		return err
 	}
 
-	if habilitado, _ := integration.Config[domain.ConfigStatusSyncEnabled].(bool); !habilitado {
+	if !configuracionActiva(integration.Config, domain.ConfigStatusSyncEnabled) {
 		uc.logger.Info(ctx).
 			Str("integration_id", integrationID).
 			Msg("Sync de estados desactivado para la integracion Tiendanube, actualizacion omitida")
@@ -134,6 +134,21 @@ func (uc *tiendanubeUseCase) UpdateOrderStatus(ctx context.Context, integrationI
 	}
 
 	return nil
+}
+
+func configuracionActiva(config map[string]interface{}, llave string) bool {
+	if config == nil {
+		return true
+	}
+	valor, existe := config[llave]
+	if !existe {
+		return true
+	}
+	activo, ok := valor.(bool)
+	if !ok {
+		return true
+	}
+	return activo
 }
 
 func construirTracking(update domain.OrderStatusUpdate) *domain.TrackingInfo {

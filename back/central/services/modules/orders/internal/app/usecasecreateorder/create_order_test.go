@@ -13,6 +13,7 @@ import (
 )
 
 type mockRepository struct {
+	IsChannelStatusInboundEnabledFn                      func(ctx context.Context, integrationID uint) (bool, error)
 	CreateOrderFn                                        func(ctx context.Context, order *entities.ProbabilityOrder) error
 	GetOrderByIDFn                                       func(ctx context.Context, id string) (*entities.ProbabilityOrder, error)
 	GetOrderByInternalNumberFn                           func(ctx context.Context, internalNumber string) (*entities.ProbabilityOrder, error)
@@ -1398,4 +1399,11 @@ func TestMapAndSaveOrder_FalloAlGuardarHistorial_NoRompeLaCreacion(t *testing.T)
 
 func (m *mockRepository) GetUserDisplayName(ctx context.Context, userID uint) string {
 	return ""
+}
+
+func (m *mockRepository) IsChannelStatusInboundEnabled(ctx context.Context, integrationID uint) (bool, error) {
+	if m.IsChannelStatusInboundEnabledFn != nil {
+		return m.IsChannelStatusInboundEnabledFn(ctx, integrationID)
+	}
+	return true, nil
 }
