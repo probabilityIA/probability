@@ -39,6 +39,7 @@ import 'services/modules/mobile/ui/providers/order_full_provider.dart';
 import 'services/integrations/core/ui/providers/integration_provider.dart';
 import 'shared/theme/active_brand.dart';
 import 'shared/theme/app_theme.dart';
+import 'shared/widgets/splash_screen.dart';
 import 'shared/utils/image_memory.dart';
 
 void main() {
@@ -76,15 +77,35 @@ class ProbabilityApp extends StatefulWidget {
 class _ProbabilityAppState extends State<ProbabilityApp> {
   late final AppRouter _appRouter;
 
+  bool _sessionReady = false;
+  bool _introDone = false;
+
   @override
   void initState() {
     super.initState();
     _appRouter = AppRouter(loginProvider: widget.loginProvider);
-    widget.loginProvider.restoreSession();
+    widget.loginProvider.restoreSession().whenComplete(() {
+      if (mounted) setState(() => _sessionReady = true);
+    });
   }
+
+  bool get _showSplash => !_introDone || !_sessionReady;
+
+  Widget _splash() => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        home: SplashScreen(
+          hold: !_sessionReady,
+          onFinished: () {
+            if (mounted) setState(() => _introDone = true);
+          },
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
+    if (_showSplash) return _splash();
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: widget.loginProvider),
