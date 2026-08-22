@@ -179,6 +179,8 @@ services:
     container_name: testing_backend_prod
     ports:
       - "127.0.0.1:9092:9092"
+    dns:
+      - 169.254.169.253
     environment:
       DB_HOST:             "${DB_HOST:-postgres}"
       DB_PORT:             "5432"
