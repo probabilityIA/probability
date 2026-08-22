@@ -5,8 +5,10 @@ import '../../../../../shared/navigation/app_modules.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
+import '../../../../../shared/utils/integration_visibility.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../../../auth/business/ui/providers/business_provider.dart';
+import '../../../../integrations/core/domain/entities.dart';
 import '../../../../integrations/core/ui/providers/integration_provider.dart';
 import '../../../../auth/login/ui/providers/login_provider.dart';
 import '../../domain/entities.dart';
@@ -32,13 +34,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (integrations.integrationTypes.isEmpty) {
         integrations.fetchIntegrationTypes();
       }
+      integrations.fetchIntegrations(businessId: widget.businessId);
     });
   }
 
   @override
   void didUpdateWidget(DashboardScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.businessId != widget.businessId) _load();
+    if (oldWidget.businessId != widget.businessId) {
+      _load();
+      context
+          .read<IntegrationProvider>()
+          .fetchIntegrations(businessId: widget.businessId);
+    }
   }
 
   void _load() {
@@ -51,6 +59,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     for (final type in types) {
       map[type.name.toLowerCase()] = type.imageUrl;
       map[type.code.toLowerCase()] = type.imageUrl;
+      map['id:${type.id}'] = type.imageUrl;
+      map['name:${type.id}'] = type.name;
     }
     return map;
   }
@@ -132,6 +142,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
                 const _QuickActions(),
+                const SizedBox(height: 18),
+                const AppSectionHeader(
+                  title: 'Integraciones activas',
+                  subtitle: 'Por categoria',
+                ),
+                _IntegrationsByCategory(logos: _channelLogos(context)),
                 if (stats.ordersByIntegrationType.isNotEmpty) ...[
                   const SizedBox(height: 18),
                   const AppSectionHeader(
@@ -259,10 +275,7 @@ class _KpiGrid extends StatelessWidget {
             ? null
             : _EffectivenessRows(data: effectiveness!),
       ),
-      _ChannelsKpiTile(
-        channels: stats.ordersByIntegrationType,
-        logos: channelLogos,
-      ),
+      _ChannelsKpiTile(logos: channelLogos),
       AppKpiTile(
         label: 'Vendido',
         value: AppFormat.money(_revenue),
@@ -419,18 +432,27 @@ class _PeriodPicker extends StatelessWidget {
 }
 
 class _ChannelsKpiTile extends StatelessWidget {
-  const _ChannelsKpiTile({required this.channels, required this.logos});
+  const _ChannelsKpiTile({required this.logos});
 
-  final List<OrderCountByIntegrationType> channels;
   final Map<String, String?> logos;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const accent = Color(0xFF0EA5E9);
-    final sorted = [...channels]..sort((a, b) => b.count.compareTo(a.count));
-    final shown = sorted.take(4).toList();
-    final extra = sorted.length - shown.length;
+    final provider = context.watch<IntegrationProvider>();
+    final active = provider.integrations
+        .where((i) => i.isActive)
+        .where((i) => IntegrationVisibility.isVisible(
+              category: i.category,
+              type: i.type,
+              name: logos['name:${i.integrationTypeId}'],
+            ))
+        .toList();
+    final categories =
+        active.map((i) => i.categoryName ?? i.category).toSet().length;
+    final shown = active.take(4).toList();
+    final extra = active.length - shown.length;
 
     return Material(
       color: AppColors.surface,
@@ -462,7 +484,7 @@ class _ChannelsKpiTile extends StatelessWidget {
                   const SizedBox(width: 9),
                   Expanded(
                     child: Text(
-                      'Canales activos',
+                      'Integraciones',
                       style: theme.textTheme.labelMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -470,12 +492,12 @@ class _ChannelsKpiTile extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    AppFormat.number(sorted.length),
+                    AppFormat.number(active.length),
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(width: 10),
@@ -485,11 +507,11 @@ class _ChannelsKpiTile extends StatelessWidget {
                       runSpacing: 4,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        for (final channel in shown)
+                        for (final item in shown)
                           BrandLogo(
-                            name: channel.integrationType,
-                            imageUrl:
-                                logos[channel.integrationType.toLowerCase()],
+                            name: logos['name:${item.integrationTypeId}'] ??
+                                item.type,
+                            imageUrl: logos['id:${item.integrationTypeId}'],
                             size: 22,
                             radius: 6,
                             padding: 3,
@@ -501,6 +523,13 @@ class _ChannelsKpiTile extends StatelessWidget {
                   ),
                 ],
               ),
+              if (categories > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '$categories categoria${categories == 1 ? '' : 's'}',
+                  style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
+                ),
+              ],
             ],
           ),
         ),
@@ -582,6 +611,127 @@ class _MetricPill extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _IntegrationsByCategory extends StatelessWidget {
+  const _IntegrationsByCategory({required this.logos});
+
+  final Map<String, String?> logos;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<IntegrationProvider>(
+      builder: (context, provider, _) {
+        final active = provider.integrations
+            .where((i) => i.isActive)
+            .where((i) => IntegrationVisibility.isVisible(
+                  category: i.category,
+                  type: i.type,
+                  name: logos['name:${i.integrationTypeId}'],
+                ))
+            .toList();
+
+        if (active.isEmpty) {
+          return AppCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                provider.isLoading
+                    ? 'Cargando integraciones...'
+                    : 'Este negocio no tiene integraciones activas.',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ),
+          );
+        }
+
+        final grouped = <String, List<Integration>>{};
+        for (final integration in active) {
+          final key = integration.categoryName?.trim().isNotEmpty == true
+              ? integration.categoryName!
+              : integration.category;
+          grouped.putIfAbsent(key, () => []).add(integration);
+        }
+        final categories = grouped.keys.toList()..sort();
+
+        return AppCard(
+          child: Column(
+            children: [
+              for (var i = 0; i < categories.length; i++) ...[
+                if (i > 0) const Divider(height: 18),
+                _CategoryRow(
+                  category: categories[i],
+                  items: grouped[categories[i]]!,
+                  logos: logos,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CategoryRow extends StatelessWidget {
+  const _CategoryRow({
+    required this.category,
+    required this.items,
+    required this.logos,
+  });
+
+  final String category;
+  final List<Integration> items;
+  final Map<String, String?> logos;
+
+  String _typeName(Integration item) =>
+      logos['name:${item.integrationTypeId}'] ?? item.type;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                category,
+                style: theme.textTheme.titleSmall?.copyWith(fontSize: 13),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                items.map(_typeName).join(' - '),
+                style: theme.textTheme.labelSmall?.copyWith(fontSize: 10.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Wrap(
+          spacing: 4,
+          children: [
+            for (final item in items.take(4))
+              BrandLogo(
+                name: _typeName(item),
+                imageUrl: logos['id:${item.integrationTypeId}'] ??
+                    logos[item.type.toLowerCase()],
+                size: 26,
+                radius: 7,
+                padding: 3,
+              ),
+          ],
         ),
       ],
     );

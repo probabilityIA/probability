@@ -5,6 +5,7 @@ import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
+import '../../../../../shared/utils/integration_visibility.dart';
 import '../providers/my_integrations_provider.dart';
 import '../widgets/integration_actions_sheet.dart';
 
@@ -40,9 +41,18 @@ class _MyIntegrationsScreenState extends State<MyIntegrationsScreen> {
     context.read<MyIntegrationsProvider>().fetchIntegrations(businessId: widget.businessId);
   }
 
+  List<MyIntegration> _visible(List<MyIntegration> rows) => rows
+      .where((r) => IntegrationVisibility.isVisible(
+            category: r.categoryCode,
+            type: r.integrationTypeCode,
+            name: r.integrationTypeName,
+          ))
+      .toList();
+
   List<MyIntegration> _filter(List<MyIntegration> rows) {
-    if (_category == 'all') return rows;
-    return rows.where((r) => (r.categoryCode ?? '') == _category).toList();
+    final visible = _visible(rows);
+    if (_category == 'all') return visible;
+    return visible.where((r) => (r.categoryCode ?? '') == _category).toList();
   }
 
   @override
@@ -57,7 +67,7 @@ class _MyIntegrationsScreenState extends State<MyIntegrationsScreen> {
           return AppErrorState(message: provider.error!, onRetry: _load);
         }
 
-        if (provider.integrations.isEmpty) {
+        if (_visible(provider.integrations).isEmpty) {
           return AppEmptyState(
             icon: Icons.hub_outlined,
             title: 'Sin integraciones conectadas',
@@ -70,7 +80,9 @@ class _MyIntegrationsScreenState extends State<MyIntegrationsScreen> {
         final rows = _filter(provider.integrations);
         final categories = <String>{
           'all',
-          ...provider.integrations.map((e) => e.categoryCode ?? '').where((e) => e.isNotEmpty),
+          ..._visible(provider.integrations)
+              .map((e) => e.categoryCode ?? '')
+              .where((e) => e.isNotEmpty),
         }.toList();
 
         return RefreshIndicator(
