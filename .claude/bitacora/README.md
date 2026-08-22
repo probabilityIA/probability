@@ -50,3 +50,4 @@ No hace falta entrada para un fix trivial o un cambio de UI.
 | 2026-08-20 | [Tiendanube devuelve 404 cuando el listado esta vacio](2026-08-20-tiendanube-404-last-page-is-0.md) | Cerrado: 404 de paginacion tratado como lista vacia, verificado en la tienda real |
 | 2026-08-21 | [Viga: 3 envios COD sin pagar y ordenes duplicadas](2026-08-21-viga-cod-pendiente-y-ordenes-duplicadas.md) | Reclamo valido: nunca entraron a un corte COD. Duplicados por reintento de guia; doble cobro sin reembolso |
 | 2026-08-21 | [Las alarmas de CloudWatch no le avisaban a nadie](2026-08-21-monitoreo-sin-destinatario.md) | Cerrado: SNS suscrito y verificado. CloudTrail activado. Faltan metricas de RAM/disco del EC2 |
+| 2026-08-22 | [El guard del SSE de cotizacion no filtraba nada](2026-08-22-sse-cotizacion-guard-sin-filtro.md) | Corregido en local, sin desplegar. Pendiente: campo `status` en POST /shipments/quote |
