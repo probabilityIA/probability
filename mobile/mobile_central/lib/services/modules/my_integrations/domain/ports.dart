@@ -1,6 +1,7 @@
 import '../../../../shared/types/paginated_response.dart';
 import '../app/sync_providers.dart';
 import 'entities.dart';
+import 'orders_compare_entities.dart';
 import 'sync_entities.dart';
 
 abstract class IMyIntegrationsRepository {
@@ -40,5 +41,15 @@ abstract class ISyncRunsRepository {
     String action, {
     int? businessId,
     List<String>? skus,
+  });
+}
+
+abstract class IOrdersCompareRepository {
+  Future<OrdersComparePage> compare(OrdersCompareQuery query);
+
+  Future<OrdersApplyResult> apply(
+    int integrationId,
+    List<String> externalIds, {
+    int? businessId,
   });
 }

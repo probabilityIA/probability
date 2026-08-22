@@ -54,6 +54,26 @@ Por proveedor (prefijo distinto segun el canal):
 | Tiendanube | 17 | `/tiendanube` | sync, compare, reconcile, apply, associate |
 | Jumpseller | 33 | `/jumpseller` | sync, reconcile, apply, associate |
 
+## El comparativo guardado (regla central del modulo)
+
+El front **no obliga a correr nada para ver algo**. Al abrir cualquier ambiente
+muestra el comparativo anterior, guardado, y correr de nuevo es una accion
+aparte:
+
+| Ambiente | De donde sale lo que se ve al abrir |
+|---|---|
+| Comparar productos | `GET /sync-runs/findings` (trae `compared_at` por canal) y `GET /sync-runs/matrix` |
+| Sincronizar inventario | `POST /{prefijo}/inventory/compare` con `source: 'snapshot'`, que responde `from_cache: true` y `checked_at` |
+| Actualizar productos | `GET /sync-runs/data-summary`, que trae `snapshot_at` |
+| Comparar ordenes | no hay guardado: siempre se le pregunta al canal |
+
+Ademas `GET /integrations/sync-runs` da la ultima corrida por canal y tipo, y
+`GET /sync-runs/items` su detalle paginado.
+
+Esto no es un detalle de UI: preguntarle al canal cuesta segundos y cuota de
+API. **Toda pantalla de este modulo abre con lo guardado y dice cuando se
+comparo**; el boton de comparar solo refresca.
+
 ## Reglas que aplican a todas las fases
 
 - `.claude/rules/mobile-listados-memoria.md`: toda coleccion va con
@@ -143,7 +163,7 @@ Endpoints: `POST /{prefijo}/inventory/compare` y `/inventory/sync`.
 Ojo: Shopify, VTEX y Jumpseller **no** tienen `compare`. La UI debe decir
 "este canal solo permite enviar, no comparar" en vez de fallar.
 
-## Fase 3 - Comparar ordenes
+## Fase 3 - Comparar ordenes - HECHO
 
 Lo que llego de main. Es el panel mas facil de los pesados: no necesita SSE, es
 un GET paginado y un POST.

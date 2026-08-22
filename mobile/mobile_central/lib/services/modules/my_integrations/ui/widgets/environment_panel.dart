@@ -8,6 +8,7 @@ import '../../domain/entities.dart';
 import '../../domain/sync_entities.dart';
 import '../providers/sync_activity_provider.dart';
 import 'module_toolbar.dart';
+import 'orders_compare_panel.dart';
 import 'orders_report.dart';
 
 class EnvironmentPanel extends StatelessWidget {
@@ -16,16 +17,25 @@ class EnvironmentPanel extends StatelessWidget {
     required this.environment,
     required this.integrations,
     required this.statsFor,
+    this.businessId,
   });
 
   final SyncEnvironment environment;
   final List<MyIntegration> integrations;
   final IntegrationStats Function(int) statsFor;
+  final int? businessId;
 
   @override
   Widget build(BuildContext context) {
     if (environment == SyncEnvironment.overview) {
       return OrdersReport(integrations: integrations, statsFor: statsFor);
+    }
+
+    if (environment == SyncEnvironment.ordersCompare) {
+      return OrdersComparePanel(
+        integrations: integrations,
+        businessId: businessId,
+      );
     }
 
     final spec = environmentSpec(environment);

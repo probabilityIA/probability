@@ -33,6 +33,7 @@ import 'services/modules/storefront/ui/providers/storefront_provider.dart';
 import 'services/modules/publicsite/ui/providers/publicsite_provider.dart';
 import 'services/modules/website_config/ui/providers/website_config_provider.dart';
 import 'services/modules/my_integrations/ui/providers/my_integrations_provider.dart';
+import 'services/modules/my_integrations/ui/providers/orders_compare_provider.dart';
 import 'services/modules/my_integrations/ui/providers/sync_activity_provider.dart';
 import 'services/modules/mobile/ui/providers/order_full_provider.dart';
 // Integration providers
@@ -196,6 +197,9 @@ class _ProbabilityAppState extends State<ProbabilityApp> {
         ),
         ChangeNotifierProvider(
           create: (_) => SyncActivityProvider(apiClient: widget.apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrdersCompareProvider(apiClient: widget.apiClient),
         ),
         // Integration core provider
         ChangeNotifierProvider(

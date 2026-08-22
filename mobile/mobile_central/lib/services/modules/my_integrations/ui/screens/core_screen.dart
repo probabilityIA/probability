@@ -160,14 +160,17 @@ class _CoreScreenState extends State<CoreScreen> {
           }
 
           if (_view == CoreView.informe) {
+            final panel = EnvironmentPanel(
+              environment: sync.environment,
+              integrations: visible,
+              statsFor: provider.statsFor,
+              businessId: widget.businessId,
+            );
+            if (sync.environment == SyncEnvironment.ordersCompare) return panel;
             return RefreshIndicator(
               onRefresh: () async => _load(),
               color: Theme.of(context).colorScheme.primary,
-              child: EnvironmentPanel(
-                environment: sync.environment,
-                integrations: visible,
-                statsFor: provider.statsFor,
-              ),
+              child: panel,
             );
           }
 
