@@ -77,7 +77,7 @@ const INTEGRATION_TYPES = [
   { id: 42, code: 'bancolombia_qr', name: 'Bancolombia QR', category: 'payment', image_url: 'integration-types/bancolombia.png' },
 ];
 
-const customers = Array.from({ length: 48 }, (_, i) => {
+const customers = Array.from({ length: 420 }, (_, i) => {
   const name = `${pick(FIRST)} ${pick(LAST)}`;
   const orderCount = between(1, 24);
   return {
@@ -111,7 +111,7 @@ const CHANNEL_LABELS = {
   'platform': 'Manual',
 };
 
-const products = Array.from({ length: 42 }, (_, i) => {
+const products = Array.from({ length: 380 }, (_, i) => {
   const name = `${PRODUCTS[i % PRODUCTS.length]}${i > 15 ? ' v' + (Math.floor(i / 16) + 1) : ''}`;
   const price = between(18000, 890000);
   const cost = Math.round(price * 0.62);
@@ -200,7 +200,7 @@ const warehouseLocations = warehouses.flatMap((w) =>
 );
 
 
-const orders = Array.from({ length: 64 }, (_, i) => {
+const orders = Array.from({ length: 640 }, (_, i) => {
   const customer = customers[i % customers.length];
   const status = ORDER_STATUSES[between(0, ORDER_STATUSES.length - 1)];
   const payment = PAYMENT_STATUSES[between(0, PAYMENT_STATUSES.length - 1)];
@@ -439,7 +439,7 @@ const WALLET_CONCEPTS = [
   { type: 'RECHARGE', concept: 'ADJUSTMENT' },
 ];
 
-const walletMovements = Array.from({ length: 40 }, (_, i) => {
+const walletMovements = Array.from({ length: 260 }, (_, i) => {
   const kind = WALLET_CONCEPTS[i % WALLET_CONCEPTS.length];
   const isCredit = kind.type === 'RECHARGE';
   const amount = isCredit ? between(50000, 600000) : between(9000, 48000);
@@ -498,7 +498,7 @@ products.forEach((product, pi) => {
   });
 });
 
-const inventoryMovements = Array.from({ length: 60 }, (_, i) => {
+const inventoryMovements = Array.from({ length: 400 }, (_, i) => {
   const product = products[i % products.length];
   const warehouse = warehouses[i % 3];
   const type = MOVEMENT_TYPES[i % MOVEMENT_TYPES.length];

@@ -192,6 +192,35 @@ incluida en `cod_total` (esa es la convencion, no un bug).
 Al cancelar una guia el dialogo avisa que **no se reembolsa el saldo debitado**,
 que es lo que ocurre hoy segun `.claude/alerts/guias-duplicadas-doble-cobro.md`.
 
+## Paginado dinamico y memoria (regla del proyecto)
+
+`.claude/rules/mobile-listados-memoria.md` fija el patron obligatorio: todo
+listado con scroll infinito sobre `ListView.builder`, nunca paginado numerado, y
+nunca acumulando sin tope.
+
+Infraestructura en `lib/shared/pagination/`:
+
+- `PagedCollection` - lista rala con ventana deslizante y expulsion LRU. Al
+  expulsar **no corre los indices**: deja el hueco en `null`, asi que el scroll
+  no salta y el hueco se vuelve a pedir al entrar al viewport.
+- `PagedListController` - refresh, loadMore, relleno de huecos y mantenimiento
+  de la ventana. Tope por defecto: 8 paginas de 20 = 160 items vivos.
+- `PaginatedListView` - el patron completo en un widget.
+- `PageSizes` - `list` (20) y `catalog` (100).
+
+Memoria de imagenes, que es el consumidor real en gama baja: `cacheWidth` y
+`cacheHeight` obligatorios en todo `Image.network` (un logo de 40 px decodificaba
+el PNG completo, ~1 MB por logo), mas el tope global del `ImageCache` en
+`main.dart` (40 MB / 120 imagenes) via `ImageMemory.applyLowEndBudget()`.
+
+Los 20 listados quedaron migrados. El mock server genera 640 ordenes, 420
+clientes, 380 productos y 400 movimientos justamente para que la ventana
+deslizante se pueda ver funcionando (con 64 registros nunca se expulsaba nada).
+
+Cobertura: 27 pruebas nuevas entre `PagedCollection`, `PagedListController`,
+`PaginatedListView` (widget tests que hacen scroll de verdad) y
+`order_provider_paging_test.dart` sobre el provider real.
+
 ## Pendiente nuevo: filtro de stock de productos
 
 Las pastillas "Con stock / Stock bajo / Agotados / Inactivos" del listado de
