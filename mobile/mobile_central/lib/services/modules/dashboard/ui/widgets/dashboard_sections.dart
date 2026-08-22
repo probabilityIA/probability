@@ -57,7 +57,8 @@ class DashboardRankRow extends StatelessWidget {
                       value: progress!.clamp(0.02, 1),
                       minHeight: 4,
                       backgroundColor: AppColors.surfaceMuted,
-                      valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation(
+                          Theme.of(context).colorScheme.primary),
                     ),
                   ),
                 ],
@@ -96,7 +97,9 @@ class DashboardRankBadge extends StatelessWidget {
       height: 30,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: position == 1 ? AppColors.primary : AppColors.surfaceMuted,
+        color: position == 1
+            ? Theme.of(context).colorScheme.primary
+            : AppColors.surfaceMuted,
         borderRadius: AppRadius.smAll,
       ),
       child: Text(
@@ -338,21 +341,22 @@ class _InitialsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       width: 34,
       height: 34,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.primarySoft,
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
         shape: BoxShape.circle,
       ),
       child: Text(
         AppFormat.initials(name),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: AppColors.primary,
+          color: scheme.primary,
         ),
       ),
     );

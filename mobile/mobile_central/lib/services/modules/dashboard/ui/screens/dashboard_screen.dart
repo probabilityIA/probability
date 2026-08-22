@@ -6,6 +6,7 @@ import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
 import '../../../../../shared/widgets/ui/ui.dart';
+import '../../../../auth/business/ui/providers/business_provider.dart';
 import '../../../../auth/login/ui/providers/login_provider.dart';
 import '../../domain/entities.dart';
 import '../providers/dashboard_provider.dart';
@@ -27,8 +28,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
+  @override
+  void didUpdateWidget(DashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.businessId != widget.businessId) _load();
+  }
+
   void _load() {
     context.read<DashboardProvider>().fetchStats(businessId: widget.businessId);
+  }
+
+  String? _activeBusinessName(BuildContext context, LoginProvider login) {
+    if (!login.isSuperAdmin) return login.businessName;
+    final id = widget.businessId;
+    if (id == null) return null;
+    final match = context
+        .watch<BusinessProvider>()
+        .businessesSimple
+        .where((b) => b.id == id)
+        .firstOrNull;
+    return match?.name;
   }
 
   @override
@@ -71,19 +90,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           return RefreshIndicator(
             onRefresh: () async => _load(),
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: AppSpacing.page,
               children: [
-                _Greeting(name: login.user?.name, business: login.businessName),
-                const SizedBox(height: 18),
+                _Greeting(
+                  name: login.user?.name,
+                  business: _activeBusinessName(context, login),
+                ),
+                const SizedBox(height: 14),
                 _KpiGrid(stats: stats),
-                const SizedBox(height: 22),
-                const AppSectionHeader(title: 'Accesos rapidos'),
+                const SizedBox(height: 16),
                 const _QuickActions(),
                 if (stats.ordersByIntegrationType.isNotEmpty) ...[
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
                   const AppSectionHeader(
                     title: 'Ordenes por canal',
                     subtitle: 'De donde vienen tus ventas',
@@ -91,12 +112,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   DashboardChannelsSection(items: stats.ordersByIntegrationType),
                 ],
                 if (stats.shipmentsByStatus.isNotEmpty) ...[
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
                   const AppSectionHeader(title: 'Envios por estado'),
                   DashboardStatusSection(items: stats.shipmentsByStatus),
                 ],
                 if (stats.shipmentsByCarrier.isNotEmpty) ...[
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
                   const AppSectionHeader(
                     title: 'Envios por transportadora',
                     subtitle: 'Guias generadas por operador',
@@ -104,21 +125,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   DashboardCarriersSection(items: stats.shipmentsByCarrier),
                 ],
                 if (stats.topProducts.isNotEmpty) ...[
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
                   const AppSectionHeader(title: 'Productos mas vendidos'),
                   DashboardProductsSection(items: stats.topProducts),
                 ],
                 if (stats.topCustomers.isNotEmpty) ...[
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
                   const AppSectionHeader(title: 'Mejores clientes'),
                   DashboardCustomersSection(items: stats.topCustomers),
                 ],
                 if (stats.ordersByLocation.isNotEmpty) ...[
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
                   const AppSectionHeader(title: 'Ordenes por ciudad'),
                   DashboardLocationsSection(items: stats.ordersByLocation),
                 ],
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
               ],
             ),
           );
@@ -145,16 +166,28 @@ class _Greeting extends StatelessWidget {
             ? 'Buenas tardes'
             : 'Buenas noches';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          firstName.isEmpty ? salute : '$salute, $firstName',
-          style: theme.textTheme.displaySmall?.copyWith(fontSize: 23),
+        Expanded(
+          child: Text(
+            firstName.isEmpty ? salute : '$salute, $firstName',
+            style: theme.textTheme.titleLarge?.copyWith(fontSize: 18),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         if (business != null) ...[
-          const SizedBox(height: 4),
-          Text(business!, style: theme.textTheme.bodySmall),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              business!,
+              style: theme.textTheme.labelSmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+            ),
+          ),
         ],
       ],
     );
@@ -166,8 +199,11 @@ class _KpiGrid extends StatelessWidget {
 
   final DashboardStats stats;
 
+  double get _revenue =>
+      stats.topProducts.fold<double>(0, (acc, p) => acc + p.totalSold);
+
   int get _unitsSold =>
-      stats.topProducts.fold<int>(0, (acc, p) => acc + p.totalSold);
+      stats.topProducts.fold<int>(0, (acc, p) => acc + p.orderCount);
 
   int get _shipments =>
       stats.shipmentsByStatus.fold<int>(0, (acc, s) => acc + s.count);
@@ -193,9 +229,10 @@ class _KpiGrid extends StatelessWidget {
         onTap: () => context.go('/integrations'),
       ),
       AppKpiTile(
-        label: 'Unidades vendidas',
-        value: AppFormat.compact(_unitsSold),
-        icon: Icons.inventory_2_outlined,
+        label: 'Vendido',
+        value: AppFormat.money(_revenue),
+        trend: _unitsSold == 0 ? null : '${AppFormat.number(_unitsSold)} unidades',
+        icon: Icons.payments_outlined,
         accent: AppColors.success,
         onTap: () => context.go('/inventory'),
       ),
@@ -215,9 +252,9 @@ class _KpiGrid extends StatelessWidget {
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 11,
-        crossAxisSpacing: 11,
-        mainAxisExtent: 122,
+        mainAxisSpacing: 9,
+        crossAxisSpacing: 9,
+        mainAxisExtent: 106,
       ),
       itemCount: tiles.length,
       itemBuilder: (context, index) => tiles[index],
@@ -264,15 +301,16 @@ class _QuickAction extends StatelessWidget {
         borderRadius: AppRadius.lgAll,
         onTap: () => context.go(module.route),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
             borderRadius: AppRadius.lgAll,
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
             children: [
-              Icon(module.icon, size: 21, color: AppColors.primary),
-              const SizedBox(height: 8),
+              Icon(module.icon, size: 19,
+                  color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 6),
               Text(
                 module.label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(

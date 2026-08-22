@@ -26,7 +26,7 @@ class AppKpiTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final content = Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppRadius.lgAll,
@@ -40,13 +40,13 @@ class AppKpiTile extends StatelessWidget {
             children: [
               if (icon != null) ...[
                 Container(
-                  width: 30,
-                  height: 30,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.10),
                     borderRadius: AppRadius.smAll,
                   ),
-                  child: Icon(icon, size: 16, color: accent),
+                  child: Icon(icon, size: 15, color: accent),
                 ),
                 const SizedBox(width: 9),
               ],
@@ -60,7 +60,7 @@ class AppKpiTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             value,
             style: theme.textTheme.headlineSmall?.copyWith(letterSpacing: -0.5),
@@ -68,7 +68,7 @@ class AppKpiTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           if (trend != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Row(
               children: [
                 Icon(
