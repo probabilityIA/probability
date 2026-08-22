@@ -96,6 +96,9 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateJumpsellerOrderStatuses(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateTiendanubeOrderStatuses(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateVtexIntegrationType(ctx); err != nil {
 		return err
 	}
