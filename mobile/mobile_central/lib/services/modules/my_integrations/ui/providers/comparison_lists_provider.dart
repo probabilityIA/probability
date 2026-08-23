@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../../core/network/api_client.dart';
+import '../../../../../core/errors/error_parser.dart';
 import '../../../../../shared/filters/filter_models.dart';
 import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
@@ -335,6 +336,217 @@ class InventoryRowsProvider extends ChangeNotifier {
   Future<void> askChannel() {
     _live = true;
     return list.refresh();
+  }
+
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
+  }
+}
+
+class InventoryMatrixProvider extends ChangeNotifier {
+  InventoryMatrixProvider({
+    required ApiClient apiClient,
+    SavedComparisonUseCases? useCases,
+  })  : _apiClient = apiClient,
+        _injectedUseCases = useCases {
+    list = PagedListController<MatrixRow>(fetcher: _fetchPage, pageSize: 20);
+    list.addListener(notifyListeners);
+  }
+
+  final ApiClient _apiClient;
+  final SavedComparisonUseCases? _injectedUseCases;
+  late final PagedListController<MatrixRow> list;
+
+  int? _businessId;
+  String _search = '';
+  String _searchBy = 'all';
+  List<MyIntegration> _channels = const <MyIntegration>[];
+  List<MatrixColumn> _columns = const <MatrixColumn>[];
+  final Set<int> _presentIn = <int>{};
+  final Set<int> _missingIn = <int>{};
+
+  final Map<int, Map<String, InventoryCompareRow>> _stock =
+      <int, Map<String, InventoryCompareRow>>{};
+  final Map<int, DateTime?> _checkedAt = <int, DateTime?>{};
+  final Set<int> _live = <int>{};
+
+  bool _asking = false;
+  String? _error;
+
+  List<MatrixColumn> get columns => _columns;
+  List<MyIntegration> get channels => _channels;
+  String get search => _search;
+  String get searchBy => _searchBy;
+  bool get asking => _asking;
+  String? get error => _error ?? list.error;
+  bool get hasFilters => _presentIn.isNotEmpty || _missingIn.isNotEmpty;
+
+  DateTime? get lastCheck {
+    DateTime? latest;
+    for (final when in _checkedAt.values) {
+      if (when == null) continue;
+      if (latest == null || when.isAfter(latest)) latest = when;
+    }
+    return latest;
+  }
+
+  InventoryCompareRow? stockFor(int integrationId, String sku) =>
+      _stock[integrationId]?[sku];
+
+  bool isLive(int integrationId) => _live.contains(integrationId);
+
+  ChannelFilterState stateFor(int integrationId) {
+    if (_presentIn.contains(integrationId)) return ChannelFilterState.present;
+    if (_missingIn.contains(integrationId)) return ChannelFilterState.missing;
+    return ChannelFilterState.off;
+  }
+
+  FilterSelection get selection {
+    final values = <String, String>{};
+    for (final id in _presentIn) {
+      values['ch_$id'] = 'present';
+    }
+    for (final id in _missingIn) {
+      values['ch_$id'] = 'missing';
+    }
+    return FilterSelection(values);
+  }
+
+  SavedComparisonUseCases get _useCases =>
+      _injectedUseCases ??
+      SavedComparisonUseCases(SavedComparisonApiRepository(_apiClient));
+
+  Future<PaginatedResponse<MatrixRow>> _fetchPage(int page, int pageSize) async {
+    final result = await _useCases.getMatchMatrix(
+      businessId: _businessId,
+      page: page,
+      pageSize: pageSize,
+      search: _search.isEmpty ? null : _search,
+      searchBy: _searchBy,
+      presentIn: _presentIn.toList(),
+      missingIn: _missingIn.toList(),
+    );
+    if (result.columns.isNotEmpty) _columns = result.columns;
+
+    await _loadStock(result.rows);
+
+    final lastPage = result.totalPages < 1 ? 1 : result.totalPages;
+    return PaginatedResponse(
+      data: result.rows,
+      pagination: _pagination(
+        page: result.page,
+        perPage: pageSize,
+        total: result.total,
+        totalPages: lastPage,
+      ),
+    );
+  }
+
+  Future<void> _loadStock(List<MatrixRow> rows, {Set<int>? live}) async {
+    final skus = rows.map((row) => row.sku).where((sku) => sku.isNotEmpty).toList();
+    if (skus.isEmpty || _channels.isEmpty) return;
+
+    await Future.wait(_channels.map((channel) async {
+      final spec = syncProviderFor(channel.integrationTypeId);
+      if (spec == null || !spec.supportsCompareInventory) return;
+
+      final askChannel = live?.contains(channel.id) == true;
+      try {
+        final page = await _useCases.compareInventory(
+          spec,
+          InventoryCompareQuery(
+            integrationId: channel.id,
+            businessId: _businessId,
+            page: 1,
+            pageSize: skus.length,
+            snapshot: !askChannel,
+            skus: skus,
+          ),
+        );
+        final map = _stock.putIfAbsent(
+          channel.id,
+          () => <String, InventoryCompareRow>{},
+        );
+        for (final row in page.rows) {
+          if (row.sku.isEmpty) continue;
+          map[row.sku] = row;
+        }
+        _checkedAt[channel.id] = page.checkedAt;
+        if (page.fromCache) {
+          _live.remove(channel.id);
+        } else {
+          _live.add(channel.id);
+        }
+      } catch (_) {
+        return;
+      }
+    }));
+  }
+
+  Future<void> load({
+    required List<MyIntegration> integrations,
+    int? businessId,
+  }) {
+    _channels = integrations
+        .where((i) =>
+            syncProviderFor(i.integrationTypeId)?.supportsCompareInventory == true)
+        .toList();
+    _businessId = businessId;
+    return list.refresh();
+  }
+
+  Future<void> setSearch(String value) {
+    final next = value.trim();
+    if (next == _search) return Future<void>.value();
+    _search = next;
+    return list.refresh();
+  }
+
+  Future<void> setSearchBy(String value) {
+    if (value == _searchBy) return Future<void>.value();
+    _searchBy = value;
+    if (_search.isEmpty) {
+      notifyListeners();
+      return Future<void>.value();
+    }
+    return list.refresh();
+  }
+
+  Future<void> applySelection(FilterSelection next) {
+    _presentIn.clear();
+    _missingIn.clear();
+    next.values.forEach((key, value) {
+      final id = int.tryParse(key.replaceFirst('ch_', ''));
+      if (id == null) return;
+      if (value == 'present') {
+        _presentIn.add(id);
+      } else if (value == 'missing') {
+        _missingIn.add(id);
+      }
+    });
+    return list.refresh();
+  }
+
+  Future<void> askChannels() async {
+    if (_asking || _channels.isEmpty) return;
+    _asking = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _loadStock(
+        list.loadedItems,
+        live: _channels.map((channel) => channel.id).toSet(),
+      );
+    } catch (e) {
+      _error = parseError(e);
+    } finally {
+      _asking = false;
+      notifyListeners();
+    }
   }
 
   @override

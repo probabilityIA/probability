@@ -14,6 +14,7 @@ import '../screens/finding_items_screen.dart';
 import '../screens/inventory_compare_screen.dart';
 import 'channel_cards.dart';
 import 'channel_data_sheet.dart';
+import 'inventory_environment.dart';
 import 'module_toolbar.dart';
 import 'products_environment.dart';
 import 'orders_compare_panel.dart';
@@ -51,6 +52,13 @@ class EnvironmentPanel extends StatelessWidget {
 
     if (environment == SyncEnvironment.products) {
       return ProductsEnvironment(businessId: businessId);
+    }
+
+    if (environment == SyncEnvironment.inventory) {
+      return InventoryEnvironment(
+        integrations: integrations,
+        businessId: businessId,
+      );
     }
 
     if (environment == SyncEnvironment.ordersCompare) {

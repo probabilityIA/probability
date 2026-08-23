@@ -215,6 +215,9 @@ class _ProbabilityAppState extends State<ProbabilityApp> {
         ChangeNotifierProvider(
           create: (_) => InventoryRowsProvider(apiClient: widget.apiClient),
         ),
+        ChangeNotifierProvider(
+          create: (_) => InventoryMatrixProvider(apiClient: widget.apiClient),
+        ),
         // Integration core provider
         ChangeNotifierProvider(
           create: (_) => IntegrationProvider(apiClient: widget.apiClient),
