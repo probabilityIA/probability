@@ -57,6 +57,18 @@ func (r *repository) FindingItems(ctx context.Context, q domain.FindingItemsQuer
 		return nil, err
 	}
 
+	// Las corridas viejas guardaban el detalle como JSON en la propia fila, no
+	// en integration_sync_run_items. Si la tabla no tiene nada, se lee de ahi.
+	if page.Total == 0 {
+		if grupo, ok := grupoDeHallazgo[q.Code]; ok {
+			sel, args = detalleEmbebido(q, grupo)
+			countSQL = "SELECT COUNT(*) FROM (" + sel + ") AS conteo"
+			if err := r.db.Conn(ctx).Raw(countSQL, args...).Scan(&page.Total).Error; err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	listSQL := sel + " ORDER BY sku, name"
 	listArgs := args
 	if !q.All {
@@ -145,6 +157,42 @@ WHERE it.group_code = ?`
 	}
 	sel += " GROUP BY " + agrupacion(grupo)
 	return sel, args, nil
+}
+
+func detalleEmbebido(q domain.FindingItemsQuery, grupo string) (string, []interface{}) {
+	sel := `
+SELECT it->>'sku' AS sku,
+       COALESCE(MAX(NULLIF(it->>'parent_label', '')), '') AS name,
+       COALESCE(MAX(it->>'label'), '') AS detail,
+       string_agg(DISTINCT runs.channel, '|') AS channels,
+       COALESCE(MAX(it->>'counterpart_sku'), '')  AS counterpart_sku,
+       COALESCE(MAX(it->>'counterpart_name'), '') AS counterpart_name,
+       NULL::int AS channel_qty,
+       NULL::int AS own_qty,
+       COALESCE(MAX(it->>'fix_side'), '') AS fix_side,
+       COALESCE(MAX(it->>'pattern'), '')  AS pattern,
+       '' AS present_in,
+       '' AS missing_in
+FROM (` + baseRuns + `) AS runs
+JOIN integration_sync_runs r ON r.id = runs.id
+CROSS JOIN LATERAL jsonb_array_elements(r.detail) AS it
+WHERE jsonb_typeof(r.detail) = 'array' AND it->>'group' = ?`
+
+	args := []interface{}{q.BusinessID, domain.KindProducts, grupo}
+	if q.Search != "" {
+		sel += " AND (it->>'sku' ILIKE ? OR it->>'label' ILIKE ? OR it->>'parent_label' ILIKE ?)"
+		like := "%" + q.Search + "%"
+		args = append(args, like, like, like)
+	}
+	sel += " GROUP BY " + agrupacionEmbebida(grupo)
+	return sel, args
+}
+
+func agrupacionEmbebida(grupo string) string {
+	if grupo == "channel_no_sku" {
+		return "it->>'sku', it->>'parent_ref', it->>'variant_label'"
+	}
+	return "it->>'sku'"
 }
 
 func agrupacion(grupo string) string {

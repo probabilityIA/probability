@@ -37,3 +37,17 @@ func TestMatrixQueryNormalizeSearchBy(t *testing.T) {
 		t.Fatalf("Normalize no debe tapar un valor invalido: el handler lo rechaza")
 	}
 }
+
+func TestFindingItemsQueryNormalize(t *testing.T) {
+	q := FindingItemsQuery{PageSize: 0}
+	q.Normalize()
+	if q.Page != 1 || q.PageSize != 50 {
+		t.Fatalf("defaults esperados 1/50, quedo en %d/%d", q.Page, q.PageSize)
+	}
+
+	q = FindingItemsQuery{PageSize: 500}
+	q.Normalize()
+	if q.PageSize != 50 {
+		t.Fatalf("un page_size fuera de rango debe caer a 50, quedo en %d", q.PageSize)
+	}
+}
