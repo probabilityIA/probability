@@ -17,6 +17,7 @@ class AppFilterBar extends StatelessWidget {
     this.selection = const FilterSelection(),
     this.onSelectionChanged,
     this.summary,
+    this.trailing,
   });
 
   final TextEditingController controller;
@@ -28,6 +29,7 @@ class AppFilterBar extends StatelessWidget {
   final FilterSelection selection;
   final ValueChanged<FilterSelection>? onSelectionChanged;
   final String? summary;
+  final Widget? trailing;
 
   SearchField get _field => searchFields.firstWhere(
         (f) => f.key == selectedField,
@@ -75,6 +77,10 @@ class AppFilterBar extends StatelessWidget {
                   onChanged: onSearchChanged,
                 ),
               ),
+              if (trailing != null) ...[
+                const SizedBox(width: 6),
+                trailing!,
+              ],
             ],
           ),
         ),

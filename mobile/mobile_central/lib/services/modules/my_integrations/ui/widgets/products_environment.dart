@@ -11,6 +11,7 @@ import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/saved_comparison_entities.dart';
 import '../providers/comparison_lists_provider.dart';
 import '../providers/saved_comparison_provider.dart';
+import '../providers/sync_activity_provider.dart';
 import '../screens/finding_items_screen.dart';
 
 class ProductsEnvironment extends StatefulWidget {
@@ -51,6 +52,55 @@ class _ProductsEnvironmentState extends State<ProductsEnvironment> {
     super.dispose();
   }
 
+  Future<void> _compare() async {
+    final sync = context.read<SyncActivityProvider>();
+    final saved = context.read<SavedComparisonProvider>();
+    final matrix = context.read<ProductMatrixProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (sync.running) return;
+    if (sync.eligible.isEmpty) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Ningun canal conectado permite comparar productos'),
+      ));
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Comparar de nuevo'),
+        content: Text(
+          'Se le va a preguntar su catalogo a ${sync.eligible.length} canal'
+          '${sync.eligible.length == 1 ? '' : 'es'}. Puede tardar varios '
+          'minutos y reemplaza la comparacion guardada.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Comparar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await sync.runProducts();
+    if (!mounted) return;
+
+    await saved.loadFindings(force: true);
+    await matrix.load(businessId: widget.businessId);
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Comparacion actualizada')),
+    );
+  }
+
   void _openFinding(Finding finding) {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => FindingItemsScreen(
@@ -71,6 +121,7 @@ class _ProductsEnvironmentState extends State<ProductsEnvironment> {
               saved: saved,
               controller: _search,
               onOpenFinding: _openFinding,
+              onCompare: _compare,
             ),
             Expanded(
               child: PaginatedListView<MatrixRow>(
@@ -104,12 +155,14 @@ class _Filters extends StatelessWidget {
     required this.saved,
     required this.controller,
     required this.onOpenFinding,
+    required this.onCompare,
   });
 
   final ProductMatrixProvider matrix;
   final SavedComparisonProvider saved;
   final TextEditingController controller;
   final void Function(Finding) onOpenFinding;
+  final Future<void> Function() onCompare;
 
   List<FilterDimension> get _dimensions => matrix.columns
       .map((column) => FilterDimension(
@@ -164,6 +217,7 @@ class _Filters extends StatelessWidget {
           dimensions: _dimensions,
           selection: matrix.selection,
           onSelectionChanged: matrix.applySelection,
+          trailing: _CompareButton(onCompare: onCompare),
         ),
         if (findings.isNotEmpty)
           SizedBox(
@@ -209,6 +263,43 @@ class _Filters extends StatelessWidget {
     if (matrix.list.isLoading && total == 0) return 'Cargando productos';
     if (!matrix.hasFilters) return '${AppFormat.number(total)} productos';
     return '${AppFormat.number(total)} productos con el filtro';
+  }
+}
+
+class _CompareButton extends StatelessWidget {
+  const _CompareButton({required this.onCompare});
+
+  final Future<void> Function() onCompare;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SyncActivityProvider>(
+      builder: (context, sync, _) {
+        final scheme = Theme.of(context).colorScheme;
+        final running = sync.running;
+
+        return Tooltip(
+          message: running
+              ? 'Comparando con los canales'
+              : 'Volver a comparar con los canales',
+          child: IconButton(
+            onPressed: running ? null : onCompare,
+            visualDensity: VisualDensity.compact,
+            icon: running
+                ? SizedBox(
+                    width: 17,
+                    height: 17,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(scheme.primary),
+                    ),
+                  )
+                : const Icon(Icons.sync_rounded, size: 21),
+            color: AppColors.textMuted,
+          ),
+        );
+      },
+    );
   }
 }
 
