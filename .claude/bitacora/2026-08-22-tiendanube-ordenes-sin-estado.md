@@ -281,8 +281,11 @@ Perfiles: `TiendanubeSections`, `JumpsellerSections`, `MeliSections` y
 `WooCommerceSections`, conectados en el mapper de cada canal donde ya se armaba
 el `ChannelMetadata`. Shopify conserva sus extractores, que son mas detallados.
 
-VTEX queda pendiente: hoy no guarda ni el raw (su unica orden en produccion es
-del mock), asi que no hay de donde sacar las llaves reales.
+VTEX tambien quedo conectado, pero es la excepcion: su mapper si arma el
+`ChannelMetadata`, lo que pasa es que la unica orden VTEX en produccion es del
+mock y entro sin raw. Como no hay un pedido real de donde sacar las llaves, el
+perfil `VTEXSections` salio de los tags del response del cliente
+(`vtex_order_response.go`) y conviene contrastarlo con el primer pedido real.
 
 Con esto se puede generalizar el mapeo de estado de pago a los demas canales, que
 es lo que hoy solo funciona para Shopify.

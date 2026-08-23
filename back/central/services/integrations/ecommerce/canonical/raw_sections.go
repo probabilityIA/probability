@@ -126,3 +126,16 @@ var WooCommerceSections = SectionKeys{
 	Payment:     []string{"payment_method", "payment_method_title", "transaction_id", "date_paid", "date_paid_gmt", "needs_payment", "billing"},
 	Fulfillment: []string{"status", "date_completed", "date_completed_gmt", "needs_processing", "refunds"},
 }
+
+// VTEX es la excepcion: en produccion todavia no hay una orden real con su JSON
+// guardado, asi que estas llaves salen de los tags del response del cliente
+// (vtex_order_response.go). Conviene contrastarlas con el primer pedido real.
+var VTEXSections = SectionKeys{
+	Financial: []string{
+		"value", "totalItems", "totalDiscount", "totalFreight", "totals",
+		"ratesAndBenefitsData", "storePreferencesData",
+	},
+	Shipping:    []string{"shippingData", "packageAttachment", "sellers"},
+	Payment:     []string{"paymentData", "clientProfileData"},
+	Fulfillment: []string{"status", "statusDescription", "lastChange", "packageAttachment", "marketplaceOrderId"},
+}

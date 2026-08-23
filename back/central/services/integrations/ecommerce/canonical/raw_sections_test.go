@@ -163,3 +163,43 @@ func TestExtractSectionsWooYMeli(t *testing.T) {
 		t.Fatalf("meli: falta la lista de pagos: %v", pagoMeli)
 	}
 }
+
+func TestExtractSectionsVTEX(t *testing.T) {
+	raw := []byte(`{
+		"orderId": "1234-01",
+		"status": "invoiced",
+		"statusDescription": "Faturado",
+		"value": 154000,
+		"totalFreight": 8000,
+		"totalDiscount": 0,
+		"lastChange": "2026-08-22T16:00:00",
+		"shippingData": {"selectedSla": "Expresso"},
+		"paymentData": {"transactions": []},
+		"packageAttachment": null
+	}`)
+
+	secciones := ExtractSections(raw, VTEXSections)
+
+	finanzas := decodificar(t, secciones.Financial)
+	if finanzas["value"] != float64(154000) || finanzas["totalFreight"] != float64(8000) {
+		t.Fatalf("vtex: seccion financiera inesperada: %v", finanzas)
+	}
+
+	envio := decodificar(t, secciones.Shipping)
+	if envio["shippingData"] == nil {
+		t.Fatalf("vtex: falta shippingData: %v", envio)
+	}
+	if _, presente := envio["packageAttachment"]; presente {
+		t.Fatal("vtex: una llave nula no debe guardarse")
+	}
+
+	fulfillment := decodificar(t, secciones.Fulfillment)
+	if fulfillment["status"] != "invoiced" || fulfillment["statusDescription"] != "Faturado" {
+		t.Fatalf("vtex: seccion de fulfillment inesperada: %v", fulfillment)
+	}
+
+	pago := decodificar(t, secciones.Payment)
+	if pago["paymentData"] == nil {
+		t.Fatalf("vtex: falta paymentData: %v", pago)
+	}
+}
