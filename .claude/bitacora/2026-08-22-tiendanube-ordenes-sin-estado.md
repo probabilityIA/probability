@@ -247,3 +247,42 @@ Detalles de implementacion:
   montado en Tiendanube, WooCommerce, MercadoLibre, Jumpseller y Shopify. VTEX
   conserva sus `ToggleRow` y solo se le agrego el de entrada.
 
+
+## Secciones del pedido original en todos los canales
+
+El JSON original **si** se guardaba: vive en `order_channel_metadata` y lo tienen
+todos los canales (Shopify 17.677/17.677, Woo 1.001/1.001, Tiendanube 9/9,
+Jumpseller 2/2, MELI 120/124, VTEX 0/1 y esa unica es del mock).
+
+Lo que estaba vacio eran las columnas `orders.financial_details`,
+`shipping_details`, `payment_details` y `fulfillment_details`, que **solo Shopify
+llenaba** con extractores propios (`shopify_details_extractor.go`). No son una
+copia del pedido: son las secciones sueltas, y el backend las lee — el mapeo de
+`payment_status_id` saca el `financial_status` de `payment_details`, y por eso
+estaba hardcodeado a Shopify.
+
+Ahora hay un extractor compartido en `canonical/raw_sections.go`: recibe el JSON
+del canal y un perfil de llaves, y arma las cuatro secciones. `Root` cubre a los
+canales que envuelven la orden en un objeto (Jumpseller la manda dentro de
+`order`). Un payload ilegible devuelve secciones vacias: nunca descarta la orden.
+
+**Las llaves de cada perfil salieron del JSON real guardado en produccion**, no
+de la documentacion:
+
+```sql
+SELECT o.platform, string_agg(DISTINCT k, ', ' ORDER BY k)
+FROM orders o
+JOIN order_channel_metadata m ON m.order_id = o.id
+CROSS JOIN LATERAL jsonb_object_keys(m.raw_data::jsonb) AS k
+GROUP BY 1;
+```
+
+Perfiles: `TiendanubeSections`, `JumpsellerSections`, `MeliSections` y
+`WooCommerceSections`, conectados en el mapper de cada canal donde ya se armaba
+el `ChannelMetadata`. Shopify conserva sus extractores, que son mas detallados.
+
+VTEX queda pendiente: hoy no guarda ni el raw (su unica orden en produccion es
+del mock), asi que no hay de donde sacar las llaves reales.
+
+Con esto se puede generalizar el mapeo de estado de pago a los demas canales, que
+es lo que hoy solo funciona para Shopify.

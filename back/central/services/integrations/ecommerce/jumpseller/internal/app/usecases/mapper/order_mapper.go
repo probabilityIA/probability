@@ -153,6 +153,12 @@ func MapJumpsellerOrderToProbability(order *domain.JumpsellerOrder, rawJSON []by
 	}
 
 	if rawJSON != nil {
+		secciones := canonical.ExtractSections(rawJSON, canonical.JumpsellerSections)
+		dto.FinancialDetails = secciones.Financial
+		dto.ShippingDetails = secciones.Shipping
+		dto.PaymentDetails = secciones.Payment
+		dto.FulfillmentDetails = secciones.Fulfillment
+
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "jumpseller",
 			RawData:       rawJSON,
