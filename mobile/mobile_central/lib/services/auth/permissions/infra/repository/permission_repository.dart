@@ -20,7 +20,7 @@ class PermissionApiRepository implements IPermissionRepository {
             ?.map((p) => Permission.fromJson(p))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: permissions, pagination: pagination);
   }
 

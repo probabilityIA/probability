@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/page_sizes.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -14,7 +15,7 @@ class RoleProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   final int _page = 1;
-  final int _pageSize = 20;
+  final int _pageSize = PageSizes.catalog;
 
   RoleProvider({required ApiClient apiClient}) : _apiClient = apiClient;
 

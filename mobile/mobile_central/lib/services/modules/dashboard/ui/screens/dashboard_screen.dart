@@ -1,13 +1,24 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/navigation/app_modules.dart';
+import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/app_tokens.dart';
+import '../../../../../shared/utils/formatters.dart';
+import '../../../../../shared/utils/integration_visibility.dart';
+import '../../../../../shared/widgets/ui/ui.dart';
+import '../../../../auth/business/ui/providers/business_provider.dart';
+import '../../../../integrations/core/domain/entities.dart';
+import '../../../../integrations/core/ui/providers/integration_provider.dart';
+import '../../../../auth/login/ui/providers/login_provider.dart';
 import '../../domain/entities.dart';
 import '../providers/dashboard_provider.dart';
+import '../widgets/dashboard_sections.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final int? businessId;
-
   const DashboardScreen({super.key, this.businessId});
+
+  final int? businessId;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -18,73 +29,163 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadStats();
+      _load();
+      final integrations = context.read<IntegrationProvider>();
+      if (integrations.integrationTypes.isEmpty) {
+        integrations.fetchIntegrationTypes();
+      }
+      integrations.fetchIntegrations(businessId: widget.businessId);
     });
   }
 
-  void _loadStats() {
+  @override
+  void didUpdateWidget(DashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.businessId != widget.businessId) {
+      _load();
+      context
+          .read<IntegrationProvider>()
+          .fetchIntegrations(businessId: widget.businessId);
+    }
+  }
+
+  void _load() {
     context.read<DashboardProvider>().fetchStats(businessId: widget.businessId);
+  }
+
+  Map<String, String?> _channelLogos(BuildContext context) {
+    final types = context.watch<IntegrationProvider>().integrationTypes;
+    final map = <String, String?>{};
+    for (final type in types) {
+      map[type.name.toLowerCase()] = type.imageUrl;
+      map[type.code.toLowerCase()] = type.imageUrl;
+      map['id:${type.id}'] = type.imageUrl;
+      map['name:${type.id}'] = type.name;
+    }
+    return map;
+  }
+
+  String? _activeBusinessName(BuildContext context, LoginProvider login) {
+    if (!login.isSuperAdmin) return login.businessName;
+    final id = widget.businessId;
+    if (id == null) return null;
+    final match = context
+        .watch<BusinessProvider>()
+        .businessesSimple
+        .where((b) => b.id == id)
+        .firstOrNull;
+    return match?.name;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        centerTitle: false,
-      ),
+    final login = context.watch<LoginProvider>();
+
+    return AppScaffold(
+      showLogo: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none_rounded, size: 22),
+          tooltip: 'Notificaciones',
+          onPressed: () => context.go('/notifications'),
+        ),
+        IconButton(
+          icon: const Icon(Icons.person_outline_rounded, size: 22),
+          tooltip: 'Perfil',
+          onPressed: () => context.go('/profile'),
+        ),
+      ],
       body: Consumer<DashboardProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.stats == null) {
-            return const _LoadingState();
+            return const AppListSkeleton();
           }
           if (provider.error != null && provider.stats == null) {
-            return _ErrorState(
-              error: provider.error!,
-              onRetry: _loadStats,
-            );
+            return AppErrorState(message: provider.error!, onRetry: _load);
           }
+
           final stats = provider.stats;
           if (stats == null) {
-            return const _EmptyState();
+            return AppEmptyState(
+              icon: Icons.insights_outlined,
+              title: 'Sin datos por ahora',
+              message: 'Cuando entren ordenes vas a ver aqui el resumen de tu operacion.',
+              actionLabel: 'Actualizar',
+              onAction: _load,
+            );
           }
+
           return RefreshIndicator(
-            onRefresh: () async => _loadStats(),
-            child: SingleChildScrollView(
+            onRefresh: () async => _load(),
+            color: Theme.of(context).colorScheme.primary,
+            child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _SummaryCardsRow(stats: stats),
-                  const SizedBox(height: 24),
-                  if (stats.ordersByIntegrationType.isNotEmpty) ...[
-                    _OrdersByChannelSection(
-                        items: stats.ordersByIntegrationType),
-                    const SizedBox(height: 24),
-                  ],
-                  if (stats.topCustomers.isNotEmpty) ...[
-                    _TopCustomersSection(customers: stats.topCustomers),
-                    const SizedBox(height: 24),
-                  ],
-                  if (stats.topProducts.isNotEmpty) ...[
-                    _TopProductsSection(products: stats.topProducts),
-                    const SizedBox(height: 24),
-                  ],
-                  if (stats.shipmentsByStatus.isNotEmpty) ...[
-                    _ShipmentsByStatusSection(items: stats.shipmentsByStatus),
-                    const SizedBox(height: 24),
-                  ],
-                  if (stats.shipmentsByCarrier.isNotEmpty) ...[
-                    _ShipmentsByCarrierSection(items: stats.shipmentsByCarrier),
-                    const SizedBox(height: 24),
-                  ],
-                  if (stats.ordersByLocation.isNotEmpty) ...[
-                    _OrdersByDepartmentSection(items: stats.ordersByLocation),
-                    const SizedBox(height: 24),
-                  ],
+              padding: AppSpacing.page,
+              children: [
+                _Greeting(
+                  name: login.user?.name,
+                  business: _activeBusinessName(context, login),
+                ),
+                const SizedBox(height: 12),
+                _PeriodPicker(
+                  selected: provider.period,
+                  onSelected: (period) {
+                    provider.setPeriod(period);
+                    _load();
+                  },
+                ),
+                const SizedBox(height: 12),
+                _KpiGrid(
+                  stats: stats,
+                  channelLogos: _channelLogos(context),
+                  effectiveness: provider.effectiveness,
+                ),
+                const SizedBox(height: 16),
+                const _QuickActions(),
+                const SizedBox(height: 18),
+                const AppSectionHeader(
+                  title: 'Integraciones activas',
+                  subtitle: 'Por categoria',
+                ),
+                _IntegrationsByCategory(logos: _channelLogos(context)),
+                if (stats.ordersByIntegrationType.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const AppSectionHeader(
+                    title: 'Ordenes por canal',
+                    subtitle: 'De donde vienen tus ventas',
+                  ),
+                  DashboardChannelsSection(items: stats.ordersByIntegrationType),
                 ],
-              ),
+                if (stats.shipmentsByStatus.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const AppSectionHeader(title: 'Envios por estado'),
+                  DashboardStatusSection(items: stats.shipmentsByStatus),
+                ],
+                if (stats.shipmentsByCarrier.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const AppSectionHeader(
+                    title: 'Envios por transportadora',
+                    subtitle: 'Guias generadas por operador',
+                  ),
+                  DashboardCarriersSection(items: stats.shipmentsByCarrier),
+                ],
+                if (stats.topProducts.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const AppSectionHeader(title: 'Productos mas vendidos'),
+                  DashboardProductsSection(items: stats.topProducts),
+                ],
+                if (stats.topCustomers.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const AppSectionHeader(title: 'Mejores clientes'),
+                  DashboardCustomersSection(items: stats.topCustomers),
+                ],
+                if (stats.ordersByLocation.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const AppSectionHeader(title: 'Ordenes por ciudad'),
+                  DashboardLocationsSection(items: stats.ordersByLocation),
+                ],
+                const SizedBox(height: 24),
+              ],
             ),
           );
         },
@@ -93,272 +194,179 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Loading state
-// ---------------------------------------------------------------------------
+class _Greeting extends StatelessWidget {
+  const _Greeting({this.name, this.business});
 
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              color: colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Cargando estadisticas...',
-            style: TextStyle(
-              fontSize: 14,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Error state
-// ---------------------------------------------------------------------------
-
-class _ErrorState extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-
-  const _ErrorState({required this.error, required this.onRetry});
+  final String? name;
+  final String? business;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_off_rounded, size: 56, color: colorScheme.error),
-            const SizedBox(height: 16),
-            Text(
-              'Error al cargar datos',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Reintentar'),
-            ),
-          ],
+    final theme = Theme.of(context);
+    final firstName = (name ?? '').split(' ').first;
+    final hour = DateTime.now().hour;
+    final salute = hour < 12
+        ? 'Buenos dias'
+        : hour < 19
+            ? 'Buenas tardes'
+            : 'Buenas noches';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            firstName.isEmpty ? salute : '$salute, $firstName',
+            style: theme.textTheme.titleLarge?.copyWith(fontSize: 18),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Empty state
-// ---------------------------------------------------------------------------
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.dashboard_outlined,
-            size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Sin datos disponibles',
-            style: TextStyle(
-              fontSize: 16,
-              color: colorScheme.onSurfaceVariant,
+        if (business != null) ...[
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              business!,
+              style: theme.textTheme.labelSmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Section header
-// ---------------------------------------------------------------------------
-
-class _SectionHeader extends StatelessWidget {
-  final IconData icon;
-  final String title;
-
-  const _SectionHeader({required this.icon, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: colorScheme.primary),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 1) Summary cards row
-// ---------------------------------------------------------------------------
-
-class _SummaryCardsRow extends StatelessWidget {
-  final DashboardStats stats;
-
-  const _SummaryCardsRow({required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    final totalChannels = stats.ordersByIntegrationType.length;
-    final totalProducts = stats.topProducts.fold<int>(
-      0,
-      (sum, p) => sum + p.totalSold,
-    );
-    final totalShipments = stats.shipmentsByStatus.fold<int>(
-      0,
-      (sum, s) => sum + s.count,
-    );
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _StatCard(
-            icon: Icons.shopping_bag_rounded,
-            label: 'Total Ordenes',
-            value: _formatNumber(stats.totalOrders),
-            color: Colors.deepPurple,
-          ),
-          const SizedBox(width: 12),
-          _StatCard(
-            icon: Icons.storefront_rounded,
-            label: 'Canales',
-            value: '$totalChannels',
-            color: Colors.blue,
-          ),
-          const SizedBox(width: 12),
-          _StatCard(
-            icon: Icons.inventory_2_rounded,
-            label: 'Uds. Vendidas',
-            value: _formatNumber(totalProducts),
-            color: Colors.teal,
-          ),
-          const SizedBox(width: 12),
-          _StatCard(
-            icon: Icons.local_shipping_rounded,
-            label: 'Envios',
-            value: _formatNumber(totalShipments),
-            color: Colors.orange,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
+class _KpiGrid extends StatelessWidget {
+  const _KpiGrid({
+    required this.stats,
+    this.channelLogos = const {},
+    this.effectiveness,
   });
 
+  final DashboardStats stats;
+  final Map<String, String?> channelLogos;
+  final OrderEffectiveness? effectiveness;
+
+  double get _revenue =>
+      stats.topProducts.fold<double>(0, (acc, p) => acc + p.totalSold);
+
+  int get _unitsSold =>
+      stats.topProducts.fold<int>(0, (acc, p) => acc + p.orderCount);
+
+  int get _shipments =>
+      stats.shipmentsByStatus.fold<int>(0, (acc, s) => acc + s.count);
+
+  int get _delivered => stats.shipmentsByStatus
+      .where((s) => s.status.toLowerCase().contains('deliver'))
+      .fold<int>(0, (acc, s) => acc + s.count);
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: 150,
-      child: Card(
-        elevation: 0,
-        color: color.withValues(alpha: 0.08),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+    final tiles = [
+      AppKpiTile(
+        label: 'Ordenes totales',
+        value: AppFormat.number(stats.totalOrders),
+        icon: Icons.receipt_long_outlined,
+        onTap: () => context.go('/orders'),
+        footer: effectiveness == null || !effectiveness!.hasData
+            ? null
+            : _EffectivenessRows(data: effectiveness!),
+      ),
+      _ChannelsKpiTile(logos: channelLogos),
+      AppKpiTile(
+        label: 'Vendido',
+        value: AppFormat.money(_revenue),
+        trend: _unitsSold == 0 ? null : '${AppFormat.number(_unitsSold)} unidades',
+        icon: Icons.payments_outlined,
+        accent: AppColors.success,
+        onTap: () => context.go('/inventory'),
+      ),
+      AppKpiTile(
+        label: 'Guias generadas',
+        value: AppFormat.number(_shipments),
+        icon: Icons.local_shipping_outlined,
+        accent: const Color(0xFFF97316),
+        trend: _shipments == 0 ? null : '$_delivered entregadas',
+        onTap: () => context.go('/orders/shipments'),
+      ),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 9,
+        crossAxisSpacing: 9,
+        mainAxisExtent: 124,
+      ),
+      itemCount: tiles.length,
+      itemBuilder: (context, index) => tiles[index],
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions();
+
+  static const List<AppModule> _modules = [
+    AppModule(label: 'Ordenes', route: '/orders', icon: Icons.receipt_long_outlined),
+    AppModule(label: 'Envios', route: '/orders/shipments', icon: Icons.local_shipping_outlined),
+    AppModule(label: 'Clientes', route: '/customers', icon: Icons.people_alt_outlined),
+    AppModule(label: 'Billetera', route: '/wallet', icon: Icons.account_balance_wallet_outlined),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: _modules
+          .map((module) => Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: module == _modules.last ? 0 : 10),
+                  child: _QuickAction(module: module),
+                ),
+              ))
+          .toList(),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({required this.module});
+
+  final AppModule module;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: AppRadius.lgAll,
+      child: InkWell(
+        borderRadius: AppRadius.lgAll,
+        onTap: () => context.go(module.route),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.lgAll,
+            border: Border.all(color: AppColors.border),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 22, color: color),
-              ),
-              const SizedBox(height: 14),
+              Icon(module.icon, size: 19,
+                  color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 6),
               Text(
-                value,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                module.label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -368,639 +376,240 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// 2) Orders by channel
-// ---------------------------------------------------------------------------
+class _PeriodPicker extends StatelessWidget {
+  const _PeriodPicker({required this.selected, required this.onSelected});
 
-class _OrdersByChannelSection extends StatelessWidget {
-  final List<OrderCountByIntegrationType> items;
-
-  const _OrdersByChannelSection({required this.items});
-
-  static IconData _iconForChannel(String type) {
-    final lower = type.toLowerCase();
-    if (lower.contains('shopify')) return Icons.shopping_cart_rounded;
-    if (lower.contains('amazon')) return Icons.store_rounded;
-    if (lower.contains('meli') || lower.contains('mercadolibre')) {
-      return Icons.handshake_rounded;
-    }
-    if (lower.contains('whatsapp')) return Icons.chat_rounded;
-    if (lower.contains('manual')) return Icons.edit_note_rounded;
-    if (lower.contains('web') || lower.contains('tienda')) {
-      return Icons.language_rounded;
-    }
-    return Icons.storefront_rounded;
-  }
-
-  static Color _colorForChannel(String type) {
-    final lower = type.toLowerCase();
-    if (lower.contains('shopify')) return Colors.green;
-    if (lower.contains('amazon')) return Colors.orange;
-    if (lower.contains('meli') || lower.contains('mercadolibre')) {
-      return Colors.yellow.shade800;
-    }
-    if (lower.contains('whatsapp')) return Colors.teal;
-    if (lower.contains('manual')) return Colors.blueGrey;
-    if (lower.contains('web') || lower.contains('tienda')) return Colors.blue;
-    return Colors.deepPurple;
-  }
+  final DashboardPeriod selected;
+  final ValueChanged<DashboardPeriod> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.hub_rounded,
-          title: 'Ordenes por Canal',
-        ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: items.map((item) {
-              final color = _colorForChannel(item.integrationType);
-              final icon = _iconForChannel(item.integrationType);
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: _ChannelChip(
-                  icon: icon,
-                  label: item.integrationType,
-                  count: item.count,
-                  color: color,
+    final scheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 32,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        itemCount: DashboardPeriod.values.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 7),
+        itemBuilder: (context, index) {
+          final period = DashboardPeriod.values[index];
+          final on = period == selected;
+          return Material(
+            color: on ? scheme.primaryContainer : AppColors.surface,
+            borderRadius: AppRadius.pillAll,
+            child: InkWell(
+              borderRadius: AppRadius.pillAll,
+              onTap: on ? null : () => onSelected(period),
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.pillAll,
+                  border: Border.all(
+                    color: on ? scheme.primary : AppColors.border,
+                  ),
                 ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ChannelChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int count;
-  final Color color;
-
-  const _ChannelChip({
-    required this.icon,
-    required this.label,
-    required this.count,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              _formatNumber(count),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: color,
+                child: Text(
+                  period.label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: on
+                        ? scheme.onPrimaryContainer
+                        : AppColors.textSecondary,
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// 3) Top customers
-// ---------------------------------------------------------------------------
+class _ChannelsKpiTile extends StatelessWidget {
+  const _ChannelsKpiTile({required this.logos});
 
-class _TopCustomersSection extends StatelessWidget {
-  final List<TopCustomer> customers;
-
-  const _TopCustomersSection({required this.customers});
+  final Map<String, String?> logos;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final top = customers.take(5).toList();
+    final theme = Theme.of(context);
+    const accent = Color(0xFF0EA5E9);
+    final provider = context.watch<IntegrationProvider>();
+    final active = provider.integrations
+        .where((i) => i.isActive)
+        .where((i) => IntegrationVisibility.isVisible(
+              category: i.category,
+              type: i.type,
+              name: logos['name:${i.integrationTypeId}'],
+            ))
+        .toList();
+    final categories =
+        active.map((i) => i.categoryName ?? i.category).toSet().length;
+    final shown = active.take(4).toList();
+    final extra = active.length - shown.length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.people_rounded,
-          title: 'Top Clientes',
-        ),
-        Card(
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+    return Material(
+      color: AppColors.surface,
+      borderRadius: AppRadius.lgAll,
+      child: InkWell(
+        borderRadius: AppRadius.lgAll,
+        onTap: () => context.go('/integrations'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.lgAll,
+            border: Border.all(color: AppColors.border),
           ),
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: top.length,
-            separatorBuilder: (context, idx) => Divider(
-              height: 1,
-              indent: 68,
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-            ),
-            itemBuilder: (context, index) {
-              final c = top[index];
-              final initial = c.customerName.isNotEmpty
-                  ? c.customerName[0].toUpperCase()
-                  : '?';
-              final avatarColors = [
-                Colors.deepPurple,
-                Colors.blue,
-                Colors.teal,
-                Colors.orange,
-                Colors.pink,
-              ];
-              final avatarColor = avatarColors[index % avatarColors.length];
-
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                leading: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: avatarColor.withValues(alpha: 0.15),
-                  child: Text(
-                    initial,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: avatarColor,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                title: Text(
-                  c.customerName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  c.customerEmail,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${c.orderCount}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 4) Top products
-// ---------------------------------------------------------------------------
-
-class _TopProductsSection extends StatelessWidget {
-  final List<TopProduct> products;
-
-  const _TopProductsSection({required this.products});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final top = products.take(5).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.inventory_2_rounded,
-          title: 'Top Productos',
-        ),
-        Card(
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: top.length,
-            separatorBuilder: (context, idx) => Divider(
-              height: 1,
-              indent: 68,
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-            ),
-            itemBuilder: (context, index) {
-              final p = top[index];
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '#${index + 1}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: Colors.deepPurple.shade700,
-                      ),
-                    ),
-                  ),
-                ),
-                title: Text(
-                  p.productName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  'SKU: ${p.sku}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${_formatNumber(p.totalSold)} uds.',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(
-                      '${p.orderCount} ordenes',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 5) Shipments by status
-// ---------------------------------------------------------------------------
-
-class _ShipmentsByStatusSection extends StatelessWidget {
-  final List<ShipmentsByStatus> items;
-
-  const _ShipmentsByStatusSection({required this.items});
-
-  static Color _colorForStatus(String status) {
-    final lower = status.toLowerCase();
-    if (lower.contains('entreg') || lower.contains('deliver')) {
-      return Colors.green;
-    }
-    if (lower.contains('cancel') || lower.contains('devol') ||
-        lower.contains('return') || lower.contains('fail')) {
-      return Colors.red;
-    }
-    if (lower.contains('pendi') || lower.contains('process') ||
-        lower.contains('transit') || lower.contains('enviad')) {
-      return Colors.orange;
-    }
-    if (lower.contains('recog') || lower.contains('pickup')) {
-      return Colors.blue;
-    }
-    return Colors.blueGrey;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionHeader(
-          icon: Icons.local_shipping_rounded,
-          title: 'Envios por Estado',
-        ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: items.map((item) {
-            final color = _colorForStatus(item.status);
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 children: [
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 26,
+                    height: 26,
                     decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
+                      color: accent.withValues(alpha: 0.10),
+                      borderRadius: AppRadius.smAll,
                     ),
+                    child: const Icon(Icons.hub_outlined, size: 15, color: accent),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    item.status,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: color.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${item.count}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: color,
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      'Integraciones',
+                      style: theme.textTheme.labelMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-            );
-          }).toList(),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    AppFormat.number(active.length),
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        for (final item in shown)
+                          BrandLogo(
+                            name: logos['name:${item.integrationTypeId}'] ??
+                                item.type,
+                            imageUrl: logos['id:${item.integrationTypeId}'],
+                            size: 22,
+                            radius: 6,
+                            padding: 3,
+                          ),
+                        if (extra > 0)
+                          Text('+$extra', style: theme.textTheme.labelSmall),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (categories > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '$categories categoria${categories == 1 ? '' : 's'}',
+                  style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
+                ),
+              ],
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// 6) Shipments by carrier
-// ---------------------------------------------------------------------------
+class _EffectivenessRows extends StatelessWidget {
+  const _EffectivenessRows({required this.data});
 
-class _ShipmentsByCarrierSection extends StatelessWidget {
-  final List<ShipmentsByCarrier> items;
-
-  const _ShipmentsByCarrierSection({required this.items});
+  final OrderEffectiveness data;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final maxCount = items.fold<int>(0, (m, i) => math.max(m, i.count));
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const _SectionHeader(
-          icon: Icons.flight_rounded,
-          title: 'Envios por Transportadora',
+        _MetricPill(
+          label: 'EFECTIVIDAD',
+          rate: data.effectivenessRate,
+          count: data.delivered,
+          caption: 'entregadas',
+          color: AppColors.success,
         ),
-        Card(
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: items.map((item) {
-                final ratio = maxCount > 0 ? item.count / maxCount : 0.0;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.carrier,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            '${item.count}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: ratio,
-                          minHeight: 6,
-                          backgroundColor:
-                              colorScheme.primary.withValues(alpha: 0.08),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+        const SizedBox(height: 4),
+        _MetricPill(
+          label: 'DEVOLUCIONES',
+          rate: data.returnRate,
+          count: data.returned,
+          caption: 'devueltas',
+          color: AppColors.warning,
         ),
       ],
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// 7) Orders by department (uses ordersByLocation state field)
-// ---------------------------------------------------------------------------
+class _MetricPill extends StatelessWidget {
+  const _MetricPill({
+    required this.label,
+    required this.rate,
+    required this.count,
+    required this.caption,
+    required this.color,
+  });
 
-class _OrdersByDepartmentSection extends StatelessWidget {
-  final List<OrderCountByLocation> items;
-
-  const _OrdersByDepartmentSection({required this.items});
+  final String label;
+  final double rate;
+  final int count;
+  final String caption;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
-    // Aggregate by state (department)
-    final deptMap = <String, int>{};
-    for (final item in items) {
-      final dept = item.state.isNotEmpty ? item.state : 'Sin Departamento';
-      deptMap[dept] = (deptMap[dept] ?? 0) + item.orderCount;
-    }
-
-    final departments = deptMap.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    final maxCount =
-        departments.fold<int>(0, (m, e) => math.max(m, e.value));
-    final totalOrders = departments.fold<int>(0, (s, e) => s + e.value);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        const _SectionHeader(
-          icon: Icons.map_rounded,
-          title: 'Ordenes por Departamento',
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        Card(
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        const SizedBox(width: 5),
+        Text(
+          '${(rate * 100).toStringAsFixed(1)}%',
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: color,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: departments.take(10).map((entry) {
-                final ratio = maxCount > 0 ? entry.value / maxCount : 0.0;
-                final pct = totalOrders > 0
-                    ? (entry.value / totalOrders * 100).toStringAsFixed(1)
-                    : '0';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on_rounded,
-                            size: 16,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              entry.key,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            '${entry.value}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          SizedBox(
-                            width: 44,
-                            child: Text(
-                              '$pct%',
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: ratio,
-                          minHeight: 6,
-                          backgroundColor:
-                              Colors.deepPurple.withValues(alpha: 0.08),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Colors.deepPurple,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            '${AppFormat.number(count)} $caption',
+            style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -1008,16 +617,123 @@ class _OrdersByDepartmentSection extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Number formatting utility
-// ---------------------------------------------------------------------------
+class _IntegrationsByCategory extends StatelessWidget {
+  const _IntegrationsByCategory({required this.logos});
 
-String _formatNumber(int value) {
-  if (value >= 1000000) {
-    return '${(value / 1000000).toStringAsFixed(1)}M';
+  final Map<String, String?> logos;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<IntegrationProvider>(
+      builder: (context, provider, _) {
+        final active = provider.integrations
+            .where((i) => i.isActive)
+            .where((i) => IntegrationVisibility.isVisible(
+                  category: i.category,
+                  type: i.type,
+                  name: logos['name:${i.integrationTypeId}'],
+                ))
+            .toList();
+
+        if (active.isEmpty) {
+          return AppCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                provider.isLoading
+                    ? 'Cargando integraciones...'
+                    : 'Este negocio no tiene integraciones activas.',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ),
+          );
+        }
+
+        final grouped = <String, List<Integration>>{};
+        for (final integration in active) {
+          final key = integration.categoryName?.trim().isNotEmpty == true
+              ? integration.categoryName!
+              : integration.category;
+          grouped.putIfAbsent(key, () => []).add(integration);
+        }
+        final categories = grouped.keys.toList()..sort();
+
+        return AppCard(
+          child: Column(
+            children: [
+              for (var i = 0; i < categories.length; i++) ...[
+                if (i > 0) const Divider(height: 18),
+                _CategoryRow(
+                  category: categories[i],
+                  items: grouped[categories[i]]!,
+                  logos: logos,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
   }
-  if (value >= 1000) {
-    return '${(value / 1000).toStringAsFixed(1)}K';
+}
+
+class _CategoryRow extends StatelessWidget {
+  const _CategoryRow({
+    required this.category,
+    required this.items,
+    required this.logos,
+  });
+
+  final String category;
+  final List<Integration> items;
+  final Map<String, String?> logos;
+
+  String _typeName(Integration item) =>
+      logos['name:${item.integrationTypeId}'] ?? item.type;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                category,
+                style: theme.textTheme.titleSmall?.copyWith(fontSize: 13),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                items.map(_typeName).join(' - '),
+                style: theme.textTheme.labelSmall?.copyWith(fontSize: 10.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Wrap(
+          spacing: 4,
+          children: [
+            for (final item in items.take(4))
+              BrandLogo(
+                name: _typeName(item),
+                imageUrl: logos['id:${item.integrationTypeId}'] ??
+                    logos[item.type.toLowerCase()],
+                size: 26,
+                radius: 7,
+                padding: 3,
+              ),
+          ],
+        ),
+      ],
+    );
   }
-  return value.toString();
 }

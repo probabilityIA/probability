@@ -13,7 +13,7 @@ class ProductApiRepository implements IProductRepository {
     final response = await _client.get('/products', queryParameters: params?.toQueryParams());
     final data = response.data;
     final items = (data['data'] as List<dynamic>?)?.map((e) => Product.fromJson(e)).toList() ?? [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

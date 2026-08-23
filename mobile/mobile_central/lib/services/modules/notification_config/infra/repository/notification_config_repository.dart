@@ -47,11 +47,16 @@ class NotificationConfigApiRepository implements INotificationConfigRepository {
       '/notification-configs',
       queryParameters: queryParams,
     );
-    final data = response.data;
-    if (data is List) {
-      return data.map((e) => NotificationConfig.fromJson(e)).toList();
-    }
-    return [];
+    final raw = response.data;
+    final data = raw is List
+        ? raw
+        : raw is Map && raw['data'] is List
+            ? raw['data'] as List<dynamic>
+            : const <dynamic>[];
+    return data
+        .whereType<Map>()
+        .map((e) => NotificationConfig.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
   }
 
   @override

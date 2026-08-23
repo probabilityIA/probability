@@ -55,6 +55,21 @@ class MockLoginRepository implements ILoginRepository {
     if (rolesPermissionsError != null) throw rolesPermissionsError!;
     return rolesPermissionsResult!;
   }
+
+  @override
+  Future<List<RecoveryChannel>> getRecoveryChannels(String email) async => const [];
+
+  @override
+  Future<SimpleAuthResponse> forgotPassword(String email, String channel) async =>
+      SimpleAuthResponse(success: true, message: '', data: const {});
+
+  @override
+  Future<SimpleAuthResponse> verifyOtp(String email, String code) async =>
+      SimpleAuthResponse(success: true, message: '', data: const {'token': 'reset-token'});
+
+  @override
+  Future<SimpleAuthResponse> resetPassword(String token, String newPassword) async =>
+      SimpleAuthResponse(success: true, message: '', data: const {});
 }
 
 void main() {

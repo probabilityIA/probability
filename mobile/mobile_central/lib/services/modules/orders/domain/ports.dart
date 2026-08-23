@@ -8,4 +8,5 @@ abstract class IOrderRepository {
   Future<Order> updateOrder(String id, UpdateOrderDTO data);
   Future<void> deleteOrder(String id);
   Future<Map<String, dynamic>> getOrderRaw(String id);
+  Future<List<OrderStatusOption>> getOrderStatuses({int? businessId});
 }

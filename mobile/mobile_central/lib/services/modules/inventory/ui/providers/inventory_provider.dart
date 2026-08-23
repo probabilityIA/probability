@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -10,57 +11,53 @@ class InventoryProvider extends ChangeNotifier {
   final ApiClient _apiClient;
   final InventoryUseCases? _injectedUseCases;
 
-  List<InventoryLevel> _inventoryLevels = [];
-  List<StockMovement> _movements = [];
   List<MovementType> _movementTypes = [];
-  Pagination? _pagination;
-  Pagination? _movementsPagination;
-  bool _isLoading = false;
   String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
   String _searchFilter = '';
   bool? _lowStockFilter;
+  int? _warehouseId;
+  int? _businessId;
+  GetMovementsParams? _movementsParams;
+
+  late final PagedListController<InventoryLevel> levels;
+  late final PagedListController<StockMovement> movementsList;
 
   InventoryProvider({required ApiClient apiClient, InventoryUseCases? useCases})
       : _apiClient = apiClient,
-        _injectedUseCases = useCases;
+        _injectedUseCases = useCases {
+    levels = PagedListController<InventoryLevel>(fetcher: _fetchLevels);
+    movementsList = PagedListController<StockMovement>(fetcher: _fetchMovements);
+    levels.addListener(notifyListeners);
+    movementsList.addListener(notifyListeners);
+  }
 
-  List<InventoryLevel> get inventoryLevels => _inventoryLevels;
-  List<StockMovement> get movements => _movements;
+  List<InventoryLevel> get inventoryLevels => levels.loadedItems;
+  List<StockMovement> get movements => movementsList.loadedItems;
   List<MovementType> get movementTypes => _movementTypes;
-  Pagination? get pagination => _pagination;
-  Pagination? get movementsPagination => _movementsPagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  int get page => _page;
-  int get pageSize => _pageSize;
+  bool get isLoading => levels.isLoading || movementsList.isLoading;
+  String? get error => _error ?? levels.error ?? movementsList.error;
 
   InventoryUseCases get _useCases =>
       _injectedUseCases ?? InventoryUseCases(InventoryApiRepository(_apiClient));
 
-  Future<void> fetchWarehouseInventory(int warehouseId, {int? businessId}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final params = GetInventoryParams(
-        page: _page,
-        pageSize: _pageSize,
+  Future<PaginatedResponse<InventoryLevel>> _fetchLevels(int page, int pageSize) {
+    return _useCases.getWarehouseInventory(
+      _warehouseId ?? 0,
+      GetInventoryParams(
+        page: page,
+        pageSize: pageSize,
         search: _searchFilter.isNotEmpty ? _searchFilter : null,
         lowStock: _lowStockFilter,
-        businessId: businessId,
-      );
-      final response = await _useCases.getWarehouseInventory(warehouseId, params);
-      _inventoryLevels = response.data;
-      _pagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
+        businessId: _businessId,
+      ),
+    );
+  }
 
-    _isLoading = false;
-    notifyListeners();
+  Future<void> fetchWarehouseInventory(int warehouseId, {int? businessId}) {
+    _warehouseId = warehouseId;
+    _businessId = businessId;
+    _error = null;
+    return levels.refresh();
   }
 
   Future<List<InventoryLevel>> getProductInventory(String productId, {int? businessId}) async {
@@ -95,21 +92,22 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchMovements({GetMovementsParams? params}) async {
-    _isLoading = true;
+  Future<PaginatedResponse<StockMovement>> _fetchMovements(int page, int pageSize) {
+    final base = _movementsParams;
+    return _useCases.getMovements(GetMovementsParams(
+      page: page,
+      pageSize: pageSize,
+      warehouseId: base?.warehouseId,
+      productId: base?.productId,
+      type: base?.type,
+      businessId: base?.businessId,
+    ));
+  }
+
+  Future<void> fetchMovements({GetMovementsParams? params}) {
+    _movementsParams = params;
     _error = null;
-    notifyListeners();
-
-    try {
-      final response = await _useCases.getMovements(params);
-      _movements = response.data;
-      _movementsPagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoading = false;
-    notifyListeners();
+    return movementsList.refresh();
   }
 
   Future<void> fetchMovementTypes({GetMovementTypesParams? params}) async {
@@ -122,22 +120,25 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  void setPage(int page) {
-    _page = page;
-  }
-
   void setFilters({
     String? search,
     bool? lowStock,
   }) {
     _searchFilter = search ?? _searchFilter;
     _lowStockFilter = lowStock ?? _lowStockFilter;
-    _page = 1;
   }
 
   void resetFilters() {
     _searchFilter = '';
     _lowStockFilter = null;
-    _page = 1;
+  }
+
+  @override
+  void dispose() {
+    levels.removeListener(notifyListeners);
+    movementsList.removeListener(notifyListeners);
+    levels.dispose();
+    movementsList.dispose();
+    super.dispose();
   }
 }

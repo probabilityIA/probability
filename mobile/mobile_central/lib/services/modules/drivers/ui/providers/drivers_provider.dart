@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -7,51 +8,40 @@ import '../../infra/repository/drivers_repository.dart';
 import '../../../../../core/errors/error_parser.dart';
 
 class DriverProvider extends ChangeNotifier {
-  final ApiClient _apiClient;
+  DriverProvider({required ApiClient apiClient}) : _apiClient = apiClient {
+    list = PagedListController<DriverInfo>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
+  }
 
-  List<DriverInfo> _drivers = [];
-  Pagination? _pagination;
-  bool _isLoading = false;
+  final ApiClient _apiClient;
+  late final PagedListController<DriverInfo> list;
+
+  int? _businessId;
   String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
   String _searchFilter = '';
   String _statusFilter = '';
 
-  DriverProvider({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  List<DriverInfo> get drivers => _drivers;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  int get page => _page;
-  int get pageSize => _pageSize;
+  List<DriverInfo> get drivers => list.loadedItems;
+  bool get isLoading => list.isLoading;
+  String? get error => _error ?? list.error;
 
   DriverUseCases get _useCases =>
       DriverUseCases(DriverApiRepository(_apiClient));
 
-  Future<void> fetchDrivers({int? businessId}) async {
-    _isLoading = true;
+  Future<PaginatedResponse<DriverInfo>> _fetchPage(int page, int pageSize) {
+    return _useCases.getDrivers(GetDriversParams(
+      page: page,
+      pageSize: pageSize,
+      search: _searchFilter.isNotEmpty ? _searchFilter : null,
+      status: _statusFilter.isNotEmpty ? _statusFilter : null,
+      businessId: _businessId,
+    ));
+  }
+
+  Future<void> fetchDrivers({int? businessId}) {
+    _businessId = businessId;
     _error = null;
-    notifyListeners();
-
-    try {
-      final params = GetDriversParams(
-        page: _page,
-        pageSize: _pageSize,
-        search: _searchFilter.isNotEmpty ? _searchFilter : null,
-        status: _statusFilter.isNotEmpty ? _statusFilter : null,
-        businessId: businessId,
-      );
-      final response = await _useCases.getDrivers(params);
-      _drivers = response.data;
-      _pagination = response.pagination;
-    } catch (e) {
-      _error = parseError(e);
-    }
-
-    _isLoading = false;
-    notifyListeners();
+    return list.refresh();
   }
 
   Future<DriverInfo?> getDriverById(int id, {int? businessId}) async {
@@ -97,22 +87,23 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  void setPage(int page) {
-    _page = page;
-  }
-
   void setFilters({
     String? search,
     String? status,
   }) {
     _searchFilter = search ?? _searchFilter;
     _statusFilter = status ?? _statusFilter;
-    _page = 1;
   }
 
   void resetFilters() {
     _searchFilter = '';
     _statusFilter = '';
-    _page = 1;
+  }
+
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
   }
 }

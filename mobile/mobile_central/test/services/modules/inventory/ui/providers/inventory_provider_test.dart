@@ -164,12 +164,9 @@ void main() {
       expect(provider.movementTypes, isEmpty);
     });
 
-    test('has null pagination', () {
-      expect(provider.pagination, isNull);
-    });
-
-    test('has null movements pagination', () {
-      expect(provider.movementsPagination, isNull);
+    test('has empty paged lists', () {
+      expect(provider.levels.itemCount, 0);
+      expect(provider.movementsList.itemCount, 0);
     });
 
     test('is not loading', () {
@@ -180,12 +177,9 @@ void main() {
       expect(provider.error, isNull);
     });
 
-    test('has default page 1', () {
-      expect(provider.page, 1);
-    });
-
     test('has default pageSize 20', () {
-      expect(provider.pageSize, 20);
+      expect(provider.levels.pageSize, 20);
+      expect(provider.movementsList.pageSize, 20);
     });
   });
 
@@ -204,8 +198,7 @@ void main() {
       expect(provider.inventoryLevels.length, 2);
       expect(provider.inventoryLevels[0].productName, 'A');
       expect(provider.inventoryLevels[1].productName, 'B');
-      expect(provider.pagination, isNotNull);
-      expect(provider.pagination!.total, 2);
+      expect(provider.levels.total, 2);
       expect(provider.isLoading, false);
       expect(provider.error, isNull);
     });
@@ -345,7 +338,7 @@ void main() {
       await provider.fetchMovements();
 
       expect(provider.movements.length, 2);
-      expect(provider.movementsPagination, isNotNull);
+      expect(provider.movementsList.total, 2);
       expect(provider.isLoading, false);
       expect(provider.error, isNull);
     });
@@ -382,26 +375,34 @@ void main() {
     });
   });
 
-  group('setPage', () {
-    test('updates page', () {
-      provider.setPage(3);
-      expect(provider.page, 3);
-    });
-  });
+  group('paginado', () {
+    test('mantiene acotada la memoria de existencias', () async {
+      mockRepo.getWarehouseInventoryResult = PaginatedResponse<InventoryLevel>(
+        data: [for (var i = 0; i < 20; i++) _makeInventoryLevel(id: i, name: 'P$i')],
+        pagination: _makePagination(total: 10000),
+      );
 
-  group('setFilters', () {
-    test('resets page to 1', () {
-      provider.setPage(5);
+      await provider.fetchWarehouseInventory(1);
+      for (var i = 0; i < 30; i++) {
+        provider.levels.itemAt(provider.levels.itemCount - 1);
+        await Future<void>.delayed(Duration.zero);
+        await provider.levels.loadMore();
+      }
+      await Future<void>.delayed(Duration.zero);
+
+      expect(provider.levels.pagesInMemory,
+          lessThanOrEqualTo(provider.levels.maxPagesInMemory));
+    });
+
+    test('setFilters no rompe la coleccion', () {
       provider.setFilters(search: 'test');
-      expect(provider.page, 1);
+      expect(provider.levels.itemCount, 0);
     });
-  });
 
-  group('resetFilters', () {
-    test('resets page to 1', () {
-      provider.setPage(5);
+    test('resetFilters limpia los filtros', () {
+      provider.setFilters(search: 'test');
       provider.resetFilters();
-      expect(provider.page, 1);
+      expect(provider.levels.itemCount, 0);
     });
   });
 }

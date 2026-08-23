@@ -9,6 +9,7 @@ import {
     type MatrixCell,
     type MatrixColumn,
     type MatrixRow,
+    type MatrixSearchBy,
 } from '../../infra/repository/sync-findings';
 import { DynamicFilters, type ActiveFilter, type FilterOption } from '@/shared/ui/dynamic-filters';
 import { channelBrand } from '../../domain/types';
@@ -134,6 +135,13 @@ function Fila({ row, columns, onDetail }: { row: MatrixRow; columns: MatrixColum
     );
 }
 
+const CAMPOS_BUSQUEDA: { key: MatrixSearchBy; label: string; hint: string }[] = [
+    { key: 'all', label: 'Todo', hint: 'Buscar SKU, producto o ean' },
+    { key: 'sku', label: 'SKU', hint: 'Buscar por SKU' },
+    { key: 'name', label: 'Producto', hint: 'Buscar por nombre' },
+    { key: 'barcode', label: 'Ean', hint: 'Buscar por codigo de barras' },
+];
+
 export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
     const [columns, setColumns] = useState<MatrixColumn[]>([]);
     const [rows, setRows] = useState<MatrixRow[]>([]);
@@ -143,6 +151,7 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [term, setTerm] = useState('');
+    const [searchBy, setSearchBy] = useState<MatrixSearchBy>('all');
     const [seleccion, setSeleccion] = useState<Record<string, string | boolean>>({});
     const [pageSize, setPageSize] = useState(10);
     const [detalleID, setDetalleID] = useState<string | null>(null);
@@ -161,7 +170,10 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
     const presentIn = useMemo(() => idsDe(PREFIJO_ESTA), [idsDe]);
     const missingIn = useMemo(() => idsDe(PREFIJO_FALTA), [idsDe]);
 
-    const filters = useMemo(() => ({ search: term, presentIn, missingIn }), [term, presentIn, missingIn]);
+    const filters = useMemo(
+        () => ({ search: term, searchBy, presentIn, missingIn }),
+        [term, searchBy, presentIn, missingIn],
+    );
 
     const opcionesFiltro: FilterOption[] = useMemo(() => {
         const verbo = (col: MatrixColumn) => (col.is_sales ? 'Se vende en' : 'Esta en');
@@ -250,23 +262,36 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
-                <div className="relative w-64 flex-shrink-0">
-                    <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        value={search}
-                        onChange={event => setSearch(event.target.value)}
-                        placeholder="Buscar SKU, producto o ean"
-                        className={`${inputCls} py-1.5 pl-7 pr-7`}
+                <div className="flex flex-shrink-0 items-center">
+                    <select
+                        value={searchBy}
+                        onChange={event => setSearchBy(event.target.value as MatrixSearchBy)}
+                        title="Por que campo buscar"
+                        className={`${inputCls} w-auto rounded-r-none border-r-0 py-1.5 pl-2.5 pr-6 text-[12px]`}
                         style={{ borderColor: CARD_BORDER }}
-                    />
-                    {search !== '' && (
-                        <button
-                            onClick={() => setSearch('')}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                        >
-                            <X size={12} />
-                        </button>
-                    )}
+                    >
+                        {CAMPOS_BUSQUEDA.map(campo => (
+                            <option key={campo.key} value={campo.key}>{campo.label}</option>
+                        ))}
+                    </select>
+                    <div className="relative w-52">
+                        <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            value={search}
+                            onChange={event => setSearch(event.target.value)}
+                            placeholder={CAMPOS_BUSQUEDA.find(c => c.key === searchBy)?.hint ?? ''}
+                            className={`${inputCls} rounded-l-none py-1.5 pl-7 pr-7`}
+                            style={{ borderColor: CARD_BORDER }}
+                        />
+                        {search !== '' && (
+                            <button
+                                onClick={() => setSearch('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            >
+                                <X size={12} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="min-w-0 flex-1">

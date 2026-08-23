@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class TokenStorage {
   static const _tokenKey = 'session_token';
   static const _userKey = 'user_data';
+  static const _sessionKey = 'session_data';
 
   final FlutterSecureStorage _storage;
 
@@ -23,6 +24,14 @@ class TokenStorage {
 
   Future<String?> getUserData() async {
     return _storage.read(key: _userKey);
+  }
+
+  Future<void> saveSessionData(String sessionData) async {
+    await _storage.write(key: _sessionKey, value: sessionData);
+  }
+
+  Future<String?> getSessionData() async {
+    return _storage.read(key: _sessionKey);
   }
 
   Future<void> clearAll() async {
