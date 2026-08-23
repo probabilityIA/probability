@@ -190,19 +190,19 @@ WHERE jsonb_typeof(r.detail) = 'array' AND it->>'group' = ?`
 
 func agrupacionEmbebida(grupo string) string {
 	if grupo == "channel_no_sku" {
-		return "it->>'sku', it->>'parent_ref', it->>'variant_label', it->>'label'"
+		return "it->>'sku', it->>'parent_ref', it->>'variant_label'"
 	}
-	return "it->>'sku', it->>'label'"
+	return "it->>'sku'"
 }
 
-// Se agrupa tambien por label: una publicacion por fila. Sin eso, dos
-// publicaciones distintas que comparten SKU se colapsaban en una y la lista
-// mostraba menos filas de las que anunciaba el contador del hallazgo.
+// El emparejamiento con el canal es por SKU, asi que una fila es un SKU.
+// channel_no_sku es la excepcion: ahi justamente no hay SKU, y la unidad es
+// la publicacion.
 func agrupacion(grupo string) string {
 	if grupo == "channel_no_sku" {
-		return "it.sku, it.parent_ref, it.variant_label, it.label"
+		return "it.sku, it.parent_ref, it.variant_label"
 	}
-	return "it.sku, it.label"
+	return "it.sku"
 }
 
 func cruzado(q domain.FindingItemsQuery) (string, []interface{}, error) {
