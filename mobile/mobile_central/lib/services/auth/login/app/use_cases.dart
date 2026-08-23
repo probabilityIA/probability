@@ -22,4 +22,20 @@ class LoginUseCases {
   Future<UserRolesPermissionsResponse> getRolesPermissions() {
     return _repository.getRolesPermissions();
   }
+
+  Future<List<RecoveryChannel>> getRecoveryChannels(String email) {
+    return _repository.getRecoveryChannels(email);
+  }
+
+  Future<SimpleAuthResponse> forgotPassword(String email, String channel) {
+    return _repository.forgotPassword(email, channel);
+  }
+
+  Future<SimpleAuthResponse> verifyOtp(String email, String code) {
+    return _repository.verifyOtp(email, code);
+  }
+
+  Future<SimpleAuthResponse> resetPassword(String token, String newPassword) {
+    return _repository.resetPassword(token, newPassword);
+  }
 }

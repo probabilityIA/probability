@@ -1,3 +1,78 @@
+class OrderEffectiveness {
+  const OrderEffectiveness({required this.delivered, required this.returned});
+
+  final int delivered;
+  final int returned;
+
+  int get closed => delivered + returned;
+  bool get hasData => closed > 0;
+
+  double get effectivenessRate => hasData ? delivered / closed : 0;
+  double get returnRate => hasData ? returned / closed : 0;
+}
+
+enum DashboardPeriod { today, week, month, all }
+
+extension DashboardPeriodX on DashboardPeriod {
+  String get label {
+    switch (this) {
+      case DashboardPeriod.today:
+        return 'Hoy';
+      case DashboardPeriod.week:
+        return '7 dias';
+      case DashboardPeriod.month:
+        return '30 dias';
+      case DashboardPeriod.all:
+        return 'Todo';
+    }
+  }
+
+  int? get days {
+    switch (this) {
+      case DashboardPeriod.today:
+        return 0;
+      case DashboardPeriod.week:
+        return 6;
+      case DashboardPeriod.month:
+        return 29;
+      case DashboardPeriod.all:
+        return null;
+    }
+  }
+
+  ({String start, String end})? rangeFrom(DateTime now) {
+    final span = days;
+    if (span == null) return null;
+    final end = DateTime(now.year, now.month, now.day);
+    final start = end.subtract(Duration(days: span));
+    return (start: _ymd(start), end: _ymd(end));
+  }
+}
+
+String _ymd(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
+
+int _asInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+double _asDouble(dynamic value) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0;
+  return 0;
+}
+
+int? _asIntOrNull(dynamic value) {
+  if (value == null) return null;
+  return _asInt(value);
+}
+
 class OrderCountByIntegrationType {
   final String integrationType;
   final int count;
@@ -10,7 +85,7 @@ class OrderCountByIntegrationType {
   factory OrderCountByIntegrationType.fromJson(Map<String, dynamic> json) {
     return OrderCountByIntegrationType(
       integrationType: json['integration_type'] ?? '',
-      count: json['count'] ?? 0,
+      count: _asInt(json['count']),
     );
   }
 }
@@ -30,7 +105,7 @@ class TopCustomer {
     return TopCustomer(
       customerName: json['customer_name'] ?? '',
       customerEmail: json['customer_email'] ?? '',
-      orderCount: json['order_count'] ?? 0,
+      orderCount: _asInt(json['order_count']),
     );
   }
 }
@@ -50,7 +125,7 @@ class OrderCountByLocation {
     return OrderCountByLocation(
       city: json['city'] ?? '',
       state: json['state'] ?? '',
-      orderCount: json['order_count'] ?? 0,
+      orderCount: _asInt(json['order_count']),
     );
   }
 }
@@ -69,8 +144,8 @@ class TopDriver {
   factory TopDriver.fromJson(Map<String, dynamic> json) {
     return TopDriver(
       driverName: json['driver_name'] ?? '',
-      driverId: json['driver_id'],
-      orderCount: json['order_count'] ?? 0,
+      driverId: _asIntOrNull(json['driver_id']),
+      orderCount: _asInt(json['order_count']),
     );
   }
 }
@@ -93,7 +168,7 @@ class DriverByLocation {
       driverName: json['driver_name'] ?? '',
       city: json['city'] ?? '',
       state: json['state'] ?? '',
-      orderCount: json['order_count'] ?? 0,
+      orderCount: _asInt(json['order_count']),
     );
   }
 }
@@ -103,7 +178,7 @@ class TopProduct {
   final String productId;
   final String sku;
   final int orderCount;
-  final int totalSold;
+  final double totalSold;
 
   TopProduct({
     required this.productName,
@@ -118,8 +193,8 @@ class TopProduct {
       productName: json['product_name'] ?? '',
       productId: json['product_id'] ?? '',
       sku: json['sku'] ?? '',
-      orderCount: json['order_count'] ?? 0,
-      totalSold: json['total_sold'] ?? 0,
+      orderCount: _asInt(json['order_count']),
+      totalSold: _asDouble(json['total_sold']),
     );
   }
 }
@@ -136,7 +211,7 @@ class ProductByCategory {
   factory ProductByCategory.fromJson(Map<String, dynamic> json) {
     return ProductByCategory(
       category: json['category'] ?? '',
-      count: json['count'] ?? 0,
+      count: _asInt(json['count']),
     );
   }
 }
@@ -153,7 +228,7 @@ class ProductByBrand {
   factory ProductByBrand.fromJson(Map<String, dynamic> json) {
     return ProductByBrand(
       brand: json['brand'] ?? '',
-      count: json['count'] ?? 0,
+      count: _asInt(json['count']),
     );
   }
 }
@@ -170,7 +245,7 @@ class ShipmentsByStatus {
   factory ShipmentsByStatus.fromJson(Map<String, dynamic> json) {
     return ShipmentsByStatus(
       status: json['status'] ?? '',
-      count: json['count'] ?? 0,
+      count: _asInt(json['count']),
     );
   }
 }
@@ -187,7 +262,7 @@ class ShipmentsByCarrier {
   factory ShipmentsByCarrier.fromJson(Map<String, dynamic> json) {
     return ShipmentsByCarrier(
       carrier: json['carrier'] ?? '',
-      count: json['count'] ?? 0,
+      count: _asInt(json['count']),
     );
   }
 }
@@ -206,8 +281,8 @@ class ShipmentsByWarehouse {
   factory ShipmentsByWarehouse.fromJson(Map<String, dynamic> json) {
     return ShipmentsByWarehouse(
       warehouseName: json['warehouse_name'] ?? '',
-      warehouseId: json['warehouse_id'],
-      count: json['count'] ?? 0,
+      warehouseId: _asIntOrNull(json['warehouse_id']),
+      count: _asInt(json['count']),
     );
   }
 }
@@ -225,9 +300,9 @@ class OrdersByBusiness {
 
   factory OrdersByBusiness.fromJson(Map<String, dynamic> json) {
     return OrdersByBusiness(
-      businessId: json['business_id'] ?? 0,
+      businessId: _asInt(json['business_id']),
       businessName: json['business_name'] ?? '',
-      orderCount: json['order_count'] ?? 0,
+      orderCount: _asInt(json['order_count']),
     );
   }
 }
@@ -265,7 +340,7 @@ class DashboardStats {
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
     return DashboardStats(
-      totalOrders: json['total_orders'] ?? 0,
+      totalOrders: _asInt(json['total_orders']),
       ordersByIntegrationType:
           (json['orders_by_integration_type'] as List<dynamic>?)
                   ?.map((e) => OrderCountByIntegrationType.fromJson(e))

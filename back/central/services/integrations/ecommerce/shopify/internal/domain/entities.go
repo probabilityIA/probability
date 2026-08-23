@@ -116,6 +116,7 @@ type ShopifyOrderItem struct {
 }
 
 type ProbabilityOrderDTO struct {
+	SkipInventory   bool
 	BusinessID      *uint
 	IntegrationID   uint
 	IntegrationType string

@@ -19,10 +19,12 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/marketingleads"
+	"github.com/secamc93/probability/back/central/services/modules/mobile"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
 	"github.com/secamc93/probability/back/central/services/modules/notification_backfill"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
+	"github.com/secamc93/probability/back/central/services/modules/orderscompare"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
 	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
@@ -65,12 +67,14 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	payments.New(router, database, logger, environment)
 	orderstatus.New(router, database, logger, environment)
 	ordersBundle := orders.New(router, database, logger, environment, rabbitMQ)
+	orderscompare.New(router, database, logger, integrationCore)
 	probability.New(database, logger, rabbitMQ)
 	products.New(router, database, logger, environment, rabbitMQ, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
 	shipmentsBundle := shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)
 	codreport.New(router, database, logger)
+	mobile.New(router, database)
 	woostore.New(router, environment, logger)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
 

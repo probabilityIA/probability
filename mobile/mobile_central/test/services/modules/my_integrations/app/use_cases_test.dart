@@ -41,6 +41,12 @@ class MockMyIntegrationsRepository implements IMyIntegrationsRepository {
     _trackCall('getIntegrationById');
     return getIntegrationByIdResult!;
   }
+  List<IntegrationStats> statsResult = const [];
+
+  @override
+  Future<List<IntegrationStats>> getStats({int? businessId}) async =>
+      statsResult;
+
 }
 
 // ---------------------------------------------------------------------------

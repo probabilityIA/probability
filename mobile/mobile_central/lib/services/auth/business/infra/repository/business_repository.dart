@@ -20,7 +20,7 @@ class BusinessApiRepository implements IBusinessRepository {
             ?.map((b) => Business.fromJson(b))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: businesses, pagination: pagination);
   }
 

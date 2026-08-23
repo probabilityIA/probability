@@ -6,6 +6,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/inventorycompare"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/orderscompare"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -29,6 +30,8 @@ type ITiendanubeUseCase interface {
 
 	SyncOrders(ctx context.Context, integrationID string, filters domain.OrderFilters) (int, error)
 	UpdateOrderStatus(ctx context.Context, integrationID string, update domain.OrderStatusUpdate) error
+	ListChannelOrders(ctx context.Context, integrationID string, filters orderscompare.ChannelFilters) ([]orderscompare.ChannelOrder, error)
+	ImportChannelOrders(ctx context.Context, integrationID string, externalIDs []string) (orderscompare.ImportResult, error)
 	ProcessOrderEvent(ctx context.Context, integrationID, event, orderID string) error
 
 	CreateWebhooks(ctx context.Context, integrationID, baseURL string) (*domain.CreateWebhooksResult, error)

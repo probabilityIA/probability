@@ -56,6 +56,10 @@ type Handler struct {
 	nextProductID int64
 	nextVariantID int64
 	nextImageID   int64
+
+	orders      map[int64]*mockOrder
+	orderIDs    []int64
+	nextOrderID int64
 }
 
 func New(logger log.ILogger) *Handler {
@@ -66,8 +70,14 @@ func New(logger log.ILogger) *Handler {
 		nextProductID: 2001,
 		nextVariantID: 9001,
 		nextImageID:   7001,
+		orders:        make(map[int64]*mockOrder),
+		orderIDs:      make([]int64, 0),
+		nextOrderID:   5001,
 	}
 	h.seedDefaults()
+	h.mu.Lock()
+	h.seedOrdersLocked()
+	h.mu.Unlock()
 	return h
 }
 
@@ -82,10 +92,13 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 		api.GET("/products/:id", h.handleGetProduct)
 		api.PUT("/products/:id", h.handleUpdateProduct)
 		api.PUT("/products/:id/variants/:vid", h.handleUpdateVariant)
+		api.GET("/orders", h.handleListOrders)
+		api.GET("/orders/:id", h.handleGetOrder)
 	}
 
 	router.POST("/mock/reset", h.handleReset)
 	router.POST("/mock/seed-products", h.handleSeedProducts)
+	router.POST("/mock/seed-orders", h.handleSeedOrders)
 }
 
 func money(value float64) string {

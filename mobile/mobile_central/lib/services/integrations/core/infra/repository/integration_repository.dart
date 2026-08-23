@@ -24,7 +24,7 @@ class IntegrationApiRepository implements IIntegrationRepository {
             ?.map((e) => Integration.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 
@@ -151,11 +151,11 @@ class IntegrationApiRepository implements IIntegrationRepository {
   @override
   Future<List<IntegrationType>> getIntegrationTypes(
       {int? categoryId}) async {
-    final queryParams = <String, dynamic>{};
+    final queryParams = <String, dynamic>{'page': 1, 'page_size': 100};
     if (categoryId != null) queryParams['category_id'] = categoryId;
     final response = await _client.get(
       '/integration-types',
-      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      queryParameters: queryParams,
     );
     final data = response.data['data'] as List<dynamic>? ?? [];
     return data.map((e) => IntegrationType.fromJson(e)).toList();

@@ -119,6 +119,10 @@ class MockOrderRepository implements IOrderRepository {
         hasNext: false,
         hasPrev: false,
       );
+  @override
+  Future<List<OrderStatusOption>> getOrderStatuses({int? businessId}) async =>
+      const [];
+
 }
 
 void main() {

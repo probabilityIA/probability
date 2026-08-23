@@ -262,3 +262,7 @@ func mapJumpsellerPaymentMethod(name, methodType string) uint {
 		return paymentMethodCreditCard
 	}
 }
+
+func MapJumpsellerOrderStatus(status, statusEnum string) string {
+	return mapJumpsellerStatus(status, statusEnum)
+}

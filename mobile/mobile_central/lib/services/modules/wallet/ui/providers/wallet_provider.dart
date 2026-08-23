@@ -22,6 +22,11 @@ class WalletProvider extends ChangeNotifier {
   Wallet? get wallet => _wallet;
   List<Wallet> get wallets => _wallets;
   List<dynamic> get history => _history;
+
+  List<WalletMovement> get movements => _history
+      .whereType<Map>()
+      .map((e) => WalletMovement.fromJson(Map<String, dynamic>.from(e)))
+      .toList();
   List<dynamic> get pendingRequests => _pendingRequests;
   List<dynamic> get processedRequests => _processedRequests;
   BusinessSubscription? get subscription => _subscription;

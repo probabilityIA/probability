@@ -19,7 +19,7 @@ class MyIntegrationsApiRepository implements IMyIntegrationsRepository {
             ?.map((e) => MyIntegration.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 
@@ -28,5 +28,18 @@ class MyIntegrationsApiRepository implements IMyIntegrationsRepository {
     final qp = businessId != null ? {'business_id': businessId} : null;
     final response = await _client.get('/integrations/$id', queryParameters: qp);
     return MyIntegration.fromJson(response.data['data'] ?? response.data);
+  }
+
+  @override
+  Future<List<IntegrationStats>> getStats({int? businessId}) async {
+    final response = await _client.get(
+      '/integrations/stats',
+      queryParameters: <String, dynamic>{'business_id': ?businessId},
+    );
+    final data = response.data;
+    final items = (data is Map ? data['data'] : data) as List<dynamic>?;
+    return (items ?? [])
+        .map((e) => IntegrationStats.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

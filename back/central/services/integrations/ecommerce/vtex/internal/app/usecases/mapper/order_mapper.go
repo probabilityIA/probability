@@ -372,3 +372,7 @@ func mapVTEXShippingStatus(vtexOrderStatus string) string {
 		return "pending"
 	}
 }
+
+func MapVTEXStatus(vtexStatus string) string {
+	return mapVTEXOrderStatus(vtexStatus)
+}

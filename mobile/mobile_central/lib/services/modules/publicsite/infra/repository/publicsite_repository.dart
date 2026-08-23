@@ -28,7 +28,7 @@ class PublicSiteApiRepository implements IPublicSiteRepository {
             ?.map((e) => PublicProduct.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

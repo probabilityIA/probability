@@ -14,4 +14,8 @@ class MyIntegrationsUseCases {
   Future<MyIntegration> getIntegrationById(int id, {int? businessId}) {
     return _repository.getIntegrationById(id, businessId: businessId);
   }
+
+  Future<List<IntegrationStats>> getStats({int? businessId}) {
+    return _repository.getStats(businessId: businessId);
+  }
 }
