@@ -88,6 +88,77 @@ class SavedComparisonApiRepository implements ISavedComparisonRepository {
   }
 
   @override
+  Future<DataPreview> getDataPreview({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+    int? businessId,
+  }) async {
+    final response = await _client.post(
+      '/integrations/sync-runs/data-preview',
+      queryParameters: <String, dynamic>{'business_id': ?businessId},
+      data: <String, dynamic>{
+        'integration_id': integrationId,
+        'field': field,
+        'mode': mode.code,
+        'business_id': ?businessId,
+      },
+    );
+    final data = response.data;
+    return DataPreview.fromJson(
+      data is Map<String, dynamic> ? data : <String, dynamic>{},
+    );
+  }
+
+  @override
+  Future<DataApplyResult> applyChannelData({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+    int? businessId,
+  }) async {
+    final response = await _client.post(
+      '/products/channel-data/apply',
+      queryParameters: <String, dynamic>{'business_id': ?businessId},
+      data: <String, dynamic>{
+        'integration_id': integrationId,
+        'field': field,
+        'mode': mode.code,
+      },
+    );
+    final data = response.data;
+    if (data is Map && data['success'] == false) {
+      throw Exception(data['message'] ?? data['error'] ?? 'No se pudo aplicar');
+    }
+    return DataApplyResult.fromJson(
+      data is Map && data['data'] is Map<String, dynamic>
+          ? data['data'] as Map<String, dynamic>
+          : null,
+    );
+  }
+
+  @override
+  Future<int> undoChannelData({
+    required String batchId,
+    int? businessId,
+  }) async {
+    final response = await _client.post(
+      '/products/channel-data/undo',
+      queryParameters: <String, dynamic>{'business_id': ?businessId},
+      data: <String, dynamic>{'batch_id': batchId},
+    );
+    final data = response.data;
+    if (data is Map && data['success'] == false) {
+      throw Exception(data['message'] ?? data['error'] ?? 'No se pudo deshacer');
+    }
+    final payload = data is Map ? data['data'] : null;
+    if (payload is Map && payload['reverted'] != null) {
+      return int.tryParse(payload['reverted'].toString()) ?? 0;
+    }
+    return 0;
+  }
+
+  @override
   Future<InventoryComparePage> compareInventory(
     SyncProviderSpec spec,
     InventoryCompareQuery query,

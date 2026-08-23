@@ -370,9 +370,20 @@ class _InventoryChannelCard extends StatelessWidget {
 }
 
 class DataSummaryView extends StatelessWidget {
-  const DataSummaryView({super.key, required this.summary});
+  const DataSummaryView({
+    super.key,
+    required this.summary,
+    required this.onPick,
+    this.lastApply,
+    this.onUndo,
+    this.undoing = false,
+  });
 
   final DataSummary summary;
+  final void Function(DataSummaryRow, DataSummaryCell, DataMode) onPick;
+  final DataApplyResult? lastApply;
+  final VoidCallback? onUndo;
+  final bool undoing;
 
   @override
   Widget build(BuildContext context) {
@@ -391,6 +402,10 @@ class DataSummaryView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SavedStamp(when: summary.snapshotAt),
+        if (lastApply != null) ...[
+          const SizedBox(height: 12),
+          _UndoCard(result: lastApply!, onUndo: onUndo, undoing: undoing),
+        ],
         const SizedBox(height: 12),
         if (rows.isEmpty)
           const AppCard(
@@ -401,7 +416,7 @@ class DataSummaryView extends StatelessWidget {
           )
         else
           for (final row in rows) ...[
-            _DataRowCard(row: row),
+            _DataRowCard(row: row, onPick: onPick),
             const SizedBox(height: 10),
           ],
       ],
@@ -409,10 +424,54 @@ class DataSummaryView extends StatelessWidget {
   }
 }
 
+class _UndoCard extends StatelessWidget {
+  const _UndoCard({
+    required this.result,
+    required this.onUndo,
+    required this.undoing,
+  });
+
+  final DataApplyResult result;
+  final VoidCallback? onUndo;
+  final bool undoing;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AppCard(
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline_rounded,
+              size: 19, color: AppColors.success),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Text(
+              '${AppFormat.number(result.applied)} productos actualizados',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+          TextButton.icon(
+            onPressed: undoing ? null : onUndo,
+            icon: undoing
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.undo_rounded, size: 17),
+            label: const Text('Deshacer'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DataRowCard extends StatelessWidget {
-  const _DataRowCard({required this.row});
+  const _DataRowCard({required this.row, required this.onPick});
 
   final DataSummaryRow row;
+  final void Function(DataSummaryRow, DataSummaryCell, DataMode) onPick;
 
   @override
   Widget build(BuildContext context) {
@@ -431,33 +490,100 @@ class _DataRowCard extends StatelessWidget {
           const SizedBox(height: 10),
           for (final cell in row.cells.where((c) => c.hasSomething)) ...[
             Padding(
-              padding: const EdgeInsets.only(bottom: 7),
-              child: Row(
+              padding: const EdgeInsets.only(bottom: 9),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      cell.integrationName,
-                      style: theme.textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  Row(
+                    children: [
+                      BrandLogo(
+                        name: cell.integrationName,
+                        size: 20,
+                        radius: 5,
+                        padding: 3,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          cell.integrationName,
+                          style: theme.textTheme.bodySmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  if (cell.canFill > 0)
-                    _Pill(label: 'llenaria', value: cell.canFill, tone: AppColors.info),
-                  if (cell.canOverwrite > 0) ...[
-                    const SizedBox(width: 6),
-                    _Pill(
-                      label: 'reemplazaria',
-                      value: cell.canOverwrite,
-                      tone: AppColors.warning,
-                    ),
-                  ],
+                  const SizedBox(height: 7),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      if (cell.canFill > 0)
+                        _ActionPill(
+                          label: 'Llenar vacios',
+                          value: cell.canFill,
+                          tone: AppColors.info,
+                          onTap: () => onPick(row, cell, DataMode.fillEmpty),
+                        ),
+                      if (cell.canOverwrite > 0)
+                        _ActionPill(
+                          label: 'Reemplazar',
+                          value: cell.canOverwrite,
+                          tone: AppColors.warning,
+                          onTap: () => onPick(row, cell, DataMode.overwrite),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    required this.label,
+    required this.value,
+    required this.tone,
+    required this.onTap,
+  });
+
+  final String label;
+  final int value;
+  final Color tone;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: tone.withValues(alpha: 0.12),
+      borderRadius: AppRadius.pillAll,
+      child: InkWell(
+        borderRadius: AppRadius.pillAll,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(11, 7, 9, 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$label ${AppFormat.number(value)}',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: tone,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded, size: 15, color: tone),
+            ],
+          ),
+        ),
       ),
     );
   }

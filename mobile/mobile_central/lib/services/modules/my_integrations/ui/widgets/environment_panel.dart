@@ -13,6 +13,7 @@ import '../providers/saved_comparison_provider.dart';
 import '../screens/finding_items_screen.dart';
 import '../screens/inventory_compare_screen.dart';
 import 'channel_cards.dart';
+import 'channel_data_sheet.dart';
 import 'module_toolbar.dart';
 import 'products_environment.dart';
 import 'orders_compare_panel.dart';
@@ -163,6 +164,9 @@ class _SavedEnvironment extends StatefulWidget {
 }
 
 class _SavedEnvironmentState extends State<_SavedEnvironment> {
+  DataApplyResult? _lastApply;
+  bool _undoing = false;
+
   @override
   void initState() {
     super.initState();
@@ -202,6 +206,57 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
         businessId: widget.businessId,
       ),
     ));
+  }
+
+  Future<void> _pickData(
+    DataSummaryRow row,
+    DataSummaryCell cell,
+    DataMode mode,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await showChannelDataSheet(
+      context,
+      target: ChannelDataTarget(
+        field: row.field,
+        label: row.label.isEmpty ? row.field : row.label,
+        cell: cell,
+        mode: mode,
+      ),
+      businessId: widget.businessId,
+    );
+    if (result == null || !mounted) return;
+
+    setState(() => _lastApply = result);
+    messenger.showSnackBar(SnackBar(
+      content: Text('${result.applied} productos actualizados'),
+    ));
+    await _load(force: true);
+  }
+
+  Future<void> _undo() async {
+    final batch = _lastApply?.batchId;
+    if (batch == null || batch.isEmpty) return;
+
+    final saved = context.read<SavedComparisonProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    setState(() => _undoing = true);
+    try {
+      final reverted = await saved.undoChannelData(batch);
+      if (!mounted) return;
+      setState(() => _lastApply = null);
+      messenger.showSnackBar(SnackBar(
+        content: Text('$reverted productos devueltos a como estaban'),
+      ));
+      await _load(force: true);
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No se pudo deshacer')),
+      );
+    } finally {
+      if (mounted) setState(() => _undoing = false);
+    }
   }
 
   void _openChannel(MyIntegration channel) {
@@ -273,7 +328,13 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
             message: saved.dataError!,
           );
         }
-        return DataSummaryView(summary: saved.dataSummary);
+        return DataSummaryView(
+          summary: saved.dataSummary,
+          onPick: _pickData,
+          lastApply: _lastApply,
+          undoing: _undoing,
+          onUndo: _undo,
+        );
 
       case SyncEnvironment.inventory:
         return InventorySnapshotView(

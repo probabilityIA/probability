@@ -47,6 +47,35 @@ class SavedComparisonUseCases {
         missingIn: missingIn,
       );
 
+  Future<DataPreview> getDataPreview({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+    int? businessId,
+  }) =>
+      _repository.getDataPreview(
+        integrationId: integrationId,
+        field: field,
+        mode: mode,
+        businessId: businessId,
+      );
+
+  Future<DataApplyResult> applyChannelData({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+    int? businessId,
+  }) =>
+      _repository.applyChannelData(
+        integrationId: integrationId,
+        field: field,
+        mode: mode,
+        businessId: businessId,
+      );
+
+  Future<int> undoChannelData({required String batchId, int? businessId}) =>
+      _repository.undoChannelData(batchId: batchId, businessId: businessId);
+
   Future<InventoryComparePage> compareInventory(
     SyncProviderSpec spec,
     InventoryCompareQuery query,

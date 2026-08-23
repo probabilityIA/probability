@@ -132,6 +132,33 @@ class SavedComparisonProvider extends ChangeNotifier {
     }
   }
 
+  Future<DataPreview> previewChannelData({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+  }) =>
+      _useCases.getDataPreview(
+        integrationId: integrationId,
+        field: field,
+        mode: mode,
+        businessId: _businessId,
+      );
+
+  Future<DataApplyResult> applyChannelData({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+  }) =>
+      _useCases.applyChannelData(
+        integrationId: integrationId,
+        field: field,
+        mode: mode,
+        businessId: _businessId,
+      );
+
+  Future<int> undoChannelData(String batchId) =>
+      _useCases.undoChannelData(batchId: batchId, businessId: _businessId);
+
   Future<void> loadInventorySnapshots(
     List<MyIntegration> integrations, {
     bool force = false,

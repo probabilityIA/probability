@@ -597,3 +597,148 @@ class FindingItemsPage {
         totalPages: _int(json['total_pages']),
       );
 }
+
+enum DataMode { fillEmpty, overwrite }
+
+extension DataModeX on DataMode {
+  String get code => this == DataMode.fillEmpty ? 'fill_empty' : 'overwrite';
+
+  String get label =>
+      this == DataMode.fillEmpty ? 'Llenar los vacios' : 'Reemplazar el dato';
+
+  String get help => this == DataMode.fillEmpty
+      ? 'Solo se tocan los productos que hoy tienen ese campo vacio.'
+      : 'Se reemplaza el dato actual, incluso donde ya hay algo escrito.';
+}
+
+class DataConflict {
+  const DataConflict({
+    required this.source,
+    required this.count,
+    this.integrationId,
+    this.integrationName,
+    this.lastChangeAt,
+  });
+
+  final String source;
+  final int count;
+  final int? integrationId;
+  final String? integrationName;
+  final DateTime? lastChangeAt;
+
+  bool get isManual => source == 'manual';
+
+  String get who => isManual
+      ? 'una edicion manual'
+      : (integrationName == null || integrationName!.isEmpty
+          ? 'otro canal'
+          : integrationName!);
+
+  factory DataConflict.fromJson(Map<String, dynamic> json) => DataConflict(
+        source: json['source']?.toString() ?? '',
+        count: _int(json['count']),
+        integrationId: json['integration_id'] == null
+            ? null
+            : _int(json['integration_id']),
+        integrationName: json['integration_name']?.toString(),
+        lastChangeAt: _when(json['last_change_at']),
+      );
+}
+
+class DataSample {
+  const DataSample({
+    required this.productId,
+    required this.sku,
+    this.name,
+    this.current,
+    this.incoming,
+  });
+
+  final String productId;
+  final String sku;
+  final String? name;
+  final String? current;
+  final String? incoming;
+
+  bool get isEmptyToday => current == null || current!.trim().isEmpty;
+
+  static String clean(String? value, {int max = 90}) {
+    if (value == null) return '';
+    final flat = value
+        .replaceAll(RegExp('<[^>]*>'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return flat.length > max ? '${flat.substring(0, max)}...' : flat;
+  }
+
+  factory DataSample.fromJson(Map<String, dynamic> json) => DataSample(
+        productId: json['product_id']?.toString() ?? '',
+        sku: json['sku']?.toString() ?? '',
+        name: json['name']?.toString(),
+        current: json['current']?.toString(),
+        incoming: json['incoming']?.toString(),
+      );
+}
+
+class DataPreview {
+  const DataPreview({
+    required this.field,
+    required this.mode,
+    this.wouldFill = 0,
+    this.wouldReplace = 0,
+    this.conflicts = const <DataConflict>[],
+    this.samples = const <DataSample>[],
+  });
+
+  final String field;
+  final String mode;
+  final int wouldFill;
+  final int wouldReplace;
+  final List<DataConflict> conflicts;
+  final List<DataSample> samples;
+
+  int get total => wouldFill + wouldReplace;
+
+  bool get hasSomething => total > 0;
+
+  factory DataPreview.fromJson(Map<String, dynamic> json) => DataPreview(
+        field: json['field']?.toString() ?? '',
+        mode: json['mode']?.toString() ?? '',
+        wouldFill: _int(json['would_fill']),
+        wouldReplace: _int(json['would_replace']),
+        conflicts: (json['conflicts'] as List<dynamic>?)
+                ?.whereType<Map<String, dynamic>>()
+                .map(DataConflict.fromJson)
+                .toList() ??
+            const <DataConflict>[],
+        samples: (json['samples'] as List<dynamic>?)
+                ?.whereType<Map<String, dynamic>>()
+                .map(DataSample.fromJson)
+                .toList() ??
+            const <DataSample>[],
+      );
+}
+
+class DataApplyResult {
+  const DataApplyResult({
+    required this.batchId,
+    required this.field,
+    this.applied = 0,
+    this.appliedAt,
+  });
+
+  final String batchId;
+  final String field;
+  final int applied;
+  final DateTime? appliedAt;
+
+  factory DataApplyResult.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const DataApplyResult(batchId: '', field: '');
+    return DataApplyResult(
+      batchId: json['batch_id']?.toString() ?? '',
+      field: json['field']?.toString() ?? '',
+      applied: _int(json['applied']),
+      appliedAt: _when(json['applied_at']),
+    );
+  }
+}

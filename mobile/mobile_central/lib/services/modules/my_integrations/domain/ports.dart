@@ -78,6 +78,22 @@ abstract class ISavedComparisonRepository {
     List<int> missingIn,
   });
 
+  Future<DataPreview> getDataPreview({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+    int? businessId,
+  });
+
+  Future<DataApplyResult> applyChannelData({
+    required int integrationId,
+    required String field,
+    required DataMode mode,
+    int? businessId,
+  });
+
+  Future<int> undoChannelData({required String batchId, int? businessId});
+
   Future<InventoryComparePage> compareInventory(
     SyncProviderSpec spec,
     InventoryCompareQuery query,
