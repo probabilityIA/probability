@@ -24,12 +24,14 @@ class ChannelDataTarget {
     required this.label,
     required this.cell,
     required this.mode,
+    this.logoUrl,
   });
 
   final String field;
   final String label;
   final DataSummaryCell cell;
   final DataMode mode;
+  final String? logoUrl;
 }
 
 Future<DataApplyResult?> showChannelDataSheet(
@@ -197,15 +199,40 @@ class _ChannelDataSheetState extends State<ChannelDataSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Actualizar ${target.label.toLowerCase()} en Probability',
-                    style: theme.textTheme.titleMedium,
+                  Row(
+                    children: [
+                      BrandLogo(
+                        name: target.cell.integrationName,
+                        imageUrl: target.logoUrl,
+                        size: 34,
+                        radius: 8,
+                        padding: 4,
+                      ),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Actualizar ${target.label.toLowerCase()}',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'desde ${target.cell.integrationName}',
+                              style: theme.textTheme.labelSmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 9),
                   Text(
-                    'Se escribe en tus productos con lo que dice '
-                    '${target.cell.integrationName}. El canal no se modifica. '
-                    '${target.mode.help}',
+                    'Se escribe en tus productos de Probability con lo que dice '
+                    'ese canal. El canal no se modifica. ${target.mode.help}',
                     style: theme.textTheme.labelSmall,
                   ),
                 ],

@@ -374,6 +374,7 @@ class DataSummaryView extends StatelessWidget {
     super.key,
     required this.summary,
     required this.onPick,
+    required this.logoFor,
     this.lastApply,
     this.onUndo,
     this.undoing = false,
@@ -381,6 +382,7 @@ class DataSummaryView extends StatelessWidget {
 
   final DataSummary summary;
   final void Function(DataSummaryRow, DataSummaryCell, DataMode) onPick;
+  final String? Function(int integrationId) logoFor;
   final DataApplyResult? lastApply;
   final VoidCallback? onUndo;
   final bool undoing;
@@ -416,7 +418,7 @@ class DataSummaryView extends StatelessWidget {
           )
         else
           for (final row in rows) ...[
-            _DataRowCard(row: row, onPick: onPick),
+            _DataRowCard(row: row, onPick: onPick, logoFor: logoFor),
             const SizedBox(height: 10),
           ],
       ],
@@ -468,10 +470,15 @@ class _UndoCard extends StatelessWidget {
 }
 
 class _DataRowCard extends StatelessWidget {
-  const _DataRowCard({required this.row, required this.onPick});
+  const _DataRowCard({
+    required this.row,
+    required this.onPick,
+    required this.logoFor,
+  });
 
   final DataSummaryRow row;
   final void Function(DataSummaryRow, DataSummaryCell, DataMode) onPick;
+  final String? Function(int integrationId) logoFor;
 
   @override
   Widget build(BuildContext context) {
@@ -498,8 +505,9 @@ class _DataRowCard extends StatelessWidget {
                     children: [
                       BrandLogo(
                         name: cell.integrationName,
-                        size: 20,
-                        radius: 5,
+                        imageUrl: logoFor(cell.integrationId),
+                        size: 24,
+                        radius: 6,
                         padding: 3,
                       ),
                       const SizedBox(width: 8),

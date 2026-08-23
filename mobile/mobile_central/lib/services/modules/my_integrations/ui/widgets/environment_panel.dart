@@ -208,6 +208,13 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
     ));
   }
 
+  String? _logoFor(int integrationId) {
+    for (final item in widget.integrations) {
+      if (item.id == integrationId) return item.imageUrl;
+    }
+    return null;
+  }
+
   Future<void> _pickData(
     DataSummaryRow row,
     DataSummaryCell cell,
@@ -221,6 +228,7 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
         label: row.label.isEmpty ? row.field : row.label,
         cell: cell,
         mode: mode,
+        logoUrl: _logoFor(cell.integrationId),
       ),
       businessId: widget.businessId,
     );
@@ -331,6 +339,7 @@ class _SavedEnvironmentState extends State<_SavedEnvironment> {
         return DataSummaryView(
           summary: saved.dataSummary,
           onPick: _pickData,
+          logoFor: _logoFor,
           lastApply: _lastApply,
           undoing: _undoing,
           onUndo: _undo,
