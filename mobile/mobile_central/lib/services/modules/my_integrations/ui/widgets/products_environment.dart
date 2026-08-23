@@ -285,6 +285,11 @@ class _CompareButton extends StatelessWidget {
           child: IconButton(
             onPressed: running ? null : onCompare,
             visualDensity: VisualDensity.compact,
+            style: IconButton.styleFrom(
+              backgroundColor: scheme.primaryContainer,
+              foregroundColor: scheme.primary,
+              shape: const CircleBorder(),
+            ),
             icon: running
                 ? SizedBox(
                     width: 17,
@@ -294,8 +299,7 @@ class _CompareButton extends StatelessWidget {
                       valueColor: AlwaysStoppedAnimation(scheme.primary),
                     ),
                   )
-                : const Icon(Icons.sync_rounded, size: 21),
-            color: AppColors.textMuted,
+                : const Icon(Icons.sync_rounded, size: 20),
           ),
         );
       },
