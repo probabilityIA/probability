@@ -75,6 +75,7 @@ type InvoiceRequestConsumer struct {
 	responsePublisher *queue.ResponsePublisher
 	log               log.ILogger
 	workers           int
+	docIndex          *documentIndex
 }
 
 func New(
@@ -95,6 +96,7 @@ func New(
 		responsePublisher: responsePublisher,
 		log:               logger.WithModule("softpymes.invoice_request_consumer"),
 		workers:           workers,
+		docIndex:          newDocumentIndex(),
 	}
 }
 
