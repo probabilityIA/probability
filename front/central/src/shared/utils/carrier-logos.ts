@@ -19,6 +19,7 @@ export const CARRIER_LOGOS: Record<string, string> = {
     'MIPAQUETE': 'https://mipaquete.com/wp-content/uploads/2021/03/mipaquete-logo.png',
     'SHIPIT': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1785346702_shipit.png',
     'RAPPI': 'https://static.vecteezy.com/system/resources/previews/067/941/720/non_2x/rappi-logo-rounded-hd-free-png.png',
+    'MERCADOENVIOS': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1771905467_mercado-libre-logo.png',
 };
 
 const COMBINING_MARK_MIN = 0x0300;
