@@ -74,6 +74,8 @@ services:
     container_name: central_reserve_prod
     ports:
       - "127.0.0.1:3050:3050"
+    dns:
+      - 169.254.169.253
     environment:
       DB_HOST:             "${DB_HOST:-postgres}"
       DB_PORT:             "5432"
@@ -177,6 +179,8 @@ services:
     container_name: testing_backend_prod
     ports:
       - "127.0.0.1:9092:9092"
+    dns:
+      - 169.254.169.253
     environment:
       DB_HOST:             "${DB_HOST:-postgres}"
       DB_PORT:             "5432"
@@ -261,6 +265,8 @@ services:
       redis-server 
       --appendonly yes
       --requirepass ${REDIS_PASSWORD}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
     volumes:
@@ -272,6 +278,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
 
@@ -292,6 +303,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   # Monitoring Services (independent of nginx)
@@ -397,6 +413,11 @@ services:
         condition: service_started
     networks:
       - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
 networks:

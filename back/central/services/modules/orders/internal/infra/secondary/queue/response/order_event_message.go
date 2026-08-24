@@ -62,6 +62,7 @@ type OrderSnapshot struct {
 	ShippingAddress     string   `json:"shipping_address,omitempty"`
 	PaymentMethodName   string   `json:"payment_method_name,omitempty"`
 	TrackingNumber      string   `json:"tracking_number,omitempty"`
+	TrackingURL         string   `json:"tracking_url,omitempty"`
 	Carrier             string   `json:"carrier,omitempty"`
 	IsPaid              bool     `json:"is_paid"`
 	DeliveryProbability float64  `json:"delivery_probability,omitempty"`

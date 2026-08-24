@@ -586,4 +586,36 @@ void main() {
       expect(json.containsKey('is_default'), false);
     });
   });
+
+  _listCostTests();
+}
+
+void _listCostTests() {
+  group('listCost', () {
+    test('usa total_cost cuando el detalle lo trae', () {
+      final s = Shipment.fromJson(const {
+        'id': 1,
+        'total_cost': 18500,
+        'shipping_cost': 11000,
+      });
+
+      expect(s.listCost, 18500);
+    });
+
+    test('cae a shipping_cost, que es lo unico que trae el listado', () {
+      final s = Shipment.fromJson(const {
+        'id': 1,
+        'shipping_cost': 11000,
+      });
+
+      expect(s.totalCost, isNull);
+      expect(s.listCost, 11000);
+    });
+
+    test('sin ningun costo queda nulo, no en cero', () {
+      final s = Shipment.fromJson(const {'id': 1});
+
+      expect(s.listCost, isNull);
+    });
+  });
 }

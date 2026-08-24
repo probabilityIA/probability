@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/app_tokens.dart';
+import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/integration_provider.dart';
+
+const Map<String, String> integrationCategoryLabels = {
+  'ecommerce': 'Tiendas',
+  'invoicing': 'Facturacion',
+  'messaging': 'Mensajeria',
+  'shipping': 'Transporte',
+  'payment': 'Pagos',
+  'platform': 'Plataforma',
+};
 
 class IntegrationListScreen extends StatefulWidget {
   const IntegrationListScreen({super.key});
@@ -11,357 +23,174 @@ class IntegrationListScreen extends StatefulWidget {
 }
 
 class _IntegrationListScreenState extends State<IntegrationListScreen> {
-  int _currentPage = 1;
-  String? _selectedCategory;
+  final _searchController = TextEditingController();
+  String _category = '';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
-    });
-  }
-
-  void _loadData() {
-    final provider = context.read<IntegrationProvider>();
-    provider.setPage(_currentPage);
-    provider.fetchIntegrations();
-    provider.fetchIntegrationCategories();
-  }
-
-  void _goToPage(int page) {
-    setState(() => _currentPage = page);
-    final provider = context.read<IntegrationProvider>();
-    provider.setPage(page);
-    provider.fetchIntegrations();
-  }
-
-  void _onCategoryChanged(String? category) {
-    setState(() {
-      _selectedCategory = category;
-      _currentPage = 1;
-    });
-    final provider = context.read<IntegrationProvider>();
-    provider.setFilters(category: category);
-    provider.setPage(1);
-    provider.fetchIntegrations();
-  }
-
-  IconData _categoryIcon(String? category) {
-    switch (category?.toLowerCase()) {
-      case 'platform':
-        return Icons.extension;
-      case 'ecommerce':
-        return Icons.shopping_cart_outlined;
-      case 'invoicing':
-        return Icons.receipt_long_outlined;
-      case 'messaging':
-        return Icons.chat_outlined;
-      case 'payment':
-        return Icons.credit_card;
-      case 'shipping':
-        return Icons.local_shipping_outlined;
-      default:
-        return Icons.integration_instructions;
-    }
-  }
-
-  Color _categoryColor(String? category) {
-    switch (category?.toLowerCase()) {
-      case 'platform':
-        return Colors.purple;
-      case 'ecommerce':
-        return Colors.blue;
-      case 'invoicing':
-        return Colors.teal;
-      case 'messaging':
-        return Colors.green;
-      case 'payment':
-        return Colors.orange;
-      case 'shipping':
-        return Colors.indigo;
-      default:
-        return Colors.grey;
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    context.read<IntegrationProvider>().fetchIntegrationTypes();
+  }
+
+  String _categoryOf(IntegrationType type) =>
+      type.category?.code ?? type.integrationCategory?.code ?? '';
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Catalogo de Integraciones')),
-      body: Consumer<IntegrationProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading && provider.integrations.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (provider.error != null && provider.integrations.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(provider.error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _loadData,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _loadData(),
-            child: Column(
-              children: [
-                // Category filter chips
-                if (provider.integrationCategories.isNotEmpty)
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: const Text('Todos'),
-                            selected: _selectedCategory == null,
-                            onSelected: (_) => _onCategoryChanged(null),
-                          ),
-                        ),
-                        ...provider.integrationCategories.map((cat) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              avatar: Icon(
-                                _categoryIcon(cat.code),
-                                size: 16,
-                                color: _selectedCategory == cat.code
-                                    ? null
-                                    : _categoryColor(cat.code),
-                              ),
-                              label: Text(cat.name),
-                              selected: _selectedCategory == cat.code,
-                              onSelected: (_) =>
-                                  _onCategoryChanged(cat.code),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-                Expanded(
-                  child: provider.integrations.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.integration_instructions_outlined,
-                                  size: 64, color: Colors.grey.shade400),
-                              const SizedBox(height: 16),
-                              Text('No hay integraciones disponibles',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey.shade600)),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: provider.integrations.length,
-                          itemBuilder: (context, index) {
-                            final integration = provider.integrations[index];
-                            return _IntegrationCatalogCard(
-                              integration: integration,
-                              icon: _categoryIcon(integration.category),
-                              color: _categoryColor(integration.category),
-                            );
-                          },
-                        ),
-                ),
-                if (provider.pagination != null &&
-                    provider.pagination!.lastPage > 1)
-                  _PaginationBar(
-                    currentPage: provider.pagination!.currentPage,
-                    totalPages: provider.pagination!.lastPage,
-                    total: provider.pagination!.total,
-                    onPageChanged: _goToPage,
-                  ),
-              ],
-            ),
+    return Consumer<IntegrationProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoadingTypes && provider.integrationTypes.isEmpty) {
+          return const AppListSkeleton();
+        }
+        if (provider.integrationTypes.isEmpty) {
+          return AppEmptyState(
+            icon: Icons.hub_outlined,
+            title: 'Catalogo vacio',
+            message: 'No hay integraciones disponibles para conectar.',
+            actionLabel: 'Actualizar',
+            onAction: _refresh,
           );
-        },
-      ),
-    );
-  }
-}
+        }
 
-class _IntegrationCatalogCard extends StatelessWidget {
-  final Integration integration;
-  final IconData icon;
-  final Color color;
+        final categories = <String>{
+          ...provider.integrationTypes.map(_categoryOf).where((c) => c.isNotEmpty),
+        }.toList()
+          ..sort();
 
-  const _IntegrationCatalogCard({
-    required this.integration,
-    required this.icon,
-    required this.color,
-  });
+        final query = _searchController.text.trim().toLowerCase();
+        final rows = provider.integrationTypes.where((type) {
+          final matchesCategory = _category.isEmpty || _categoryOf(type) == _category;
+          final matchesQuery = query.isEmpty || type.name.toLowerCase().contains(query);
+          return matchesCategory && matchesQuery;
+        }).toList();
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            if (integration.integrationType?.imageUrl != null &&
-                integration.integrationType!.imageUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  integration.integrationType!.imageUrl!,
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => CircleAvatar(
-                    backgroundColor: color.withValues(alpha: 0.12),
-                    child: Icon(icon, color: color),
-                  ),
-                ),
-              )
-            else
-              CircleAvatar(
-                backgroundColor: color.withValues(alpha: 0.12),
-                child: Icon(icon, color: color),
-              ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(integration.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          integration.categoryName ?? integration.category,
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: color,
-                              fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: integration.isActive
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : Colors.grey.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          integration.isActive ? 'Activa' : 'Inactiva',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: integration.isActive
-                                ? Colors.green
-                                : Colors.grey,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (integration.description != null &&
-                      integration.description!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(integration.description!,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis),
-                  ],
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PaginationBar extends StatelessWidget {
-  final int currentPage;
-  final int totalPages;
-  final int total;
-  final ValueChanged<int> onPageChanged;
-
-  const _PaginationBar({
-    required this.currentPage,
-    required this.totalPages,
-    required this.total,
-    required this.onPageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('$total resultados',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-          Row(
+        return RefreshIndicator(
+          onRefresh: () async => _refresh(),
+          color: AppColors.primary,
+          child: Column(
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: currentPage > 1
-                    ? () => onPageChanged(currentPage - 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                child: AppSearchField(
+                  controller: _searchController,
+                  hintText: 'Buscar integracion',
+                  onChanged: (_) => setState(() {}),
+                ),
               ),
-              Text('$currentPage / $totalPages',
-                  style: const TextStyle(fontSize: 13)),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: currentPage < totalPages
-                    ? () => onPageChanged(currentPage + 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
+              AppFilterChips(
+                options: [
+                  (value: '', label: 'Todas'),
+                  ...categories.map(
+                    (code) => (
+                      value: code,
+                      label: integrationCategoryLabels[code] ?? code,
+                    ),
+                  ),
+                ],
+                selected: _category,
+                onSelected: (value) => setState(() => _category = value),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: rows.isEmpty
+                    ? const AppEmptyState(
+                        icon: Icons.search_off_rounded,
+                        title: 'Sin resultados',
+                        message: 'Ninguna integracion coincide con el filtro.',
+                      )
+                    : GridView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: AppSpacing.page,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 11,
+                          crossAxisSpacing: 11,
+                          mainAxisExtent: 132,
+                        ),
+                        itemCount: rows.length,
+                        itemBuilder: (context, index) => _CatalogTile(
+                          type: rows[index],
+                          categoryCode: _categoryOf(rows[index]),
+                        ),
+                      ),
               ),
             ],
           ),
-        ],
+        );
+      },
+    );
+  }
+}
+
+class _CatalogTile extends StatelessWidget {
+  const _CatalogTile({required this.type, required this.categoryCode});
+
+  final IntegrationType type;
+  final String categoryCode;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final unavailable = type.inDevelopment == true || !type.isActive;
+
+    return AppCard(
+      padding: const EdgeInsets.all(13),
+      onTap: unavailable
+          ? null
+          : () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Conectar ${type.name} desde la plataforma web')),
+              );
+            },
+      child: Opacity(
+        opacity: unavailable ? 0.55 : 1,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                BrandLogo(
+                  name: type.name,
+                  imageUrl: type.imageUrl,
+                  size: 42,
+                  radius: 11,
+                  padding: 6,
+                ),
+                const Spacer(),
+                if (type.inDevelopment == true)
+                  const AppStatusChip(
+                    dense: true,
+                    label: 'Pronto',
+                    tone: AppStatusTone.warning,
+                  ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              type.name,
+              style: theme.textTheme.titleSmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              integrationCategoryLabels[categoryCode] ?? categoryCode,
+              style: theme.textTheme.labelSmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

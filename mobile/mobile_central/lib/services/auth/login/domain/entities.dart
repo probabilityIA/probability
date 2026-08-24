@@ -191,3 +191,42 @@ class GeneratePasswordResponse {
     );
   }
 }
+
+class RecoveryChannel {
+  final String channel;
+  final String? masked;
+  final bool available;
+
+  RecoveryChannel({required this.channel, this.masked, required this.available});
+
+  factory RecoveryChannel.fromJson(Map<String, dynamic> json) {
+    return RecoveryChannel(
+      channel: json['channel'] ?? '',
+      masked: json['masked'] ?? json['value'],
+      available: json['available'] ?? true,
+    );
+  }
+}
+
+class SimpleAuthResponse {
+  final bool success;
+  final String message;
+  final Map<String, dynamic> data;
+
+  SimpleAuthResponse({
+    required this.success,
+    required this.message,
+    required this.data,
+  });
+
+  factory SimpleAuthResponse.fromJson(Map<String, dynamic> json) {
+    final raw = json['data'];
+    return SimpleAuthResponse(
+      success: json['success'] ?? false,
+      message: json['message'] ?? '',
+      data: raw is Map<String, dynamic> ? raw : <String, dynamic>{},
+    );
+  }
+
+  String? get token => data['token']?.toString();
+}

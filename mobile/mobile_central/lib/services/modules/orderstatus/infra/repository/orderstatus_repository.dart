@@ -12,7 +12,7 @@ class OrderStatusApiRepository implements IOrderStatusRepository {
     final response = await _client.get('/order-status-mappings', queryParameters: params?.toQueryParams());
     final data = response.data;
     final items = (data['data'] as List<dynamic>?)?.map((e) => OrderStatusMapping.fromJson(e)).toList() ?? [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

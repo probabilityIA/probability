@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../shared/types/paginated_response.dart';
 import '../../../../../shared/widgets/network_avatar.dart';
+import '../../../../../shared/widgets/ui/ui.dart';
 import '../../domain/entities.dart';
 import '../providers/business_provider.dart';
 
@@ -13,9 +13,6 @@ class BusinessListScreen extends StatefulWidget {
 }
 
 class _BusinessListScreenState extends State<BusinessListScreen> {
-  int _currentPage = 1;
-  static const int _pageSize = 20;
-
   @override
   void initState() {
     super.initState();
@@ -26,24 +23,12 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
 
   void _fetchData() {
     final provider = context.read<BusinessProvider>();
-    provider.fetchBusinesses(
-      params: GetBusinessesParams(page: _currentPage, pageSize: _pageSize),
-    );
+    provider.fetchBusinesses();
     provider.fetchBusinessTypes();
   }
 
   Future<void> _refresh() async {
-    await context.read<BusinessProvider>().fetchBusinesses(
-          params:
-              GetBusinessesParams(page: _currentPage, pageSize: _pageSize),
-        );
-  }
-
-  void _goToPage(int page) {
-    setState(() => _currentPage = page);
-    context.read<BusinessProvider>().fetchBusinesses(
-          params: GetBusinessesParams(page: page, pageSize: _pageSize),
-        );
+    await context.read<BusinessProvider>().fetchBusinesses();
   }
 
   void _showCreateForm() {
@@ -597,37 +582,21 @@ class _BusinessListScreenState extends State<BusinessListScreen> {
             );
           }
 
-          return Column(
-            children: [
-              // List
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                    itemCount: provider.businesses.length,
-                    itemBuilder: (context, index) {
-                      final business = provider.businesses[index];
-                      return _BusinessCard(
-                        business: business,
-                        onEdit: () => _showEditForm(business),
-                        onDelete: () => _confirmDelete(business),
-                        onToggleActive: () => _toggleActive(business),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              // Pagination
-              if (provider.pagination != null &&
-                  provider.pagination!.lastPage > 1)
-                _PaginationBar(
-                  pagination: provider.pagination!,
-                  currentPage: _currentPage,
-                  onPageChanged: _goToPage,
-                ),
-            ],
+          return PaginatedListView<Business>(
+            controller: provider.list,
+            unitLabel: 'negocios',
+            placeholderHeight: 128,
+            separatorHeight: 0,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+            emptyIcon: Icons.storefront_outlined,
+            emptyTitle: 'Sin negocios',
+            emptyMessage: 'Crea tu primer negocio',
+            itemBuilder: (context, business, index) => _BusinessCard(
+              business: business,
+              onEdit: () => _showEditForm(business),
+              onDelete: () => _confirmDelete(business),
+              onToggleActive: () => _toggleActive(business),
+            ),
           );
         },
       ),
@@ -831,62 +800,3 @@ class _BusinessCard extends StatelessWidget {
   }
 }
 
-class _PaginationBar extends StatelessWidget {
-  final Pagination pagination;
-  final int currentPage;
-  final ValueChanged<int> onPageChanged;
-
-  const _PaginationBar({
-    required this.pagination,
-    required this.currentPage,
-    required this.onPageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '${pagination.total} negocios',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed:
-                    pagination.hasPrev ? () => onPageChanged(currentPage - 1) : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
-              ),
-              Text(
-                '$currentPage / ${pagination.lastPage}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed:
-                    pagination.hasNext ? () => onPageChanged(currentPage + 1) : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}

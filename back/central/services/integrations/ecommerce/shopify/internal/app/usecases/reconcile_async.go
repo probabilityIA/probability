@@ -52,6 +52,8 @@ func (uc *SyncOrdersUseCase) ReconcileProductsAsync(ctx context.Context, integra
 		"not_associated":      len(result.MatchedNotAssociated),
 		"only_in_probability": len(result.OnlyInProbability),
 		"only_in_channel":     len(result.OnlyInShopify),
+		"probability_no_sku":  result.ProbabilityNoSKU,
+		"shopify_no_sku":      result.ShopifyNoSKU,
 		"match_rules":         result.MatchRules,
 	}
 

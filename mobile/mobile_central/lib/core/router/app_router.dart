@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../services/auth/login/ui/providers/login_provider.dart';
 import '../../services/auth/login/ui/screens/login_screen.dart';
 import '../../services/auth/business/ui/screens/business_list_screen.dart';
+import '../../services/auth/login/ui/screens/forgot_password_screen.dart';
+import '../../services/auth/profile/ui/screens/profile_screen.dart';
 
 // Module screens (standalone)
 import '../../services/modules/customers/ui/screens/customer_list_screen.dart';
@@ -24,8 +26,11 @@ import '../../shared/widgets/modules/notifications_module_screen.dart';
 import '../../shared/widgets/modules/invoicing_module_screen.dart';
 
 // Shared
+import '../../services/modules/my_integrations/ui/screens/core_screen.dart';
+import '../../shared/navigation/app_modules.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/business_selector_wrapper.dart';
+import '../../shared/widgets/modules_screen.dart';
 
 class AppRouter {
   final LoginProvider loginProvider;
@@ -38,9 +43,17 @@ class AppRouter {
     redirect: (context, state) {
       final isLoggedIn = loginProvider.isLoggedIn;
       final isLoginRoute = state.matchedLocation == '/login';
+      final isPublicRoute = isLoginRoute || state.matchedLocation == '/forgot-password';
 
-      if (!isLoggedIn && !isLoginRoute) return '/login';
+      if (!isLoggedIn && !isPublicRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/dashboard';
+      if (isLoggedIn &&
+          !AppModules.isRouteAllowed(
+            state.matchedLocation,
+            isSuperAdmin: loginProvider.isSuperAdmin,
+          )) {
+        return '/dashboard';
+      }
       return null;
     },
     routes: [
@@ -49,11 +62,22 @@ class AppRouter {
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
 
       // Todas las rutas autenticadas dentro del ShellRoute con Drawer
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
+          GoRoute(
+            path: '/core',
+            builder: (context, state) => _withBusiness(
+              (id) => CoreScreen(businessId: id),
+            ),
+          ),
+
           // Dashboard (página inicial)
           GoRoute(
             path: '/dashboard',
@@ -74,9 +98,14 @@ class AppRouter {
                 const OrdersModuleScreen(initialTab: 1),
           ),
           GoRoute(
-            path: '/orders/statuses',
+            path: '/orders/quote',
             builder: (context, state) =>
                 const OrdersModuleScreen(initialTab: 2),
+          ),
+          GoRoute(
+            path: '/orders/statuses',
+            builder: (context, state) =>
+                const OrdersModuleScreen(initialTab: 3),
           ),
           GoRoute(
             path: '/customers',
@@ -192,6 +221,15 @@ class AppRouter {
           GoRoute(
             path: '/businesses',
             builder: (context, state) => const BusinessListScreen(),
+          ),
+
+          GoRoute(
+            path: '/more',
+            builder: (context, state) => const ModulesScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
           ),
 
           // ── Otros ──

@@ -6,6 +6,8 @@ import 'package:mobile_central/services/modules/dashboard/domain/ports.dart';
 // --- Manual Mock ---
 
 class MockDashboardRepository implements IDashboardRepository {
+  String? lastStartDate;
+  String? lastEndDate;
   final List<String> calls = [];
 
   DashboardStatsResponse? getStatsResult;
@@ -15,13 +17,33 @@ class MockDashboardRepository implements IDashboardRepository {
   int? capturedIntegrationId;
 
   @override
-  Future<DashboardStatsResponse> getStats({int? businessId, int? integrationId}) async {
+  Future<DashboardStatsResponse> getStats({
+    int? businessId,
+    int? integrationId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    lastStartDate = startDate;
+    lastEndDate = endDate;
     calls.add('getStats');
     capturedBusinessId = businessId;
     capturedIntegrationId = integrationId;
     if (errorToThrow != null) throw errorToThrow!;
     return getStatsResult!;
   }
+  OrderEffectiveness effectivenessResult =
+      const OrderEffectiveness(delivered: 0, returned: 0);
+
+  @override
+  Future<OrderEffectiveness> getEffectiveness({
+    int? businessId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    if (errorToThrow != null) throw errorToThrow!;
+    return effectivenessResult;
+  }
+
 }
 
 // --- Helpers ---

@@ -298,6 +298,11 @@ func (m *RepositoryMock) GetPaymentStatusIDByCode(ctx context.Context, code stri
 	return args.Get(0).(*uint), args.Error(1)
 }
 
+func (m *RepositoryMock) IsChannelStatusInboundEnabled(ctx context.Context, integrationID uint) (bool, error) {
+	args := m.Called(ctx, integrationID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *RepositoryMock) GetFulfillmentStatusIDByCode(ctx context.Context, code string) (*uint, error) {
 	args := m.Called(ctx, code)
 	if args.Get(0) == nil {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, ArrowDownToLine, ArrowRightLeft, Link2 } from 'lucide-react';
 import { useSSE } from '@/shared/hooks/use-sse';
+import { fetchSyncRunItems } from '@/services/modules/my-integrations/infra/repository/sync-run-items';
 import { reconcileShopifyProductsAction, applyShopifyProductsAction, associateShopifyProductsAction } from '../../infra/actions';
 
 interface ShopifyProductSyncModalProps {
@@ -28,10 +29,19 @@ interface Diff {
 }
 
 const PRODUCT_EVENT_TYPES = [
+    'shopify.product.reconcile.started',
+    'shopify.product.reconcile.completed',
     'shopify.product.sync.started',
     'shopify.product.sync.progress',
     'shopify.product.sync.completed',
 ];
+
+const MAX_BRIEFS = 500;
+
+function nombreDesdeEtiqueta(label: string) {
+    const sep = label.indexOf(' - ');
+    return sep >= 0 ? label.slice(sep + 3) : '';
+}
 
 type Phase = 'analyzing' | 'diff' | 'running' | 'done' | 'error';
 type Direction = 'to_shopify' | 'to_probability';
@@ -48,15 +58,51 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const correlationRef = useRef<string | null>(null);
+    const reconcileCorrRef = useRef<string | null>(null);
+
+    const cargarGrupo = useCallback(async (group: string, esperados: number): Promise<Brief[]> => {
+        if (esperados <= 0) return [];
+        const pagina = await fetchSyncRunItems({
+            integration_id: integrationId,
+            kind: 'products',
+            group,
+            page: 1,
+            page_size: Math.min(esperados, MAX_BRIEFS),
+            business_id: businessId ?? undefined,
+        });
+        return pagina.items.map((item) => ({ sku: item.sku, name: nombreDesdeEtiqueta(item.label || '') }));
+    }, [integrationId, businessId]);
+
+    const aplicarConteos = useCallback(async (data: any) => {
+        const [sinAsociar, soloProbability, soloCanal] = await Promise.all([
+            cargarGrupo('not_associated', Number(data.not_associated) || 0),
+            cargarGrupo('only_probability', Number(data.only_in_probability) || 0),
+            cargarGrupo('only_channel', Number(data.only_in_channel) || 0),
+        ]);
+        setDiff({
+            matched: Number(data.matched) || 0,
+            matchedNotAssociated: sinAsociar,
+            onlyInProbability: soloProbability,
+            onlyInShopify: soloCanal,
+            probabilityNoSku: Number(data.probability_no_sku) || 0,
+            shopifyNoSku: Number(data.shopify_no_sku) || 0,
+        });
+        setPhase('diff');
+    }, [cargarGrupo]);
 
     const analyze = useCallback(async () => {
         setPhase('analyzing');
         setErrorMessage(null);
         setSelected(new Set());
+        reconcileCorrRef.current = null;
         const res: any = await reconcileShopifyProductsAction(integrationId, businessId ?? undefined);
         if (!res?.success) {
             setErrorMessage(res?.message || 'No se pudo analizar los productos');
             setPhase('error');
+            return;
+        }
+        if (res.matched === undefined && res.correlation_id) {
+            reconcileCorrRef.current = res.correlation_id;
             return;
         }
         setDiff({
@@ -136,6 +182,20 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
             const eventType = parsed.type || parsed.metadata?.event_type;
             const data = parsed.data;
             if (!data) return;
+            if (eventType === 'shopify.product.reconcile.started') return;
+
+            if (eventType === 'shopify.product.reconcile.completed') {
+                if (!reconcileCorrRef.current || data.correlation_id !== reconcileCorrRef.current) return;
+                reconcileCorrRef.current = null;
+                if (data.error) {
+                    setErrorMessage(String(data.error));
+                    setPhase('error');
+                    return;
+                }
+                aplicarConteos(data);
+                return;
+            }
+
             const corr = correlationRef.current;
             if (!corr || data.correlation_id !== corr) return;
 
@@ -161,13 +221,13 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
         } catch {
             return;
         }
-    }, [onCompleted]);
+    }, [onCompleted, aplicarConteos]);
 
     useSSE({
         businessId: businessId ?? 0,
         eventTypes: PRODUCT_EVENT_TYPES,
         onMessage: handleMessage,
-        enabled: isOpen && (phase === 'running' || phase === 'done'),
+        enabled: isOpen && (phase === 'analyzing' || phase === 'running' || phase === 'done'),
     });
 
     if (!isOpen) return null;

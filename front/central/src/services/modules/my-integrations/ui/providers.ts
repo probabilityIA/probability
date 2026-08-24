@@ -11,6 +11,7 @@ import { ShopifyProductSyncModal } from '@/services/integrations/ecommerce/shopi
 import { MercadoLibreProductSyncModal } from '@/services/integrations/ecommerce/mercadolibre/ui/components/MercadoLibreProductSyncModal';
 import { WooProductSyncModal } from '@/services/integrations/ecommerce/woocommerce/ui/components/WooProductSyncModal';
 import { JumpsellerProductSyncModal } from '@/services/integrations/ecommerce/jumpseller/ui/components/JumpsellerProductSyncModal';
+import { TiendanubeProductSyncModal } from '@/services/integrations/ecommerce/tiendanube/ui/components/TiendanubeProductSyncModal';
 
 export interface ProductSyncModalProps {
     isOpen: boolean;
@@ -141,6 +142,7 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         },
         onlyInChannelField: 'only_in_tiendanube',
         channelNoSkuField: 'tiendanube_no_sku',
+        ProductSyncModal: TiendanubeProductSyncModal,
     },
     33: {
         typeId: 33,

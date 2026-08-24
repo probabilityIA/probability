@@ -151,6 +151,15 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 		Int("items", len(items)).
 		Msg("Processing order event for inventory")
 
+	if skipInventory(msg.Metadata) {
+		c.logger.Info(ctx).
+			Str("event_type", msg.EventType).
+			Str("order_id", msg.OrderID).
+			Uint("business_id", businessID).
+			Msg("Order marked as historical import, inventory movement skipped")
+		return
+	}
+
 	switch msg.EventType {
 	case "order.created":
 		c.handleReserve(ctx, msg, businessID, items)
@@ -167,6 +176,18 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 	case "order.status_changed":
 		c.handleStatusChanged(ctx, msg, businessID, items)
 	}
+}
+
+func skipInventory(metadata map[string]any) bool {
+	if metadata == nil {
+		return false
+	}
+	value, ok := metadata["skip_inventory"]
+	if !ok {
+		return false
+	}
+	flag, ok := value.(bool)
+	return ok && flag
 }
 
 func (c *OrderConsumer) handleReserve(ctx context.Context, msg orderEventMessage, businessID uint, items []dtos.OrderInventoryItem) {

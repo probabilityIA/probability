@@ -139,6 +139,8 @@ func (c *TiendanubeClient) do(ctx context.Context, cred domain.Credential, metho
 			}
 			time.Sleep(retryAfter(headers, attempt))
 			continue
+		case status == http.StatusNotFound:
+			return nil, headers, fmt.Errorf("%w: %s %s: %s", domain.ErrResourceNotFound, method, path, truncate(raw))
 		case status >= 400:
 			return nil, headers, fmt.Errorf("tiendanube client: %s %s returned %d: %s", method, path, status, truncate(raw))
 		}

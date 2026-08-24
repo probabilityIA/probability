@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/pagination/page_sizes.dart';
 import '../../domain/entities.dart';
 import '../providers/action_provider.dart';
 
@@ -11,8 +12,6 @@ class ActionListScreen extends StatefulWidget {
 }
 
 class _ActionListScreenState extends State<ActionListScreen> {
-  int _currentPage = 1;
-  static const int _pageSize = 20;
 
   @override
   void initState() {
@@ -24,16 +23,10 @@ class _ActionListScreenState extends State<ActionListScreen> {
 
   void _loadActions() {
     context.read<ActionProvider>().fetchActions(
-          params: GetActionsParams(page: _currentPage, pageSize: _pageSize),
+          params: GetActionsParams(page: 1, pageSize: PageSizes.catalog),
         );
   }
 
-  void _goToPage(int page) {
-    setState(() => _currentPage = page);
-    context.read<ActionProvider>().fetchActions(
-          params: GetActionsParams(page: page, pageSize: _pageSize),
-        );
-  }
 
   Future<void> _showFormDialog({ActionEntity? action}) async {
     final saved = await showDialog<bool>(
@@ -204,14 +197,6 @@ class _ActionListScreenState extends State<ActionListScreen> {
                   ),
                 ),
                 // Pagination
-                if (provider.pagination != null &&
-                    provider.pagination!.lastPage > 1)
-                  _PaginationBar(
-                    currentPage: provider.pagination!.currentPage,
-                    totalPages: provider.pagination!.lastPage,
-                    total: provider.pagination!.total,
-                    onPageChanged: _goToPage,
-                  ),
               ],
             ),
           );
@@ -380,56 +365,3 @@ class _ActionFormDialogState extends State<_ActionFormDialog> {
 // --------------------------------------------------
 // Shared Widgets
 // --------------------------------------------------
-class _PaginationBar extends StatelessWidget {
-  final int currentPage;
-  final int totalPages;
-  final int total;
-  final ValueChanged<int> onPageChanged;
-
-  const _PaginationBar({
-    required this.currentPage,
-    required this.totalPages,
-    required this.total,
-    required this.onPageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('$total resultados',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: currentPage > 1
-                    ? () => onPageChanged(currentPage - 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
-              ),
-              Text('$currentPage / $totalPages',
-                  style: const TextStyle(fontSize: 13)),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: currentPage < totalPages
-                    ? () => onPageChanged(currentPage + 1)
-                    : null,
-                iconSize: 20,
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}

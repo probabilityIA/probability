@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	stderrors "errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ func newDashboardUseCase(repo *mocks.RepositoryMock) domain.IUseCase {
 	if repo == nil {
 		repo = &mocks.RepositoryMock{}
 	}
-	return New(repo, mocks.NewSilentLogger())
+	return New(repo, nil, mocks.NewSilentLogger())
 }
 
 func uintPtr(v uint) *uint { return &v }
@@ -24,7 +25,7 @@ func uintPtr(v uint) *uint { return &v }
 func statsDe(t *testing.T, repo *mocks.RepositoryMock, businessID *uint) *domain.DashboardStats {
 	t.Helper()
 	got, err := newDashboardUseCase(repo).
-		GetDashboardStats(context.Background(), businessID, nil, nil, nil, nil)
+		GetDashboardStats(context.Background(), businessID, nil, nil, nil, nil, false)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	return got
@@ -105,7 +106,7 @@ func TestGetDashboardStats_ConsultasCriticas_AbortanElDashboard(t *testing.T) {
 			tc.aplica(repo)
 
 			got, err := newDashboardUseCase(repo).
-				GetDashboardStats(context.Background(), nil, nil, nil, nil, nil)
+				GetDashboardStats(context.Background(), nil, nil, nil, nil, nil, false)
 
 			assert.ErrorIs(t, err, dbErr)
 			assert.Nil(t, got)
@@ -244,18 +245,24 @@ func TestGetDashboardStats_ConFiltroDeBusiness_NoConsultaNiMuestraOtrosNegocios(
 
 func TestGetDashboardStats_PropagaElBusinessIDATodasLasConsultas(t *testing.T) {
 	negocio := uintPtr(26)
+	var muVistos sync.Mutex
 	var vistos []*uint
+	anotaVisto := func(b *uint) {
+		muVistos.Lock()
+		defer muVistos.Unlock()
+		vistos = append(vistos, b)
+	}
 	repo := &mocks.RepositoryMock{
 		GetTotalOrdersFn: func(ctx context.Context, b, i *uint, s, e *time.Time) (int64, error) {
-			vistos = append(vistos, b)
+			anotaVisto(b)
 			return 0, nil
 		},
 		GetTopCustomersFn: func(ctx context.Context, b, i *uint, l int, s, e *time.Time) ([]domain.TopCustomer, error) {
-			vistos = append(vistos, b)
+			anotaVisto(b)
 			return nil, nil
 		},
 		GetShipmentsByCarrierFn: func(ctx context.Context, b, i *uint, s, e *time.Time) ([]domain.ShipmentsByCarrier, error) {
-			vistos = append(vistos, b)
+			anotaVisto(b)
 			return nil, nil
 		},
 	}
@@ -285,7 +292,7 @@ func TestGetDashboardStats_PropagaElIntegrationIDYElRangoDeFechas(t *testing.T) 
 	}
 
 	_, err := newDashboardUseCase(repo).GetDashboardStats(
-		context.Background(), nil, integracion, nil, &desde, &hasta)
+		context.Background(), nil, integracion, nil, &desde, &hasta, false)
 
 	require.NoError(t, err)
 	require.NotNil(t, vistaIntegracion)
@@ -307,7 +314,7 @@ func TestGetDashboardStats_ElInicioDeSemanaSoloVaALaConsultaDeDiaDeSemana(t *tes
 	}
 
 	_, err := newDashboardUseCase(repo).GetDashboardStats(
-		context.Background(), nil, nil, &inicioSemana, nil, nil)
+		context.Background(), nil, nil, &inicioSemana, nil, nil, false)
 
 	require.NoError(t, err)
 	require.NotNil(t, visto)
@@ -325,30 +332,36 @@ func TestGetDashboardStats_UsaLaVersionFiltradaDeEnviosPorEstado(t *testing.T) {
 }
 
 func TestGetDashboardStats_LosTopsPidenDiez(t *testing.T) {
+	var muLimites sync.Mutex
 	limites := map[string]int{}
+	anota := func(nombre string, l int) {
+		muLimites.Lock()
+		defer muLimites.Unlock()
+		limites[nombre] = l
+	}
 	repo := &mocks.RepositoryMock{
 		GetTopCustomersFn: func(ctx context.Context, b, i *uint, l int, s, e *time.Time) ([]domain.TopCustomer, error) {
-			limites["customers"] = l
+			anota("customers", l)
 			return nil, nil
 		},
 		GetOrdersByLocationFn: func(ctx context.Context, b, i *uint, l int, s, e *time.Time) ([]domain.OrderCountByLocation, error) {
-			limites["location"] = l
+			anota("location", l)
 			return nil, nil
 		},
 		GetTopDriversFn: func(ctx context.Context, b, i *uint, l int, s, e *time.Time) ([]domain.TopDriver, error) {
-			limites["drivers"] = l
+			anota("drivers", l)
 			return nil, nil
 		},
 		GetDriversByLocationFn: func(ctx context.Context, b, i *uint, l int, s, e *time.Time) ([]domain.DriverByLocation, error) {
-			limites["driversByLocation"] = l
+			anota("driversByLocation", l)
 			return nil, nil
 		},
 		GetTopProductsFn: func(ctx context.Context, b, i *uint, l int, s, e *time.Time) ([]domain.TopProduct, error) {
-			limites["products"] = l
+			anota("products", l)
 			return nil, nil
 		},
 		GetShipmentsByWarehouseFn: func(ctx context.Context, b, i *uint, l int, s, e *time.Time) ([]domain.ShipmentsByWarehouse, error) {
-			limites["warehouse"] = l
+			anota("warehouse", l)
 			return nil, nil
 		},
 	}

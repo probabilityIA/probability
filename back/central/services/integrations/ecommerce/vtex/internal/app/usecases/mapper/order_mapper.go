@@ -245,6 +245,12 @@ func MapVTEXOrderToProbability(order *domain.VTEXOrder, rawJSON []byte) *canonic
 
 	// Channel metadata
 	if rawJSON != nil {
+		secciones := canonical.ExtractSections(rawJSON, canonical.VTEXSections)
+		dto.FinancialDetails = secciones.Financial
+		dto.ShippingDetails = secciones.Shipping
+		dto.PaymentDetails = secciones.Payment
+		dto.FulfillmentDetails = secciones.Fulfillment
+
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "vtex",
 			RawData:       rawJSON,
@@ -365,4 +371,8 @@ func mapVTEXShippingStatus(vtexOrderStatus string) string {
 	default:
 		return "pending"
 	}
+}
+
+func MapVTEXStatus(vtexStatus string) string {
+	return mapVTEXOrderStatus(vtexStatus)
 }

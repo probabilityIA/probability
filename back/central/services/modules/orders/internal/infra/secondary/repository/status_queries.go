@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"gorm.io/gorm"
 
@@ -174,4 +175,40 @@ func (r *Repository) GetFulfillmentStatusIDByCode(ctx context.Context, code stri
 	}
 
 	return &fulfillmentStatus.ID, nil
+}
+
+func (r *Repository) IsChannelStatusInboundEnabled(ctx context.Context, integrationID uint) (bool, error) {
+	if integrationID == 0 {
+		return true, nil
+	}
+
+	var raw []byte
+	err := r.db.Conn(ctx).
+		Table("integrations").
+		Select("config").
+		Where("id = ?", integrationID).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(&raw).Error
+	if err != nil {
+		return true, err
+	}
+	if len(raw) == 0 {
+		return true, nil
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(raw, &config); err != nil {
+		return true, nil
+	}
+
+	valor, existe := config["status_inbound_enabled"]
+	if !existe {
+		return true, nil
+	}
+	habilitado, ok := valor.(bool)
+	if !ok {
+		return true, nil
+	}
+	return habilitado, nil
 }

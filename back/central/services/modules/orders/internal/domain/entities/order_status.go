@@ -222,3 +222,18 @@ func (s OrderStatus) CanTransitionTo(target OrderStatus) bool {
 	}
 	return false
 }
+
+// channelOverrides son los estados que el canal puede imponer siempre, incluso
+// cuando el negocio apagó la entrada de estados desde ese canal. Una cancelación
+// o un reembolso hechos en la tienda tienen que llegar igual: si no, se despacha
+// una orden que el comprador ya canceló.
+var channelOverrides = map[OrderStatus]bool{
+	OrderStatusCancelled: true,
+	OrderStatusRefunded:  true,
+}
+
+// IsChannelOverride indica si el estado es uno de los que el canal impone
+// siempre, sin importar la configuración de la integración.
+func (s OrderStatus) IsChannelOverride() bool {
+	return channelOverrides[s]
+}

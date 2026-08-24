@@ -33,12 +33,21 @@ import 'services/modules/storefront/ui/providers/storefront_provider.dart';
 import 'services/modules/publicsite/ui/providers/publicsite_provider.dart';
 import 'services/modules/website_config/ui/providers/website_config_provider.dart';
 import 'services/modules/my_integrations/ui/providers/my_integrations_provider.dart';
+import 'services/modules/my_integrations/ui/providers/comparison_lists_provider.dart';
+import 'services/modules/my_integrations/ui/providers/orders_compare_provider.dart';
+import 'services/modules/my_integrations/ui/providers/saved_comparison_provider.dart';
+import 'services/modules/my_integrations/ui/providers/sync_activity_provider.dart';
+import 'services/modules/mobile/ui/providers/order_full_provider.dart';
 // Integration providers
 import 'services/integrations/core/ui/providers/integration_provider.dart';
+import 'shared/theme/active_brand.dart';
 import 'shared/theme/app_theme.dart';
+import 'shared/widgets/splash_screen.dart';
+import 'shared/utils/image_memory.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  ImageMemory.applyLowEndBudget();
 
   final tokenStorage = TokenStorage();
   final apiClient = ApiClient();
@@ -71,18 +80,41 @@ class ProbabilityApp extends StatefulWidget {
 class _ProbabilityAppState extends State<ProbabilityApp> {
   late final AppRouter _appRouter;
 
+  bool _sessionReady = false;
+  bool _introDone = false;
+
   @override
   void initState() {
     super.initState();
     _appRouter = AppRouter(loginProvider: widget.loginProvider);
-    widget.loginProvider.restoreSession();
+    widget.loginProvider.restoreSession().whenComplete(() {
+      if (mounted) setState(() => _sessionReady = true);
+    });
   }
+
+  bool get _showSplash => !_introDone || !_sessionReady;
+
+  Widget _splash() => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        home: SplashScreen(
+          hold: !_sessionReady,
+          onFinished: () {
+            if (mounted) setState(() => _introDone = true);
+          },
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
+    if (_showSplash) return _splash();
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: widget.loginProvider),
+        ChangeNotifierProvider(
+          create: (_) => OrderFullProvider(apiClient: widget.apiClient),
+        ),
         ChangeNotifierProvider(
           create: (_) => UserProvider(apiClient: widget.apiClient),
         ),
@@ -165,18 +197,44 @@ class _ProbabilityAppState extends State<ProbabilityApp> {
         ChangeNotifierProvider(
           create: (_) => MyIntegrationsProvider(apiClient: widget.apiClient),
         ),
+        ChangeNotifierProvider(
+          create: (_) => SyncActivityProvider(apiClient: widget.apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrdersCompareProvider(apiClient: widget.apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => SavedComparisonProvider(apiClient: widget.apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ProductMatrixProvider(apiClient: widget.apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FindingItemsProvider(apiClient: widget.apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => InventoryRowsProvider(apiClient: widget.apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => InventoryMatrixProvider(apiClient: widget.apiClient),
+        ),
         // Integration core provider
         ChangeNotifierProvider(
           create: (_) => IntegrationProvider(apiClient: widget.apiClient),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'Probability Central',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
-        routerConfig: _appRouter.router,
-        debugShowCheckedModeBanner: false,
+      child: Builder(
+        builder: (context) {
+          final brand = ActiveBrand.watch(context);
+          return MaterialApp.router(
+            title: 'Probability Central',
+            theme: AppTheme.lightFor(brand),
+            darkTheme: AppTheme.darkFor(brand),
+            themeMode: ThemeMode.system,
+            routerConfig: _appRouter.router,
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

@@ -33,7 +33,6 @@ const GeozoneMiniMap = dynamic(
 const normalizeLocationName = (str: string) => {
     if (!str) return "";
     let s = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
-    // Remove variations of D.C. to improve matching
     s = s.replace(/,\s*D\.C\./g, "").replace(/\sD\.C\./g, "").replace(/\sDC\b/g, "").trim();
     return s;
 };
@@ -133,7 +132,6 @@ const step1Schema = z.object({
     codPaymentMethod: z.enum(["cash", "data_phone"]),
 });
 
-// Step 3: Detailed Contact Info Schema
 const step3Schema = z.object({
     originCompany: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres"),
     originFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (limite del transportador)"),
@@ -172,31 +170,23 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    // Async quote tracking: saves correlation_id while waiting for SSE response
     const [pendingCorrelationId, setPendingCorrelationId] = useState<string | null>(null);
     const pendingStep1DataRef = useRef<Step1Values | null>(null);
 
-    // Async guide generation tracking
     const [pendingGuideCorrelationId, setPendingGuideCorrelationId] = useState<string | null>(null);
     const [guideGenerationRequested, setGuideGenerationRequested] = useState(false);
 
-    // Get businessId from permissions for SSE connection
     const { permissions, isSuperAdmin } = usePermissions();
     const businessId = permissions?.business_id || 0;
-    // For wallet queries: super admin acts on behalf of the order's business
     const effectiveBusinessId = isSuperAdmin ? (order?.business_id ?? 0) : 0;
 
-    // Step 1 data
     const [step1Data, setStep1Data] = useState<Step1Values | null>(null);
 
-    // Step 2 data (quotes)
     const [rates, setRates] = useState<EnvioClickRate[]>([]);
     const [selectedRate, setSelectedRate] = useState<EnvioClickRate | null>(null);
 
-    // Step 3 data
     const [step3Data, setStep3Data] = useState<Step3Values | null>(null);
 
-    // Step 4 data
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
     const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
@@ -269,19 +259,16 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
     const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
 
-    // Guide format states
     const [guideFormats, setGuideFormats] = useState<any[]>([]);
     const [showGuideFormatDropdown, setShowGuideFormatDropdown] = useState(false);
     const [selectedGuideFormat, setSelectedGuideFormat] = useState<string | null>(null);
     const formatDropdownRef = useRef<HTMLDivElement>(null);
 
-    // DANE search states
     const [originSearch, setOriginSearch] = useState("");
     const [destSearch, setDestSearch] = useState("");
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
     
-    // Carrier Offices search states
     const [showOriginOffices, setShowOriginOffices] = useState(false);
     const [showDestOffices, setShowDestOffices] = useState(false);
     const [officeCarrier, setOfficeCarrier] = useState<string | null>(null);
@@ -290,9 +277,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
 
-    // const repo = new ShipmentApiRepository(); // Eliminado para usar Server Actions
-
-    // DANE options
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
         value: code,
         label: `${data.ciudad} (${data.departamento})`
@@ -329,7 +313,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         },
     });
 
-    // Step 3 Form
     const step3Form = useForm<Step3Values>({
         resolver: zodResolver(step3Schema),
         mode: 'onChange',
@@ -356,7 +339,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         },
     });
 
-    // Fetch initial data on open
     const handleWarehouseSelect = (wh: Warehouse) => {
         setSelectedOriginWarehouse(wh);
         const daneCode = wh.city_dane_code || findDaneCode(wh.city || "", wh.state || "") || "";
@@ -371,7 +353,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             } catch {}
         }
 
-        // Step 3
         step3Form.setValue("originCompany", wh.company || wh.name);
         step3Form.setValue("originFirstName", wh.first_name || wh.contact_name?.split(' ')[0] || "");
         step3Form.setValue("originLastName", wh.last_name || wh.contact_name?.split(' ').slice(1).join(' ') || "");
@@ -396,7 +377,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }).then(res => {
                 if (res.data) {
                     setOriginWarehouses(res.data);
-                    // Si la orden ya tiene warehouse_id, pre-seleccionar esa bodega
                     const preselect = order?.warehouse_id
                         ? res.data.find(w => w.id === order.warehouse_id)
                         : res.data.find(w => w.is_default);
@@ -408,10 +388,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         }
     }, [isOpen]);
 
-    // Pre-fill from order
     useEffect(() => {
         if (isOpen && order) {
-            // Step 1
             step1Form.setValue("contentValue", order.total_amount);
             step1Form.setValue("description", `Order ${order.order_number}`);
             step1Form.setValue("destAddress", (order.shipping_street || "").split(" | ")[0], { shouldValidate: true });
@@ -455,7 +433,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         }
     }, [isOpen, order]);
 
-    // Click outside to close DANE dropdowns
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (originRef.current && !originRef.current.contains(event.target as Node)) {
@@ -469,11 +446,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // SSE: listen for async quote/guide results
     useShipmentSSE({
         businessId,
         onQuoteReceived: (data) => {
-            if (pendingCorrelationId && data.correlation_id !== pendingCorrelationId) return;
+            if (!pendingCorrelationId || data.correlation_id !== pendingCorrelationId) return;
             setPendingCorrelationId(null);
             const quotes = data.quotes as any;
             const rates: EnvioClickRate[] = quotes?.data?.rates || quotes?.rates || [];
@@ -490,15 +466,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setLoading(false);
         },
         onQuoteFailed: (data) => {
-            if (pendingCorrelationId && data.correlation_id !== pendingCorrelationId) return;
+            if (!pendingCorrelationId || data.correlation_id !== pendingCorrelationId) return;
             setPendingCorrelationId(null);
             pendingStep1DataRef.current = null;
             setError(data.error_message || "Error al cotizar envío");
             setLoading(false);
         },
         onGuideGenerated: async (data) => {
-            if (!pendingGuideCorrelationId) return; // no pending guide request in this modal
-            // Only reject if correlation_id is present AND doesn't match (backend now includes it)
+            if (!pendingGuideCorrelationId) return;
             if (data.correlation_id && data.correlation_id !== pendingGuideCorrelationId) return;
             setPendingGuideCorrelationId(null);
             if (data.label_url) setGeneratedPdfUrl(data.label_url);
@@ -521,7 +496,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
                 }
 
-                // Fallback to selectedRate.carrier if data.carrier is empty
                 const carrier = data.carrier || selectedRate?.carrier || '';
                 if (onGuideGenerated) onGuideGenerated({
                     tracking_number: data.tracking_number,
@@ -539,7 +513,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         },
     });
 
-    // Timeout: if quote SSE never arrives, stop loading after 30s
     useEffect(() => {
         if (!pendingCorrelationId) return;
         const timeout = setTimeout(() => {
@@ -551,7 +524,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         return () => clearTimeout(timeout);
     }, [pendingCorrelationId]);
 
-    // Timeout: if guide SSE never arrives, stop loading after 45s
     useEffect(() => {
         if (!pendingGuideCorrelationId) return;
         const timeout = setTimeout(() => {
@@ -600,7 +572,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Reset on close
     useEffect(() => {
         if (!isOpen) {
             setCurrentStep(1);
@@ -626,7 +597,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         }
     }, [isOpen]);
 
-    // Step 1: Quote (async - sends to queue, result arrives via SSE)
     const handleStep1Submit = async (data: Step1Values) => {
         if (!data.originDaneCode || !data.destDaneCode) {
             setError("⚠️ Por favor selecciona códigos DANE válidos para origen y destino");
@@ -703,7 +673,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 return;
             }
 
-            // Synchronous path: backend polled Redis and returned rates directly
             const syncRates: EnvioClickRate[] = response.data?.rates || [];
             if (syncRates.length > 0) {
                 setRates(syncRates);
@@ -713,22 +682,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 return;
             }
 
-            // No rates available
             setError("No hay transportadoras disponibles para esta ruta. Verifica la integración con tus proveedores logísticos.");
             setLoading(false);
             return;
-
-            // Asynchronous path: wait for SSE response
-            pendingStep1DataRef.current = data;
-            setPendingCorrelationId(response.correlation_id || null);
-            // loading stays true until SSE response arrives
         } catch (err: any) {
             setError(getActionError(err, "Error al cotizar envío"));
             setLoading(false);
         }
     };
 
-    // Step 2: Select Rate (NO avanza automaticamente; el usuario debe presionar Continuar)
     const handleRateSelection = (rate: EnvioClickRate) => {
         setSelectedRate(rate);
     };
@@ -737,12 +699,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         if (selectedRate) setCurrentStep(3);
     };
 
-    // Step 3: Details
     const handleStep3Submit = async (data: Step3Values) => {
-        // Collect all validation errors
         const errors = step3Form.formState.errors;
 
-        // Debug: Log all data and errors
         console.log('📋 Step 3 Data:', data);
         console.log('❌ Step 3 Errors:', errors);
         console.log('📊 Error Count:', Object.keys(errors).length);
@@ -768,7 +727,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 myShipmentReference: "Mi Referencia de Envío",
             };
 
-            // Group errors by section
             const originErrors: string[] = [];
             const destErrors: string[] = [];
 
@@ -791,7 +749,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
             setError(`Completa: ${sections.join(' | ')}`);
 
-            // Scroll al campo con error
             setTimeout(() => {
                 const firstErrorField = Object.keys(errors)[0];
                 const input = document.querySelector(`[name="${firstErrorField}"]`) as HTMLElement;
@@ -806,7 +763,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         setCurrentStep(4);
     };
 
-    // Step 4: Generate Guide
     const handleFinalGenerate = async () => {
         const missingFields: string[] = [];
 
@@ -825,7 +781,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             return;
         }
 
-        // Check wallet balance
         if (!selectedRate || !step3Data || !step1Data) return;
         const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (step1Data.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
         const codCarrierFee = selectedRate.cod ? (selectedRate.codCarrierFee ?? 0) : 0;
@@ -895,7 +850,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 return;
             }
 
-            // Sync path: backend returned guide data directly (legacy)
             if (response.data?.data?.url) {
                 const tracker = response.data.data.tracker;
                 const carrier = (response.data?.data as any)?.carrier;
@@ -925,11 +879,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 return;
             }
 
-            // Async path (202 Accepted): wait for SSE event shipment.guide_generated
             setPendingGuideCorrelationId((response.data as any)?.correlation_id || null);
             setGuideGenerationRequested(true);
             setCurrentStep(4);
-            // loading stays true until SSE arrives or timeout fires
         } catch (err: any) {
             setError(getActionError(err, "Error al generar guía"));
             setLoading(false);
@@ -954,7 +906,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     <Stepper steps={STEPS} currentStep={currentStep} />
                 </div>
 
-                {/* Content */}
                 <div className="p-3 flex flex-col flex-1 overflow-hidden min-h-0">
                     {error && (
                         <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
@@ -979,7 +930,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </div>
                     )}
 
-                    {/* Step 1: Origin/Destination/Package */}
                     {currentStep === 1 && (
                          
                         <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="flex flex-col h-full overflow-hidden min-h-0" data-testid="step1-form">
@@ -1263,7 +1213,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </form>
                     )}
 
-                    {/* Step 2: Quote Selection */}
                     {currentStep === 2 && (
                         <div className="flex flex-row h-full gap-3 overflow-hidden">
                             {order?.business_id && order.business_id > 0 && order.id && (
@@ -1624,7 +1573,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </div>
                     )}
 
-                    {/* Step 3: Details */}
                     {currentStep === 3 && (
                         <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="flex flex-col h-full overflow-hidden">
                             <div className="overflow-y-auto flex-1 space-y-3 pr-1">
@@ -1697,10 +1645,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </form>
                     )}
 
-                    {/* Step 4: Payment & Confirmation */}
                     {currentStep === 4 && selectedRate && (
                         <div className="flex flex-col h-full w-full overflow-hidden gap-3">
-                            {/* Resumen de Envío - No Scrolleable */}
                             <div className="flex-shrink-0 space-y-3">
                                 <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200">Resumen de tu envío</h3>
 
@@ -1744,7 +1690,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 </div>
                             </div>
 
-                            {/* Información de Pago - Con Scroll */}
                             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-3 pr-3" style={{ maxHeight: 'calc(85vh - 280px)' }}>
                                 <div>
                                     <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-3">Selecciona tu método de pago</h4>
@@ -1857,9 +1802,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     )}
                 </div>
 
-                {/* Footer with Buttons */}
                 <div className="bg-white dark:bg-gray-800 border-t px-3 py-3 flex-shrink-0 flex justify-between items-center gap-3">
-                    {/* Back Button */}
                     {(currentStep === 2 || currentStep === 3 || currentStep === 4) && !generatedPdfUrl && (
                         <Button
                             variant="outline"
@@ -1870,12 +1813,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </Button>
                     )}
 
-                    {/* Spacer when no back button */}
                     {(currentStep === 1 || (currentStep === 4 && generatedPdfUrl)) && (
                         <div />
                     )}
 
-                    {/* Step 1: Next Button */}
                     {currentStep === 1 && (
                         <Button
                             variant="primary"
@@ -1929,7 +1870,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </div>
                     )}
 
-                    {/* Step 3: Next Button - DISABLED if form has errors */}
                     {currentStep === 3 && (
                         <Button
                             className="shipment-btn-primary"
@@ -1951,7 +1891,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </Button>
                     )}
 
-                    {/* Step 4: Pay Button */}
                     {currentStep === 4 && !generatedPdfUrl && (
                         <Button
                             onClick={handleFinalGenerate}

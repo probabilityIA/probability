@@ -18,6 +18,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { MercadoLibreProductSyncModal } from './MercadoLibreProductSyncModal';
 import { MercadoLibreInventorySection, MeliInventoryConfig } from './MercadoLibreInventorySection';
+import {
+    ChannelStatusSyncSection,
+    readChannelStatusSyncConfig,
+    writeChannelStatusSyncConfig,
+    type ChannelStatusSyncConfig,
+} from '@/services/integrations/core/ui/components/ChannelStatusSyncSection';
 import { MercadoLibreWarehouseMappingSection, MeliWarehouseMapping } from './MercadoLibreWarehouseMappingSection';
 import { MercadoLibreInventorySyncModal } from './MercadoLibreInventorySyncModal';
 import { ProductMatchRulesCard } from '@/services/integrations/core/ui/components/ProductMatchRulesCard';
@@ -71,6 +77,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
     const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
     const [reconnecting, setReconnecting] = useState(false);
+    const [statusSync, setStatusSync] = useState<ChannelStatusSyncConfig>(readChannelStatusSyncConfig(initialData?.config));
     const [inventorySync, setInventorySync] = useState<MeliInventoryConfig>(() => {
         const c: any = initialData?.config || {};
         return {
@@ -224,6 +231,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 ...(initialData?.config || {}),
                 cod_includes_shipping: codIncludesShipping,
                 seller_id: formData.seller_id || undefined,
+                ...writeChannelStatusSyncConfig(statusSync),
                 inventory_sync_enabled: inventorySync.enabled,
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
@@ -619,6 +627,14 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                     channelName="Mercado Libre"
                 />
             )}
+
+            <div className="mb-4">
+                <ChannelStatusSyncSection
+                    channelName="Mercado Libre"
+                    value={statusSync}
+                    onChange={setStatusSync}
+                />
+            </div>
 
             <MercadoLibreInventorySection
                 value={inventorySync}

@@ -32,28 +32,57 @@ func (uc *UseCaseUpdateOrder) updateOrderStatuses(ctx context.Context, order *en
 	return hasChanges
 }
 
-// updateOrderStatus actualiza el estado general de la orden.
-// Este método es usado por integraciones (Shopify, etc.) que son fuente de verdad de su estado.
-// NO aplica reglas de transición — las integraciones pueden "saltar" estados.
-// Las reglas de transición estrictas solo aplican en PUT /orders/:id/status (usecaseupdatestatus).
+// channelStatusInboundEnabled indica si esta integración acepta que el canal
+// mueva el estado de sus órdenes. Por defecto sí: apagarlo es una decisión
+// explícita del negocio.
+func (uc *UseCaseUpdateOrder) channelStatusInboundEnabled(ctx context.Context, order *entities.ProbabilityOrder) bool {
+	if order.IntegrationID == 0 {
+		return true
+	}
+	habilitado, err := uc.repo.IsChannelStatusInboundEnabled(ctx, order.IntegrationID)
+	if err != nil {
+		uc.logger.Warn().
+			Err(err).
+			Str("order_id", order.ID).
+			Msg("No se pudo leer la configuración de entrada de estados; se acepta el estado del canal")
+		return true
+	}
+	return habilitado
+}
+
+// updateOrderStatus actualiza el estado general de la orden a partir de lo que
+// reporta la integración. No aplica las reglas de transición internas: las
+// estrictas viven en PUT /orders/:id/status (usecaseupdatestatus).
 func (uc *UseCaseUpdateOrder) updateOrderStatus(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
-	// Actualizar Status (sin validar transición — viene de integración externa)
+	currentStatus := entities.OrderStatus(order.Status)
+	targetStatus := entities.OrderStatus(dto.Status)
+
+	// Cada integración decide si el canal puede mover el estado de sus órdenes.
+	// Con la entrada apagada solo pasan cancelaciones y reembolsos.
+	channelWins := uc.channelStatusInboundEnabled(ctx, order) || targetStatus.IsChannelOverride()
+
 	if dto.Status != "" && order.Status != dto.Status {
-		// Log si la transición no sería válida en el flujo interno
-		currentStatus := entities.OrderStatus(order.Status)
-		targetStatus := entities.OrderStatus(dto.Status)
-		if !currentStatus.CanTransitionTo(targetStatus) && targetStatus != entities.OrderStatusCancelled {
-			uc.logger.Warn().
+		if !channelWins {
+			uc.logger.Info().
 				Str("order_id", order.ID).
-				Str("from", order.Status).
-				Str("to", dto.Status).
+				Str("current", order.Status).
+				Str("channel_status", dto.Status).
 				Str("integration_type", dto.IntegrationType).
-				Msg("Integración realizó salto de estado que no cumple flujo v2 — aceptado por ser fuente externa")
+				Msg("La integración tiene apagada la entrada de estados; se ignora el estado que llega del canal")
+		} else {
+			if !currentStatus.CanTransitionTo(targetStatus) && targetStatus != entities.OrderStatusCancelled {
+				uc.logger.Warn().
+					Str("order_id", order.ID).
+					Str("from", order.Status).
+					Str("to", dto.Status).
+					Str("integration_type", dto.IntegrationType).
+					Msg("Integración realizó salto de estado que no cumple flujo v2 — aceptado por ser fuente externa")
+			}
+			order.Status = dto.Status
+			changed = true
 		}
-		order.Status = dto.Status
-		changed = true
 	}
 
 	// Actualizar OriginalStatus y mapear StatusID
@@ -61,11 +90,14 @@ func (uc *UseCaseUpdateOrder) updateOrderStatus(ctx context.Context, order *enti
 		order.OriginalStatus = dto.OriginalStatus
 		changed = true
 
-		// Buscar mapeo de estado cuando cambia el OriginalStatus
-		mappedStatusID := uc.mapOrderStatusID(ctx, dto)
-		if order.StatusID == nil || (mappedStatusID != nil && *order.StatusID != *mappedStatusID) || (mappedStatusID == nil && order.StatusID != nil) {
-			order.StatusID = mappedStatusID
-			changed = true
+		// El estado del canal se registra siempre, pero el StatusID solo se
+		// remapea cuando el canal aún puede mandar sobre esta orden.
+		if channelWins {
+			mappedStatusID := uc.mapOrderStatusID(ctx, dto)
+			if order.StatusID == nil || (mappedStatusID != nil && *order.StatusID != *mappedStatusID) || (mappedStatusID == nil && order.StatusID != nil) {
+				order.StatusID = mappedStatusID
+				changed = true
+			}
 		}
 	}
 
@@ -158,6 +190,16 @@ func (uc *UseCaseUpdateOrder) mapOrderStatusID(ctx context.Context, dto *dtos.Pr
 func (uc *UseCaseUpdateOrder) mapPaymentStatusID(ctx context.Context, dto *dtos.ProbabilityOrderDTO) *uint {
 	if dto.PaymentStatusID != nil && *dto.PaymentStatusID > 0 {
 		return dto.PaymentStatusID
+	}
+
+	for _, p := range dto.Payments {
+		if p.Status == "completed" {
+			paidID, err := uc.repo.GetPaymentStatusIDByCode(ctx, "paid")
+			if err == nil && paidID != nil {
+				return paidID
+			}
+			break
+		}
 	}
 
 	if dto.IntegrationType == "shopify" && len(dto.PaymentDetails) > 0 {

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../shared/pagination/paged_list_controller.dart';
 import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -7,31 +8,41 @@ import '../../infra/repository/vehicles_repository.dart';
 import '../../../../../core/errors/error_parser.dart';
 
 class VehicleProvider extends ChangeNotifier {
+  VehicleProvider({required ApiClient apiClient}) : _apiClient = apiClient {
+    list = PagedListController<VehicleInfo>(fetcher: _fetchPage);
+    list.addListener(notifyListeners);
+  }
+
   final ApiClient _apiClient;
-  List<VehicleInfo> _vehicles = [];
-  Pagination? _pagination;
-  bool _isLoading = false;
+  late final PagedListController<VehicleInfo> list;
+
+  int? _businessId;
+  String? _typeFilter;
+  String? _statusFilter;
   String? _error;
-  int _page = 1;
-  final int _pageSize = 20;
 
-  VehicleProvider({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  List<VehicleInfo> get vehicles => _vehicles;
-  Pagination? get pagination => _pagination;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+  List<VehicleInfo> get vehicles => list.loadedItems;
+  bool get isLoading => list.isLoading;
+  String? get error => _error ?? list.error;
 
   VehicleUseCases get _useCases => VehicleUseCases(VehicleApiRepository(_apiClient));
 
-  Future<void> fetchVehicles({int? businessId, String? type, String? status}) async {
-    _isLoading = true; _error = null; notifyListeners();
-    try {
-      final params = GetVehiclesParams(page: _page, pageSize: _pageSize, businessId: businessId, type: type, status: status);
-      final response = await _useCases.getVehicles(params);
-      _vehicles = response.data; _pagination = response.pagination;
-    } catch (e) { _error = parseError(e); }
-    _isLoading = false; notifyListeners();
+  Future<PaginatedResponse<VehicleInfo>> _fetchPage(int page, int pageSize) {
+    return _useCases.getVehicles(GetVehiclesParams(
+      page: page,
+      pageSize: pageSize,
+      businessId: _businessId,
+      type: _typeFilter,
+      status: _statusFilter,
+    ));
+  }
+
+  Future<void> fetchVehicles({int? businessId, String? type, String? status}) {
+    _businessId = businessId;
+    _typeFilter = type;
+    _statusFilter = status;
+    _error = null;
+    return list.refresh();
   }
 
   Future<VehicleInfo?> createVehicle(CreateVehicleDTO data, {int? businessId}) async {
@@ -46,5 +57,10 @@ class VehicleProvider extends ChangeNotifier {
     try { await _useCases.deleteVehicle(id, businessId: businessId); return true; } catch (e) { _error = parseError(e); notifyListeners(); return false; }
   }
 
-  void setPage(int page) { _page = page; }
+  @override
+  void dispose() {
+    list.removeListener(notifyListeners);
+    list.dispose();
+    super.dispose();
+  }
 }

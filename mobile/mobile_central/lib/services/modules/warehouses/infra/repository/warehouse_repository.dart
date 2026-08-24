@@ -15,7 +15,7 @@ class WarehouseApiRepository implements IWarehouseRepository {
     final response = await _client.get('/warehouses', queryParameters: params?.toQueryParams());
     final data = response.data;
     final items = (data['data'] as List<dynamic>?)?.map((e) => Warehouse.fromJson(e)).toList() ?? [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

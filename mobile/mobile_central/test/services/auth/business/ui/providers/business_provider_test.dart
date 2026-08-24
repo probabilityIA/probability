@@ -176,8 +176,9 @@ void main() {
       expect(provider.businessTypes, isEmpty);
     });
 
-    test('has null pagination', () {
-      expect(provider.pagination, isNull);
+    test('has empty paged list', () {
+      expect(provider.list.itemCount, 0);
+      expect(provider.list.total, 0);
     });
 
     test('is not loading', () {
@@ -227,8 +228,7 @@ void main() {
       expect(provider.businesses.length, 2);
       expect(provider.businesses[0].name, 'Biz A');
       expect(provider.businesses[1].name, 'Biz B');
-      expect(provider.pagination, isNotNull);
-      expect(provider.pagination!.total, 2);
+      expect(provider.list.total, 2);
       expect(provider.isLoading, false);
       expect(provider.error, isNull);
     });

@@ -188,7 +188,16 @@ export interface WebhookResponse {
     data: WebhookInfo;
 }
 
-// Información de un webhook de Shopify (desde la API)
+// Información de un webhook de un canal (desde la API del proveedor)
+export interface IntegrationWebhookInfo {
+    id: string;
+    address: string;
+    topic: string;
+    format: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface ShopifyWebhookInfo {
     id: string;
     address: string;

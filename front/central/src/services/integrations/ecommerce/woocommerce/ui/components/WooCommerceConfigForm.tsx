@@ -10,6 +10,12 @@ import { getBusinessesSimpleAction } from '@/services/auth/business/infra/action
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { WooProductSyncModal } from './WooProductSyncModal';
 import { WooCommerceInventorySection, WooInventoryConfig } from './WooCommerceInventorySection';
+import {
+    ChannelStatusSyncSection,
+    readChannelStatusSyncConfig,
+    writeChannelStatusSyncConfig,
+    type ChannelStatusSyncConfig,
+} from '@/services/integrations/core/ui/components/ChannelStatusSyncSection';
 import { WooCommerceInventorySyncModal } from './WooCommerceInventorySyncModal';
 import { WooWebhookManager } from './WooWebhookManager';
 import { getWooPluginZipAction } from '../../infra/actions';
@@ -152,6 +158,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
+    const [statusSync, setStatusSync] = useState<ChannelStatusSyncConfig>(readChannelStatusSyncConfig(initialData?.config));
     const [inventorySync, setInventorySync] = useState<WooInventoryConfig>(() => {
         const c: any = initialData?.config || {};
         return {
@@ -339,6 +346,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 cod_includes_shipping: codIncludesShipping,
                 allowed_carriers_cod: allowedCarriersCOD,
                 allowed_carriers_prepaid: allowedCarriersPrepaid,
+                ...writeChannelStatusSyncConfig(statusSync),
                 inventory_sync_enabled: inventorySync.enabled,
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
@@ -746,6 +754,14 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     channelName="WooCommerce"
                 />
             )}
+
+            <div className="mb-4">
+                <ChannelStatusSyncSection
+                    channelName="WooCommerce"
+                    value={statusSync}
+                    onChange={setStatusSync}
+                />
+            </div>
 
             <WooCommerceInventorySection
                 value={inventorySync}

@@ -6,7 +6,29 @@ class DashboardUseCases {
 
   DashboardUseCases(this._repository);
 
-  Future<DashboardStatsResponse> getStats({int? businessId, int? integrationId}) {
-    return _repository.getStats(businessId: businessId, integrationId: integrationId);
+  Future<DashboardStatsResponse> getStats({
+    int? businessId,
+    int? integrationId,
+    String? startDate,
+    String? endDate,
+  }) {
+    return _repository.getStats(
+      businessId: businessId,
+      integrationId: integrationId,
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
+  Future<OrderEffectiveness> getEffectiveness({
+    int? businessId,
+    String? startDate,
+    String? endDate,
+  }) {
+    return _repository.getEffectiveness(
+      businessId: businessId,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 }

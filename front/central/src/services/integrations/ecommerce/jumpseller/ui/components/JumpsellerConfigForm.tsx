@@ -8,6 +8,12 @@ import { JumpsellerProductSyncModal } from './JumpsellerProductSyncModal';
 import { JumpsellerInventorySyncModal } from './JumpsellerInventorySyncModal';
 import { JumpsellerOrderSyncModal } from './JumpsellerOrderSyncModal';
 import { JumpsellerInventorySection, JumpsellerInventoryConfig, JumpsellerLocationsInfo } from './JumpsellerInventorySection';
+import {
+    ChannelStatusSyncSection,
+    readChannelStatusSyncConfig,
+    writeChannelStatusSyncConfig,
+    type ChannelStatusSyncConfig,
+} from '@/services/integrations/core/ui/components/ChannelStatusSyncSection';
 import { JumpsellerWebhookManager } from './JumpsellerWebhookManager';
 import { getJumpsellerLocationsAction } from '../../infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -96,6 +102,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
 
+    const [statusSync, setStatusSync] = useState<ChannelStatusSyncConfig>(readChannelStatusSyncConfig(initialData?.config));
     const [inventorySyncEnabled, setInventorySyncEnabled] = useState<boolean>(!!initialData?.config?.inventory_sync_enabled);
     const [inventorySync, setInventorySync] = useState<JumpsellerInventoryConfig>(() => {
         const c: any = initialData?.config || {};
@@ -247,6 +254,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
 
             const config = {
                 cod_includes_shipping: codIncludesShipping,
+                ...writeChannelStatusSyncConfig(statusSync),
                 inventory_sync_enabled: inventorySyncEnabled,
                 status_sync_enabled: statusSyncEnabled,
                 inventory_warehouse_mode: inventorySync.mode,
@@ -534,6 +542,14 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                         subtitle="Actualiza el estado de las ordenes en Jumpseller cuando cambian en Probability"
                         checked={statusSyncEnabled}
                         onToggle={() => setStatusSyncEnabled(!statusSyncEnabled)}
+                    />
+                </div>
+
+                <div className="mb-4">
+                    <ChannelStatusSyncSection
+                        channelName="Jumpseller"
+                        value={statusSync}
+                        onChange={setStatusSync}
                     />
                 </div>
 

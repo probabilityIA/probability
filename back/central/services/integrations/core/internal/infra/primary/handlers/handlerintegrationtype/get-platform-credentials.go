@@ -30,6 +30,13 @@ func (h *IntegrationTypeHandler) buildWebhookURLs(code string) map[string]string
 			"production": base + "/api/v1/webhooks/bancolombia",
 			"sandbox":    base + "/api/v1/webhooks/bancolombia/test",
 		}
+	case "tiendanube", "tienda_nube":
+		return map[string]string{
+			"production":             base + "/api/v1/tiendanube/webhook",
+			"store_redact":           base + "/api/v1/tiendanube/webhook/store-redact",
+			"customers_redact":       base + "/api/v1/tiendanube/webhook/customers-redact",
+			"customers_data_request": base + "/api/v1/tiendanube/webhook/customers-data-request",
+		}
 	}
 	return nil
 }

@@ -57,9 +57,19 @@ func (h *handler) MatchMatrix(c *gin.Context) {
 
 	descarga := c.Query("format") == "csv"
 
+	searchBy := strings.TrimSpace(c.Query("search_by"))
+	if searchBy != "" && !domain.IsMatrixSearchBy(searchBy) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "search_by invalido: usa all, sku, name o barcode",
+		})
+		return
+	}
+
 	query := domain.MatrixQuery{
 		BusinessID: businessID,
 		Search:     strings.TrimSpace(c.Query("q")),
+		SearchBy:   searchBy,
 		All:        descarga,
 	}
 	query.Page, _ = strconv.Atoi(c.Query("page"))

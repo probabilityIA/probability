@@ -193,6 +193,12 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 	}
 
 	if rawJSON != nil {
+		secciones := canonical.ExtractSections(rawJSON, canonical.MeliSections)
+		dto.FinancialDetails = secciones.Financial
+		dto.ShippingDetails = secciones.Shipping
+		dto.PaymentDetails = secciones.Payment
+		dto.FulfillmentDetails = secciones.Fulfillment
+
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "mercadolibre",
 			RawData:       withPackOrderIDs(withShipmentRaw(rawJSON, shipmentRaw), order.PackOrderIDs),
@@ -354,4 +360,8 @@ func withPackOrderIDs(orderRaw []byte, packOrderIDs []int64) []byte {
 		return orderRaw
 	}
 	return out
+}
+
+func MapMeliStatus(meliStatus string) string {
+	return mapMeliOrderStatus(meliStatus)
 }

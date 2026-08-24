@@ -19,7 +19,7 @@ class StorefrontApiRepository implements IStorefrontRepository {
             ?.map((e) => StorefrontProduct.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 
@@ -52,7 +52,7 @@ class StorefrontApiRepository implements IStorefrontRepository {
             ?.map((e) => StorefrontOrder.fromJson(e))
             .toList() ??
         [];
-    final pagination = Pagination.fromJson(data['pagination'] ?? {});
+    final pagination = Pagination.fromEnvelope(data);
     return PaginatedResponse(data: items, pagination: pagination);
   }
 

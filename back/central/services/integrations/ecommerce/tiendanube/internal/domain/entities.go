@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
@@ -60,4 +62,116 @@ type StockTarget struct {
 	ProductID int64
 	VariantID int64
 	Found     bool
+}
+
+type WebhookItem struct {
+	ID        string
+	Address   string
+	Topic     string
+	Format    string
+	CreatedAt string
+	UpdatedAt string
+}
+
+type CreateWebhooksResult struct {
+	WebhookURL       string
+	ExistingWebhooks []WebhookItem
+	CreatedWebhooks  []string
+	FailedWebhooks   []string
+}
+
+type TiendanubeAddress struct {
+	FirstName string
+	LastName  string
+	Name      string
+	Phone     string
+	Street    string
+	Number    string
+	Floor     string
+	Locality  string
+	City      string
+	Province  string
+	Country   string
+	Zipcode   string
+}
+
+type TiendanubeOrderItem struct {
+	ID        string
+	ProductID string
+	VariantID string
+	Name      string
+	SKU       string
+	Price     float64
+	Quantity  int
+	Weight    float64
+	ImageURL  string
+}
+
+type TiendanubeOrder struct {
+	ID                    string
+	Number                string
+	Currency              string
+	Status                string
+	PaymentStatus         string
+	ShippingStatus        string
+	Subtotal              float64
+	Discount              float64
+	Total                 float64
+	ShippingCost          float64
+	Weight                float64
+	ContactName           string
+	ContactEmail          string
+	ContactPhone          string
+	ContactIdentification string
+	Gateway               string
+	GatewayName           string
+	Note                  string
+	ShippingOption        string
+	TrackingNumber        string
+	TrackingURL           string
+	BillingAddress        TiendanubeAddress
+	ShippingAddress       TiendanubeAddress
+	Items                 []TiendanubeOrderItem
+	CreatedAt             string
+	UpdatedAt             string
+	PaidAt                string
+	CancelledAt           string
+}
+
+type OrderFilters struct {
+	CreatedAtMin  string
+	CreatedAtMax  string
+	Status        string
+	PaymentStatus string
+	Limit         int
+}
+
+type FulfillmentOrder struct {
+	ID     string
+	Number int
+	Status string
+}
+
+type TrackingInfo struct {
+	Code           string
+	URL            string
+	NotifyCustomer bool
+}
+
+type TrackingEvent struct {
+	Status              string
+	Description         string
+	Address             string
+	HappenedAt          time.Time
+	EstimatedDeliveryAt *time.Time
+}
+
+type OrderStatusUpdate struct {
+	ExternalOrderID string
+	Status          string
+	TrackingNumber  string
+	TrackingURL     string
+	Carrier         string
+	City            string
+	HappenedAt      time.Time
 }
