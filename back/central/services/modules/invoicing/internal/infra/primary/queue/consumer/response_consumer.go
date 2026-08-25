@@ -812,6 +812,7 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 				}
 			} else {
 				matched++
+				continue
 			}
 			results = append(results, dtos.CompareResult{
 				Status:          status,
