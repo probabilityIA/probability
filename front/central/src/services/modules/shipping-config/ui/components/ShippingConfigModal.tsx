@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ShippingConfigForm } from './ShippingConfigForm';
 import { TruckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
@@ -10,10 +12,14 @@ interface ShippingConfigModalProps {
 }
 
 export function ShippingConfigModal({ isOpen, onClose, businessId }: ShippingConfigModalProps) {
-    if (!isOpen) return null;
+    const [mounted, setMounted] = useState(false);
 
-    return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    useEffect(() => setMounted(true), []);
+
+    if (!isOpen || !mounted) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 70 }}>
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
                     <div className="flex items-center gap-2">
@@ -28,6 +34,7 @@ export function ShippingConfigModal({ isOpen, onClose, businessId }: ShippingCon
                     <ShippingConfigForm businessId={businessId} onClose={onClose} />
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

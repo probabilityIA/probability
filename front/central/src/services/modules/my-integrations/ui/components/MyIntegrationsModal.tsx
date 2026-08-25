@@ -310,6 +310,9 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         ? WIDE_FORM_TYPE_IDS.includes(Number(editingIntegration.integration_type_id))
         : false;
 
+    const messagingCategory = services.find(cat => cat.code === 'messaging');
+    const invoicingCategory = services.find(cat => cat.code === 'invoicing');
+
     const renderCluster = (cat: IntegrationCategory) => (
         <CyberCluster
             key={cat.code}
@@ -400,6 +403,11 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 anchorRef={setClusterRef('channels')}
                             />
                             <div className="relative pb-12">
+                            {messagingCategory && (
+                                <div className="mb-8 flex justify-center lg:mb-0 lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-start">
+                                    {renderCluster(messagingCategory)}
+                                </div>
+                            )}
                             <CyberHub
                                 ref={hubRef}
                                 integrations={internalIntegrations}
@@ -412,9 +420,11 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 <ShippingConfigNode onOpen={() => setShippingConfigOpen(true)} />
                             </div>
                             </div>
-                            <div className="flex flex-wrap gap-8 lg:flex-nowrap">
-                                {services.map(renderCluster)}
-                            </div>
+                            {invoicingCategory && (
+                                <div className="mx-auto w-full max-w-xl">
+                                    {renderCluster(invoicingCategory)}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
