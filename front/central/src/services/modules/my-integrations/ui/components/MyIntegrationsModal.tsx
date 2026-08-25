@@ -404,7 +404,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                             />
                             <div className="relative pb-12">
                             {messagingCategory && (
-                                <div className="mb-8 flex justify-center lg:mb-0 lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-start">
+                                <div className="relative z-20 mb-8 flex justify-center lg:mb-0 lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-start">
                                     {renderCluster(messagingCategory)}
                                 </div>
                             )}
@@ -416,7 +416,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 lastOrderAt={lastOwnOrder}
                                 findingsCount={findings?.findings.length ?? 0}
                             />
-                            <div className="mt-8 flex justify-center lg:mt-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-end">
+                            <div className="relative z-20 mt-8 flex justify-center lg:mt-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-end">
                                 <ShippingConfigNode onOpen={() => setShippingConfigOpen(true)} />
                             </div>
                             </div>
