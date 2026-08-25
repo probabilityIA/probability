@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/entities"
@@ -10,6 +11,8 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
+
+const inventoryModuleCode = "inventory"
 
 func (r *Repository) CreateSubscriptionAndActivate(ctx context.Context, subscription *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 	return r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
@@ -44,10 +47,64 @@ func (r *Repository) CreateSubscriptionAndActivate(ctx context.Context, subscrip
 			"subscription_status":   entities.BusinessStatusActive,
 			"subscription_end_date": endDate,
 		}
-		return tx.Model(&models.Business{}).
+		if err := tx.Model(&models.Business{}).
 			Where("id = ? AND deleted_at IS NULL", subscription.BusinessID).
-			Updates(updates).Error
+			Updates(updates).Error; err != nil {
+			return err
+		}
+
+		return activateInventoryIntegrationIfPlanIncludesIt(tx, subscription.BusinessID, subscriptionTypeID)
 	})
+}
+
+func planIncludesModule(moduleCodes []string, code string) bool {
+	for _, c := range moduleCodes {
+		if c == code {
+			return true
+		}
+	}
+	return false
+}
+
+func activateInventoryIntegrationIfPlanIncludesIt(tx *gorm.DB, businessID uint, subscriptionTypeID uint) error {
+	var subType models.SubscriptionType
+	if err := tx.Select("features").First(&subType, subscriptionTypeID).Error; err != nil {
+		return err
+	}
+	if !planIncludesModule(unmarshalModuleCodes(subType.Features), inventoryModuleCode) {
+		return nil
+	}
+
+	var integrationTypeID uint
+	if err := tx.Table("integration_types").Select("id").Where("code = ?", inventoryModuleCode).Limit(1).Scan(&integrationTypeID).Error; err != nil {
+		return err
+	}
+	if integrationTypeID == 0 {
+		return nil
+	}
+
+	var existing models.Integration
+	err := tx.Where("business_id = ? AND integration_type_id = ? AND deleted_at IS NULL", businessID, integrationTypeID).First(&existing).Error
+	if err == nil {
+		if existing.IsActive {
+			return nil
+		}
+		return tx.Model(&existing).Update("is_active", true).Error
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	integration := models.Integration{
+		Name:              "Inventario",
+		Code:              fmt.Sprintf("inventory_%d", businessID),
+		Category:          "internal",
+		IntegrationTypeID: integrationTypeID,
+		BusinessID:        &businessID,
+		IsActive:          true,
+		CreatedByID:       1,
+	}
+	return tx.Create(&integration).Error
 }
 
 func (r *Repository) GetLatestByBusinessID(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
