@@ -202,7 +202,7 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
 
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs text-blue-800 dark:text-blue-200">
                 Estos margenes se suman automaticamente al precio que cobra cada transportadora al generar guias.
-                EnvioClick es el intermediario y no lleva margen propio: el margen aplica al carrier real (Servientrega, Interrapidisimo, etc.).
+                El margen aplica sobre la tarifa de la transportadora real (Servientrega, Interrapidisimo, etc.), no sobre el intermediario.
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

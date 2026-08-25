@@ -70,3 +70,38 @@ func TestSafeQuoteMessage_ConservaMensajeLimpio(t *testing.T) {
 		t.Fatalf("esperaba %q, obtuve %q", in, got)
 	}
 }
+
+func TestSafeMessage_UsaElFallbackCuandoMencionaElProveedor(t *testing.T) {
+	casos := []struct {
+		in       string
+		fallback string
+	}{
+		{"cancelar manualmente en la plataforma de EnvioClick", GenericCancelErrorMessage},
+		{"la cuenta de Envio Clik quedo sin saldo", GenericCancelErrorMessage},
+		{"envioclickpro respondio 502", GenericTrackingErrorMessage},
+		{"", GenericQuoteErrorMessage},
+	}
+
+	for _, caso := range casos {
+		got := SafeMessage(caso.in, caso.fallback)
+		if got != caso.fallback {
+			t.Fatalf("entrada %q: esperaba el fallback %q, obtuve %q", caso.in, caso.fallback, got)
+		}
+	}
+}
+
+func TestSafeMessage_ConservaMensajeLimpio(t *testing.T) {
+	in := "la transportadora acepto la solicitud pero el envio sigue activo (estado: Pendiente de Recoleccion): contacta a soporte para cancelarla manualmente"
+
+	if got := SafeMessage(in, GenericCancelErrorMessage); got != in {
+		t.Fatalf("esperaba %q, obtuve %q", in, got)
+	}
+}
+
+func TestGenericMessages_NoMencionanElProveedor(t *testing.T) {
+	for _, msg := range []string{GenericGuideErrorMessage, GenericQuoteErrorMessage, GenericCancelErrorMessage, GenericTrackingErrorMessage} {
+		if MentionsProvider(msg) {
+			t.Fatalf("el mensaje generico expone el proveedor: %q", msg)
+		}
+	}
+}

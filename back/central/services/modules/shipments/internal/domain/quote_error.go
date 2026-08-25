@@ -4,9 +4,17 @@ import "strings"
 
 const GenericGuideErrorMessage = "No fue posible generar la guía con la transportadora. Revisa los datos del destinatario e inténtalo de nuevo."
 
+const GenericQuoteErrorMessage = "No fue posible cotizar el envío con la transportadora. Revisa los datos de la orden e inténtalo de nuevo."
+
+const GenericCancelErrorMessage = "No fue posible cancelar el envío con la transportadora. Inténtalo de nuevo en unos minutos."
+
+const GenericTrackingErrorMessage = "No fue posible consultar el estado del envío con la transportadora. Inténtalo de nuevo en unos minutos."
+
 var providerBlocklist = []string{
 	"envioclick",
 	"envio click",
+	"envioclik",
+	"envio clik",
 	"enviame",
 	"envíame",
 	"mipaquete",
@@ -99,13 +107,17 @@ func MentionsProvider(text string) bool {
 	return false
 }
 
-func SafeQuoteMessage(text string) string {
+func SafeMessage(text, fallback string) string {
 	trimmed := strings.TrimSpace(text)
 	if trimmed == "" || MentionsProvider(trimmed) {
-		return GenericGuideErrorMessage
+		return fallback
 	}
 	if len(trimmed) > 240 {
-		return GenericGuideErrorMessage
+		return fallback
 	}
 	return trimmed
+}
+
+func SafeQuoteMessage(text string) string {
+	return SafeMessage(text, GenericGuideErrorMessage)
 }

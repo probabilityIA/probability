@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,14 +16,11 @@ const (
 	DefaultBaseURL = "https://api.envioclickpro.com.co/api/v2"
 )
 
-// Client implements domain.IEnvioClickClient using the shared httpclient
 type Client struct {
 	httpClient *httpclient.Client
 	log        log.ILogger
 }
 
-// New creates a new EnvioClick HTTP client.
-// The baseURL is no longer fixed at construction — each method receives it dynamically.
 func New(logger log.ILogger) domain.IEnvioClickClient {
 	logger.Info(context.Background()).Msg("🔍 Creating EnvioClick HTTP client")
 
@@ -50,7 +48,6 @@ type envioClickErrorResponse struct {
 	} `json:"status_messages"`
 }
 
-// parseEnvioClickError extracts a human-readable error from an EnvioClick error response body
 func parseEnvioClickError(body []byte) string {
 	var errorResp envioClickErrorResponse
 	if err := json.Unmarshal(body, &errorResp); err == nil && len(errorResp.StatusMessages) > 0 {
@@ -64,7 +61,6 @@ func parseEnvioClickError(body []byte) string {
 	return mapEnvioClickError(string(body))
 }
 
-// mapEnvioClickError translates EnvioClick error messages to user-friendly Spanish
 func mapEnvioClickError(originalErr string) string {
 	lowerErr := strings.ToLower(originalErr)
 
@@ -93,5 +89,11 @@ func mapEnvioClickError(originalErr string) string {
 		return "Error: Faltan datos obligatorios en la solicitud"
 	}
 
-	return "Error de Transporte: " + originalErr
+	return "Error de Transporte: " + scrubProviderName(originalErr)
+}
+
+var providerNamePattern = regexp.MustCompile(`(?i)(https?://)?(api\.)?env[ií]o\s*cli?c?k(pro)?(\.com(\.co)?)?`)
+
+func scrubProviderName(text string) string {
+	return strings.TrimSpace(providerNamePattern.ReplaceAllString(text, "la transportadora"))
 }

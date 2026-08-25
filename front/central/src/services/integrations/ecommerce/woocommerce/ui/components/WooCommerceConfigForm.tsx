@@ -812,7 +812,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
 
                     <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
                         Instala este plugin en tu WordPress para que tus clientes vean las tarifas reales de las
-                        transportadoras (EnvioClick y otras) directamente en el checkout, calculadas por Probability
+                        transportadoras directamente en el checkout, calculadas por Probability
                         segun la direccion de envio. Requiere que tengas una transportadora y una direccion de origen
                         configuradas en Probability.
                     </p>

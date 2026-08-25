@@ -147,12 +147,12 @@ func (uc *useCase) verifyCancelled(ctx context.Context, baseURL, apiKey, trackin
 		Str("tracking_number", trackingNumber).
 		Int64("id_order", idOrder).
 		Str("carrier_status", lastStatus).
-		Msg("Cancellation accepted by EnvioClick but shipment is still active - NOT marking as cancelled")
+		Msg("Cancellation accepted by provider but shipment is still active - NOT marking as cancelled")
 
 	if lastStatus == "" {
-		return nil, fmt.Errorf("no se pudo confirmar la cancelacion con la transportadora: cancelar manualmente en la plataforma de EnvioClick")
+		return nil, fmt.Errorf("no se pudo confirmar la cancelacion con la transportadora: contacta a soporte para cancelarla manualmente")
 	}
-	return nil, fmt.Errorf("la transportadora acepto la solicitud pero el envio sigue activo (estado: %s): cancelar manualmente en la plataforma de EnvioClick", lastStatus)
+	return nil, fmt.Errorf("la transportadora acepto la solicitud pero el envio sigue activo (estado: %s): contacta a soporte para cancelarla manualmente", lastStatus)
 }
 
 func (uc *useCase) CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest, metas *[]domain.SyncMeta) (*domain.CancelBatchResponse, error) {

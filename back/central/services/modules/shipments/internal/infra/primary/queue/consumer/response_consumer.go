@@ -139,7 +139,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 					c.markQuoteFailed(ctx, *shipment.OrderID, response.Error)
 				}
 			}
-			c.ssePublisher.PublishGuideFailed(ctx, businessID, *response.ShipmentID, response.CorrelationID, response.Error)
+			c.ssePublisher.PublishGuideFailed(ctx, businessID, *response.ShipmentID, response.CorrelationID, domain.SanitizeGuideError(response.Error))
 		}
 		return
 	}
@@ -358,8 +358,9 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 			Str("correlation_id", response.CorrelationID).
 			Msg("❌ Quote request failed")
 
-		c.storeQuoteResult(ctx, response.CorrelationID, nil, response.Error)
-		c.ssePublisher.PublishQuoteFailed(ctx, businessID, response.CorrelationID, response.Error)
+		safeError := domain.SafeMessage(response.Error, domain.GenericQuoteErrorMessage)
+		c.storeQuoteResult(ctx, response.CorrelationID, nil, safeError)
+		c.ssePublisher.PublishQuoteFailed(ctx, businessID, response.CorrelationID, safeError)
 		return
 	}
 
@@ -410,7 +411,7 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 			Str("correlation_id", response.CorrelationID).
 			Msg("❌ Tracking request failed")
 
-		c.ssePublisher.PublishTrackingFailed(ctx, businessID, response.CorrelationID, response.Error)
+		c.ssePublisher.PublishTrackingFailed(ctx, businessID, response.CorrelationID, domain.SafeMessage(response.Error, domain.GenericTrackingErrorMessage))
 		return
 	}
 
@@ -473,7 +474,7 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 		if response.ShipmentID != nil {
 			shipmentID = *response.ShipmentID
 		}
-		c.ssePublisher.PublishCancelFailed(ctx, businessID, shipmentID, response.CorrelationID, response.Error)
+		c.ssePublisher.PublishCancelFailed(ctx, businessID, shipmentID, response.CorrelationID, domain.SafeMessage(response.Error, domain.GenericCancelErrorMessage))
 		return
 	}
 
