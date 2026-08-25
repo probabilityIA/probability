@@ -216,9 +216,17 @@ export function InvoiceComparisonModal({
               </span>
             </div>
 
+            {compareData.results.length > 0 && (
+              <p className="mb-3 text-xs text-gray-400">
+                La tabla lista unicamente las discrepancias. Las facturas que coinciden se cuentan arriba.
+              </p>
+            )}
+
             {compareData.results.length === 0 ? (
               <div className="text-center py-14 text-gray-400 text-sm">
-                No se encontraron facturas en el rango seleccionado
+                {compareData.summary.matched > 0
+                  ? `Sin discrepancias: las ${compareData.summary.matched} facturas del rango coinciden con el proveedor`
+                  : 'No se encontraron facturas en el rango seleccionado'}
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

@@ -72,51 +72,66 @@ func (c *InvoiceRequestConsumer) processCheckStatus(
 	searchComment := "order:" + orderID
 	pageSize := strconv.Itoa(checkStatusPageSize)
 
-	var foundDoc *ports.ListedDocument
-	docsSearched := 0
-
-	for daysBack := 0; daysBack <= checkStatusMaxDaysBack && foundDoc == nil; daysBack++ {
-		day := now.AddDate(0, 0, -daysBack).Format("2006-01-02")
-
+	fetchDay := func(fetchCtx context.Context, day string) ([]ports.ListedDocument, error) {
+		var all []ports.ListedDocument
 		for page := 1; page <= checkStatusMaxPagesPerDay; page++ {
 			pageStr := strconv.Itoa(page)
-			docs, listErr := c.softpymesClient.ListDocuments(ctx, apiKey, apiSecret, referer, ports.ListDocumentsParams{
+			docs, listErr := c.softpymesClient.ListDocuments(fetchCtx, apiKey, apiSecret, referer, ports.ListDocumentsParams{
 				DateFrom: day,
 				DateTo:   day,
 				PageSize: &pageSize,
 				Page:     &pageStr,
 			}, effectiveURL)
-
 			if listErr != nil {
-				c.log.Warn(ctx).Err(listErr).
-					Uint("invoice_id", request.InvoiceID).
-					Str("order_id", orderID).
-					Str("day", day).
-					Int("page", page).
-					Msg("Failed to search documents in Softpymes — keeping as pending")
-
-				processingTime := time.Since(startTime).Milliseconds()
-				return &queue.InvoiceResponseMessage{
-					InvoiceID:      request.InvoiceID,
-					Provider:       "softpymes",
-					Status:         "pending_validation",
-					CorrelationID:  request.CorrelationID,
-					Timestamp:      time.Now(),
-					ProcessingTime: processingTime,
-					Error:          "Check status failed, will retry: " + listErr.Error(),
-				}
+				return nil, listErr
 			}
-
-			docsSearched += len(docs)
-
-			for i := range docs {
-				if strings.Contains(docs[i].Comment, searchComment) {
-					foundDoc = &docs[i]
-					break
-				}
+			all = append(all, docs...)
+			if len(docs) < checkStatusPageSize {
+				break
 			}
+		}
+		return all, nil
+	}
 
-			if foundDoc != nil || len(docs) < checkStatusPageSize {
+	var foundDoc *ports.ListedDocument
+	docsSearched := 0
+	daysFromCache := 0
+
+	for daysBack := 0; daysBack <= checkStatusMaxDaysBack && foundDoc == nil; daysBack++ {
+		day := now.AddDate(0, 0, -daysBack).Format("2006-01-02")
+
+		docs, fromCache, listErr := c.docIndex.documentsForDay(ctx, integrationID, day, now, fetchDay)
+		if listErr != nil {
+			c.log.Warn(ctx).Err(listErr).
+				Uint("invoice_id", request.InvoiceID).
+				Str("order_id", orderID).
+				Str("day", day).
+				Msg("Failed to search documents in Softpymes - keeping as pending")
+
+			processingTime := time.Since(startTime).Milliseconds()
+			return &queue.InvoiceResponseMessage{
+				InvoiceID:      request.InvoiceID,
+				Provider:       "softpymes",
+				Status:         "pending_validation",
+				CorrelationID:  request.CorrelationID,
+				Timestamp:      time.Now(),
+				ProcessingTime: processingTime,
+				Error:          "Check status failed, will retry: " + listErr.Error(),
+			}
+		}
+
+		if fromCache {
+			daysFromCache++
+		}
+		docsSearched += len(docs)
+
+		for i := range docs {
+			if strings.Contains(docs[i].Comment, searchComment) {
+				foundDoc = &ports.ListedDocument{
+					DocumentNumber: docs[i].DocumentNumber,
+					DocumentDate:   docs[i].DocumentDate,
+					Comment:        docs[i].Comment,
+				}
 				break
 			}
 		}
@@ -172,7 +187,8 @@ func (c *InvoiceRequestConsumer) processCheckStatus(
 		Str("order_id", orderID).
 		Int("docs_searched", docsSearched).
 		Int("days_searched", checkStatusMaxDaysBack+1).
-		Msg("Document not found in Softpymes — DIAN still validating, keeping pending")
+		Int("days_from_cache", daysFromCache).
+		Msg("Document not found in Softpymes - DIAN still validating, keeping pending")
 
 	processingTime := time.Since(startTime).Milliseconds()
 	return &queue.InvoiceResponseMessage{
