@@ -7,8 +7,6 @@ export class ShipmentApiRepository implements IShipmentRepository {
     private token: string | null;
 
     constructor(token?: string | null) {
-        // Usar env.API_BASE_URL (servidor) en lugar de envPublic (cliente)
-        // Los repositorios se usan en Server Actions que corren en el servidor
         this.baseUrl = env.API_BASE_URL;
         this.token = token || null;
     }
@@ -49,6 +47,11 @@ export class ShipmentApiRepository implements IShipmentRepository {
         return this.fetch<PaginatedResponse<Shipment>>(`/shipments?${searchParams.toString()}`);
     }
 
+    async getShipmentById(id: number): Promise<Shipment> {
+        const res = await this.fetch<{ data?: Shipment } & Shipment>(`/shipments/${id}`);
+        return (res as { data?: Shipment }).data ?? (res as Shipment);
+    }
+
     async quoteShipment(req: EnvioClickQuoteRequest): Promise<EnvioClickQuoteResponse> {
         return this.fetch<EnvioClickQuoteResponse>('/shipments/quote', {
             method: 'POST',
@@ -64,10 +67,8 @@ export class ShipmentApiRepository implements IShipmentRepository {
     }
 
     async trackShipment(trackingNumber: string): Promise<EnvioClickTrackingResponse> {
-        // Disparamos actualización asíncrona pero sin esperar a que termine para no bloquear UI
         this.fetch<any>(`/shipments/tracking/${trackingNumber}/track`, { method: 'POST' }).catch(e => console.error(e));
         
-        // Consultamos historial actual
         return this.fetch<EnvioClickTrackingResponse>(`/tracking/${trackingNumber}/history`, {
             method: 'GET',
         });
@@ -104,7 +105,6 @@ export class ShipmentApiRepository implements IShipmentRepository {
         });
     }
 
-    // Origin Addresses
     private businessQuery(businessId?: number): string {
         return businessId ? `?business_id=${businessId}` : '';
     }

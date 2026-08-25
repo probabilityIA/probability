@@ -9,10 +9,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
-// CancelBatch cancela envíos en lote en EnvioClick
-// Endpoint: POST /v2cancellation/batch/order
 func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchRequest, meta *domain.SyncMeta) (*domain.CancelBatchResponse, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
 
 	if baseURL == "" {
 		baseURL = DefaultBaseURL

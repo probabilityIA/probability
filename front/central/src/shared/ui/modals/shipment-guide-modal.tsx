@@ -4,12 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Input, Button, Stepper } from "@/shared/ui";
+import { Input, Button, Stepper, BrandLoaderOverlay } from "@/shared/ui";
 import { ShipmentApiRepository } from "@/services/modules/shipments/infra/repository/api-repository";
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { Order } from "@/services/modules/orders/domain/types";
 import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
-import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
+import { quoteShipmentAction, generateGuideAction, getShipmentByIdAction } from "@/services/modules/shipments/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
@@ -24,6 +24,10 @@ import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/component
 import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
 import dynamic from 'next/dynamic';
+
+const GUIDE_SSE_GRACE_MS = 45000;
+const GUIDE_POLL_INTERVAL_MS = 5000;
+const GUIDE_POLL_MAX_ATTEMPTS = 24;
 
 const GeozoneMiniMap = dynamic(
     () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
@@ -256,6 +260,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     }
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
     const [generatedShipmentId, setGeneratedShipmentId] = useState<number | null>(null);
+    const pendingGuideShipmentIdRef = useRef<number | null>(null);
+    const [guideBlocked, setGuideBlocked] = useState(false);
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
     const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
 
@@ -505,11 +511,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
             setLoading(false);
         },
-        onGuideFailed: (data) => {
+        onGuideFailed: async (data) => {
             if (pendingGuideCorrelationId && data.correlation_id !== pendingGuideCorrelationId) return;
             setPendingGuideCorrelationId(null);
             setError(data.error_message || "Error al generar la guía");
             setLoading(false);
+            const id = pendingGuideShipmentIdRef.current;
+            if (!id) return;
+            const res = await getShipmentByIdAction(id);
+            if (res.success && (res.data as any)?.status === 'needs_verification') {
+                setGuideBlocked(true);
+            }
         },
     });
 
@@ -526,12 +538,72 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     useEffect(() => {
         if (!pendingGuideCorrelationId) return;
-        const timeout = setTimeout(() => {
+        let cancelled = false;
+        let polls = 0;
+
+        const finishWithShipment = (shipment: any) => {
             setPendingGuideCorrelationId(null);
-            setError("Tiempo de espera agotado al generar la guía. Verifica en la lista de envíos.");
+            setGeneratedShipmentId(shipment.id ?? null);
+            if (shipment.guide_url) setGeneratedPdfUrl(shipment.guide_url);
+            if (shipment.tracking_number) setTrackingNumber(shipment.tracking_number);
+            if (shipment.carrier) setSelectedCarrier(shipment.carrier);
+            setSuccess(`Gu\u00eda generada exitosamente${shipment.carrier ? ` con ${shipment.carrier}` : ''}.`);
             setLoading(false);
-        }, 45000);
-        return () => clearTimeout(timeout);
+            if (onGuideGenerated && shipment.tracking_number) {
+                onGuideGenerated({
+                    tracking_number: shipment.tracking_number,
+                    carrier: shipment.carrier || '',
+                    label_url: shipment.guide_url || undefined,
+                });
+            }
+        };
+
+        const poll = async () => {
+            if (cancelled) return;
+            polls += 1;
+            const id = pendingGuideShipmentIdRef.current;
+            if (!id) {
+                setPendingGuideCorrelationId(null);
+                setError("No pudimos confirmar el estado de la gu\u00eda. Rev\u00edsala en la lista de env\u00edos antes de intentar de nuevo.");
+                setLoading(false);
+                return;
+            }
+            const res = await getShipmentByIdAction(id);
+            if (cancelled) return;
+            const shipment: any = res.success ? res.data : null;
+            if (shipment?.tracking_number || shipment?.guide_url) {
+                finishWithShipment(shipment);
+                return;
+            }
+            if (shipment?.status === 'failed') {
+                setPendingGuideCorrelationId(null);
+                setError("La transportadora rechaz\u00f3 la gu\u00eda. Corrige los datos e intenta de nuevo.");
+                setLoading(false);
+                return;
+            }
+            if (shipment?.status === 'needs_verification') {
+                setPendingGuideCorrelationId(null);
+                setGuideBlocked(true);
+                setError("No pudimos confirmar la respuesta de la transportadora. La gu\u00eda puede haberse creado: verif\u00edcala antes de generar otra para no duplicarla.");
+                setLoading(false);
+                return;
+            }
+            if (polls >= GUIDE_POLL_MAX_ATTEMPTS) {
+                setPendingGuideCorrelationId(null);
+                setGuideBlocked(true);
+                setError("La gu\u00eda sigue gener\u00e1ndose. NO vuelvas a generarla: revisa la lista de env\u00edos en unos minutos para no crear una gu\u00eda duplicada.");
+                setLoading(false);
+                return;
+            }
+            setError("La gu\u00eda est\u00e1 tardando m\u00e1s de lo normal. Estamos verificando con la transportadora, no cierres esta ventana.");
+            timer = setTimeout(poll, GUIDE_POLL_INTERVAL_MS);
+        };
+
+        let timer = setTimeout(poll, GUIDE_SSE_GRACE_MS);
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
     }, [pendingGuideCorrelationId]);
 
     useEffect(() => {
@@ -879,6 +951,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 return;
             }
 
+            pendingGuideShipmentIdRef.current = (response.data as any)?.shipment_id ?? null;
             setPendingGuideCorrelationId((response.data as any)?.correlation_id || null);
             setGuideGenerationRequested(true);
             setCurrentStep(4);
@@ -892,7 +965,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-2">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', maxHeight: '90vh' }}>
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', maxHeight: '90vh' }}>
+                {loading && currentStep === 4 && (
+                    <BrandLoaderOverlay
+                        title="Generando tu guia..."
+                        subtitle="Estamos confirmando con la transportadora. No cierres esta ventana ni vuelvas a generar."
+                    />
+                )}
                 <div className="bg-white dark:bg-gray-800 border-b px-3 py-3 flex-shrink-0">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>Generar Guía de Envío</h2>
@@ -1894,10 +1973,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {currentStep === 4 && !generatedPdfUrl && (
                         <Button
                             onClick={handleFinalGenerate}
-                            disabled={loading}
+                            disabled={loading || guideBlocked}
                             className="shipment-btn-secondary"
                         >
-                            {loading ? "Generando..." : "Pagar guías"}
+                            {loading ? "Generando..." : guideBlocked ? "Verifica la gu\u00eda antes de reintentar" : "Pagar gu\u00edas"}
                         </Button>
                     )}
                 </div>

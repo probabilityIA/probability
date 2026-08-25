@@ -9,10 +9,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
-// Track obtiene el estado de tracking de un envío en EnvioClick usando trackingCode
-// Endpoint: POST /track
 func (c *Client) Track(baseURL, apiKey string, trackingNumber string, meta *domain.SyncMeta) (*domain.TrackingResponse, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
 
 	if baseURL == "" {
 		baseURL = DefaultBaseURL
@@ -57,10 +56,9 @@ func (c *Client) Track(baseURL, apiKey string, trackingNumber string, meta *doma
 	return &apiResp, nil
 }
 
-// TrackByOrdersBatch obtiene el estado de múltiples envíos usando sus idOrder
-// Endpoint: POST /track-by-orders
 func (c *Client) TrackByOrdersBatch(baseURL, apiKey string, orders []int64, meta *domain.SyncMeta) (*domain.TrackingResponse, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
 
 	if baseURL == "" {
 		baseURL = DefaultBaseURL

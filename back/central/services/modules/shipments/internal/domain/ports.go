@@ -70,6 +70,9 @@ type IRepository interface {
 	GetShipmentsByOrderID(ctx context.Context, orderID string) ([]Shipment, error)
 	ListShipments(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]Shipment, int64, error)
 	UpdateShipment(ctx context.Context, shipment *Shipment) error
+	WithOrderGuideLock(ctx context.Context, orderID string, fn func() error) error
+	MarkShipmentGenerating(ctx context.Context, id uint, staleBefore time.Time) (bool, error)
+	ReleaseShipmentGenerating(ctx context.Context, id uint) error
 	DeleteShipment(ctx context.Context, id uint) error
 
 	ShipmentExists(ctx context.Context, orderID string, trackingNumber string) (bool, error)

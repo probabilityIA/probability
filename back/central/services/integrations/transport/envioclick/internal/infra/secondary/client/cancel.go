@@ -9,10 +9,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
-// Cancel cancela un envío en EnvioClick
-// Endpoint: DELETE /shipment/{idShipment}
 func (c *Client) Cancel(baseURL, apiKey string, idShipment string, meta *domain.SyncMeta) (*domain.CancelResponse, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
 
 	if baseURL == "" {
 		baseURL = DefaultBaseURL
@@ -46,7 +45,6 @@ func (c *Client) Cancel(baseURL, apiKey string, idShipment string, meta *domain.
 		return nil, fmt.Errorf("%s", parseEnvioClickError(resp.Body()))
 	}
 
-	// EnvioClick a veces retorna texto plano con "success" en vez de JSON estructurado
 	if apiResp.Status == "" && strings.Contains(strings.ToLower(string(resp.Body())), "success") {
 		apiResp = domain.CancelResponse{Status: "success", Message: "Cancelación exitosa"}
 	}

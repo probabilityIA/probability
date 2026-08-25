@@ -82,3 +82,57 @@ type Shipment struct {
 	OrderTotalAmount  *float64   `json:"order_total_amount,omitempty"`
 	OrderCurrency     string     `json:"order_currency,omitempty"`
 }
+
+const (
+	ShipmentStatusPending    = "pending"
+	ShipmentStatusGenerating = "generating"
+	ShipmentStatusFailed     = "failed"
+	ShipmentStatusCancelled  = "cancelled"
+)
+
+const GuideGenerationStaleAfter = 15 * time.Minute
+
+func (s *Shipment) HasActiveGuide() bool {
+	if s == nil {
+		return false
+	}
+	if s.Status == ShipmentStatusCancelled || s.Status == ShipmentStatusFailed {
+		return false
+	}
+	if s.TrackingNumber != nil && *s.TrackingNumber != "" {
+		return true
+	}
+	if s.GuideURL != nil && *s.GuideURL != "" {
+		return true
+	}
+	return false
+}
+
+func (s *Shipment) GuideInFlight(now time.Time) bool {
+	if s == nil || s.Status != ShipmentStatusGenerating {
+		return false
+	}
+	return now.Sub(s.UpdatedAt) < GuideGenerationStaleAfter
+}
+
+func (s *Shipment) ReusableForGuide(now time.Time) bool {
+	if s == nil {
+		return false
+	}
+	if s.TrackingNumber != nil && *s.TrackingNumber != "" {
+		return false
+	}
+	if s.GuideURL != nil && *s.GuideURL != "" {
+		return false
+	}
+	if s.Status == ShipmentStatusPending {
+		return true
+	}
+	return s.Status == ShipmentStatusGenerating && !s.GuideInFlight(now)
+}
+
+const ShipmentStatusNeedsVerification = "needs_verification"
+
+func (s *Shipment) NeedsVerification() bool {
+	return s != nil && s.Status == ShipmentStatusNeedsVerification
+}

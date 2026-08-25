@@ -2,6 +2,7 @@ import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest
 
 export interface IShipmentRepository {
     getShipments(params?: GetShipmentsParams): Promise<PaginatedResponse<Shipment>>;
+    getShipmentById(id: number): Promise<Shipment>;
     quoteShipment(req: EnvioClickQuoteRequest): Promise<EnvioClickQuoteResponse>;
     generateGuide(req: EnvioClickQuoteRequest): Promise<EnvioClickGenerateResponse>;
     trackShipment(trackingNumber: string): Promise<EnvioClickTrackingResponse>;
@@ -9,7 +10,6 @@ export interface IShipmentRepository {
     cancelBatchShipments(req: EnvioClickCancelBatchRequest): Promise<EnvioClickCancelBatchResponse>;
     createShipment(req: CreateShipmentRequest): Promise<{ success: boolean; message: string; data?: Shipment }>;
 
-    // Direcciones de Origen
     getOriginAddresses(businessId?: number): Promise<OriginAddress[]>;
     createOriginAddress(req: CreateOriginAddressRequest, businessId?: number): Promise<OriginAddress>;
     updateOriginAddress(id: number, req: UpdateOriginAddressRequest, businessId?: number): Promise<OriginAddress>;

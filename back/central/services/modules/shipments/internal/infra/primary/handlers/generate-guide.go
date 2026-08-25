@@ -68,56 +68,14 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 	shipmentReq.CreatedBy = actor.ID
 	shipmentReq.CreatedByName = actor.Name
 
-	var shipmentID uint
-	if shipmentReq.OrderID != nil && *shipmentReq.OrderID != "" {
-		existing, _ := h.uc.Repo().GetShipmentsByOrderID(c.Request.Context(), *shipmentReq.OrderID)
-		for i := range existing {
-			if shipmentHasActiveGuide(&existing[i]) {
-				tracking := ""
-				if existing[i].TrackingNumber != nil {
-					tracking = *existing[i].TrackingNumber
-				}
-				c.JSON(http.StatusConflict, gin.H{
-					"error":           "La orden ya tiene una guia activa. Cancela la guia existente antes de generar una nueva.",
-					"shipment_id":     existing[i].ID,
-					"tracking_number": tracking,
-				})
-				return
-			}
-		}
-		for i := range existing {
-			s := &existing[i]
-			if s.Status == "pending" && (s.TrackingNumber == nil || *s.TrackingNumber == "") && (s.GuideURL == nil || *s.GuideURL == "") {
-				shipmentID = s.ID
-				break
-			}
-		}
+	shipmentID, conflict, err := h.reserveShipmentForGuide(c.Request.Context(), shipmentReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al preparar el envio: " + err.Error()})
+		return
 	}
-
-	if shipmentID == 0 {
-		shipmentResp, err := h.uc.CreateShipment(c.Request.Context(), shipmentReq)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear registro de envio: " + err.Error()})
-			return
-		}
-		shipmentID = shipmentResp.ID
-	} else {
-		updateReq := &domain.UpdateShipmentRequest{
-			UpdatedBy:     actor.ID,
-			UpdatedByName: actor.Name,
-			TotalCost:     shipmentReq.TotalCost,
-			CodCarrierFee: shipmentReq.CodCarrierFee,
-			Carrier:       shipmentReq.Carrier,
-			CarrierCode:   shipmentReq.CarrierCode,
-			Weight:        shipmentReq.Weight,
-			Height:        shipmentReq.Height,
-			Width:         shipmentReq.Width,
-			Length:        shipmentReq.Length,
-		}
-		if _, err := h.uc.UpdateShipment(c.Request.Context(), shipmentID, updateReq); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar envio: " + err.Error()})
-			return
-		}
+	if conflict != nil {
+		c.JSON(conflict.status, conflict.body)
+		return
 	}
 
 	h.overrideCodValue(c, raw, shipmentReq)
@@ -146,6 +104,7 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 	}
 
 	if err := h.transportPub.PublishTransportRequest(c.Request.Context(), msg); err != nil {
+		_ = h.uc.Repo().ReleaseShipmentGenerating(c.Request.Context(), shipmentID)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Error al enviar solicitud de generacion de guia: " + err.Error(),
 		})
@@ -193,19 +152,7 @@ func (h *Handlers) overrideCodValue(c *gin.Context, raw map[string]interface{}, 
 }
 
 func shipmentHasActiveGuide(s *domain.Shipment) bool {
-	if s == nil {
-		return false
-	}
-	if s.Status == "cancelled" || s.Status == "failed" {
-		return false
-	}
-	if s.TrackingNumber != nil && *s.TrackingNumber != "" {
-		return true
-	}
-	if s.GuideURL != nil && *s.GuideURL != "" {
-		return true
-	}
-	return false
+	return s.HasActiveGuide()
 }
 
 func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInfo) *domain.CreateShipmentRequest {

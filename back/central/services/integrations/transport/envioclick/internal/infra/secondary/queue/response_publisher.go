@@ -14,27 +14,25 @@ const (
 	QueueTransportResponses = rabbitmq.QueueTransportResponses
 )
 
-// TransportResponseMessage is the message published back to modules/shipments
 type TransportResponseMessage struct {
 	ShipmentID    *uint                  `json:"shipment_id,omitempty"`
 	BusinessID    uint                   `json:"business_id"`
 	Provider      string                 `json:"provider"`
 	Operation     string                 `json:"operation"`
-	Status        string                 `json:"status"` // "success", "error"
+	Status        string                 `json:"status"`
 	CorrelationID string                 `json:"correlation_id"`
 	IsTest        bool                   `json:"is_test,omitempty"`
 	Timestamp     time.Time              `json:"timestamp"`
 	Data          map[string]interface{} `json:"data,omitempty"`
 	Error         string                 `json:"error,omitempty"`
+	ErrorKind     string                 `json:"error_kind,omitempty"`
 }
 
-// ResponsePublisher publishes transport responses
 type ResponsePublisher struct {
 	queue rabbitmq.IQueue
 	log   log.ILogger
 }
 
-// NewResponsePublisher creates a new response publisher
 func NewResponsePublisher(queue rabbitmq.IQueue, logger log.ILogger) *ResponsePublisher {
 	return &ResponsePublisher{
 		queue: queue,
@@ -42,7 +40,6 @@ func NewResponsePublisher(queue rabbitmq.IQueue, logger log.ILogger) *ResponsePu
 	}
 }
 
-// PublishResponse publishes a transport response
 func (p *ResponsePublisher) PublishResponse(ctx context.Context, response *TransportResponseMessage) error {
 	if response.Timestamp.IsZero() {
 		response.Timestamp = time.Now()

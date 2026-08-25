@@ -14,6 +14,9 @@ type RepositoryMock struct {
 	GetShipmentsByOrderIDFn           func(ctx context.Context, orderID string) ([]domain.Shipment, error)
 	ListShipmentsFn                   func(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.Shipment, int64, error)
 	UpdateShipmentFn                  func(ctx context.Context, shipment *domain.Shipment) error
+	WithOrderGuideLockFn              func(ctx context.Context, orderID string, fn func() error) error
+	MarkShipmentGeneratingFn          func(ctx context.Context, id uint, staleBefore time.Time) (bool, error)
+	ReleaseShipmentGeneratingFn       func(ctx context.Context, id uint) error
 	DeleteShipmentFn                  func(ctx context.Context, id uint) error
 	ShipmentExistsFn                  func(ctx context.Context, orderID string, trackingNumber string) (bool, error)
 	GetActiveShippingCarrierFn        func(ctx context.Context, businessID uint) (*domain.CarrierInfo, error)
@@ -97,6 +100,27 @@ func (m *RepositoryMock) ListShipments(ctx context.Context, page, pageSize int, 
 func (m *RepositoryMock) UpdateShipment(ctx context.Context, shipment *domain.Shipment) error {
 	if m.UpdateShipmentFn != nil {
 		return m.UpdateShipmentFn(ctx, shipment)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) WithOrderGuideLock(ctx context.Context, orderID string, fn func() error) error {
+	if m.WithOrderGuideLockFn != nil {
+		return m.WithOrderGuideLockFn(ctx, orderID, fn)
+	}
+	return fn()
+}
+
+func (m *RepositoryMock) MarkShipmentGenerating(ctx context.Context, id uint, staleBefore time.Time) (bool, error) {
+	if m.MarkShipmentGeneratingFn != nil {
+		return m.MarkShipmentGeneratingFn(ctx, id, staleBefore)
+	}
+	return true, nil
+}
+
+func (m *RepositoryMock) ReleaseShipmentGenerating(ctx context.Context, id uint) error {
+	if m.ReleaseShipmentGeneratingFn != nil {
+		return m.ReleaseShipmentGeneratingFn(ctx, id)
 	}
 	return nil
 }
