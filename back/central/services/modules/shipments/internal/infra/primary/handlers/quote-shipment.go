@@ -47,6 +47,10 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		return
 	}
 
+	if orderUUID, _ := raw["order_uuid"].(string); orderUUID != "" {
+		h.applyPackageConfig(c.Request.Context(), businessID, orderUUID, raw)
+	}
+
 	correlationID := uuid.New().String()
 
 	result, err := h.runQuote(c.Request.Context(), carrier, businessID, raw, correlationID, 30*time.Second)

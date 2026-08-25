@@ -2,6 +2,8 @@ package mocks
 
 import (
 	"context"
+
+	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -15,6 +17,8 @@ type RepositoryMock struct {
 	ListShipmentsFn                   func(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.Shipment, int64, error)
 	UpdateShipmentFn                  func(ctx context.Context, shipment *domain.Shipment) error
 	WithOrderGuideLockFn              func(ctx context.Context, orderID string, fn func() error) error
+	GetBusinessPackageConfigFn        func(ctx context.Context, businessID uint, warehouseID *uint) (*domain.PackageConfig, error)
+	GetOrderPackageItemsFn            func(ctx context.Context, orderID string) ([]shippingpkg.PackageItem, uint, error)
 	MarkShipmentGeneratingFn          func(ctx context.Context, id uint, staleBefore time.Time) (bool, error)
 	ReleaseShipmentGeneratingFn       func(ctx context.Context, id uint) error
 	DeleteShipmentFn                  func(ctx context.Context, id uint) error
@@ -102,6 +106,20 @@ func (m *RepositoryMock) UpdateShipment(ctx context.Context, shipment *domain.Sh
 		return m.UpdateShipmentFn(ctx, shipment)
 	}
 	return nil
+}
+
+func (m *RepositoryMock) GetOrderPackageItems(ctx context.Context, orderID string) ([]shippingpkg.PackageItem, uint, error) {
+	if m.GetOrderPackageItemsFn != nil {
+		return m.GetOrderPackageItemsFn(ctx, orderID)
+	}
+	return nil, 0, nil
+}
+
+func (m *RepositoryMock) GetBusinessPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*domain.PackageConfig, error) {
+	if m.GetBusinessPackageConfigFn != nil {
+		return m.GetBusinessPackageConfigFn(ctx, businessID, warehouseID)
+	}
+	return nil, nil
 }
 
 func (m *RepositoryMock) WithOrderGuideLock(ctx context.Context, orderID string, fn func() error) error {

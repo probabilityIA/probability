@@ -18,6 +18,8 @@ import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, PLATFORM_CODE, CATEGORY_C
 import { getSyncProvider } from '../providers';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { CyberCluster } from './CyberCluster';
+import { ShippingConfigNode } from './ShippingConfigNode';
+import { ShippingConfigModal } from '@/services/modules/shipping-config/ui';
 import { CyberChannelsCluster } from './CyberChannelsCluster';
 import { CyberHub } from './CyberHub';
 import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
@@ -81,6 +83,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const [editLoadingId, setEditLoadingId] = useState<number | null>(null);
     const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [shippingConfigOpen, setShippingConfigOpen] = useState(false);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const channelNodesRef = useRef<HTMLDivElement | null>(null);
@@ -396,7 +399,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 editingId={editLoadingId}
                                 anchorRef={setClusterRef('channels')}
                             />
-                            <div className="pb-12">
+                            <div className="relative pb-12">
                             <CyberHub
                                 ref={hubRef}
                                 integrations={internalIntegrations}
@@ -405,6 +408,9 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 lastOrderAt={lastOwnOrder}
                                 findingsCount={findings?.findings.length ?? 0}
                             />
+                            <div className="mt-8 flex justify-center lg:mt-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-end">
+                                <ShippingConfigNode onOpen={() => setShippingConfigOpen(true)} />
+                            </div>
                             </div>
                             <div className="flex flex-wrap gap-8 lg:flex-nowrap">
                                 {services.map(renderCluster)}
@@ -414,6 +420,12 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                 )}
                 </div>
             </Modal>
+
+            <ShippingConfigModal
+                isOpen={shippingConfigOpen}
+                onClose={() => setShippingConfigOpen(false)}
+                businessId={effectiveBusinessId ?? undefined}
+            />
 
             <Modal
                 isOpen={!!editingIntegration}

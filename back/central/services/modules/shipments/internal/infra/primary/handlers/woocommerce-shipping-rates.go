@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 )
 
 type wooRateDestination struct {
@@ -215,6 +216,7 @@ func (h *Handlers) resolveWooPackageDimensions(ctx context.Context, businessID u
 	var totalGrams float64
 	var totalQuantity int
 	skus := make([]string, 0, len(req.Contents))
+	items := make([]shippingpkg.PackageItem, 0, len(req.Contents))
 	for _, it := range req.Contents {
 		qty := it.Quantity
 		if qty <= 0 {
@@ -225,58 +227,70 @@ func (h *Handlers) resolveWooPackageDimensions(ctx context.Context, businessID u
 		if it.Sku != "" {
 			skus = append(skus, it.Sku)
 		}
+		items = append(items, shippingpkg.PackageItem{SKU: it.Sku, Quantity: qty})
 	}
 
-	weightKg := totalGrams / 1000.0
-	if weightKg <= 0 {
-		weightKg = 1
-	}
-
-	var maxLength, maxWidth, maxHeight float64
+	catalogWeights := make(map[string]float64)
 	if businessID > 0 && len(skus) > 0 {
-		dims, err := h.uc.Repo().GetProductDimensionsBySKUs(ctx, businessID, skus)
-		if err == nil {
-			for _, d := range dims {
-				if d.Length != nil && *d.Length > maxLength {
-					maxLength = *d.Length
+		if dims, err := h.uc.Repo().GetProductDimensionsBySKUs(ctx, businessID, skus); err == nil {
+			for i := range items {
+				d, ok := dims[items[i].SKU]
+				if !ok {
+					continue
 				}
-				if d.Width != nil && *d.Width > maxWidth {
-					maxWidth = *d.Width
-				}
-				if d.Height != nil && *d.Height > maxHeight {
-					maxHeight = *d.Height
+				items[i].Length = d.Length
+				items[i].Width = d.Width
+				items[i].Height = d.Height
+				if d.Weight != nil {
+					catalogWeights[items[i].SKU] = *d.Weight
 				}
 			}
 		}
 	}
 
-	if resolved.OriginIsWarehouse && resolved.PackageConfig != nil &&
-		resolved.PackageConfig.Strategy == domain.ShippingPackageStrategyStandardBox {
-		if box := resolved.PackageConfig.SelectBox(totalQuantity, maxLength, maxWidth, maxHeight); box != nil {
-			out := wooPackageDims{Weight: weightKg, Length: maxLength, Width: maxWidth, Height: maxHeight}
-			if box.Weight != nil {
-				out.Weight = *box.Weight
-			}
-			if box.Length != nil {
-				out.Length = *box.Length
-			}
-			if box.Width != nil {
-				out.Width = *box.Width
-			}
-			if box.Height != nil {
-				out.Height = *box.Height
-			}
-			if out.Length > 0 && out.Width > 0 && out.Height > 0 {
-				return out
-			}
+	strategy := ""
+	var boxes []shippingpkg.Box
+	if cfg := h.packageConfigForWoo(ctx, businessID, resolved); cfg != nil {
+		strategy = cfg.Strategy
+		boxes = cfg.Boxes
+	} else if resolved.OriginIsWarehouse && resolved.PackageConfig != nil {
+		strategy = resolved.PackageConfig.Strategy
+		for _, b := range resolved.PackageConfig.StandardBoxes {
+			boxes = append(boxes, shippingpkg.Box{
+				Name:     b.Name,
+				Weight:   b.Weight,
+				Length:   b.Length,
+				Width:    b.Width,
+				Height:   b.Height,
+				MaxItems: b.MaxItems,
+			})
 		}
 	}
 
-	if maxLength > 0 && maxWidth > 0 && maxHeight > 0 {
-		return wooPackageDims{Weight: weightKg, Length: maxLength, Width: maxWidth, Height: maxHeight}
-	}
+	out := shippingpkg.Resolve(strategy, boxes, shippingpkg.PackageInput{
+		TotalQuantity:  totalQuantity,
+		CartWeightKg:   totalGrams / 1000.0,
+		CatalogWeights: catalogWeights,
+		Items:          items,
+	})
 
-	return wooPackageDims{Weight: weightKg, Length: defaultPackageDimCm, Width: defaultPackageDimCm, Height: defaultPackageDimCm}
+	return wooPackageDims{Weight: out.Weight, Length: out.Length, Width: out.Width, Height: out.Height}
+}
+
+func (h *Handlers) packageConfigForWoo(ctx context.Context, businessID uint, resolved *wooResolved) *domain.PackageConfig {
+	if businessID == 0 {
+		return nil
+	}
+	var whPtr *uint
+	if resolved != nil && resolved.OriginIsWarehouse && resolved.Origin != nil && resolved.Origin.ID > 0 {
+		id := resolved.Origin.ID
+		whPtr = &id
+	}
+	cfg, err := h.uc.Repo().GetBusinessPackageConfig(ctx, businessID, whPtr)
+	if err != nil {
+		return nil
+	}
+	return cfg
 }
 
 func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, destDane string, pkgDims wooPackageDims) map[string]interface{} {

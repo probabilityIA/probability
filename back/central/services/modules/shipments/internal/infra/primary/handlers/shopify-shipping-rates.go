@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"math"
 	"net/http"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 )
 
 type shopifyRateAddress struct {
@@ -98,7 +100,8 @@ func (h *Handlers) ShopifyShippingRates(c *gin.Context) {
 		return
 	}
 
-	payload := buildShopifyQuotePayload(req, origin, destDane)
+	pkgDims := h.resolveShopifyPackage(ctx, businessID, origin, req)
+	payload := buildShopifyQuotePayload(req, origin, destDane, pkgDims)
 
 	correlationID := uuid.New().String()
 	result, err := h.runQuote(ctx, carrier, businessID, payload, correlationID, 8*time.Second)
@@ -148,7 +151,7 @@ func toRatesList(ratesData interface{}) []map[string]interface{} {
 	return out
 }
 
-func buildShopifyQuotePayload(req shopifyRateRequest, origin *domain.OriginAddress, destDane string) map[string]interface{} {
+func buildShopifyQuotePayload(req shopifyRateRequest, origin *domain.OriginAddress, destDane string, pkgDims shippingpkg.ResolvedPackage) map[string]interface{} {
 	dest := req.Rate.Destination
 
 	firstName, lastName := splitName(dest.Name)
@@ -158,27 +161,20 @@ func buildShopifyQuotePayload(req shopifyRateRequest, origin *domain.OriginAddre
 		street = strings.TrimSpace(street + " " + dest.Address2)
 	}
 
-	var totalGrams int
 	var contentValue float64
 	for _, it := range req.Rate.Items {
 		qty := it.Quantity
 		if qty <= 0 {
 			qty = 1
 		}
-		totalGrams += it.Grams * qty
 		contentValue += float64(it.Price) * float64(qty) / 100.0
 	}
 
-	weightKg := float64(totalGrams) / 1000.0
-	if weightKg <= 0 {
-		weightKg = 1
-	}
-
 	pkg := map[string]interface{}{
-		"weight": weightKg,
-		"height": 10.0,
-		"width":  10.0,
-		"length": 10.0,
+		"weight": pkgDims.Weight,
+		"height": pkgDims.Height,
+		"width":  pkgDims.Width,
+		"length": pkgDims.Length,
 	}
 
 	return map[string]interface{}{
@@ -313,4 +309,61 @@ func toFloat(v interface{}) float64 {
 		return f
 	}
 	return 0
+}
+
+func (h *Handlers) resolveShopifyPackage(ctx context.Context, businessID uint, origin *domain.OriginAddress, req shopifyRateRequest) shippingpkg.ResolvedPackage {
+	var totalGrams int
+	var totalQuantity int
+	skus := make([]string, 0, len(req.Rate.Items))
+	items := make([]shippingpkg.PackageItem, 0, len(req.Rate.Items))
+	for _, it := range req.Rate.Items {
+		qty := it.Quantity
+		if qty <= 0 {
+			qty = 1
+		}
+		totalGrams += it.Grams * qty
+		totalQuantity += qty
+		if it.Sku != "" {
+			skus = append(skus, it.Sku)
+		}
+		items = append(items, shippingpkg.PackageItem{SKU: it.Sku, Quantity: qty})
+	}
+
+	catalogWeights := make(map[string]float64)
+	if businessID > 0 && len(skus) > 0 {
+		if dims, err := h.uc.Repo().GetProductDimensionsBySKUs(ctx, businessID, skus); err == nil {
+			for i := range items {
+				d, ok := dims[items[i].SKU]
+				if !ok {
+					continue
+				}
+				items[i].Length = d.Length
+				items[i].Width = d.Width
+				items[i].Height = d.Height
+				if d.Weight != nil {
+					catalogWeights[items[i].SKU] = *d.Weight
+				}
+			}
+		}
+	}
+
+	var whPtr *uint
+	if origin != nil && origin.ID > 0 {
+		id := origin.ID
+		whPtr = &id
+	}
+
+	strategy := ""
+	var boxes []shippingpkg.Box
+	if cfg, err := h.uc.Repo().GetBusinessPackageConfig(ctx, businessID, whPtr); err == nil && cfg != nil {
+		strategy = cfg.Strategy
+		boxes = cfg.Boxes
+	}
+
+	return shippingpkg.Resolve(strategy, boxes, shippingpkg.PackageInput{
+		TotalQuantity:  totalQuantity,
+		CartWeightKg:   float64(totalGrams) / 1000.0,
+		CatalogWeights: catalogWeights,
+		Items:          items,
+	})
 }

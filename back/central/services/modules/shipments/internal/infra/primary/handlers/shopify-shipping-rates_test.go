@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 )
 
 func TestBuildShopifyQuotePayload(t *testing.T) {
@@ -32,7 +33,7 @@ func TestBuildShopifyQuotePayload(t *testing.T) {
 		CityDaneCode: "05631000",
 	}
 
-	payload := buildShopifyQuotePayload(req, origin, "11001")
+	payload := buildShopifyQuotePayload(req, origin, "11001", shippingpkg.Resolve("", nil, shippingpkg.PackageInput{TotalQuantity: 3, CartWeightKg: 1.5}))
 
 	originMap := payload["origin"].(map[string]interface{})
 	if originMap["daneCode"] != "05631000" {
@@ -64,7 +65,7 @@ func TestBuildShopifyQuotePayload(t *testing.T) {
 	}
 	pkg := pkgs[0].(map[string]interface{})
 	if pkg["weight"].(float64) != 1.5 {
-		t.Fatalf("package weight = %v, want 1.5 ((2*600 + 1*300)/1000)", pkg["weight"])
+		t.Fatalf("package weight = %v, want 1.5 (el resuelto por shippingpkg)", pkg["weight"])
 	}
 }
 
@@ -72,7 +73,7 @@ func TestBuildShopifyQuotePayloadDefaultsWeight(t *testing.T) {
 	var req shopifyRateRequest
 	req.Rate.Items = []shopifyRateItem{{Name: "Digital", Quantity: 1, Grams: 0, Price: 1000}}
 
-	payload := buildShopifyQuotePayload(req, &domain.OriginAddress{CityDaneCode: "11001"}, "05001")
+	payload := buildShopifyQuotePayload(req, &domain.OriginAddress{CityDaneCode: "11001"}, "05001", shippingpkg.Resolve("", nil, shippingpkg.PackageInput{TotalQuantity: 1}))
 	pkg := payload["packages"].([]interface{})[0].(map[string]interface{})
 	if pkg["weight"].(float64) != 1 {
 		t.Fatalf("weight = %v, want default 1", pkg["weight"])

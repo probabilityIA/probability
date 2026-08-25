@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+
+	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 	"math"
 	"time"
 )
@@ -71,6 +73,8 @@ type IRepository interface {
 	ListShipments(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]Shipment, int64, error)
 	UpdateShipment(ctx context.Context, shipment *Shipment) error
 	WithOrderGuideLock(ctx context.Context, orderID string, fn func() error) error
+	GetBusinessPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*PackageConfig, error)
+	GetOrderPackageItems(ctx context.Context, orderID string) ([]shippingpkg.PackageItem, uint, error)
 	MarkShipmentGenerating(ctx context.Context, id uint, staleBefore time.Time) (bool, error)
 	ReleaseShipmentGenerating(ctx context.Context, id uint) error
 	DeleteShipment(ctx context.Context, id uint) error

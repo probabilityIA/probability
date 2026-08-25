@@ -62,6 +62,10 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		return
 	}
 
+	if orderUUID, _ := raw["order_uuid"].(string); orderUUID != "" {
+		h.applyPackageConfig(c.Request.Context(), businessID, orderUUID, raw)
+	}
+
 	shipmentReq := buildShipmentRequest(raw, carrier)
 
 	actor := h.resolveActor(c)
