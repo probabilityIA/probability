@@ -101,6 +101,7 @@ func (uc *UseCase) save(ctx context.Context, businessID uint, warehouseID *uint,
 		PackageStrategy: strategy,
 		Boxes:           boxes,
 		Carriers:        carriers,
+		AlwaysInsure:    req.AlwaysInsure,
 	}
 
 	if err := uc.repo.UpsertConfig(ctx, cfg); err != nil {

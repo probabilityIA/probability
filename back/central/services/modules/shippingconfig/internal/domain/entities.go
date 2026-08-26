@@ -35,6 +35,7 @@ type ShippingConfig struct {
 	PackageStrategy string           `json:"package_strategy"`
 	Boxes           []Box            `json:"boxes"`
 	Carriers        []CarrierSetting `json:"carriers"`
+	AlwaysInsure    bool             `json:"always_insure"`
 	CreatedAt       time.Time        `json:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at"`
 }

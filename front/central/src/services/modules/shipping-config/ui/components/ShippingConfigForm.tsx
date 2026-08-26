@@ -87,6 +87,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
     const [strategy, setStrategy] = useState<'product_dimensions' | 'standard_box'>('product_dimensions');
     const [boxes, setBoxes] = useState<ShippingBox[]>([]);
     const [carriers, setCarriers] = useState<CarrierSetting[]>([]);
+    const [alwaysInsure, setAlwaysInsure] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -97,6 +98,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
             setStrategy(data.business.package_strategy);
             setBoxes(data.business.boxes || []);
             setCarriers(data.business.carriers || []);
+            setAlwaysInsure(data.business.always_insure || false);
         } else {
             showToast((res as { message?: string }).message || 'No se pudo cargar la configuracion', 'error');
         }
@@ -125,7 +127,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
 
     const handleSave = async () => {
         setSaving(true);
-        const res = await saveShippingConfigAction({ package_strategy: strategy, boxes, carriers }, businessId);
+        const res = await saveShippingConfigAction({ package_strategy: strategy, boxes, carriers, always_insure: alwaysInsure }, businessId);
         if (res.success) {
             showToast('Configuracion de envios guardada', 'success');
             await load();
@@ -167,6 +169,21 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                     <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span>Elige que transportadoras se ofrecen en tus cotizaciones y guias. Si tienes convenio directo con alguna, activa su integracion propia.</span>
                 </p>
+
+                <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-600 p-3 flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">Cotizar con seguro adicional en el checkout de WooCommerce</span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            El seguro minimo obligatorio siempre va incluido en el precio, sin importar esta opcion. Activarla suma el seguro adicional (cobertura sobre el valor declarado) a todas las cotizaciones que ve el cliente en el checkout.
+                        </p>
+                    </div>
+                    <Toggle
+                        size="md"
+                        checked={alwaysInsure}
+                        onChange={setAlwaysInsure}
+                        label="Seguro adicional en checkout"
+                    />
+                </div>
 
                 <div className="space-y-2">
                     {carriers.map((c) => (

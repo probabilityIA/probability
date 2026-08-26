@@ -31,6 +31,7 @@ type SaveConfigRequest struct {
 	PackageStrategy string           `json:"package_strategy"`
 	Boxes           []Box            `json:"boxes"`
 	Carriers        []CarrierSetting `json:"carriers"`
+	AlwaysInsure    bool             `json:"always_insure"`
 	UpdatedBy       uint             `json:"-"`
 	UpdatedByName   string           `json:"-"`
 }

@@ -12,6 +12,7 @@ type ShippingConfig struct {
 	PackageStrategy string         `gorm:"size:32;not null;default:'product_dimensions'"`
 	Boxes           datatypes.JSON `gorm:"type:jsonb"`
 	Carriers        datatypes.JSON `gorm:"type:jsonb"`
+	AlwaysInsure    bool           `gorm:"not null;default:false"`
 	CreatedBy       uint
 	CreatedByName   string `gorm:"size:255"`
 	UpdatedBy       uint
