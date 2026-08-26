@@ -114,3 +114,65 @@ func TestDocumentIndexDoesNotCacheFailedFetch(t *testing.T) {
 		t.Fatalf("a failed fetch must not be cached, got %d calls", calls)
 	}
 }
+
+func TestCacheAguantaElBarridoDeReconcile(t *testing.T) {
+	idx := newDocumentIndex()
+	now := time.Now()
+
+	for integrationID := uint(1); integrationID <= 3; integrationID++ {
+		for d := 0; d <= reconcileMaxDaysBack; d++ {
+			day := now.AddDate(0, 0, -d).Format("2006-01-02")
+			key := dayIndexKey(integrationID, day)
+			idx.store(key, &dayIndex{day: day, docs: nil, fetchedAt: now}, now)
+		}
+	}
+
+	for d := 0; d <= reconcileMaxDaysBack; d++ {
+		day := now.AddDate(0, 0, -d).Format("2006-01-02")
+		if _, ok := idx.cached(dayIndexKey(1, day), day, now); !ok {
+			t.Fatalf("el barrido de la integracion 1 se autodesalojo en el dia -%d", d)
+		}
+	}
+}
+
+func TestCacheExpulsaPrimeroLoVencido(t *testing.T) {
+	idx := newDocumentIndex()
+	now := time.Now()
+	viejo := now.Add(-7 * time.Hour)
+
+	for i := 0; i < documentIndexMaxDays; i++ {
+		day := now.AddDate(0, 0, -(i + 2)).Format("2006-01-02")
+		idx.store(dayIndexKey(99, day), &dayIndex{day: day, docs: nil, fetchedAt: viejo}, now)
+	}
+
+	hoy := now.Format("2006-01-02")
+	idx.store(dayIndexKey(1, hoy), &dayIndex{day: hoy, docs: nil, fetchedAt: now}, now)
+
+	if _, ok := idx.cached(dayIndexKey(1, hoy), hoy, now); !ok {
+		t.Fatal("la entrada recien guardada no debia expulsarse")
+	}
+
+	idx.mu.Lock()
+	total := len(idx.days)
+	idx.mu.Unlock()
+	if total > documentIndexMaxDays {
+		t.Fatalf("el indice quedo con %d entradas, tope %d", total, documentIndexMaxDays)
+	}
+}
+
+func TestTTLDelDiaActual(t *testing.T) {
+	idx := newDocumentIndex()
+	now := time.Now()
+	hoy := now.Format("2006-01-02")
+	ayer := now.AddDate(0, 0, -1).Format("2006-01-02")
+
+	if got := idx.ttlFor(hoy, now); got != documentIndexCurrentDayTTL {
+		t.Fatalf("ttl del dia actual: esperado %s, obtenido %s", documentIndexCurrentDayTTL, got)
+	}
+	if got := idx.ttlFor(ayer, now); got != documentIndexPastDayTTL {
+		t.Fatalf("ttl de dia pasado: esperado %s, obtenido %s", documentIndexPastDayTTL, got)
+	}
+	if documentIndexCurrentDayTTL >= 15*time.Minute {
+		t.Fatalf("el ttl del dia actual (%s) no puede alcanzar el backoff minimo de reintento (15m): una factura recien emitida no se detectaria", documentIndexCurrentDayTTL)
+	}
+}

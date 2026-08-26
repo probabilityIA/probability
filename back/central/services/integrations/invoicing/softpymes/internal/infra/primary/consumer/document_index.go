@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	documentIndexCurrentDayTTL = 2 * time.Minute
+	documentIndexCurrentDayTTL = 10 * time.Minute
 	documentIndexPastDayTTL    = 6 * time.Hour
-	documentIndexMaxDays       = 24
+	documentIndexMaxDays       = 120
 )
 
 type indexedDocument struct {
@@ -22,6 +22,7 @@ type indexedDocument struct {
 }
 
 type dayIndex struct {
+	day       string
 	docs      []indexedDocument
 	fetchedAt time.Time
 }
@@ -63,22 +64,38 @@ func (d *documentIndex) cached(key, day string, now time.Time) (*dayIndex, bool)
 	return entry, true
 }
 
-func (d *documentIndex) store(key string, entry *dayIndex) {
+func (d *documentIndex) store(key string, entry *dayIndex, now time.Time) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.days[key] = entry
+
 	if len(d.days) <= documentIndexMaxDays {
 		return
 	}
-	oldestKey := ""
-	var oldestAt time.Time
+
 	for k, v := range d.days {
-		if oldestKey == "" || v.fetchedAt.Before(oldestAt) {
-			oldestKey = k
-			oldestAt = v.fetchedAt
+		if k != key && now.Sub(v.fetchedAt) > d.ttlFor(v.day, now) {
+			delete(d.days, k)
 		}
 	}
-	delete(d.days, oldestKey)
+
+	for len(d.days) > documentIndexMaxDays {
+		oldestKey := ""
+		var oldestAt time.Time
+		for k, v := range d.days {
+			if k == key {
+				continue
+			}
+			if oldestKey == "" || v.fetchedAt.Before(oldestAt) {
+				oldestKey = k
+				oldestAt = v.fetchedAt
+			}
+		}
+		if oldestKey == "" {
+			return
+		}
+		delete(d.days, oldestKey)
+	}
 }
 
 func (d *documentIndex) lockFor(key string) *sync.Mutex {
@@ -129,7 +146,7 @@ func (d *documentIndex) documentsForDay(
 		})
 	}
 
-	d.store(key, &dayIndex{docs: docs, fetchedAt: time.Now()})
+	d.store(key, &dayIndex{day: day, docs: docs, fetchedAt: time.Now()}, now)
 
 	return docs, false, nil
 }
