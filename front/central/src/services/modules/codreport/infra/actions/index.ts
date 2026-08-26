@@ -86,6 +86,14 @@ export const confirmCodCutAction = async (cutId: number, businessId?: number) =>
     }
 };
 
+export const getCodCutEmailPreviewAction = async (cutId: number, businessId?: number) => {
+    try {
+        return await (await getRepo()).getCutEmailPreview(cutId, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al generar la vista previa', data: null as { subject: string; html: string } | null };
+    }
+};
+
 export const sendCodCutEmailAction = async (cutId: number, emails: string[], businessId?: number) => {
     try {
         return await (await getRepo()).sendCutEmail(cutId, emails, businessId);

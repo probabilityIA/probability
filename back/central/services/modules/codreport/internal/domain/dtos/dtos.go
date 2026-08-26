@@ -66,3 +66,8 @@ type SendCutEmailDTO struct {
 	Recipients []string
 	UserID     uint
 }
+
+type CutEmailPreview struct {
+	Subject string
+	HTML    string
+}

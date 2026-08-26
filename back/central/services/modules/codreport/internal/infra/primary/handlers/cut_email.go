@@ -88,3 +88,37 @@ func (h *Handlers) SendCutEmail(c *gin.Context) {
 		"data":    gin.H{"sent_to": recipients},
 	})
 }
+
+func (h *Handlers) PreviewCutEmail(c *gin.Context) {
+	if !isAdminUser(c) {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "message": "Solo un administrador puede ver el correo del corte"})
+		return
+	}
+
+	businessID, err := resolveBusinessID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+
+	cutID, err := strconv.ParseUint(c.Query("cut_id"), 10, 64)
+	if err != nil || cutID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "cut_id invalido"})
+		return
+	}
+
+	preview, err := h.uc.CutEmailPreview(c.Request.Context(), businessID, uint(cutID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Error al generar la vista previa del correo",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    gin.H{"subject": preview.Subject, "html": preview.HTML},
+	})
+}

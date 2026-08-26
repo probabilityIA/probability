@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Mail, RefreshCw, Send, X } from 'lucide-react';
-import { sendCodCutEmailAction } from '../../infra/actions';
+import { useEffect, useState } from 'react';
+import { Mail, RefreshCw, Send, X, Eye } from 'lucide-react';
+import { sendCodCutEmailAction, getCodCutEmailPreviewAction } from '../../infra/actions';
 import { PaymentCut } from '../../domain/types';
 import { formatMoney, formatDateOnly } from './helpers';
 
@@ -25,6 +25,22 @@ export function CutEmailModal({ cut, businessId, justConfirmed, onClose, onSent 
     const [raw, setRaw] = useState('');
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(true);
+    const [previewError, setPreviewError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        setPreviewLoading(true);
+        setPreviewError(null);
+        getCodCutEmailPreviewAction(cut.id, businessId || undefined).then(res => {
+            if (cancelled) return;
+            if (res.success && res.data) setPreview(res.data);
+            else setPreviewError(res.message || 'No se pudo generar la vista previa');
+            setPreviewLoading(false);
+        });
+        return () => { cancelled = true; };
+    }, [cut.id, businessId]);
 
     const emails = parseEmails(raw);
     const invalid = emails.filter(e => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
@@ -49,7 +65,7 @@ export function CutEmailModal({ cut, businessId, justConfirmed, onClose, onSent 
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-5">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full p-5 max-h-[92vh] flex flex-col">
                 <div className="flex items-start justify-between mb-1">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Mail size={18} className="text-purple-600" /> Enviar corte por correo
@@ -64,11 +80,31 @@ export function CutEmailModal({ cut, businessId, justConfirmed, onClose, onSent 
                     </p>
                 )}
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                    Se enviara la relacion completa del corte del periodo{' '}
-                    <strong>{formatDateOnly(cut.period_start)} - {formatDateOnly(cut.period_end)}</strong>:
-                    fecha de confirmacion, resumen por transportadora y cada orden con su guia, fecha de entrega y valor consignado
-                    ({cut.orders_count} ordenes, {formatMoney(cut.total_collected)}).
+                    Corte del periodo <strong>{formatDateOnly(cut.period_start)} - {formatDateOnly(cut.period_end)}</strong>{' '}
+                    ({cut.orders_count} ordenes, {formatMoney(cut.total_collected)}). Abajo ves el correo tal como se enviara.
                 </p>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    <Eye size={13} /> Vista previa
+                    {preview?.subject && <span className="font-normal text-gray-400 truncate">- Asunto: {preview.subject}</span>}
+                </div>
+                <div className="border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900/40 mb-3 min-h-[260px] flex-1 overflow-hidden">
+                    {previewLoading && (
+                        <div className="flex items-center justify-center h-[260px] text-gray-400 text-sm">
+                            <RefreshCw size={16} className="animate-spin mr-2" /> Generando vista previa...
+                        </div>
+                    )}
+                    {!previewLoading && previewError && (
+                        <div className="p-3 text-sm text-red-700">{previewError}</div>
+                    )}
+                    {!previewLoading && preview && (
+                        <iframe
+                            title="Vista previa del correo"
+                            srcDoc={preview.html}
+                            sandbox=""
+                            className="w-full h-[45vh] min-h-[260px] bg-white"
+                        />
+                    )}
+                </div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Destinatarios</label>
                 <textarea
                     value={raw}
@@ -93,7 +129,7 @@ export function CutEmailModal({ cut, businessId, justConfirmed, onClose, onSent 
                     </button>
                     <button
                         onClick={send}
-                        disabled={sending || invalid.length > 0}
+                        disabled={sending || invalid.length > 0 || !preview}
                         className="px-3 py-2 text-sm rounded-md bg-purple-600 hover:bg-purple-700 text-white font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
                     >
                         {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}

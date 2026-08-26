@@ -22,6 +22,27 @@ var bogota = func() *time.Location {
 
 var monthsES = []string{"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"}
 
+func (uc *UseCase) CutEmailPreview(ctx context.Context, businessID uint, cutID uint) (*dtos.CutEmailPreview, error) {
+	cut, err := uc.repo.CutByID(ctx, businessID, cutID)
+	if err != nil {
+		return nil, err
+	}
+	if cut.Status != "confirmed" {
+		return nil, fmt.Errorf("solo se puede enviar por correo un corte confirmado")
+	}
+
+	orders, err := uc.CutOrders(ctx, businessID, cutID)
+	if err != nil {
+		return nil, err
+	}
+
+	businessName := uc.repo.BusinessName(ctx, businessID)
+	return &dtos.CutEmailPreview{
+		Subject: fmt.Sprintf("Corte de pago contra entrega %s - %s", periodLabel(cut.PeriodStart, cut.PeriodEnd), businessName),
+		HTML:    renderCutEmailHTML(cut, orders, businessName),
+	}, nil
+}
+
 func (uc *UseCase) SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) error {
 	if uc.email == nil {
 		return fmt.Errorf("servicio de correo no configurado")
@@ -30,24 +51,11 @@ func (uc *UseCase) SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) err
 		return fmt.Errorf("sin destinatarios")
 	}
 
-	cut, err := uc.repo.CutByID(ctx, d.BusinessID, d.CutID)
+	preview, err := uc.CutEmailPreview(ctx, d.BusinessID, d.CutID)
 	if err != nil {
 		return err
 	}
-	if cut.Status != "confirmed" {
-		return fmt.Errorf("solo se puede enviar por correo un corte confirmado")
-	}
-
-	orders, err := uc.CutOrders(ctx, d.BusinessID, d.CutID)
-	if err != nil {
-		return err
-	}
-
-	businessName := uc.repo.BusinessName(ctx, d.BusinessID)
-	senderName := uc.repo.UserName(ctx, d.UserID)
-
-	subject := fmt.Sprintf("Corte de pago contra entrega %s - %s", periodLabel(cut.PeriodStart, cut.PeriodEnd), businessName)
-	body := renderCutEmailHTML(cut, orders, businessName, senderName)
+	subject, body := preview.Subject, preview.HTML
 
 	var failed []string
 	for _, to := range d.Recipients {
@@ -75,8 +83,13 @@ func dateTimeES(t time.Time) string {
 	return fmt.Sprintf("%02d %s %d, %02d:%02d", t.Day(), monthsES[t.Month()-1], t.Year(), t.Hour(), t.Minute())
 }
 
+func dateOnlyES(t time.Time) string {
+	t = t.UTC()
+	return fmt.Sprintf("%02d %s %d", t.Day(), monthsES[t.Month()-1], t.Year())
+}
+
 func periodLabel(start, end time.Time) string {
-	return dateES(start) + " - " + dateES(end)
+	return dateOnlyES(start) + " - " + dateOnlyES(end)
 }
 
 func formatCOP(v float64) string {
@@ -111,7 +124,7 @@ func carrierTitle(c string) string {
 const cellStyle = `padding:7px 8px;border-bottom:1px solid #f3f4f6;font-size:12px`
 const headStyle = `padding:8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-transform:uppercase;color:#6b7280`
 
-func renderCutEmailHTML(cut *entities.PaymentCut, orders []entities.CodOrder, businessName, senderName string) string {
+func renderCutEmailHTML(cut *entities.PaymentCut, orders []entities.CodOrder, businessName string) string {
 	esc := html.EscapeString
 	var b strings.Builder
 
@@ -126,13 +139,9 @@ func renderCutEmailHTML(cut *entities.PaymentCut, orders []entities.CodOrder, bu
 	b.WriteString(`<tr><td style="padding:3px 0"><strong>Periodo:</strong> ` + esc(periodLabel(cut.PeriodStart, cut.PeriodEnd)) + `</td>`)
 	b.WriteString(`<td style="padding:3px 0;text-align:right"><strong>Corte No.</strong> ` + fmt.Sprintf("%d", cut.ID) + `</td></tr>`)
 	if cut.ConfirmedAt != nil {
-		by := cut.ConfirmedByName
-		if by == "" {
-			by = senderName
-		}
 		b.WriteString(`<tr><td style="padding:3px 0" colspan="2"><strong>Confirmado:</strong> ` + esc(dateTimeES(*cut.ConfirmedAt)))
-		if by != "" {
-			b.WriteString(` por ` + esc(by))
+		if cut.ConfirmedByName != "" {
+			b.WriteString(` por ` + esc(cut.ConfirmedByName))
 		}
 		b.WriteString(`</td></tr>`)
 	}
