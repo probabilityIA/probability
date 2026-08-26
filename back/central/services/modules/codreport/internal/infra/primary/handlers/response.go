@@ -100,6 +100,34 @@ type paymentCutResponse struct {
 	ConfirmedAt       *time.Time               `json:"confirmed_at"`
 }
 
+type cutEmailLogResponse struct {
+	ID           string    `json:"id"`
+	Recipient    string    `json:"recipient"`
+	Subject      string    `json:"subject"`
+	Status       string    `json:"status"`
+	ErrorMessage string    `json:"error_message"`
+	SentBy       uint      `json:"sent_by"`
+	SentByName   string    `json:"sent_by_name"`
+	SentAt       time.Time `json:"sent_at"`
+}
+
+func mapCutEmailLogs(in []entities.CutEmailLog) []cutEmailLogResponse {
+	out := make([]cutEmailLogResponse, len(in))
+	for i := range in {
+		out[i] = cutEmailLogResponse{
+			ID:           in[i].ID,
+			Recipient:    in[i].Recipient,
+			Subject:      in[i].Subject,
+			Status:       in[i].Status,
+			ErrorMessage: in[i].ErrorMessage,
+			SentBy:       in[i].SentBy,
+			SentByName:   in[i].SentByName,
+			SentAt:       in[i].SentAt,
+		}
+	}
+	return out
+}
+
 type carrierConfigResponse struct {
 	ID                 uint    `json:"id"`
 	CarrierName        string  `json:"carrier_name"`

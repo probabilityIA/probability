@@ -57,7 +57,12 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		if isCOD, err := h.uc.Repo().GetOrderIsCOD(c.Request.Context(), orderUUID); err == nil {
 			quoteIsCOD = isCOD
 		}
+	} else if items := parseQuoteItems(raw); len(items) > 0 {
+		h.applyPackageFromItems(c.Request.Context(), businessID, items, raw)
+	} else {
+		h.applyPackageConfig(c.Request.Context(), businessID, "", raw)
 	}
+	delete(raw, "items")
 
 	correlationID := uuid.New().String()
 

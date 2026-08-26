@@ -67,6 +67,9 @@ func (m *ucMock) UpdateCarrierFee(_ context.Context, d dtos.UpdateCarrierFeeDTO)
 }
 
 func (m *ucMock) SendCutEmail(_ context.Context, _ dtos.SendCutEmailDTO) error { return nil }
+func (m *ucMock) CutEmailHistory(_ context.Context, _ uint, _ uint) ([]entities.CutEmailLog, error) {
+	return nil, nil
+}
 func (m *ucMock) CutEmailPreview(_ context.Context, _ uint, _ uint) (*dtos.CutEmailPreview, error) {
 	return &dtos.CutEmailPreview{}, nil
 }

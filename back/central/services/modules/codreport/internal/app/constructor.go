@@ -23,6 +23,7 @@ type Iapp interface {
 	UpdateCarrierFee(ctx context.Context, d dtos.UpdateCarrierFeeDTO) (*dtos.UpdateCarrierFeeResult, error)
 	SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) error
 	CutEmailPreview(ctx context.Context, businessID uint, cutID uint) (*dtos.CutEmailPreview, error)
+	CutEmailHistory(ctx context.Context, businessID uint, cutID uint) ([]entities.CutEmailLog, error)
 }
 
 type UseCase struct {

@@ -113,6 +113,19 @@ type WeekAggregate struct {
 	Collected float64
 }
 
+type CutEmailLog struct {
+	ID           string
+	CutID        uint
+	BusinessID   uint
+	Recipient    string
+	Subject      string
+	Status       string
+	ErrorMessage string
+	SentBy       uint
+	SentByName   string
+	SentAt       time.Time
+}
+
 type PayoutOrder struct {
 	OrderID   string
 	Carrier   string

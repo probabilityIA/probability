@@ -86,6 +86,14 @@ export const confirmCodCutAction = async (cutId: number, businessId?: number) =>
     }
 };
 
+export const getCodCutEmailHistoryAction = async (cutId: number, businessId?: number) => {
+    try {
+        return await (await getRepo()).getCutEmailHistory(cutId, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al obtener el historico de correos', data: [] as any };
+    }
+};
+
 export const getCodCutEmailPreviewAction = async (cutId: number, businessId?: number) => {
     try {
         return await (await getRepo()).getCutEmailPreview(cutId, businessId);

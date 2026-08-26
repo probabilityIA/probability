@@ -66,6 +66,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<OrderWithQuote | null>(null);
     const [selectedOrderForEdit, setSelectedOrderForEdit] = useState<OrderWithQuote | null>(null);
     const [editForm, setEditForm] = useState<Partial<OrderWithQuote>>({});
+    const [editedPackageIds, setEditedPackageIds] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
@@ -172,6 +173,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
             const res = await updateOrderAction(selectedOrderForEdit.id, payload);
             if (res.success) {
                 setOrders(orders.map(o => o.id === selectedOrderForEdit.id ? { ...o, ...payload } as OrderWithQuote : o));
+                setEditedPackageIds(prev => new Set(prev).add(selectedOrderForEdit.id));
                 setSelectedOrderForEdit(null);
             } else {
                 alert(res.message || 'Error guardando');
@@ -199,6 +201,8 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
                 const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
                 const quotePayload: EnvioClickQuoteRequest = {
+                    order_uuid: order.id,
+                    auto_package: !editedPackageIds.has(order.id),
                     packages: [{
                         weight: order.weight || 1,
                         height: order.height || 10,
@@ -265,6 +269,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     myShipmentReference: "Orden " + (order.internal_number || order.order_number),
                     external_order_id: order.order_number,
                     order_uuid: order.id,
+                    auto_package: !editedPackageIds.has(order.id),
                     requestPickup: false,
                     pickupDate: new Date().toISOString().split('T')[0],
                     insurance: true,

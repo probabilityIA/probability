@@ -63,6 +63,10 @@ func (m *repoMock) UpdateCutTotals(_ context.Context, _ entities.PaymentCut) err
 }
 func (m *repoMock) UserName(_ context.Context, _ uint) string { return "" }
 func (m *repoMock) BusinessName(_ context.Context, _ uint) string { return "" }
+func (m *repoMock) SaveCutEmailLogs(_ context.Context, _ []entities.CutEmailLog) error { return nil }
+func (m *repoMock) CutEmailLogs(_ context.Context, _ uint, _ uint) ([]entities.CutEmailLog, error) {
+	return nil, nil
+}
 func (m *repoMock) CutByID(_ context.Context, _ uint, _ uint) (*entities.PaymentCut, error) {
 	return nil, nil
 }

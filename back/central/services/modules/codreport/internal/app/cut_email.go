@@ -56,13 +56,23 @@ func (uc *UseCase) SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) err
 		return err
 	}
 	subject, body := preview.Subject, preview.HTML
+	senderName := uc.repo.UserName(ctx, d.UserID)
+	now := time.Now().UTC()
 
 	var failed []string
+	logs := make([]entities.CutEmailLog, 0, len(d.Recipients))
 	for _, to := range d.Recipients {
+		entry := entities.CutEmailLog{CutID: d.CutID, BusinessID: d.BusinessID, Recipient: to, Subject: subject, Status: "sent", SentBy: d.UserID, SentByName: senderName, SentAt: now}
 		if err := uc.email.SendHTML(ctx, to, subject, body); err != nil {
 			uc.log.Error(ctx).Err(err).Uint("cut_id", d.CutID).Str("to", to).Msg("Error enviando corte COD por correo")
 			failed = append(failed, to)
+			entry.Status = "failed"
+			entry.ErrorMessage = err.Error()
 		}
+		logs = append(logs, entry)
+	}
+	if err := uc.repo.SaveCutEmailLogs(ctx, logs); err != nil {
+		uc.log.Error(ctx).Err(err).Uint("cut_id", d.CutID).Msg("No se pudo guardar el historico de correos del corte")
 	}
 	if len(failed) == len(d.Recipients) {
 		return fmt.Errorf("no se pudo enviar el correo a ningun destinatario")
@@ -71,6 +81,13 @@ func (uc *UseCase) SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) err
 		return fmt.Errorf("no se pudo enviar a: %s", strings.Join(failed, ", "))
 	}
 	return nil
+}
+
+func (uc *UseCase) CutEmailHistory(ctx context.Context, businessID uint, cutID uint) ([]entities.CutEmailLog, error) {
+	if _, err := uc.repo.CutByID(ctx, businessID, cutID); err != nil {
+		return nil, err
+	}
+	return uc.repo.CutEmailLogs(ctx, businessID, cutID)
 }
 
 func dateES(t time.Time) string {
@@ -121,6 +138,8 @@ func carrierTitle(c string) string {
 	return strings.ToUpper(lower[:1]) + lower[1:]
 }
 
+const logoURL = "https://probabilityia.com.co/logo2recortado.png"
+
 const cellStyle = `padding:7px 8px;border-bottom:1px solid #f3f4f6;font-size:12px`
 const headStyle = `padding:8px;border-bottom:1px solid #e5e7eb;font-size:11px;text-transform:uppercase;color:#6b7280`
 
@@ -129,7 +148,10 @@ func renderCutEmailHTML(cut *entities.PaymentCut, orders []entities.CodOrder, bu
 	var b strings.Builder
 
 	b.WriteString(`<div style="font-family:Arial,Helvetica,sans-serif;max-width:760px;margin:0 auto;color:#1f2937">`)
-	b.WriteString(`<div style="background:#111827;color:#ffffff;padding:22px 24px;border-radius:8px 8px 0 0">`)
+	b.WriteString(`<div style="padding:18px 24px;border:1px solid #e5e7eb;border-bottom:none;border-radius:8px 8px 0 0;background:#ffffff">`)
+	b.WriteString(`<img src="` + logoURL + `" alt="ProbabilityIA" width="170" style="display:block;height:auto;max-width:170px;border:0">`)
+	b.WriteString(`</div>`)
+	b.WriteString(`<div style="background:#111827;color:#ffffff;padding:22px 24px">`)
 	b.WriteString(`<h1 style="margin:0;font-size:19px">Corte de pago contra entrega</h1>`)
 	b.WriteString(`<p style="margin:6px 0 0;font-size:13px;color:#d1d5db">` + esc(businessName) + `</p>`)
 	b.WriteString(`</div>`)

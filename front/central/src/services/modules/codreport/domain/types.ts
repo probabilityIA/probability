@@ -155,6 +155,17 @@ export interface SingleResult<T> {
     data: T;
 }
 
+export interface CutEmailLog {
+    id: string;
+    recipient: string;
+    subject: string;
+    status: 'sent' | 'failed';
+    error_message: string;
+    sent_by: number;
+    sent_by_name: string;
+    sent_at: string;
+}
+
 export interface CutsResult {
     success: boolean;
     message?: string;

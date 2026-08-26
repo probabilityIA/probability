@@ -12,6 +12,7 @@ import {
     Paginated,
     SingleResult,
     CutsResult,
+    CutEmailLog,
 } from '../../domain/types';
 
 export class CodReportApiRepository {
@@ -102,6 +103,13 @@ export class CodReportApiRepository {
             method: 'POST',
             body: JSON.stringify({ period_start: periodStart, period_end: periodEnd, order_ids: orderIds }),
         });
+    }
+
+    async getCutEmailHistory(cutId: number, businessId?: number): Promise<SingleResult<CutEmailLog[]>> {
+        const sp = new URLSearchParams();
+        sp.append('cut_id', String(cutId));
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<SingleResult<CutEmailLog[]>>(`/cod-report/cuts/emails?${sp.toString()}`);
     }
 
     async getCutEmailPreview(cutId: number, businessId?: number): Promise<SingleResult<{ subject: string; html: string }>> {
