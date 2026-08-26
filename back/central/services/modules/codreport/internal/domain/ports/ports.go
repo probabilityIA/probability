@@ -37,4 +37,6 @@ type IRepository interface {
 	ShipmentCarrierFee(ctx context.Context, businessID uint, shipmentID uint) (float64, string, error)
 	CutByID(ctx context.Context, businessID uint, cutID uint) (*entities.PaymentCut, error)
 	BusinessName(ctx context.Context, businessID uint) string
+	SaveCutEmailLogs(ctx context.Context, logs []entities.CutEmailLog) error
+	CutEmailLogs(ctx context.Context, businessID uint, cutID uint) ([]entities.CutEmailLog, error)
 }

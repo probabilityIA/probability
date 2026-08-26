@@ -56,13 +56,23 @@ func (uc *UseCase) SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) err
 		return err
 	}
 	subject, body := preview.Subject, preview.HTML
+	senderName := uc.repo.UserName(ctx, d.UserID)
+	now := time.Now().UTC()
 
 	var failed []string
+	logs := make([]entities.CutEmailLog, 0, len(d.Recipients))
 	for _, to := range d.Recipients {
+		entry := entities.CutEmailLog{CutID: d.CutID, BusinessID: d.BusinessID, Recipient: to, Subject: subject, Status: "sent", SentBy: d.UserID, SentByName: senderName, SentAt: now}
 		if err := uc.email.SendHTML(ctx, to, subject, body); err != nil {
 			uc.log.Error(ctx).Err(err).Uint("cut_id", d.CutID).Str("to", to).Msg("Error enviando corte COD por correo")
 			failed = append(failed, to)
+			entry.Status = "failed"
+			entry.ErrorMessage = err.Error()
 		}
+		logs = append(logs, entry)
+	}
+	if err := uc.repo.SaveCutEmailLogs(ctx, logs); err != nil {
+		uc.log.Error(ctx).Err(err).Uint("cut_id", d.CutID).Msg("No se pudo guardar el historico de correos del corte")
 	}
 	if len(failed) == len(d.Recipients) {
 		return fmt.Errorf("no se pudo enviar el correo a ningun destinatario")
@@ -71,6 +81,13 @@ func (uc *UseCase) SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) err
 		return fmt.Errorf("no se pudo enviar a: %s", strings.Join(failed, ", "))
 	}
 	return nil
+}
+
+func (uc *UseCase) CutEmailHistory(ctx context.Context, businessID uint, cutID uint) ([]entities.CutEmailLog, error) {
+	if _, err := uc.repo.CutByID(ctx, businessID, cutID); err != nil {
+		return nil, err
+	}
+	return uc.repo.CutEmailLogs(ctx, businessID, cutID)
 }
 
 func dateES(t time.Time) string {

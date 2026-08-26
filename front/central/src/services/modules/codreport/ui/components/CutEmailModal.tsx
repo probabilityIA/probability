@@ -5,6 +5,7 @@ import { Mail, RefreshCw, Send, X, Eye } from 'lucide-react';
 import { sendCodCutEmailAction, getCodCutEmailPreviewAction } from '../../infra/actions';
 import { PaymentCut } from '../../domain/types';
 import { formatMoney, formatDateOnly } from './helpers';
+import { CutEmailHistory } from './CutEmailHistory';
 
 interface Props {
     cut: PaymentCut;
@@ -104,6 +105,9 @@ export function CutEmailModal({ cut, businessId, justConfirmed, onClose, onSent 
                             className="w-full h-[45vh] min-h-[260px] bg-white"
                         />
                     )}
+                </div>
+                <div className="mb-3">
+                    <CutEmailHistory cutId={cut.id} businessId={businessId} compact />
                 </div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Destinatarios</label>
                 <textarea

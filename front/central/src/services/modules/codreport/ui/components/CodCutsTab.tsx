@@ -10,6 +10,7 @@ import { formatMoney, formatDateTime, formatDateOnly } from './helpers';
 import { CutSelectionModal } from './CutSelectionModal';
 import { CutOrdersDetail } from './CutOrdersDetail';
 import { CutEmailModal } from './CutEmailModal';
+import { CutEmailHistory } from './CutEmailHistory';
 
 interface Props {
     businessId?: number | null;
@@ -50,6 +51,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
     const [deleting, setDeleting] = useState(false);
     const [confirmingId, setConfirmingId] = useState<number | null>(null);
     const [emailTarget, setEmailTarget] = useState<{ cut: PaymentCut; justConfirmed: boolean } | null>(null);
+    const [emailRefresh, setEmailRefresh] = useState(0);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -291,6 +293,9 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                                         Ordenes en este borrador. Confirma el corte para consignarlas, o cancelalo para liberarlas.
                                     </div>
                                 )}
+                                {isConfirmed && (
+                                    <CutEmailHistory cutId={cut.id} businessId={businessId} refreshKey={emailRefresh} />
+                                )}
                                 <CutOrdersDetail cutId={cut.id} businessId={businessId} />
                             </div>
                         )}
@@ -315,7 +320,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                     businessId={businessId}
                     justConfirmed={emailTarget.justConfirmed}
                     onClose={() => setEmailTarget(null)}
-                    onSent={msg => { setFeedback({ ok: true, msg }); setTimeout(() => setFeedback(null), 4000); }}
+                    onSent={msg => { setFeedback({ ok: true, msg }); setEmailRefresh(k => k + 1); setTimeout(() => setFeedback(null), 4000); }}
                 />
             )}
 

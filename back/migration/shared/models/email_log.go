@@ -7,37 +7,35 @@ import (
 	"gorm.io/gorm"
 )
 
-//
-//	EMAIL LOGS - Logs de envío de emails de notificación
-//
-
-// EmailLog registra cada intento de envío de email de notificación.
-// Útil para auditoría, debugging y reintentos futuros.
 type EmailLog struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	CreatedAt time.Time `gorm:"not null;index"`
 
-	// Contexto del negocio
 	BusinessID    uint `gorm:"not null;index"`
-	IntegrationID uint `gorm:"not null;index"`
-	ConfigID      uint `gorm:"not null;index"`
+	IntegrationID uint `gorm:"not null;default:0;index"`
+	ConfigID      uint `gorm:"not null;default:0;index"`
 
-	// Destinatario y contenido
+	Module        string `gorm:"size:64;not null;default:'notification';index"`
+	ReferenceType string `gorm:"size:64;not null;default:'';index:idx_email_logs_reference,priority:1"`
+	ReferenceID   string `gorm:"size:64;not null;default:'';index:idx_email_logs_reference,priority:2"`
+
 	To        string `gorm:"size:255;not null;index"`
 	Subject   string `gorm:"size:512;not null"`
 	EventType string `gorm:"size:128;not null;index"`
 
-	// Estado del envío: "sent" o "failed"
-	Status       string  `gorm:"size:32;not null;index"`
-	ErrorMessage *string `gorm:"type:text"`
+	Status            string  `gorm:"size:32;not null;index"`
+	ErrorMessage      *string `gorm:"type:text"`
+	Provider          string  `gorm:"size:32;not null;default:''"`
+	ProviderMessageID string  `gorm:"size:128;not null;default:''"`
+
+	SentBy     uint   `gorm:"not null;default:0"`
+	SentByName string `gorm:"size:160;not null;default:''"`
 }
 
-// TableName especifica el nombre de la tabla para EmailLog
 func (EmailLog) TableName() string {
 	return "email_logs"
 }
 
-// BeforeCreate genera un UUID si no se ha asignado
 func (e *EmailLog) BeforeCreate(tx *gorm.DB) error {
 	if e.ID == uuid.Nil {
 		e.ID = uuid.New()

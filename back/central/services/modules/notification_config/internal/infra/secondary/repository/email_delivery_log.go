@@ -11,13 +11,13 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-// deliveryLogRepository persiste logs de entrega de notificaciones
+const emailLogModuleNotification = "notification"
+
 type deliveryLogRepository struct {
 	db     db.IDatabase
 	logger log.ILogger
 }
 
-// NewDeliveryLogRepository crea una nueva instancia del repositorio de logs de entrega
 func NewDeliveryLogRepository(database db.IDatabase, logger log.ILogger) ports.IDeliveryLogRepository {
 	return &deliveryLogRepository{
 		db:     database,
@@ -25,12 +25,12 @@ func NewDeliveryLogRepository(database db.IDatabase, logger log.ILogger) ports.I
 	}
 }
 
-// CreateEmailLog persiste un log de entrega de email usando models.EmailLog
 func (r *deliveryLogRepository) CreateEmailLog(ctx context.Context, entry *entities.EmailDeliveryLog) error {
 	model := &models.EmailLog{
 		BusinessID:    entry.BusinessID,
 		IntegrationID: entry.IntegrationID,
 		ConfigID:      entry.ConfigID,
+		Module:        emailLogModuleNotification,
 		To:            entry.To,
 		Subject:       entry.Subject,
 		EventType:     entry.EventType,
