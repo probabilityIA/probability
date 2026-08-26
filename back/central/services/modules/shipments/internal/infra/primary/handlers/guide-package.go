@@ -18,10 +18,6 @@ func isDefaultPackage(pkg map[string]interface{}) bool {
 }
 
 func (h *Handlers) applyPackageConfig(ctx context.Context, businessID uint, orderID string, raw map[string]interface{}) {
-	if orderID == "" {
-		return
-	}
-
 	pkgs, ok := raw["packages"].([]interface{})
 	if !ok || len(pkgs) == 0 {
 		return
@@ -31,14 +27,17 @@ func (h *Handlers) applyPackageConfig(ctx context.Context, businessID uint, orde
 		return
 	}
 
-	items, warehouseID, err := h.uc.Repo().GetOrderPackageItems(ctx, orderID)
-	if err != nil {
-		return
-	}
-
+	var items []shippingpkg.PackageItem
 	var whPtr *uint
-	if warehouseID > 0 {
-		whPtr = &warehouseID
+	if orderID != "" {
+		orderItems, warehouseID, err := h.uc.Repo().GetOrderPackageItems(ctx, orderID)
+		if err != nil {
+			return
+		}
+		items = orderItems
+		if warehouseID > 0 {
+			whPtr = &warehouseID
+		}
 	}
 
 	cfg, err := h.uc.Repo().GetBusinessPackageConfig(ctx, businessID, whPtr)

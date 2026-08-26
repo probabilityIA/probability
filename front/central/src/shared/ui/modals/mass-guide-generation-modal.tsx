@@ -199,6 +199,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
                 const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
                 const quotePayload: EnvioClickQuoteRequest = {
+                    order_uuid: order.id,
                     packages: [{
                         weight: order.weight || 1,
                         height: order.height || 10,
