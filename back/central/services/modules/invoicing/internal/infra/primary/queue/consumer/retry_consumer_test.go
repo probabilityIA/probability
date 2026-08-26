@@ -296,3 +296,36 @@ func TestElBucleNoSeRepiteEnLaSiguienteVuelta(t *testing.T) {
 		t.Fatalf("la segunda vuelta no debia reprocesar nada, total de consultas: %d", len(uc.checked))
 	}
 }
+
+func TestDespachoExitosoDejaDeDisparar(t *testing.T) {
+	syncLog := nuevoSyncLog(1, 100, constants.SyncStatusFailed, 0)
+	repo := armar([]*entities.InvoiceSyncLog{syncLog}, map[uint]*entities.Invoice{
+		100: {ID: 100, Status: constants.InvoiceStatusPending},
+	})
+	uc := &fakeRetryUseCase{}
+	consumidor := nuevoConsumer(repo, uc)
+
+	consumidor.processRetries(context.Background())
+
+	if len(uc.checked) != 1 {
+		t.Fatalf("la primera vuelta debia despachar una consulta, despacho %d", len(uc.checked))
+	}
+	if repo.logs[1].NextRetryAt != nil {
+		t.Fatal("la fila despachada debia dejar de estar elegible: next_retry_at sigue puesto")
+	}
+
+	elegibles := make([]*entities.InvoiceSyncLog, 0, 1)
+	for _, l := range repo.logs {
+		if l.NextRetryAt != nil && l.RetryCount < l.MaxRetries &&
+			(l.Status == constants.SyncStatusFailed || l.Status == constants.SyncStatusPending) {
+			elegibles = append(elegibles, l)
+		}
+	}
+	repo.batch = elegibles
+
+	consumidor.processRetries(context.Background())
+
+	if len(uc.checked) != 1 {
+		t.Fatalf("la segunda vuelta volvio a despachar: %d consultas en total", len(uc.checked))
+	}
+}

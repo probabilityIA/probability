@@ -138,6 +138,7 @@ func (c *RetryConsumer) processOne(ctx context.Context, syncLog *entities.Invoic
 	}
 
 	if err == nil {
+		c.settle(ctx, syncLog)
 		return outcomeDispatched
 	}
 
@@ -152,6 +153,21 @@ func (c *RetryConsumer) processOne(ctx context.Context, syncLog *entities.Invoic
 
 	c.deferRetry(ctx, syncLog, err)
 	return outcomeDeferred
+}
+
+func (c *RetryConsumer) settle(ctx context.Context, syncLog *entities.InvoiceSyncLog) {
+	if !c.stillEligible(ctx, syncLog) {
+		return
+	}
+
+	syncLog.NextRetryAt = nil
+	if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+		c.log.Error(ctx).
+			Err(err).
+			Uint("invoice_id", syncLog.InvoiceID).
+			Uint("sync_log_id", syncLog.ID).
+			Msg("No se pudo cerrar el sync log despachado: vuelve a disparar en la proxima vuelta")
+	}
 }
 
 func (c *RetryConsumer) stillEligible(ctx context.Context, syncLog *entities.InvoiceSyncLog) bool {

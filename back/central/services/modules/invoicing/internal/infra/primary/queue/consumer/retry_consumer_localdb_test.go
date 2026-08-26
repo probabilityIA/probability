@@ -140,3 +140,76 @@ func TestBucleDeReintentosContraBaseLocal(t *testing.T) {
 	}
 	t.Logf("%d sync logs retirados (cancelled + next_retry_at NULL)", cancelados)
 }
+
+type aceptaTodoUseCase struct {
+	ports.IUseCase
+	retried []uint
+	checked []uint
+}
+
+func (u *aceptaTodoUseCase) RetryInvoice(_ context.Context, invoiceID uint, _ bool) error {
+	u.retried = append(u.retried, invoiceID)
+	return nil
+}
+
+func (u *aceptaTodoUseCase) CheckPendingInvoice(_ context.Context, invoiceID uint) error {
+	u.checked = append(u.checked, invoiceID)
+	return nil
+}
+
+func TestDespachoExitosoNoRedisparaContraBaseLocal(t *testing.T) {
+	if os.Getenv("INVOICING_LOCAL_DB_TEST") != "1" {
+		t.Skip("requiere la base local en 5434: INVOICING_LOCAL_DB_TEST=1")
+	}
+
+	conn, err := gorm.Open(postgres.Open(localDSN), &gorm.Config{
+		Logger: gormlogger.Default.LogMode(gormlogger.Silent),
+	})
+	if err != nil {
+		t.Fatalf("no se pudo conectar a la base local: %v", err)
+	}
+
+	antes := elegibles(t, conn)
+	if len(antes) == 0 {
+		t.Skip("la base local no tiene reintentos pendientes que probar")
+	}
+
+	snapshot := make([]filaElegible, len(antes))
+	copy(snapshot, antes)
+	t.Cleanup(func() {
+		for _, fila := range snapshot {
+			conn.Exec(
+				"UPDATE invoice_sync_logs SET status = ?, retry_count = ?, next_retry_at = ?, error_message = NULL WHERE id = ?",
+				fila.Status, fila.RetryCount, fila.NextRetryAt, fila.ID,
+			)
+		}
+	})
+
+	repo := repository.New(&localDB{conn: conn}, nil, mocks.NewSilentLogger())
+	useCase := &aceptaTodoUseCase{}
+	retryConsumer := NewRetryConsumer(repo, useCase, mocks.NewSilentLogger())
+
+	ctx := context.Background()
+	retryConsumer.processRetries(ctx)
+
+	primera := len(useCase.retried) + len(useCase.checked)
+	t.Logf("primera vuelta: %d retry, %d check sobre %d filas",
+		len(useCase.retried), len(useCase.checked), len(antes))
+	if primera != len(antes) {
+		t.Fatalf("esperaba despachar las %d filas, se despacharon %d", len(antes), primera)
+	}
+
+	restantes := elegibles(t, conn)
+	if len(restantes) != 0 {
+		t.Fatalf("quedaron %d filas elegibles tras despachar: volverian a disparar cada 5 minutos", len(restantes))
+	}
+	t.Log("conjunto elegible tras despachar: 0 filas")
+
+	retryConsumer.processRetries(ctx)
+
+	segunda := len(useCase.retried) + len(useCase.checked) - primera
+	if segunda != 0 {
+		t.Fatalf("la segunda vuelta redisparo %d despachos", segunda)
+	}
+	t.Log("segunda vuelta: 0 despachos")
+}
