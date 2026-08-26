@@ -24,6 +24,8 @@ type wooResolved struct {
 	AllowedCarriersCOD     []string              `json:"allowed_carriers_cod"`
 	AllowedCarriersPrepaid []string              `json:"allowed_carriers_prepaid"`
 	AlwaysInsure           bool                  `json:"always_insure"`
+	DisableCitySelector    bool                  `json:"disable_city_selector"`
+	DisableAddressMap      bool                  `json:"disable_address_map"`
 }
 
 func wooResKey(integrationID uint) string {
@@ -70,6 +72,12 @@ func (h *Handlers) resolveWoo(ctx context.Context, integrationID uint) (*wooReso
 	}
 	if insured, ferr := h.uc.Repo().GetIntegrationConfigFlag(ctx, integrationID, "always_insure"); ferr == nil {
 		r.AlwaysInsure = insured
+	}
+	if disabled, ferr := h.uc.Repo().GetIntegrationConfigFlag(ctx, integrationID, "disable_city_selector"); ferr == nil {
+		r.DisableCitySelector = disabled
+	}
+	if disabled, ferr := h.uc.Repo().GetIntegrationConfigFlag(ctx, integrationID, "disable_address_map"); ferr == nil {
+		r.DisableAddressMap = disabled
 	}
 	if r.FreeShippingEnabled {
 		if minStr, verr := h.uc.Repo().GetIntegrationConfigValue(ctx, integrationID, "free_shipping_min"); verr == nil && minStr != "" {

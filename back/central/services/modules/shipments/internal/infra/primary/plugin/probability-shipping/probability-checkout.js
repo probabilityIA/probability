@@ -205,14 +205,17 @@
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (res) {
                 if (!res) return;
-                var note = ensureNote(prefix);
-                if (!note) return;
                 var dane = ensureHidden('probability_dane_code');
                 var lat = ensureHidden('probability_lat');
                 var lng = ensureHidden('probability_lng');
                 if (dane) dane.value = res.dane_code || '';
                 if (lat) lat.value = res.lat || '';
                 if (lng) lng.value = res.lng || '';
+
+                if (cfg.showMap === false) return;
+
+                var note = ensureNote(prefix);
+                if (!note) return;
 
                 if (res.confidence === 'high') {
                     note.style.color = '#1a7f37';

@@ -40,11 +40,13 @@ add_action('wp_enqueue_scripts', function () {
     if (empty($cfg['url']) || empty($cfg['integration_id']) || empty($cfg['token'])) {
         return;
     }
+    $checkoutCfg = probability_shipping_fetch_checkout_config($cfg);
     $config = array(
         'backendUrl'          => rtrim($cfg['url'], '/'),
         'integrationId'       => (string) $cfg['integration_id'],
         'token'               => $cfg['token'],
-        'citySelectorEnabled' => $cfg['city_selector_enabled'],
+        'citySelectorEnabled' => $checkoutCfg['city_selector_enabled'],
+        'showMap'             => $checkoutCfg['show_map'],
     );
 
     wp_enqueue_style(
@@ -80,8 +82,44 @@ add_action('wp_enqueue_scripts', function () {
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
 });
 
+function probability_shipping_fetch_checkout_config($cfg) {
+    $defaults = array('city_selector_enabled' => true, 'show_map' => true);
+
+    if (empty($cfg['url']) || empty($cfg['integration_id']) || empty($cfg['token'])) {
+        return $defaults;
+    }
+
+    $cache_key = 'probability_checkout_cfg_' . $cfg['integration_id'];
+    $cached = get_transient($cache_key);
+    if (is_array($cached)) {
+        return $cached;
+    }
+
+    $endpoint = rtrim($cfg['url'], '/') . '/api/v1/woocommerce/checkout-config/' . rawurlencode($cfg['integration_id']);
+    $response = wp_remote_get($endpoint, array(
+        'timeout' => 5,
+        'headers' => array('X-Probability-Token' => $cfg['token']),
+    ));
+
+    $result = $defaults;
+    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if (is_array($data)) {
+            if (isset($data['city_selector_enabled'])) {
+                $result['city_selector_enabled'] = (bool) $data['city_selector_enabled'];
+            }
+            if (isset($data['show_map'])) {
+                $result['show_map'] = (bool) $data['show_map'];
+            }
+        }
+    }
+
+    set_transient($cache_key, $result, 60);
+    return $result;
+}
+
 function probability_shipping_public_config() {
-    $cfg = array('url' => '', 'integration_id' => '', 'token' => '', 'city_selector_enabled' => true);
+    $cfg = array('url' => '', 'integration_id' => '', 'token' => '');
 
     global $wpdb;
     $rows = $wpdb->get_col(
@@ -91,9 +129,6 @@ function probability_shipping_public_config() {
         $opt = get_option('woocommerce_probability_shipping_' . $instance_id . '_settings');
         if (!is_array($opt)) {
             continue;
-        }
-        if (isset($opt['city_selector_enabled'])) {
-            $cfg['city_selector_enabled'] = ($opt['city_selector_enabled'] === 'yes');
         }
         $key = isset($opt['connection_key']) ? trim($opt['connection_key']) : '';
         if ($key !== '') {
@@ -230,14 +265,6 @@ add_action('woocommerce_shipping_init', function () {
                     'type'        => 'text',
                     'description' => 'Solo si no usas la Clave de conexion.',
                     'default'     => '',
-                    'desc_tip'    => true,
-                ),
-                'city_selector_enabled' => array(
-                    'title'       => 'Selector de ciudad',
-                    'type'        => 'checkbox',
-                    'label'       => 'Reemplazar el campo de ciudad del tema por el selector de municipios de Probability',
-                    'description' => 'Desactiva esto si tu tema ya tiene su propio campo de Localidad/Ciudad funcionando: evita que se dupliquen los campos en el checkout clasico.',
-                    'default'     => 'yes',
                     'desc_tip'    => true,
                 ),
             );

@@ -33,6 +33,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	wooPublic.GET("/dane/:integration_id/states", h.WooCommerceDaneStates)
 	wooPublic.GET("/dane/:integration_id/cities", h.WooCommerceDaneCities)
 	wooPublic.POST("/validate-address/:integration_id", h.WooCommerceValidateAddress)
+	wooPublic.GET("/checkout-config/:integration_id", h.WooCommerceCheckoutConfig)
 
 	wooAuth := router.Group("/woocommerce", middleware.JWT())
 	wooAuth.GET("/connection-info/:integration_id", h.WooCommerceConnectionInfo)

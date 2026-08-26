@@ -23,10 +23,11 @@ de envio con su precio antes de pagar.
 == Changelog ==
 
 = 1.6.2 =
-* Nueva opcion "Reemplazar el campo de ciudad del tema por el selector de
-  municipios de Probability" (activada por defecto). Desactivala si tu tema ya
-  trae su propio campo de Localidad/Ciudad funcionando, para evitar que el
-  checkout clasico muestre el campo duplicado.
+* El selector de municipios (checkout clasico) y el mapa/validacion de
+  direccion ahora se controlan por separado desde Probability (Integraciones
+  -> WooCommerce), sin tocar WordPress. Utiles si tu tema ya trae su propio
+  campo de Localidad/Ciudad, o si el mapa no aplica para tu checkout. Ambos
+  activados por defecto.
 
 = 1.6.1 =
 * El "Costo de respaldo" ya no se aplica cuando el negocio tiene desactivada la
