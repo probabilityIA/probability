@@ -74,7 +74,9 @@ type IRepository interface {
 	UpdateShipment(ctx context.Context, shipment *Shipment) error
 	WithOrderGuideLock(ctx context.Context, orderID string, fn func() error) error
 	GetBusinessPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*PackageConfig, error)
+	GetBusinessCarrierSettings(ctx context.Context, businessID uint, warehouseID *uint) ([]CarrierSetting, error)
 	GetOrderPackageItems(ctx context.Context, orderID string) ([]shippingpkg.PackageItem, uint, error)
+	GetOrderIsCOD(ctx context.Context, orderUUID string) (bool, error)
 	MarkShipmentGenerating(ctx context.Context, id uint, staleBefore time.Time) (bool, error)
 	ReleaseShipmentGenerating(ctx context.Context, id uint) error
 	DeleteShipment(ctx context.Context, id uint) error
@@ -160,7 +162,6 @@ type IRepository interface {
 	GetBusinessForManifest(ctx context.Context, businessID uint) (*ManifestBusinessInfo, error)
 	GetChildBusinessIDs(ctx context.Context, parentID uint) ([]uint, error)
 
-	GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*ShippingPackageConfig, error)
 	GetProductDimensionsBySKUs(ctx context.Context, businessID uint, skus []string) (map[string]ProductDimensions, error)
 }
 

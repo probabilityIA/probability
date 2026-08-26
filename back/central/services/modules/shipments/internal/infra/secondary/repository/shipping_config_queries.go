@@ -8,16 +8,19 @@ import (
 	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 )
 
-func (r *Repository) GetBusinessPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*domain.PackageConfig, error) {
-	var rows []struct {
-		WarehouseID     *uint
-		PackageStrategy string
-		Boxes           []byte
-	}
+type shippingConfigRow struct {
+	WarehouseID     *uint
+	PackageStrategy string
+	Boxes           []byte
+	Carriers        []byte
+}
+
+func (r *Repository) pickShippingConfig(ctx context.Context, businessID uint, warehouseID *uint) (*shippingConfigRow, error) {
+	var rows []shippingConfigRow
 
 	err := r.db.Conn(ctx).
 		Table("shipping_configs").
-		Select("warehouse_id, package_strategy, boxes").
+		Select("warehouse_id, package_strategy, boxes, carriers").
 		Where("business_id = ? AND deleted_at IS NULL", businessID).
 		Scan(&rows).Error
 	if err != nil {
@@ -40,15 +43,51 @@ func (r *Repository) GetBusinessPackageConfig(ctx context.Context, businessID ui
 	if pick < 0 {
 		return nil, nil
 	}
+	return &rows[pick], nil
+}
 
-	cfg := &domain.PackageConfig{Strategy: rows[pick].PackageStrategy}
-	if len(rows[pick].Boxes) > 0 {
+func (r *Repository) GetBusinessPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*domain.PackageConfig, error) {
+	row, err := r.pickShippingConfig(ctx, businessID, warehouseID)
+	if err != nil || row == nil {
+		return nil, err
+	}
+
+	cfg := &domain.PackageConfig{Strategy: row.PackageStrategy}
+	if len(row.Boxes) > 0 {
 		var boxes []shippingpkg.Box
-		if err := json.Unmarshal(rows[pick].Boxes, &boxes); err == nil {
+		if err := json.Unmarshal(row.Boxes, &boxes); err == nil {
 			cfg.Boxes = boxes
 		}
 	}
 	return cfg, nil
+}
+
+func (r *Repository) GetBusinessCarrierSettings(ctx context.Context, businessID uint, warehouseID *uint) ([]domain.CarrierSetting, error) {
+	row, err := r.pickShippingConfig(ctx, businessID, warehouseID)
+	if err != nil || row == nil || len(row.Carriers) == 0 {
+		return nil, err
+	}
+
+	var settings []domain.CarrierSetting
+	if err := json.Unmarshal(row.Carriers, &settings); err != nil {
+		return nil, nil
+	}
+	return settings, nil
+}
+
+func (r *Repository) GetOrderIsCOD(ctx context.Context, orderUUID string) (bool, error) {
+	var order struct {
+		IsCod bool
+	}
+	if err := r.db.Conn(ctx).
+		Table("orders").
+		Select("is_cod").
+		Where("id = ?", orderUUID).
+		Limit(1).
+		Scan(&order).Error; err != nil {
+		return false, err
+	}
+	return order.IsCod, nil
 }
 
 func (r *Repository) GetOrderPackageItems(ctx context.Context, orderID string) ([]shippingpkg.PackageItem, uint, error) {

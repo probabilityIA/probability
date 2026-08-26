@@ -144,6 +144,13 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 
 	ratesList := toRatesList(getRatesFromData(result.Data))
 
+	var wooWarehouseID *uint
+	if resolved.OriginIsWarehouse && resolved.Origin != nil && resolved.Origin.ID > 0 {
+		id := resolved.Origin.ID
+		wooWarehouseID = &id
+	}
+	ratesList = h.filterRatesByBusinessCarriers(ctx, businessID, wooWarehouseID, req.COD, ratesList)
+
 	allowedCarriers := resolved.AllowedCarriersPrepaid
 	if req.COD {
 		allowedCarriers = resolved.AllowedCarriersCOD
@@ -253,18 +260,6 @@ func (h *Handlers) resolveWooPackageDimensions(ctx context.Context, businessID u
 	if cfg := h.packageConfigForWoo(ctx, businessID, resolved); cfg != nil {
 		strategy = cfg.Strategy
 		boxes = cfg.Boxes
-	} else if resolved.OriginIsWarehouse && resolved.PackageConfig != nil {
-		strategy = resolved.PackageConfig.Strategy
-		for _, b := range resolved.PackageConfig.StandardBoxes {
-			boxes = append(boxes, shippingpkg.Box{
-				Name:     b.Name,
-				Weight:   b.Weight,
-				Length:   b.Length,
-				Width:    b.Width,
-				Height:   b.Height,
-				MaxItems: b.MaxItems,
-			})
-		}
 	}
 
 	out := shippingpkg.Resolve(strategy, boxes, shippingpkg.PackageInput{

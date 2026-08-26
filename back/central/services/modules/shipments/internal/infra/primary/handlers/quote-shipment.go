@@ -47,8 +47,16 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		return
 	}
 
+	var quoteWarehouseID *uint
+	var quoteIsCOD bool
 	if orderUUID, _ := raw["order_uuid"].(string); orderUUID != "" {
 		h.applyPackageConfig(c.Request.Context(), businessID, orderUUID, raw)
+		if _, whID, err := h.uc.Repo().GetOrderPackageItems(c.Request.Context(), orderUUID); err == nil && whID > 0 {
+			quoteWarehouseID = &whID
+		}
+		if isCOD, err := h.uc.Repo().GetOrderIsCOD(c.Request.Context(), orderUUID); err == nil {
+			quoteIsCOD = isCOD
+		}
 	}
 
 	correlationID := uuid.New().String()
@@ -80,6 +88,13 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		})
 	default:
 		ratesList := toRatesList(getRatesFromData(result.Data))
+		ratesList = h.filterRatesByBusinessCarriers(
+			c.Request.Context(),
+			businessID,
+			quoteWarehouseID,
+			quoteIsCOD,
+			ratesList,
+		)
 		var quoteID uint
 		if len(ratesList) > 0 {
 			orderRef, _ := raw["order_uuid"].(string)
@@ -104,7 +119,7 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 			"message":        "Cotización exitosa",
 			"correlation_id": correlationID,
 			"quote_id":       quoteID,
-			"data":           gin.H{"rates": getRatesFromData(result.Data)},
+			"data":           gin.H{"rates": ratesList},
 		})
 	}
 }

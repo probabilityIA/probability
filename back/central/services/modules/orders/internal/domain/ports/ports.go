@@ -29,7 +29,7 @@ type IRepository interface {
 	GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error)
 	GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error)
 	BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error)
-	GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error)
+	GetShippingPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*entities.ShippingPackageConfig, error)
 
 	OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error)
 	GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)

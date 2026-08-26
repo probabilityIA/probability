@@ -160,7 +160,7 @@ func (m *RepositoryMock) BusinessHasWarehouse(ctx context.Context, businessID ui
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *RepositoryMock) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error) {
+func (m *RepositoryMock) GetShippingPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*entities.ShippingPackageConfig, error) {
 	args := m.Called(ctx, warehouseID)
 	var cfg *entities.ShippingPackageConfig
 	if v, ok := args.Get(0).(*entities.ShippingPackageConfig); ok {
