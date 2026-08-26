@@ -12,6 +12,26 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
 
+type wooFlexString string
+
+func (f *wooFlexString) UnmarshalJSON(data []byte) error {
+	trimmed := strings.TrimSpace(string(data))
+	if trimmed == "null" {
+		*f = ""
+		return nil
+	}
+	if len(trimmed) > 0 && trimmed[0] == '"' {
+		var s string
+		if err := json.Unmarshal(data, &s); err != nil {
+			return err
+		}
+		*f = wooFlexString(s)
+		return nil
+	}
+	*f = wooFlexString(trimmed)
+	return nil
+}
+
 type wooImageResponse struct {
 	Src string `json:"src"`
 }
@@ -21,9 +41,9 @@ type wooTermResponse struct {
 }
 
 type wooDimensionsResponse struct {
-	Length string `json:"length"`
-	Width  string `json:"width"`
-	Height string `json:"height"`
+	Length wooFlexString `json:"length"`
+	Width  wooFlexString `json:"width"`
+	Height wooFlexString `json:"height"`
 }
 
 type wooProductResponse struct {
@@ -32,13 +52,13 @@ type wooProductResponse struct {
 	SKU              string                `json:"sku"`
 	GlobalUniqueID   string                `json:"global_unique_id"`
 	Type             string                `json:"type"`
-	Price            string                `json:"price"`
-	RegularPrice     string                `json:"regular_price"`
+	Price            wooFlexString         `json:"price"`
+	RegularPrice     wooFlexString         `json:"regular_price"`
 	Description      string                `json:"description"`
 	ShortDescription string                `json:"short_description"`
 	Categories       []wooTermResponse     `json:"categories"`
 	Brands           []wooTermResponse     `json:"brands"`
-	Weight           string                `json:"weight"`
+	Weight           wooFlexString         `json:"weight"`
 	Dimensions       wooDimensionsResponse `json:"dimensions"`
 	StockQuantity    *int                  `json:"stock_quantity"`
 	Images           []wooImageResponse    `json:"images"`
@@ -54,10 +74,10 @@ type wooVariationResponse struct {
 	Attributes     []wooAttributeResponse `json:"attributes"`
 	SKU            string                 `json:"sku"`
 	GlobalUniqueID string                 `json:"global_unique_id"`
-	Price          string                 `json:"price"`
-	RegularPrice   string                 `json:"regular_price"`
+	Price          wooFlexString          `json:"price"`
+	RegularPrice   wooFlexString          `json:"regular_price"`
 	Description    string                 `json:"description"`
-	Weight         string                 `json:"weight"`
+	Weight         wooFlexString          `json:"weight"`
 	Dimensions     wooDimensionsResponse  `json:"dimensions"`
 	StockQuantity  *int                   `json:"stock_quantity"`
 	Image          *wooImageResponse      `json:"image"`
@@ -174,7 +194,7 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 				for _, v := range variations {
 					vprice := 0.0
 					if v.Price != "" {
-						vprice, _ = strconv.ParseFloat(v.Price, 64)
+						vprice, _ = strconv.ParseFloat(string(v.Price), 64)
 					}
 					vstock := 0
 					if v.StockQuantity != nil {
@@ -196,10 +216,10 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 						Description:       firstText(v.Description, p.Description, p.ShortDescription),
 						Category:          firstTerm(p.Categories),
 						Brand:             firstTerm(p.Brands),
-						Weight:            numeroWoo(firstText(v.Weight, p.Weight)),
-						Length:            numeroWoo(firstText(v.Dimensions.Length, p.Dimensions.Length)),
-						Width:             numeroWoo(firstText(v.Dimensions.Width, p.Dimensions.Width)),
-						Height:            numeroWoo(firstText(v.Dimensions.Height, p.Dimensions.Height)),
+						Weight:            numeroWoo(firstText(string(v.Weight), string(p.Weight))),
+						Length:            numeroWoo(firstText(string(v.Dimensions.Length), string(p.Dimensions.Length))),
+						Width:             numeroWoo(firstText(string(v.Dimensions.Width), string(p.Dimensions.Width))),
+						Height:            numeroWoo(firstText(string(v.Dimensions.Height), string(p.Dimensions.Height))),
 						Price:             vprice,
 						StockQuantity:     vstock,
 						ImageURL:          image,
@@ -210,7 +230,7 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 
 			price := 0.0
 			if p.Price != "" {
-				price, _ = strconv.ParseFloat(p.Price, 64)
+				price, _ = strconv.ParseFloat(string(p.Price), 64)
 			}
 			stock := 0
 			if p.StockQuantity != nil {
@@ -224,10 +244,10 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 				Description:   firstText(p.Description, p.ShortDescription),
 				Category:      firstTerm(p.Categories),
 				Brand:         firstTerm(p.Brands),
-				Weight:        numeroWoo(p.Weight),
-				Length:        numeroWoo(p.Dimensions.Length),
-				Width:         numeroWoo(p.Dimensions.Width),
-				Height:        numeroWoo(p.Dimensions.Height),
+				Weight:        numeroWoo(string(p.Weight)),
+				Length:        numeroWoo(string(p.Dimensions.Length)),
+				Width:         numeroWoo(string(p.Dimensions.Width)),
+				Height:        numeroWoo(string(p.Dimensions.Height)),
 				Price:         price,
 				StockQuantity: stock,
 				ImageURL:      firstImage(p.Images),
