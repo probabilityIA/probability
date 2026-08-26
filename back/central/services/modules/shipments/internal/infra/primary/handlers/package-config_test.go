@@ -176,3 +176,39 @@ func TestApplyPackageFromItems_ExpresConProductosUsaDimensionesYCaja(t *testing.
 		t.Fatalf("peso debe ser 3 x 2kg = 6kg (mayor que la caja), llego %v", pkg["weight"])
 	}
 }
+
+func TestApplyPackageConfig_AutoPackageAplicaCajaAunqueLaOrdenTraigaPeso(t *testing.T) {
+	repo := &mocks.RepositoryMock{
+		GetOrderPackageItemsFn: func(_ context.Context, _ string) ([]shippingpkg.PackageItem, uint, error) {
+			return []shippingpkg.PackageItem{{SKU: "SKU-A", Quantity: 2}}, 0, nil
+		},
+		GetBusinessPackageConfigFn: func(_ context.Context, _ uint, _ *uint) (*domain.PackageConfig, error) {
+			return demoBoxConfig(), nil
+		},
+	}
+	h := newPackageTestHandlers(repo)
+
+	raw := map[string]interface{}{"auto_package": true, "packages": []interface{}{map[string]interface{}{"weight": 2.0, "height": 10.0, "width": 10.0, "length": 10.0}}}
+	h.applyPackageConfig(context.Background(), 26, "order-1", raw)
+	pkg := raw["packages"].([]interface{})[0].(map[string]interface{})
+	if pkg["length"] != 30.0 || pkg["width"] != 40.0 || pkg["height"] != 30.0 || pkg["weight"] != 3.0 {
+		t.Fatalf("masivo sin editar: caja 30x40x30 y peso de la caja (3 > 2 del canal), llego %v", pkg)
+	}
+	if _, ok := raw["auto_package"]; ok {
+		t.Fatal("auto_package no debe viajar al carrier")
+	}
+
+	raw = map[string]interface{}{"auto_package": true, "packages": []interface{}{map[string]interface{}{"weight": 5.0, "height": 10.0, "width": 10.0, "length": 10.0}}}
+	h.applyPackageConfig(context.Background(), 26, "order-1", raw)
+	pkg = raw["packages"].([]interface{})[0].(map[string]interface{})
+	if pkg["weight"] != 5.0 || pkg["length"] != 30.0 {
+		t.Fatalf("peso del canal (5kg) debe ganarle a la caja (3kg) manteniendo sus medidas, llego %v", pkg)
+	}
+
+	raw = map[string]interface{}{"auto_package": false, "packages": []interface{}{map[string]interface{}{"weight": 5.0, "height": 20.0, "width": 20.0, "length": 20.0}}}
+	h.applyPackageConfig(context.Background(), 26, "order-1", raw)
+	pkg = raw["packages"].([]interface{})[0].(map[string]interface{})
+	if pkg["length"] != 20.0 || pkg["weight"] != 5.0 {
+		t.Fatalf("orden editada a mano no debe cambiar, llego %v", pkg)
+	}
+}

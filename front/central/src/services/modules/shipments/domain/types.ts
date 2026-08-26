@@ -131,6 +131,7 @@ export interface EnvioClickQuoteRequest {
     external_order_id?: string;
     order_uuid?: string;
     items?: EnvioClickQuoteItem[];
+    auto_package?: boolean;
     requestPickup?: boolean;
     pickupDate?: string;
     insurance?: boolean;

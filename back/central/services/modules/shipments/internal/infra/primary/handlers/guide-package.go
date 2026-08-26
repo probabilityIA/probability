@@ -18,13 +18,20 @@ func isDefaultPackage(pkg map[string]interface{}) bool {
 }
 
 func (h *Handlers) applyPackageConfig(ctx context.Context, businessID uint, orderID string, raw map[string]interface{}) {
+	autoPackage, _ := raw["auto_package"].(bool)
+	delete(raw, "auto_package")
+
 	pkgs, ok := raw["packages"].([]interface{})
 	if !ok || len(pkgs) == 0 {
 		return
 	}
 	pkg, ok := pkgs[0].(map[string]interface{})
-	if !ok || !isDefaultPackage(pkg) {
+	if !ok || (!autoPackage && !isDefaultPackage(pkg)) {
 		return
+	}
+	cartWeight := 0.0
+	if autoPackage {
+		cartWeight, _ = pkg["weight"].(float64)
 	}
 
 	var items []shippingpkg.PackageItem
@@ -56,6 +63,7 @@ func (h *Handlers) applyPackageConfig(ctx context.Context, businessID uint, orde
 
 	resolved := shippingpkg.Resolve(cfg.Strategy, cfg.Boxes, shippingpkg.PackageInput{
 		TotalQuantity: quantity,
+		CartWeightKg:  cartWeight,
 		Items:         items,
 	})
 
