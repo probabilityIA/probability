@@ -3,7 +3,7 @@ Contributors: probability
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2 or later
 
 Cotiza tarifas de transportadoras (EnvioClick y otras) en el checkout de
@@ -21,6 +21,12 @@ de envio con su precio antes de pagar.
 5. Listo: en el checkout apareceran las tarifas reales de las transportadoras.
 
 == Changelog ==
+
+= 1.6.2 =
+* Nueva opcion "Reemplazar el campo de ciudad del tema por el selector de
+  municipios de Probability" (activada por defecto). Desactivala si tu tema ya
+  trae su propio campo de Localidad/Ciudad funcionando, para evitar que el
+  checkout clasico muestre el campo duplicado.
 
 = 1.6.1 =
 * El "Costo de respaldo" ya no se aplica cuando el negocio tiene desactivada la

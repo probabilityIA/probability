@@ -238,19 +238,26 @@
     }
 
     function wire() {
+        var citySelectorEnabled = cfg.citySelectorEnabled !== false;
+
         prefixes().forEach(function (prefix) {
             var stateSel = document.getElementById(prefix + '_state');
             var addrInput = document.getElementById(prefix + '_address_1');
             if (!cityField(prefix)) return;
 
-            loadCities(prefix, false);
+            if (citySelectorEnabled) {
+                loadCities(prefix, false);
+            }
 
             if (stateSel && !stateSel.getAttribute('data-probability')) {
                 stateSel.setAttribute('data-probability', '1');
+                var onStateChange = citySelectorEnabled
+                    ? function () { loadCities(prefix, true); scheduleValidate(prefix); }
+                    : function () { scheduleValidate(prefix); };
                 if (window.jQuery) {
-                    window.jQuery(stateSel).on('change', function () { loadCities(prefix, true); scheduleValidate(prefix); });
+                    window.jQuery(stateSel).on('change', onStateChange);
                 } else {
-                    stateSel.addEventListener('change', function () { loadCities(prefix, true); scheduleValidate(prefix); });
+                    stateSel.addEventListener('change', onStateChange);
                 }
             }
             if (addrInput && !addrInput.getAttribute('data-probability')) {

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.6.1
+ * Version: 1.6.2
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -41,9 +41,10 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
     $config = array(
-        'backendUrl'    => rtrim($cfg['url'], '/'),
-        'integrationId' => (string) $cfg['integration_id'],
-        'token'         => $cfg['token'],
+        'backendUrl'          => rtrim($cfg['url'], '/'),
+        'integrationId'       => (string) $cfg['integration_id'],
+        'token'               => $cfg['token'],
+        'citySelectorEnabled' => $cfg['city_selector_enabled'],
     );
 
     wp_enqueue_style(
@@ -64,7 +65,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery', 'probability-leaflet'),
-        '1.6.1',
+        '1.6.2',
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -73,14 +74,14 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data', 'probability-leaflet'),
-        '1.6.1',
+        '1.6.2',
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
 });
 
 function probability_shipping_public_config() {
-    $cfg = array('url' => '', 'integration_id' => '', 'token' => '');
+    $cfg = array('url' => '', 'integration_id' => '', 'token' => '', 'city_selector_enabled' => true);
 
     global $wpdb;
     $rows = $wpdb->get_col(
@@ -90,6 +91,9 @@ function probability_shipping_public_config() {
         $opt = get_option('woocommerce_probability_shipping_' . $instance_id . '_settings');
         if (!is_array($opt)) {
             continue;
+        }
+        if (isset($opt['city_selector_enabled'])) {
+            $cfg['city_selector_enabled'] = ($opt['city_selector_enabled'] === 'yes');
         }
         $key = isset($opt['connection_key']) ? trim($opt['connection_key']) : '';
         if ($key !== '') {
@@ -226,6 +230,14 @@ add_action('woocommerce_shipping_init', function () {
                     'type'        => 'text',
                     'description' => 'Solo si no usas la Clave de conexion.',
                     'default'     => '',
+                    'desc_tip'    => true,
+                ),
+                'city_selector_enabled' => array(
+                    'title'       => 'Selector de ciudad',
+                    'type'        => 'checkbox',
+                    'label'       => 'Reemplazar el campo de ciudad del tema por el selector de municipios de Probability',
+                    'description' => 'Desactiva esto si tu tema ya tiene su propio campo de Localidad/Ciudad funcionando: evita que se dupliquen los campos en el checkout clasico.',
+                    'default'     => 'yes',
                     'desc_tip'    => true,
                 ),
             );
