@@ -3,6 +3,7 @@ package entities
 import "time"
 
 type SubscriptionUsage struct {
+	PlanCode             string
 	PlanName             string
 	PlanPrice            float64
 	BillingPeriod        string

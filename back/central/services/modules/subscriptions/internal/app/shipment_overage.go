@@ -24,6 +24,9 @@ func (uc *UseCase) CheckShipmentOverage(ctx context.Context, businessID uint) (b
 	if usage == nil {
 		return false, "", 0, nil
 	}
+	if usage.PlanCode != freePlanCode {
+		return false, "", 0, nil
+	}
 
 	if usage.OverageAmountDue != nil && usage.OverageAmountPaidAt == nil {
 		return true, OverageReasonPaymentDue, *usage.OverageAmountDue, nil

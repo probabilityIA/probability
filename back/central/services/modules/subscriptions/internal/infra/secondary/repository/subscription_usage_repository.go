@@ -32,6 +32,7 @@ func (r *Repository) GetSubscriptionUsage(ctx context.Context, businessID uint) 
 	plan := *sub.SubscriptionType
 
 	usage := &entities.SubscriptionUsage{
+		PlanCode:             plan.Code,
 		PlanName:             plan.Name,
 		PlanPrice:            plan.Price,
 		BillingPeriod:        plan.BillingPeriod,
