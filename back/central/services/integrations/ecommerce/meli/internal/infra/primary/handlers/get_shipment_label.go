@@ -57,8 +57,12 @@ func labelErrorResponse(err error) (int, string) {
 		return http.StatusNotFound, "envio no encontrado"
 	case errors.Is(err, domain.ErrShipmentNotOwned):
 		return http.StatusForbidden, "el envio no pertenece al negocio"
+	case errors.Is(err, domain.ErrLabelAlreadyShipped):
+		return http.StatusConflict, "la guia ya no se puede descargar: la transportadora recogio el envio y el canal no permite reimprimirla"
+	case errors.Is(err, domain.ErrLabelNotPDF):
+		return http.StatusBadGateway, "el canal devolvio un archivo ilegible en vez de la guia, intenta de nuevo en unos minutos"
 	case errors.Is(err, domain.ErrLabelNotAvailable):
-		return http.StatusNotFound, "MercadoLibre aun no tiene etiqueta para este envio"
+		return http.StatusNotFound, "la guia todavia no esta disponible para este envio"
 	case errors.Is(err, domain.ErrIntegrationNotFound):
 		return http.StatusNotFound, "integracion de MercadoLibre no encontrada"
 	case errors.Is(err, domain.ErrTokenExpired), errors.Is(err, domain.ErrTokenRefreshFailed):
@@ -66,6 +70,6 @@ func labelErrorResponse(err error) (int, string) {
 	case errors.Is(err, domain.ErrRateLimited):
 		return http.StatusTooManyRequests, "MercadoLibre esta limitando las solicitudes, intenta de nuevo"
 	default:
-		return http.StatusInternalServerError, err.Error()
+		return http.StatusInternalServerError, "no fue posible descargar la guia, intenta de nuevo"
 	}
 }

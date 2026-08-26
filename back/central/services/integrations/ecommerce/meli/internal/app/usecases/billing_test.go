@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
@@ -84,3 +85,63 @@ func TestOrdenQueYaTraeDocumentoNoLlamaAlCanal(t *testing.T) {
 		t.Fatalf("no debia consultar el canal, hizo %d llamadas", len(cli.tokensUsados))
 	}
 }
+
+type mockLabelClient struct {
+	domain.IMeliClient
+
+	tokensUsados []string
+	errores      []error
+	label        *domain.ShipmentLabel
+}
+
+func (m *mockLabelClient) WithBaseURL(string) domain.IMeliClient { return m }
+func (m *mockLabelClient) ForAccount(string) domain.IMeliClient  { return m }
+
+func (m *mockLabelClient) GetShipmentLabel(_ context.Context, accessToken string, _ int64, _ string) (*domain.ShipmentLabel, error) {
+	idx := len(m.tokensUsados)
+	m.tokensUsados = append(m.tokensUsados, accessToken)
+	if idx < len(m.errores) && m.errores[idx] != nil {
+		return nil, m.errores[idx]
+	}
+	return m.label, nil
+}
+
+type mockLabelLookup struct {
+	domain.IOrderLookupRepository
+	ref *domain.MeliLabelRef
+}
+
+func (m *mockLabelLookup) GetMeliLabelRefByShipmentID(context.Context, uint) (*domain.MeliLabelRef, error) {
+	return m.ref, nil
+}
+
+func usecaseDeEtiquetas(cli domain.IMeliClient, svc domain.IIntegrationService) *meliUseCase {
+	negocio := uint(26)
+	return &meliUseCase{
+		client:  cli,
+		service: svc,
+		logger:  testLogger(),
+		orderLookupRepo: &mockLabelLookup{ref: &domain.MeliLabelRef{
+			BusinessID: negocio, IntegrationID: 7, MeliShipmentID: 47846252129,
+		}},
+	}
+}
+
+func TestEtiquetaConEnvioYaDespachadoNoEsErrorInterno(t *testing.T) {
+	cli := &mockLabelClient{errores: []error{domain.ErrLabelAlreadyShipped}}
+	svc := &mockService{
+		integration: &domain.Integration{ID: 7, Config: futureToken(), BusinessID: uintPtr(26)},
+		token:       "token",
+	}
+
+	_, err := usecaseDeEtiquetas(cli, svc).GetShipmentLabel(context.Background(), 1, 26, "pdf")
+
+	if !errors.Is(err, domain.ErrLabelAlreadyShipped) {
+		t.Fatalf("esperaba ErrLabelAlreadyShipped, obtuve %v", err)
+	}
+	if len(cli.tokensUsados) != 1 {
+		t.Fatalf("no debia reintentar un envio ya despachado, hizo %d llamadas", len(cli.tokensUsados))
+	}
+}
+
+func uintPtr(v uint) *uint { return &v }

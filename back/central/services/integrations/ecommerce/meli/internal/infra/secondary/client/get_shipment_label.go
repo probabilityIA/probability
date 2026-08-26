@@ -30,10 +30,24 @@ func (c *MeliClient) GetShipmentLabel(ctx context.Context, accessToken string, s
 		return nil, domain.ErrLabelNotAvailable
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("meli client: unexpected status %d: %s", resp.StatusCode, string(body))
+		if motivo := classifyLabelBody(body); motivo != nil {
+			return nil, motivo
+		}
+		return nil, fmt.Errorf("meli client: unexpected status %d", resp.StatusCode)
 	}
 	if len(body) == 0 {
 		return nil, domain.ErrLabelNotAvailable
+	}
+
+	if looksLikeJSON(body) {
+		if motivo := classifyLabelBody(body); motivo != nil {
+			return nil, motivo
+		}
+		return nil, domain.ErrLabelNotAvailable
+	}
+
+	if !strings.EqualFold(responseType, "zpl2") && !looksLikePDF(body) {
+		return nil, domain.ErrLabelNotPDF
 	}
 
 	contentType := resp.Header.Get("Content-Type")

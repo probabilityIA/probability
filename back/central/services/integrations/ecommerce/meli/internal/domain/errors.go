@@ -21,5 +21,7 @@ var (
 	ErrItemNotFound            = errors.New("meli: item not found")
 	ErrShipmentNotFound        = errors.New("meli: shipment not found")
 	ErrLabelNotAvailable       = errors.New("meli: shipping label not available")
+	ErrLabelAlreadyShipped     = errors.New("meli: shipping label no longer printable, shipment already dispatched")
+	ErrLabelNotPDF             = errors.New("meli: shipping label content is not a valid document")
 	ErrShipmentNotOwned        = errors.New("meli: shipment does not belong to the business")
 )
