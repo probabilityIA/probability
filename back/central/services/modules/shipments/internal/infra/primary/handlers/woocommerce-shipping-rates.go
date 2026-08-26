@@ -128,7 +128,7 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 
 	pkg := h.resolveWooPackageDimensions(ctx, businessID, resolved, req)
 
-	payload := buildWooQuotePayload(req, resolved.Origin, normalizeDaneCode(destDane), pkg)
+	payload := buildWooQuotePayload(req, resolved.Origin, normalizeDaneCode(destDane), pkg, resolved.AlwaysInsure)
 
 	correlationID := uuid.New().String()
 	result, err := h.runQuote(ctx, carrier, businessID, payload, correlationID, 12*time.Second)
@@ -213,11 +213,10 @@ func normalizeDaneCode(code string) string {
 }
 
 type wooPackageDims struct {
-	Weight       float64
-	Length       float64
-	Width        float64
-	Height       float64
-	AlwaysInsure bool
+	Weight float64
+	Length float64
+	Width  float64
+	Height float64
 }
 
 func (h *Handlers) resolveWooPackageDimensions(ctx context.Context, businessID uint, resolved *wooResolved, req wooRateRequest) wooPackageDims {
@@ -258,11 +257,9 @@ func (h *Handlers) resolveWooPackageDimensions(ctx context.Context, businessID u
 
 	strategy := ""
 	var boxes []shippingpkg.Box
-	var alwaysInsure bool
 	if cfg := h.packageConfigForWoo(ctx, businessID, resolved); cfg != nil {
 		strategy = cfg.Strategy
 		boxes = cfg.Boxes
-		alwaysInsure = cfg.AlwaysInsure
 	}
 
 	out := shippingpkg.Resolve(strategy, boxes, shippingpkg.PackageInput{
@@ -272,7 +269,7 @@ func (h *Handlers) resolveWooPackageDimensions(ctx context.Context, businessID u
 		Items:          items,
 	})
 
-	return wooPackageDims{Weight: out.Weight, Length: out.Length, Width: out.Width, Height: out.Height, AlwaysInsure: alwaysInsure}
+	return wooPackageDims{Weight: out.Weight, Length: out.Length, Width: out.Width, Height: out.Height}
 }
 
 func (h *Handlers) packageConfigForWoo(ctx context.Context, businessID uint, resolved *wooResolved) *domain.PackageConfig {
@@ -291,7 +288,7 @@ func (h *Handlers) packageConfigForWoo(ctx context.Context, businessID uint, res
 	return cfg
 }
 
-func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, destDane string, pkgDims wooPackageDims) map[string]interface{} {
+func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, destDane string, pkgDims wooPackageDims, alwaysInsure bool) map[string]interface{} {
 	dest := req.Destination
 
 	firstName, lastName := splitName(dest.Name)
@@ -319,7 +316,7 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 
 	return map[string]interface{}{
 		"requestPickup": false,
-		"insurance":     pkgDims.AlwaysInsure,
+		"insurance":     alwaysInsure,
 		"description":   "Compra en linea",
 		"contentValue":  contentValue,
 		"packages":      []interface{}{pkg},

@@ -13,7 +13,6 @@ type shippingConfigRow struct {
 	PackageStrategy string
 	Boxes           []byte
 	Carriers        []byte
-	AlwaysInsure    bool
 }
 
 func (r *Repository) pickShippingConfig(ctx context.Context, businessID uint, warehouseID *uint) (*shippingConfigRow, error) {
@@ -21,7 +20,7 @@ func (r *Repository) pickShippingConfig(ctx context.Context, businessID uint, wa
 
 	err := r.db.Conn(ctx).
 		Table("shipping_configs").
-		Select("warehouse_id, package_strategy, boxes, carriers, always_insure").
+		Select("warehouse_id, package_strategy, boxes, carriers").
 		Where("business_id = ? AND deleted_at IS NULL", businessID).
 		Scan(&rows).Error
 	if err != nil {
@@ -56,7 +55,7 @@ func (r *Repository) GetBusinessPackageConfig(ctx context.Context, businessID ui
 		return nil, err
 	}
 
-	cfg := &domain.PackageConfig{Strategy: row.PackageStrategy, AlwaysInsure: row.AlwaysInsure}
+	cfg := &domain.PackageConfig{Strategy: row.PackageStrategy}
 	if len(row.Boxes) > 0 {
 		var boxes []shippingpkg.Box
 		if err := json.Unmarshal(row.Boxes, &boxes); err == nil {

@@ -81,7 +81,6 @@ func (r *Repository) UpsertConfig(ctx context.Context, cfg *domain.ShippingConfi
 			PackageStrategy: cfg.PackageStrategy,
 			Boxes:           datatypes.JSON(boxes),
 			Carriers:        datatypes.JSON(carriers),
-			AlwaysInsure:    cfg.AlwaysInsure,
 		}
 		if err := r.db.Conn(ctx).Create(&row).Error; err != nil {
 			return err
@@ -96,7 +95,6 @@ func (r *Repository) UpsertConfig(ctx context.Context, cfg *domain.ShippingConfi
 		"package_strategy": cfg.PackageStrategy,
 		"boxes":            datatypes.JSON(boxes),
 		"carriers":         datatypes.JSON(carriers),
-		"always_insure":    cfg.AlwaysInsure,
 	}
 	if err := r.db.Conn(ctx).Model(&models.ShippingConfig{}).Where("id = ?", existing.ID).Updates(updates).Error; err != nil {
 		return err
@@ -171,7 +169,6 @@ func toDomain(row *models.ShippingConfig) domain.ShippingConfig {
 		PackageStrategy: row.PackageStrategy,
 		Boxes:           []domain.Box{},
 		Carriers:        []domain.CarrierSetting{},
-		AlwaysInsure:    row.AlwaysInsure,
 		CreatedAt:       row.CreatedAt,
 		UpdatedAt:       row.UpdatedAt,
 	}

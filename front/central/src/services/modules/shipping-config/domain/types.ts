@@ -28,7 +28,6 @@ export interface ShippingConfig {
     package_strategy: 'product_dimensions' | 'standard_box';
     boxes: ShippingBox[];
     carriers: CarrierSetting[];
-    always_insure: boolean;
 }
 
 export interface WarehouseOrigin {
@@ -60,5 +59,4 @@ export interface SaveShippingConfigRequest {
     package_strategy: 'product_dimensions' | 'standard_box';
     boxes: ShippingBox[];
     carriers: CarrierSetting[];
-    always_insure: boolean;
 }

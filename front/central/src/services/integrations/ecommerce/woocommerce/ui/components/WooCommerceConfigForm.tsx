@@ -175,6 +175,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [downloadingPlugin, setDownloadingPlugin] = useState(false);
     const [codQuotingDisabled, setCodQuotingDisabled] = useState<boolean>(!!initialData?.config?.cod_quoting_disabled);
     const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(initialData?.config?.cod_includes_shipping !== false);
+    const [alwaysInsure, setAlwaysInsure] = useState<boolean>(!!initialData?.config?.always_insure);
     const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean>(!!initialData?.config?.free_shipping_enabled);
     const [freeShippingMin, setFreeShippingMin] = useState<string>(
         initialData?.config?.free_shipping_min != null ? String(initialData.config.free_shipping_min) : ''
@@ -344,6 +345,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 free_shipping_min: freeShippingEnabled ? Number(freeShippingMin) || 0 : 0,
                 cod_quoting_disabled: codQuotingDisabled,
                 cod_includes_shipping: codIncludesShipping,
+                always_insure: alwaysInsure,
                 allowed_carriers_cod: allowedCarriersCOD,
                 allowed_carriers_prepaid: allowedCarriersPrepaid,
                 ...writeChannelStatusSyncConfig(statusSync),
@@ -886,6 +888,26 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${codIncludesShipping ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${codIncludesShipping ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">Cotizar con seguro adicional</span>
+                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">
+                                    El seguro minimo obligatorio siempre va incluido en el precio, sin importar esta opcion. Activarla suma el seguro adicional (cobertura sobre el valor declarado) a todas las cotizaciones que ve el cliente en este checkout.
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={alwaysInsure}
+                                onClick={() => setAlwaysInsure((v) => !v)}
+                                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${alwaysInsure ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${alwaysInsure ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
                         </div>
                     </div>
