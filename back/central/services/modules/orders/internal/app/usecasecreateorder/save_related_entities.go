@@ -124,10 +124,10 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 // del peso real de los productos con la dimension mas grande entre los items.
 func (uc *UseCaseCreateOrder) applyShippingPackageDimensions(ctx context.Context, order *entities.ProbabilityOrder, totalQuantity int, totalWeight, maxLength, maxWidth, maxHeight float64) {
 	var config *entities.ShippingPackageConfig
-	if order.WarehouseID != nil {
-		cfg, err := uc.repo.GetWarehouseShippingConfig(ctx, *order.WarehouseID)
+	if order.BusinessID != nil && *order.BusinessID > 0 {
+		cfg, err := uc.repo.GetShippingPackageConfig(ctx, *order.BusinessID, order.WarehouseID)
 		if err != nil {
-			uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("failed to load warehouse shipping config")
+			uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("failed to load shipping package config")
 		} else {
 			config = cfg
 		}

@@ -105,3 +105,24 @@ Falta: idempotencia real contra el proveedor (marcar el shipment "en generacion"
 antes de llamar a EnvioClick, o reconciliar por `myShipmentReference` con
 `GET /shipment` antes de crear). El guard actual no protege cuando la respuesta
 del carrier no alcanza a persistirse.
+
+## 2026-08-25 - fix de idempotencia aplicado (sin desplegar)
+
+El agujero que quedaba abierto ("Falta: idempotencia real contra el proveedor")
+esta cerrado en codigo, probado en local con un mock de EnvioClick. Detalle
+completo y evidencia: `.claude/bitacora/2026-08-25-guias-duplicadas-idempotencia.md`.
+
+- Estado `generating` reservado con UPDATE condicional antes de publicar a la cola.
+- Lock por orden `pg_advisory_xact_lock(hashtext(order_id))` en los tres caminos
+  (manual, reintento de cotizacion, autogeneracion). Hacia falta: sin el, N clics
+  simultaneos creaban N shipments y cada uno bloqueaba solo el suyo.
+- Estado `needs_verification` cuando el carrier no confirma respuesta (timeout de
+  30 s del httpclient con la guia posiblemente creada). Antes quedaba `failed`,
+  o sea reintentable.
+- Front: el modal ya no rehabilita el boton a los 45 s; verifica el shipment y,
+  si quedo sin confirmar, bloquea el boton.
+
+Sigue urgente lo de siempre en esta alerta: los **reembolsos manuales** de las
+ordenes con doble cobro y las guias huerfanas por cancelar en EnvioClick
+(2284436982, 014160988633, 84151641204, 84151641209). El fix evita nuevas
+duplicaciones, no arregla el dinero ya cobrado.

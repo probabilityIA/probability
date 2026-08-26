@@ -13,22 +13,22 @@ import (
 
 const (
 	DefaultBaseURL = "https://api.envioclickpro.com.co/api/v2"
+
+	generateTimeout = 120 * time.Second
+	readTimeout     = 30 * time.Second
 )
 
-// Client implements domain.IEnvioClickClient using the shared httpclient
 type Client struct {
 	httpClient *httpclient.Client
 	log        log.ILogger
 }
 
-// New creates a new EnvioClick HTTP client.
-// The baseURL is no longer fixed at construction — each method receives it dynamically.
 func New(logger log.ILogger) domain.IEnvioClickClient {
 	logger.Info(context.Background()).Msg("🔍 Creating EnvioClick HTTP client")
 
 	httpConfig := httpclient.HTTPClientConfig{
-		BaseURL:    DefaultBaseURL, // placeholder; overridden per-request
-		Timeout:    30 * time.Second,
+		BaseURL:    DefaultBaseURL,
+		Timeout:    generateTimeout,
 		RetryCount: 2,
 		RetryWait:  3 * time.Second,
 		Debug:      true,
@@ -50,7 +50,6 @@ type envioClickErrorResponse struct {
 	} `json:"status_messages"`
 }
 
-// parseEnvioClickError extracts a human-readable error from an EnvioClick error response body
 func parseEnvioClickError(body []byte) string {
 	var errorResp envioClickErrorResponse
 	if err := json.Unmarshal(body, &errorResp); err == nil && len(errorResp.StatusMessages) > 0 {
@@ -64,7 +63,6 @@ func parseEnvioClickError(body []byte) string {
 	return mapEnvioClickError(string(body))
 }
 
-// mapEnvioClickError translates EnvioClick error messages to user-friendly Spanish
 func mapEnvioClickError(originalErr string) string {
 	lowerErr := strings.ToLower(originalErr)
 

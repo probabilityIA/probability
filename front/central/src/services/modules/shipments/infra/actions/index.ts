@@ -89,6 +89,16 @@ export const quoteShipmentAction = async (req: any) => {
     }
 };
 
+export const getShipmentByIdAction = async (id: number) => {
+    try {
+        const data = await (await getUseCases()).getShipmentById(id);
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Get Shipment By Id Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al consultar el envio' };
+    }
+};
+
 export const generateGuideAction = async (req: any) => {
     try {
         const data = await (await getUseCases()).generateGuide(req);
@@ -99,7 +109,6 @@ export const generateGuideAction = async (req: any) => {
     }
 };
 
-// Origin Addresses Actions
 export const getOriginAddressesAction = async (businessId?: number) => {
     try {
         const data = await (await getUseCases()).getOriginAddresses(businessId);

@@ -2,6 +2,8 @@ package mocks
 
 import (
 	"context"
+
+	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -14,6 +16,13 @@ type RepositoryMock struct {
 	GetShipmentsByOrderIDFn           func(ctx context.Context, orderID string) ([]domain.Shipment, error)
 	ListShipmentsFn                   func(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.Shipment, int64, error)
 	UpdateShipmentFn                  func(ctx context.Context, shipment *domain.Shipment) error
+	WithOrderGuideLockFn              func(ctx context.Context, orderID string, fn func() error) error
+	GetBusinessPackageConfigFn        func(ctx context.Context, businessID uint, warehouseID *uint) (*domain.PackageConfig, error)
+	GetBusinessCarrierSettingsFn      func(ctx context.Context, businessID uint, warehouseID *uint) ([]domain.CarrierSetting, error)
+	GetOrderIsCODFn                   func(ctx context.Context, orderUUID string) (bool, error)
+	GetOrderPackageItemsFn            func(ctx context.Context, orderID string) ([]shippingpkg.PackageItem, uint, error)
+	MarkShipmentGeneratingFn          func(ctx context.Context, id uint, staleBefore time.Time) (bool, error)
+	ReleaseShipmentGeneratingFn       func(ctx context.Context, id uint) error
 	DeleteShipmentFn                  func(ctx context.Context, id uint) error
 	ShipmentExistsFn                  func(ctx context.Context, orderID string, trackingNumber string) (bool, error)
 	GetActiveShippingCarrierFn        func(ctx context.Context, businessID uint) (*domain.CarrierInfo, error)
@@ -50,7 +59,6 @@ type RepositoryMock struct {
 	ListOriginAddressesByBusinessFn   func(ctx context.Context, businessID uint) ([]domain.OriginAddress, error)
 	GetDefaultOriginAddressFn         func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
 	GetDefaultWarehouseOriginFn       func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
-	GetWarehouseShippingConfigFn      func(ctx context.Context, warehouseID uint) (*domain.ShippingPackageConfig, error)
 	GetProductDimensionsBySKUsFn      func(ctx context.Context, businessID uint, skus []string) (map[string]domain.ProductDimensions, error)
 	ListDaneStatesFn                  func(ctx context.Context) ([]domain.DaneItem, error)
 	ListDaneCitiesByStateFn           func(ctx context.Context, stateCode string) ([]domain.DaneItem, error)
@@ -97,6 +105,55 @@ func (m *RepositoryMock) ListShipments(ctx context.Context, page, pageSize int, 
 func (m *RepositoryMock) UpdateShipment(ctx context.Context, shipment *domain.Shipment) error {
 	if m.UpdateShipmentFn != nil {
 		return m.UpdateShipmentFn(ctx, shipment)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) GetOrderPackageItems(ctx context.Context, orderID string) ([]shippingpkg.PackageItem, uint, error) {
+	if m.GetOrderPackageItemsFn != nil {
+		return m.GetOrderPackageItemsFn(ctx, orderID)
+	}
+	return nil, 0, nil
+}
+
+func (m *RepositoryMock) GetBusinessPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*domain.PackageConfig, error) {
+	if m.GetBusinessPackageConfigFn != nil {
+		return m.GetBusinessPackageConfigFn(ctx, businessID, warehouseID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetBusinessCarrierSettings(ctx context.Context, businessID uint, warehouseID *uint) ([]domain.CarrierSetting, error) {
+	if m.GetBusinessCarrierSettingsFn != nil {
+		return m.GetBusinessCarrierSettingsFn(ctx, businessID, warehouseID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetOrderIsCOD(ctx context.Context, orderUUID string) (bool, error) {
+	if m.GetOrderIsCODFn != nil {
+		return m.GetOrderIsCODFn(ctx, orderUUID)
+	}
+	return false, nil
+}
+
+func (m *RepositoryMock) WithOrderGuideLock(ctx context.Context, orderID string, fn func() error) error {
+	if m.WithOrderGuideLockFn != nil {
+		return m.WithOrderGuideLockFn(ctx, orderID, fn)
+	}
+	return fn()
+}
+
+func (m *RepositoryMock) MarkShipmentGenerating(ctx context.Context, id uint, staleBefore time.Time) (bool, error) {
+	if m.MarkShipmentGeneratingFn != nil {
+		return m.MarkShipmentGeneratingFn(ctx, id, staleBefore)
+	}
+	return true, nil
+}
+
+func (m *RepositoryMock) ReleaseShipmentGenerating(ctx context.Context, id uint) error {
+	if m.ReleaseShipmentGeneratingFn != nil {
+		return m.ReleaseShipmentGeneratingFn(ctx, id)
 	}
 	return nil
 }
@@ -344,13 +401,6 @@ func (m *RepositoryMock) GetDefaultOriginAddress(ctx context.Context, businessID
 func (m *RepositoryMock) GetDefaultWarehouseOrigin(ctx context.Context, businessID uint) (*domain.OriginAddress, error) {
 	if m.GetDefaultWarehouseOriginFn != nil {
 		return m.GetDefaultWarehouseOriginFn(ctx, businessID)
-	}
-	return nil, nil
-}
-
-func (m *RepositoryMock) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*domain.ShippingPackageConfig, error) {
-	if m.GetWarehouseShippingConfigFn != nil {
-		return m.GetWarehouseShippingConfigFn(ctx, warehouseID)
 	}
 	return nil, nil
 }

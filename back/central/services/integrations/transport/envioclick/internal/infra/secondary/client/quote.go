@@ -9,10 +9,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
-// Quote obtiene cotizaciones de envío desde EnvioClick
-// Endpoint: POST /quotation
 func (c *Client) Quote(baseURL, apiKey string, req domain.QuoteRequest, meta *domain.SyncMeta) (*domain.QuoteResponse, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
 
 	if baseURL == "" {
 		baseURL = DefaultBaseURL

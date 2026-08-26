@@ -165,7 +165,7 @@ func (m *mockRepository) BusinessHasWarehouse(ctx context.Context, businessID ui
 	}
 	return true, nil
 }
-func (m *mockRepository) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error) {
+func (m *mockRepository) GetShippingPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*entities.ShippingPackageConfig, error) {
 	return nil, nil
 }
 func (m *mockRepository) OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error) {

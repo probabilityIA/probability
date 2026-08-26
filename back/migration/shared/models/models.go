@@ -274,13 +274,14 @@ func (IntegrationCategory) TableName() string {
 // INTEGRATION TYPES - Tipos de integraciones disponibles
 type IntegrationType struct {
 	gorm.Model
-	Name          string `gorm:"size:100;not null;unique"` // "WhatsApp", "Shopify", "Mercado Libre"
-	Code          string `gorm:"size:50;not null;unique"`  // "whatsapp", "shopify", "mercado_libre"
-	Description   string `gorm:"size:500"`                 // Descripción del tipo de integración
-	Icon          string `gorm:"size:100"`                 // Icono para UI
-	ImageURL      string `gorm:"size:500"`                 // URL de la imagen del logo (path relativo en S3)
-	IsActive      bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
-	InDevelopment bool   `gorm:"default:false"`            // Si el tipo está en desarrollo (próximamente)
+	Name             string `gorm:"size:100;not null;unique"` // "WhatsApp", "Shopify", "Mercado Libre"
+	Code             string `gorm:"size:50;not null;unique"`  // "whatsapp", "shopify", "mercado_libre"
+	Description      string `gorm:"size:500"`                 // Descripción del tipo de integración
+	Icon             string `gorm:"size:100"`                 // Icono para UI
+	ImageURL         string `gorm:"size:500"`                 // URL de la imagen del logo (path relativo en S3)
+	IsActive         bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
+	InDevelopment    bool   `gorm:"default:false"`            // Si el tipo está en desarrollo (próximamente)
+	IsSystemProvider bool   `gorm:"default:false;index"`      // Integracion interna de la plataforma: Probability la opera para todos los negocios y el cliente no la ve
 
 	// Relación con IntegrationCategory
 	CategoryID *uint                `gorm:"index"`

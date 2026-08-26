@@ -29,6 +29,7 @@ type TransportResponseMessage struct {
 	Timestamp     time.Time              `json:"timestamp"`
 	Data          map[string]interface{} `json:"data,omitempty"`
 	Error         string                 `json:"error,omitempty"`
+	ErrorKind     string                 `json:"error_kind,omitempty"`
 }
 
 type ResponseConsumer struct {
@@ -128,18 +129,32 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			Str("correlation_id", response.CorrelationID).
 			Msg("❌ Guide generation failed")
 
+		unconfirmed := response.ErrorKind == "unreachable"
+		errorMessage := response.Error
+		if unconfirmed {
+			errorMessage = "No pudimos confirmar la respuesta de la transportadora. La guia puede haberse creado: verificala antes de generar otra."
+		}
+
 		if response.ShipmentID != nil {
 			shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 			if err == nil && shipment != nil {
-				shipment.Status = "failed"
+				if unconfirmed {
+					shipment.Status = domain.ShipmentStatusNeedsVerification
+					c.log.Error(ctx).
+						Uint("shipment_id", shipment.ID).
+						Str("correlation_id", response.CorrelationID).
+						Msg("Guia sin respuesta confirmada: shipment marcado para verificacion manual, no se permite regenerar")
+				} else {
+					shipment.Status = domain.ShipmentStatusFailed
+				}
 				if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
-					c.log.Error(ctx).Err(err).Msg("Failed to update shipment status to failed")
+					c.log.Error(ctx).Err(err).Msg("Failed to update shipment status after failed generation")
 				}
 				if shipment.OrderID != nil {
-					c.markQuoteFailed(ctx, *shipment.OrderID, response.Error)
+					c.markQuoteFailed(ctx, *shipment.OrderID, errorMessage)
 				}
 			}
-			c.ssePublisher.PublishGuideFailed(ctx, businessID, *response.ShipmentID, response.CorrelationID, response.Error)
+			c.ssePublisher.PublishGuideFailed(ctx, businessID, *response.ShipmentID, response.CorrelationID, errorMessage)
 		}
 		return
 	}

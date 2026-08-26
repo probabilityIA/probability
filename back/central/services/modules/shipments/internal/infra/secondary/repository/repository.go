@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/repository/mappers"
@@ -12,30 +13,25 @@ import (
 	"gorm.io/gorm"
 )
 
-// Repository implementa el repositorio de envíos
 type Repository struct {
 	db db.IDatabase
 }
 
-// New crea una nueva instancia del repositorio
 func New(database db.IDatabase) domain.IRepository {
 	return &Repository{
 		db: database,
 	}
 }
 
-// CreateShipment crea un nuevo envío en la base de datos
 func (r *Repository) CreateShipment(ctx context.Context, shipment *domain.Shipment) error {
 	dbShipment := mappers.ToDBShipment(shipment)
 	if err := r.db.Conn(ctx).Create(dbShipment).Error; err != nil {
 		return err
 	}
-	// Actualizar el ID del modelo de dominio con el ID generado
 	shipment.ID = dbShipment.ID
 	return nil
 }
 
-// GetShipmentByID obtiene un envío por su ID
 func (r *Repository) GetShipmentByID(ctx context.Context, id uint) (*domain.Shipment, error) {
 	var shipment models.Shipment
 	err := r.db.Conn(ctx).
@@ -54,7 +50,6 @@ func (r *Repository) GetShipmentByID(ctx context.Context, id uint) (*domain.Ship
 	return mappers.ToDomainShipment(&shipment), nil
 }
 
-// GetShipmentByTrackingNumber obtiene un envío por su número de tracking
 func (r *Repository) GetShipmentByTrackingNumber(ctx context.Context, trackingNumber string) (*domain.Shipment, error) {
 	var shipment models.Shipment
 	err := r.db.Conn(ctx).
@@ -73,7 +68,6 @@ func (r *Repository) GetShipmentByTrackingNumber(ctx context.Context, trackingNu
 	return mappers.ToDomainShipment(&shipment), nil
 }
 
-// GetShipmentsByOrderID obtiene todos los envíos de una orden
 func (r *Repository) GetShipmentsByOrderID(ctx context.Context, orderID string) ([]domain.Shipment, error) {
 	var shipments []models.Shipment
 	err := r.db.Conn(ctx).
@@ -95,55 +89,44 @@ func (r *Repository) GetShipmentsByOrderID(ctx context.Context, orderID string) 
 	return domainShipments, nil
 }
 
-// ListShipments obtiene una lista paginada de envíos con filtros optimizados
 func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.Shipment, int64, error) {
 	var shipments []models.Shipment
 	var total int64
 
-	// Construir query base
 	query := r.db.Conn(ctx).Model(&models.Shipment{})
 
-	// Filtro por order_id
 	if orderID, ok := filters["order_id"].(string); ok && orderID != "" {
 		query = query.Where("shipments.order_id = ?", orderID)
 	}
 
-	// Filtro por múltiples order_ids
 	if orderIDs, ok := filters["order_ids"].([]string); ok && len(orderIDs) > 0 {
 		query = query.Where("shipments.order_id IN ?", orderIDs)
 	}
 
-	// Filtro por tracking_number (búsqueda parcial)
 	if trackingNumber, ok := filters["tracking_number"].(string); ok && trackingNumber != "" {
 		query = query.Where("shipments.tracking_number ILIKE ?", "%"+trackingNumber+"%")
 	}
 
-	// Filtro por múltiples tracking_numbers
 	if trackingNumbers, ok := filters["tracking_numbers"].([]string); ok && len(trackingNumbers) > 0 {
 		query = query.Where("shipments.tracking_number IN ?", trackingNumbers)
 	}
 
-	// Filtro por carrier
 	if carrier, ok := filters["carrier"].(string); ok && carrier != "" {
 		query = query.Where("shipments.carrier ILIKE ?", "%"+carrier+"%")
 	}
 
-	// Filtro por carrier_code
 	if carrierCode, ok := filters["carrier_code"].(string); ok && carrierCode != "" {
 		query = query.Where("shipments.carrier_code = ?", carrierCode)
 	}
 
-	// Filtro por status
 	if status, ok := filters["status"].(string); ok && status != "" {
 		query = query.Where("shipments.status = ?", status)
 	}
 
-	// Filtro por múltiples statuses
 	if statuses, ok := filters["statuses"].([]string); ok && len(statuses) > 0 {
 		query = query.Where("shipments.status IN ?", statuses)
 	}
 
-	// Filtro por guide_id
 	if guideID, ok := filters["guide_id"].(string); ok && guideID != "" {
 		query = query.Where("shipments.guide_id = ?", guideID)
 	}
@@ -156,27 +139,22 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.order_number ILIKE ?)", "%"+orderNumber+"%")
 	}
 
-	// Filtro por warehouse_id
 	if warehouseID, ok := filters["warehouse_id"].(uint); ok && warehouseID > 0 {
 		query = query.Where("shipments.warehouse_id = ?", warehouseID)
 	}
 
-	// Filtro por driver_id
 	if driverID, ok := filters["driver_id"].(uint); ok && driverID > 0 {
 		query = query.Where("shipments.driver_id = ?", driverID)
 	}
 
-	// Filtro por is_last_mile
 	if isLastMile, ok := filters["is_last_mile"].(bool); ok {
 		query = query.Where("shipments.is_last_mile = ?", isLastMile)
 	}
 
-	// Filtro por is_test
 	if isTest, ok := filters["is_test"].(bool); ok {
 		query = query.Where("shipments.is_test = ?", isTest)
 	}
 
-	// Filtros de fecha - shipped_at
 	if shippedAfter, ok := filters["shipped_after"].(string); ok && shippedAfter != "" {
 		query = query.Where("shipments.shipped_at >= ?", shippedAfter)
 	}
@@ -185,7 +163,6 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.shipped_at <= ?", shippedBefore)
 	}
 
-	// Filtros de fecha - delivered_at
 	if deliveredAfter, ok := filters["delivered_after"].(string); ok && deliveredAfter != "" {
 		query = query.Where("shipments.delivered_at >= ?", deliveredAfter)
 	}
@@ -194,7 +171,6 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.delivered_at <= ?", deliveredBefore)
 	}
 
-	// Filtros de fecha - created_at (compatibilidad)
 	if startDate, ok := filters["start_date"].(string); ok && startDate != "" {
 		query = query.Where("shipments.created_at >= ?", startDate)
 	}
@@ -211,7 +187,6 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.created_at <= ?", createdBefore)
 	}
 
-	// Filtros de fecha - updated_at
 	if updatedAfter, ok := filters["updated_after"].(string); ok && updatedAfter != "" {
 		query = query.Where("shipments.updated_at >= ?", updatedAfter)
 	}
@@ -220,30 +195,24 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.updated_at <= ?", updatedBefore)
 	}
 
-	// Filtro por business_id (a través de Preload de Order)
 	if businessID, ok := filters["business_id"].(uint); ok && businessID > 0 {
 		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.business_id = ?)", businessID)
 	}
 
-	// Filtro por integration_id (a través de Preload de Order)
 	if integrationID, ok := filters["integration_id"].(uint); ok && integrationID > 0 {
 		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.integration_id = ?)", integrationID)
 	}
 
-	// Filtro por integration_type (a través de Preload de Order)
 	if integrationType, ok := filters["integration_type"].(string); ok && integrationType != "" {
 		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.integration_type = ?)", integrationType)
 	}
 
-	// Contar total (antes de aplicar paginación y ordenamiento)
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Aplicar ordenamiento
 	sortBy := "shipments.created_at"
 	if sort, ok := filters["sort_by"].(string); ok && sort != "" {
-		// Mapear campos de ordenamiento
 		sortFieldMap := map[string]string{
 			"id":              "shipments.id",
 			"order_id":        "shipments.order_id",
@@ -269,14 +238,11 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 
 	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 
-	// Aplicar paginación
 	offset := (page - 1) * pageSize
 	query = query.Offset(offset).Limit(pageSize)
 
-	// Precargar relaciones
 	query = query.Preload("Order").Preload("ShippingAddress")
 
-	// Ejecutar query
 	if err := query.Find(&shipments).Error; err != nil {
 		return nil, 0, err
 	}
@@ -320,18 +286,47 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 	return domainShipments, total, nil
 }
 
-// UpdateShipment actualiza un envío existente
 func (r *Repository) UpdateShipment(ctx context.Context, shipment *domain.Shipment) error {
 	dbShipment := mappers.ToDBShipment(shipment)
 	return r.db.Conn(ctx).Save(dbShipment).Error
 }
 
-// DeleteShipment elimina (soft delete) un envío
+func (r *Repository) WithOrderGuideLock(ctx context.Context, orderID string, fn func() error) error {
+	return r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("SELECT pg_advisory_xact_lock(hashtext(?)::bigint)", orderID).Error; err != nil {
+			return err
+		}
+		return fn()
+	})
+}
+
+func (r *Repository) MarkShipmentGenerating(ctx context.Context, id uint, staleBefore time.Time) (bool, error) {
+	res := r.db.Conn(ctx).Model(&models.Shipment{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Where("status <> ? OR updated_at < ?", domain.ShipmentStatusGenerating, staleBefore).
+		Updates(map[string]interface{}{
+			"status":     domain.ShipmentStatusGenerating,
+			"updated_at": time.Now(),
+		})
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
+}
+
+func (r *Repository) ReleaseShipmentGenerating(ctx context.Context, id uint) error {
+	return r.db.Conn(ctx).Model(&models.Shipment{}).
+		Where("id = ? AND status = ?", id, domain.ShipmentStatusGenerating).
+		Updates(map[string]interface{}{
+			"status":     domain.ShipmentStatusPending,
+			"updated_at": time.Now(),
+		}).Error
+}
+
 func (r *Repository) DeleteShipment(ctx context.Context, id uint) error {
 	return r.db.Conn(ctx).Where("id = ?", id).Delete(&models.Shipment{}).Error
 }
 
-// ShipmentExists verifica si existe un envío con el tracking number para una orden
 func (r *Repository) ShipmentExists(ctx context.Context, orderID string, trackingNumber string) (bool, error) {
 	var count int64
 	err := r.db.Conn(ctx).
@@ -345,8 +340,6 @@ func (r *Repository) ShipmentExists(ctx context.Context, orderID string, trackin
 
 	return count > 0, nil
 }
-
-// ORIGIN ADDRESSES
 
 func (r *Repository) CreateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {
 	dbAddress := &models.OriginAddress{
@@ -440,7 +433,7 @@ func (r *Repository) GetDefaultOriginAddress(ctx context.Context, businessID uin
 	var dbAddress models.OriginAddress
 	if err := r.db.Conn(ctx).Where("business_id = ? AND is_default = ?", businessID, true).First(&dbAddress).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // No default found
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -498,15 +491,12 @@ func (r *Repository) DeleteOriginAddress(ctx context.Context, id uint) error {
 
 func (r *Repository) SetDefaultOriginAddress(ctx context.Context, businessID, addressID uint) error {
 	return r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
-		// Remove existing default
 		if err := tx.Model(&models.OriginAddress{}).Where("business_id = ?", businessID).Update("is_default", false).Error; err != nil {
 			return err
 		}
-		// Set new default
 		if err := tx.Model(&models.OriginAddress{}).Where("id = ? AND business_id = ?", addressID, businessID).Update("is_default", true).Error; err != nil {
 			return err
 		}
 		return nil
 	})
 }
-

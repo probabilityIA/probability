@@ -15,6 +15,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.GET("/cuts/orders", h.CutOrders)
 		g.POST("/cuts/draft", h.CreateDraftCut)
 		g.POST("/cuts/confirm", h.ConfirmCut)
+		g.POST("/cuts/email", h.SendCutEmail)
+		g.GET("/cuts/email/preview", h.PreviewCutEmail)
 		g.DELETE("/cuts", h.DeleteCut)
 		g.GET("/carrier-config", h.CarrierConfigs)
 		g.PUT("/carrier-config", h.SaveCarrierConfig)

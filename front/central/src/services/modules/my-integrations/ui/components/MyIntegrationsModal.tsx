@@ -18,6 +18,8 @@ import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, PLATFORM_CODE, CATEGORY_C
 import { getSyncProvider } from '../providers';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { CyberCluster } from './CyberCluster';
+import { ShippingConfigNode } from './ShippingConfigNode';
+import { ShippingConfigModal } from '@/services/modules/shipping-config/ui';
 import { CyberChannelsCluster } from './CyberChannelsCluster';
 import { CyberHub } from './CyberHub';
 import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
@@ -81,6 +83,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const [editLoadingId, setEditLoadingId] = useState<number | null>(null);
     const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [shippingConfigOpen, setShippingConfigOpen] = useState(false);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const channelNodesRef = useRef<HTMLDivElement | null>(null);
@@ -307,6 +310,9 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         ? WIDE_FORM_TYPE_IDS.includes(Number(editingIntegration.integration_type_id))
         : false;
 
+    const messagingCategory = services.find(cat => cat.code === 'messaging');
+    const invoicingCategory = services.find(cat => cat.code === 'invoicing');
+
     const renderCluster = (cat: IntegrationCategory) => (
         <CyberCluster
             key={cat.code}
@@ -396,7 +402,12 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 editingId={editLoadingId}
                                 anchorRef={setClusterRef('channels')}
                             />
-                            <div className="pb-12">
+                            <div className="relative pb-12">
+                            {messagingCategory && (
+                                <div className="relative z-20 mb-8 flex justify-center lg:mb-0 lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-start">
+                                    {renderCluster(messagingCategory)}
+                                </div>
+                            )}
                             <CyberHub
                                 ref={hubRef}
                                 integrations={internalIntegrations}
@@ -405,15 +416,26 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 lastOrderAt={lastOwnOrder}
                                 findingsCount={findings?.findings.length ?? 0}
                             />
+                            <div className="relative z-20 mt-8 flex justify-center lg:mt-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 lg:justify-end">
+                                <ShippingConfigNode onOpen={() => setShippingConfigOpen(true)} />
                             </div>
-                            <div className="flex flex-wrap gap-8 lg:flex-nowrap">
-                                {services.map(renderCluster)}
                             </div>
+                            {invoicingCategory && (
+                                <div className="mx-auto w-full max-w-xl">
+                                    {renderCluster(invoicingCategory)}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
                 </div>
             </Modal>
+
+            <ShippingConfigModal
+                isOpen={shippingConfigOpen}
+                onClose={() => setShippingConfigOpen(false)}
+                businessId={effectiveBusinessId ?? undefined}
+            />
 
             <Modal
                 isOpen={!!editingIntegration}

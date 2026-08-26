@@ -11,10 +11,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
-// Generate crea un envío (genera guía) en EnvioClick
-// Endpoint: POST /shipment
 func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest, meta *domain.SyncMeta) (*domain.GenerateResponse, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), generateTimeout)
+	defer cancel()
 
 	if baseURL == "" {
 		baseURL = DefaultBaseURL
@@ -41,7 +40,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest, meta 
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick generate request failed - network error")
-		return nil, fmt.Errorf("error de red al conectar con el servicio de transporte: %w", err)
+		return nil, fmt.Errorf("%w: %v", domain.ErrTransportUnreachable, err)
 	}
 
 	if resp.IsError() {
@@ -52,7 +51,6 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest, meta 
 		return nil, fmt.Errorf("%s", parseEnvioClickError(resp.Body()))
 	}
 
-	// Parsear manualmente con interface{} en tracker e idOrder para tolerar variaciones
 	var raw struct {
 		Status string `json:"status"`
 		Data   struct {
@@ -69,7 +67,6 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest, meta 
 		return nil, fmt.Errorf("error parseando respuesta del servicio de transporte: %w", err)
 	}
 
-	// Convertir tracker a string
 	var trackingNumber string
 	switch v := raw.Data.Tracker.(type) {
 	case string:
@@ -82,7 +79,6 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest, meta 
 		}
 	}
 
-	// Convertir idOrder a int64
 	var idOrder int64
 	switch v := raw.Data.IDOrder.(type) {
 	case float64:

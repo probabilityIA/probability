@@ -1055,43 +1055,54 @@ func (r *Repository) BusinessHasWarehouse(ctx context.Context, businessID uint) 
 	return count > 0, nil
 }
 
-func (r *Repository) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error) {
-	var row struct {
-		Metadata datatypes.JSON
+func (r *Repository) GetShippingPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*entities.ShippingPackageConfig, error) {
+	var rows []struct {
+		WarehouseID     *uint
+		PackageStrategy string
+		Boxes           datatypes.JSON
 	}
 	err := r.db.Conn(ctx).
-		Table("warehouses").
-		Select("metadata").
-		Where("id = ?", warehouseID).
-		Limit(1).
-		Scan(&row).Error
+		Table("shipping_configs").
+		Select("warehouse_id, package_strategy, boxes").
+		Where("business_id = ? AND deleted_at IS NULL", businessID).
+		Scan(&rows).Error
 	if err != nil {
 		return nil, err
 	}
-	if len(row.Metadata) == 0 {
+	if len(rows) == 0 {
 		return nil, nil
 	}
 
-	var raw struct {
-		ShippingPackageStrategy string `json:"shipping_package_strategy"`
-		StandardBoxes           []struct {
-			Name     string   `json:"name"`
-			Weight   *float64 `json:"weight"`
-			Length   *float64 `json:"length"`
-			Width    *float64 `json:"width"`
-			Height   *float64 `json:"height"`
-			MaxItems int      `json:"max_items"`
-		} `json:"standard_boxes"`
+	pick := -1
+	for i := range rows {
+		if warehouseID != nil && rows[i].WarehouseID != nil && *rows[i].WarehouseID == *warehouseID {
+			pick = i
+			break
+		}
+		if rows[i].WarehouseID == nil && pick < 0 {
+			pick = i
+		}
 	}
-	if err := json.Unmarshal(row.Metadata, &raw); err != nil {
-		return nil, nil
-	}
-	if raw.ShippingPackageStrategy == "" {
+	if pick < 0 || rows[pick].PackageStrategy == "" {
 		return nil, nil
 	}
 
-	boxes := make([]entities.StandardBox, 0, len(raw.StandardBoxes))
-	for _, b := range raw.StandardBoxes {
+	var raw []struct {
+		Name     string   `json:"name"`
+		Weight   *float64 `json:"weight"`
+		Length   *float64 `json:"length"`
+		Width    *float64 `json:"width"`
+		Height   *float64 `json:"height"`
+		MaxItems int      `json:"max_items"`
+	}
+	if len(rows[pick].Boxes) > 0 {
+		if err := json.Unmarshal(rows[pick].Boxes, &raw); err != nil {
+			raw = nil
+		}
+	}
+
+	boxes := make([]entities.StandardBox, 0, len(raw))
+	for _, b := range raw {
 		boxes = append(boxes, entities.StandardBox{
 			Name:     b.Name,
 			Weight:   b.Weight,
@@ -1103,7 +1114,7 @@ func (r *Repository) GetWarehouseShippingConfig(ctx context.Context, warehouseID
 	}
 
 	return &entities.ShippingPackageConfig{
-		Strategy:      raw.ShippingPackageStrategy,
+		Strategy:      rows[pick].PackageStrategy,
 		StandardBoxes: boxes,
 	}, nil
 }

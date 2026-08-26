@@ -66,6 +66,11 @@ func (m *ucMock) UpdateCarrierFee(_ context.Context, d dtos.UpdateCarrierFeeDTO)
 	return &dtos.UpdateCarrierFeeResult{OrderNumber: "VIG-0083", PreviousFee: 6236, NewFee: d.Fee}, nil
 }
 
+func (m *ucMock) SendCutEmail(_ context.Context, _ dtos.SendCutEmailDTO) error { return nil }
+func (m *ucMock) CutEmailPreview(_ context.Context, _ uint, _ uint) (*dtos.CutEmailPreview, error) {
+	return &dtos.CutEmailPreview{}, nil
+}
+
 func newOrdersRequest(uc *ucMock, query string) *httptest.ResponseRecorder {
 	gin.SetMode(gin.TestMode)
 	h := handlers.New(uc, log.New())

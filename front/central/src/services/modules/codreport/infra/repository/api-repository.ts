@@ -104,6 +104,23 @@ export class CodReportApiRepository {
         });
     }
 
+    async getCutEmailPreview(cutId: number, businessId?: number): Promise<SingleResult<{ subject: string; html: string }>> {
+        const sp = new URLSearchParams();
+        sp.append('cut_id', String(cutId));
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<SingleResult<{ subject: string; html: string }>>(`/cod-report/cuts/email/preview?${sp.toString()}`);
+    }
+
+    async sendCutEmail(cutId: number, emails: string[], businessId?: number): Promise<{ success: boolean; message?: string; data?: { sent_to: string[] } }> {
+        const sp = new URLSearchParams();
+        sp.append('cut_id', String(cutId));
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<{ success: boolean; message?: string; data?: { sent_to: string[] } }>(`/cod-report/cuts/email?${sp.toString()}`, {
+            method: 'POST',
+            body: JSON.stringify({ emails }),
+        });
+    }
+
     async confirmCut(cutId: number, businessId?: number): Promise<{ success: boolean; message?: string }> {
         const sp = new URLSearchParams();
         sp.append('cut_id', String(cutId));

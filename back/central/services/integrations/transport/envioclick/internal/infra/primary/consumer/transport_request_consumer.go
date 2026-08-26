@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -311,7 +312,15 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 	resp, err := c.useCase.Generate(ctx, baseURL, apiKey, req, &metas)
 	c.persistSyncLogs(ctx, request, "generate", metas, err)
 	if err != nil {
-		return c.errorResponse(request, err.Error())
+		out := c.errorResponse(request, err.Error())
+		if errors.Is(err, domain.ErrTransportUnreachable) {
+			out.ErrorKind = "unreachable"
+			c.log.Error(ctx).Err(err).
+				Str("correlation_id", request.CorrelationID).
+				Str("reference", req.MyShipmentReference).
+				Msg("Generate sin respuesta confirmada: la guia pudo haberse creado en la transportadora")
+		}
+		return out
 	}
 
 	if resp.Data.Carrier == "" {

@@ -50,11 +50,28 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 	orderUUID := *quote.OrderUUID
 
 	existing, _ := repo.GetShipmentsByOrderID(ctx, orderUUID)
+	now := time.Now()
 	for i := range existing {
 		if shipmentHasActiveGuide(&existing[i]) {
 			c.JSON(http.StatusConflict, gin.H{
 				"error":       "La orden ya tiene una guia activa. Cancelala antes de generar otra.",
 				"shipment_id": existing[i].ID,
+			})
+			return
+		}
+		if existing[i].GuideInFlight(now) {
+			c.JSON(http.StatusConflict, gin.H{
+				"error":       "La guia de esta orden ya se esta generando. Espera el resultado antes de intentar de nuevo.",
+				"shipment_id": existing[i].ID,
+				"in_flight":   true,
+			})
+			return
+		}
+		if existing[i].NeedsVerification() {
+			c.JSON(http.StatusConflict, gin.H{
+				"error":              "No pudimos confirmar si la transportadora creo esta guia. Verificala con la transportadora antes de generar otra para no duplicarla.",
+				"shipment_id":        existing[i].ID,
+				"needs_verification": true,
 			})
 			return
 		}
@@ -98,9 +115,47 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 
 	payload := buildRetryPayload(quote, recipient, orderUUID)
 
-	shipmentID, err := h.createOrReuseShipmentForRetry(c, payload, carrier, orderUUID, existing)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al preparar el envio: " + err.Error()})
+	var shipmentID uint
+	var retryConflict *guideConflict
+	reserveErr := repo.WithOrderGuideLock(ctx, orderUUID, func() error {
+		fresh, _ := repo.GetShipmentsByOrderID(ctx, orderUUID)
+		at := time.Now()
+		for i := range fresh {
+			s := &fresh[i]
+			if s.HasActiveGuide() {
+				retryConflict = activeGuideConflict(s)
+				return nil
+			}
+			if s.GuideInFlight(at) {
+				retryConflict = inFlightConflict(s.ID)
+				return nil
+			}
+			if s.NeedsVerification() {
+				retryConflict = needsVerificationConflict(s.ID)
+				return nil
+			}
+		}
+		id, err := h.createOrReuseShipmentForRetry(c, payload, carrier, orderUUID, fresh)
+		if err != nil {
+			return err
+		}
+		locked, err := repo.MarkShipmentGenerating(ctx, id, time.Now().Add(-domain.GuideGenerationStaleAfter))
+		if err != nil {
+			return err
+		}
+		if !locked {
+			retryConflict = inFlightConflict(id)
+			return nil
+		}
+		shipmentID = id
+		return nil
+	})
+	if reserveErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al preparar el envio: " + reserveErr.Error()})
+		return
+	}
+	if retryConflict != nil {
+		c.JSON(retryConflict.status, retryConflict.body)
 		return
 	}
 
@@ -127,6 +182,7 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 	}
 
 	if err := h.transportPub.PublishTransportRequest(ctx, msg); err != nil {
+		_ = repo.ReleaseShipmentGenerating(ctx, shipmentID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al enviar la solicitud: " + err.Error()})
 		return
 	}
@@ -158,10 +214,10 @@ func (h *Handlers) createOrReuseShipmentForRetry(
 	orderUUID string,
 	existing []domain.Shipment,
 ) (uint, error) {
+	now := time.Now()
 	for i := range existing {
-		s := existing[i]
-		if s.Status == "pending" && (s.TrackingNumber == nil || *s.TrackingNumber == "") && (s.GuideURL == nil || *s.GuideURL == "") {
-			return s.ID, nil
+		if existing[i].ReusableForGuide(now) {
+			return existing[i].ID, nil
 		}
 	}
 

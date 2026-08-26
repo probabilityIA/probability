@@ -28,6 +28,7 @@ export * from './iam-subnavbar';
 export * from './wallet-subnavbar';
 export * from './accounting-subnavbar';
 export * from './spinner';
+export * from './brand-loader';
 export * from './stepper';
 export * from './table';
 export * from './user-profile-modal';

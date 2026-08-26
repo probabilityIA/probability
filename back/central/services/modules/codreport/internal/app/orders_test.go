@@ -62,6 +62,10 @@ func (m *repoMock) UpdateCutTotals(_ context.Context, _ entities.PaymentCut) err
 	return nil
 }
 func (m *repoMock) UserName(_ context.Context, _ uint) string { return "" }
+func (m *repoMock) BusinessName(_ context.Context, _ uint) string { return "" }
+func (m *repoMock) CutByID(_ context.Context, _ uint, _ uint) (*entities.PaymentCut, error) {
+	return nil, nil
+}
 func (m *repoMock) CutPeriodOrders(_ context.Context, _ uint, _, _ time.Time) ([]entities.CarrierAggregate, error) {
 	return nil, nil
 }
@@ -102,7 +106,7 @@ func TestListOrders_ForwardsHasGuideFilter(t *testing.T) {
 			return []entities.CodOrder{}, 0, nil
 		},
 	}
-	uc := New(repo, log.New())
+	uc := New(repo, nil, log.New())
 
 	_, _, err := uc.ListOrders(context.Background(), dtos.OrdersFilter{BusinessID: 10, HasGuide: &guide})
 	if err != nil {
@@ -122,7 +126,7 @@ func TestListOrders_PreservesHasGuide(t *testing.T) {
 			}, 2, nil
 		},
 	}
-	uc := New(repo, log.New())
+	uc := New(repo, nil, log.New())
 
 	orders, total, err := uc.ListOrders(context.Background(), dtos.OrdersFilter{BusinessID: 10})
 	if err != nil {
@@ -152,7 +156,7 @@ func TestListOrders_SoloPagadaCuentaComoRecaudada(t *testing.T) {
 			}, 6, nil
 		},
 	}
-	uc := New(repo, log.New())
+	uc := New(repo, nil, log.New())
 
 	orders, _, err := uc.ListOrders(context.Background(), dtos.OrdersFilter{BusinessID: 10})
 	if err != nil {

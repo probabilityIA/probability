@@ -35,6 +35,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/routes"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
 	"github.com/secamc93/probability/back/central/services/modules/shipping_margins"
+	"github.com/secamc93/probability/back/central/services/modules/shippingconfig"
 	"github.com/secamc93/probability/back/central/services/modules/siigoreferrals"
 	"github.com/secamc93/probability/back/central/services/modules/storefront"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions"
@@ -73,7 +74,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
 	shipmentsBundle := shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)
-	codreport.New(router, database, logger)
+	codreport.New(router, database, logger, environment)
 	mobile.New(router, database)
 	woostore.New(router, environment, logger)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
@@ -99,6 +100,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	shipmentsBundle.SetSubscriptionOverageChecker(subscriptionsBundle.UseCase.CheckShipmentOverage)
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "invoicing"))
 	warehouses.New(router, database)
+	shippingconfig.New(router, database)
 	commercial.New(router, database, logger)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "inventory"))
 	drivers.New(router, database)

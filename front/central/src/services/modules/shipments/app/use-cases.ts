@@ -12,6 +12,10 @@ export class ShipmentUseCases {
         return this.repository.getShipments(params);
     }
 
+    async getShipmentById(id: number): Promise<Shipment> {
+        return this.repository.getShipmentById(id);
+    }
+
     async quoteShipment(req: any) {
         return this.repository.quoteShipment(req);
     }
@@ -36,7 +40,6 @@ export class ShipmentUseCases {
         return this.repository.createShipment(req);
     }
 
-    // Origin Addresses
     async getOriginAddresses(businessId?: number) {
         return this.repository.getOriginAddresses(businessId);
     }

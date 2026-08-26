@@ -8,6 +8,7 @@ import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
+import { ShippingConfigButton } from '@/services/modules/shipping-config/ui';
 import { OrdersEffectivenessKpis } from '@/services/modules/orders/ui';
 
 export const ORDERS_FILTERS_SLOT_ID = 'orders-filters-slot';
@@ -88,6 +89,9 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
                         <div className="flex items-center min-w-0 shrink overflow-x-auto overflow-y-hidden subnavbar-scroll">
                             <OrdersEffectivenessKpis businessId={selectedBusinessId} />
                         </div>
+                        {pathname.startsWith('/shipments') && (
+                            <ShippingConfigButton businessId={selectedBusinessId ?? undefined} />
+                        )}
                         <MyIntegrationsButton businessId={selectedBusinessId} />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}

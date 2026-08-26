@@ -50,9 +50,24 @@ func (c *OrderCreatedConsumer) maybeAutoGenerate(ctx context.Context, msg *order
 	payload["external_order_id"] = msg.OrderID
 	payload["myShipmentReference"] = msg.OrderID
 
-	shipmentID, err := c.createOrReusePendingShipment(ctx, payload, carrier, msg.OrderID)
-	if err != nil {
-		c.log.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to pre-create shipment for auto guide")
+	var shipmentID uint
+	reserveErr := c.uc.Repo().WithOrderGuideLock(ctx, msg.OrderID, func() error {
+		id, err := c.createOrReusePendingShipment(ctx, payload, carrier, msg.OrderID)
+		if err != nil {
+			return err
+		}
+		locked, err := c.uc.Repo().MarkShipmentGenerating(ctx, id, time.Now().Add(-domain.GuideGenerationStaleAfter))
+		if err != nil {
+			return err
+		}
+		if !locked {
+			return fmt.Errorf("order %s already has a guide in flight (shipment %d)", msg.OrderID, id)
+		}
+		shipmentID = id
+		return nil
+	})
+	if reserveErr != nil {
+		c.log.Error(ctx).Err(reserveErr).Str("order_id", msg.OrderID).Msg("Failed to reserve shipment for auto guide")
 		return
 	}
 
@@ -76,6 +91,7 @@ func (c *OrderCreatedConsumer) maybeAutoGenerate(ctx context.Context, msg *order
 		TriggeredBy:       "auto",
 	}
 	if err := c.transportPub.PublishTransportRequest(ctx, out); err != nil {
+		_ = c.uc.Repo().ReleaseShipmentGenerating(ctx, shipmentID)
 		c.log.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to publish auto generate request")
 		return
 	}
@@ -184,19 +200,22 @@ func (c *OrderCreatedConsumer) pollQuoteRates(ctx context.Context, correlationID
 
 func (c *OrderCreatedConsumer) createOrReusePendingShipment(ctx context.Context, payload map[string]interface{}, carrier *domain.CarrierInfo, orderUUID string) (uint, error) {
 	existing, _ := c.uc.Repo().GetShipmentsByOrderID(ctx, orderUUID)
+	now := time.Now()
 	for i := range existing {
 		s := &existing[i]
-		if s.Status == "cancelled" || s.Status == "failed" {
-			continue
-		}
-		if (s.TrackingNumber != nil && *s.TrackingNumber != "") || (s.GuideURL != nil && *s.GuideURL != "") {
+		if s.HasActiveGuide() {
 			return 0, fmt.Errorf("order %s already has an active guide (shipment %d)", orderUUID, s.ID)
+		}
+		if s.GuideInFlight(now) {
+			return 0, fmt.Errorf("order %s already has a guide in flight (shipment %d)", orderUUID, s.ID)
+		}
+		if s.NeedsVerification() {
+			return 0, fmt.Errorf("order %s has a guide pending manual verification (shipment %d)", orderUUID, s.ID)
 		}
 	}
 	for i := range existing {
-		s := existing[i]
-		if s.Status == "pending" && (s.TrackingNumber == nil || *s.TrackingNumber == "") && (s.GuideURL == nil || *s.GuideURL == "") {
-			return s.ID, nil
+		if existing[i].ReusableForGuide(now) {
+			return existing[i].ID, nil
 		}
 	}
 
