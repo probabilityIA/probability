@@ -21,15 +21,17 @@ type Iapp interface {
 	CarrierConfigs(ctx context.Context, businessID uint) ([]entities.CarrierConfig, error)
 	SaveCarrierConfig(ctx context.Context, d dtos.SaveCarrierConfigDTO) (*entities.CarrierConfig, error)
 	UpdateCarrierFee(ctx context.Context, d dtos.UpdateCarrierFeeDTO) (*dtos.UpdateCarrierFeeResult, error)
+	SendCutEmail(ctx context.Context, d dtos.SendCutEmailDTO) error
 }
 
 type UseCase struct {
-	repo ports.IRepository
-	log  log.ILogger
+	repo  ports.IRepository
+	email ports.IEmailSender
+	log   log.ILogger
 }
 
-func New(repo ports.IRepository, logger log.ILogger) Iapp {
-	return &UseCase{repo: repo, log: logger}
+func New(repo ports.IRepository, emailSender ports.IEmailSender, logger log.ILogger) Iapp {
+	return &UseCase{repo: repo, email: emailSender, log: logger}
 }
 
 func (uc *UseCase) discountMap(_ context.Context, _ uint) map[string]float64 {

@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Calendar, CheckCircle2, ChevronDown, ChevronUp, RefreshCw, AlertCircle, ShieldCheck, Clock, Plus, Trash2,
+    Calendar, CheckCircle2, ChevronDown, ChevronUp, RefreshCw, AlertCircle, ShieldCheck, Clock, Plus, Trash2, Mail,
 } from 'lucide-react';
 import { getCodCutsAction, deleteCodCutAction, confirmCodCutAction } from '../../infra/actions';
 import { PaymentCut } from '../../domain/types';
 import { formatMoney, formatDateTime, formatDateOnly } from './helpers';
 import { CutSelectionModal } from './CutSelectionModal';
 import { CutOrdersDetail } from './CutOrdersDetail';
+import { CutEmailModal } from './CutEmailModal';
 
 interface Props {
     businessId?: number | null;
@@ -48,6 +49,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
     const [deleteTarget, setDeleteTarget] = useState<PaymentCut | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [confirmingId, setConfirmingId] = useState<number | null>(null);
+    const [emailTarget, setEmailTarget] = useState<{ cut: PaymentCut; justConfirmed: boolean } | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -111,6 +113,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
         if (res.success) {
             setFeedback({ ok: true, msg: 'Corte confirmado y consignado' });
             await load();
+            setEmailTarget({ cut: { ...cut, status: 'confirmed' }, justConfirmed: true });
         } else {
             setFeedback({ ok: false, msg: (res as any).message || 'Error al confirmar el corte' });
         }
@@ -247,6 +250,15 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             ) : null}
                             {canConfirm && isConfirmed && cut.id ? (
                                 <button
+                                    onClick={() => setEmailTarget({ cut, justConfirmed: false })}
+                                    className="px-3 py-1.5 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-xs font-semibold rounded-md inline-flex items-center gap-1.5"
+                                    title="Enviar por correo la relacion de este corte"
+                                >
+                                    <Mail size={13} /> Enviar correo
+                                </button>
+                            ) : null}
+                            {canConfirm && isConfirmed && cut.id ? (
+                                <button
                                     onClick={() => setDeleteTarget(cut)}
                                     className="p-1.5 rounded-md border border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                                     title="Eliminar corte (libera sus ordenes)"
@@ -294,6 +306,16 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                     periodStart={selectionPeriod.start}
                     periodEnd={selectionPeriod.end}
                     businessId={businessId}
+                />
+            )}
+
+            {emailTarget && (
+                <CutEmailModal
+                    cut={emailTarget.cut}
+                    businessId={businessId}
+                    justConfirmed={emailTarget.justConfirmed}
+                    onClose={() => setEmailTarget(null)}
+                    onSent={msg => { setFeedback({ ok: true, msg }); setTimeout(() => setFeedback(null), 4000); }}
                 />
             )}
 

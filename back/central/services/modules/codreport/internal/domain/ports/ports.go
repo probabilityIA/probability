@@ -8,6 +8,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain/entities"
 )
 
+type IEmailSender interface {
+	SendHTML(ctx context.Context, to, subject, html string) error
+}
+
 type IRepository interface {
 	ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error)
 	AggregateByCarrier(ctx context.Context, f dtos.ReportFilter, collected bool) ([]entities.CarrierAggregate, error)
@@ -31,4 +35,6 @@ type IRepository interface {
 	DeleteCut(ctx context.Context, businessID uint, cutID uint) error
 	UpdateShipmentCarrierFee(ctx context.Context, businessID uint, shipmentID uint, fee float64) error
 	ShipmentCarrierFee(ctx context.Context, businessID uint, shipmentID uint) (float64, string, error)
+	CutByID(ctx context.Context, businessID uint, cutID uint) (*entities.PaymentCut, error)
+	BusinessName(ctx context.Context, businessID uint) string
 }

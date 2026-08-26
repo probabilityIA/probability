@@ -11,7 +11,7 @@ import (
 
 func TestUpdateCarrierFee_ActualizaYDevuelveLaComisionAnterior(t *testing.T) {
 	repo := &repoMock{feePrevia: 6236}
-	uc := New(repo, log.New())
+	uc := New(repo, nil, log.New())
 
 	res, err := uc.UpdateCarrierFee(context.Background(), dtos.UpdateCarrierFeeDTO{
 		BusinessID: 46,
@@ -56,7 +56,7 @@ func TestUpdateCarrierFee_RechazaEntradasInvalidas(t *testing.T) {
 	for _, caso := range casos {
 		t.Run(caso.nombre, func(t *testing.T) {
 			repo := &repoMock{}
-			uc := New(repo, log.New())
+			uc := New(repo, nil, log.New())
 
 			if _, err := uc.UpdateCarrierFee(context.Background(), caso.dto); err == nil {
 				t.Error("se esperaba error")
@@ -70,7 +70,7 @@ func TestUpdateCarrierFee_RechazaEntradasInvalidas(t *testing.T) {
 
 func TestUpdateCarrierFee_ComisionCeroEsValida(t *testing.T) {
 	repo := &repoMock{feePrevia: 6236}
-	uc := New(repo, log.New())
+	uc := New(repo, nil, log.New())
 
 	if _, err := uc.UpdateCarrierFee(context.Background(), dtos.UpdateCarrierFeeDTO{
 		BusinessID: 46,
@@ -86,7 +86,7 @@ func TestUpdateCarrierFee_ComisionCeroEsValida(t *testing.T) {
 
 func TestUpdateCarrierFee_PropagaElErrorDelRepositorio(t *testing.T) {
 	repo := &repoMock{feeErr: errors.New("el envio no existe o no pertenece al negocio")}
-	uc := New(repo, log.New())
+	uc := New(repo, nil, log.New())
 
 	if _, err := uc.UpdateCarrierFee(context.Background(), dtos.UpdateCarrierFeeDTO{
 		BusinessID: 46,

@@ -59,3 +59,10 @@ type UpdateCarrierFeeResult struct {
 	PreviousFee float64
 	NewFee      float64
 }
+
+type SendCutEmailDTO struct {
+	BusinessID uint
+	CutID      uint
+	Recipients []string
+	UserID     uint
+}

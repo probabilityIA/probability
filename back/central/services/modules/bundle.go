@@ -74,7 +74,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
 	shipmentsBundle := shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)
-	codreport.New(router, database, logger)
+	codreport.New(router, database, logger, environment)
 	mobile.New(router, database)
 	woostore.New(router, environment, logger)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
