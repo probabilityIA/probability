@@ -212,3 +212,28 @@ func TestApplyPackageConfig_AutoPackageAplicaCajaAunqueLaOrdenTraigaPeso(t *test
 		t.Fatalf("orden editada a mano no debe cambiar, llego %v", pkg)
 	}
 }
+
+func TestApplyPackageFromItems_UsaLaBodegaDeOrigenDelRequest(t *testing.T) {
+	repo := &mocks.RepositoryMock{
+		GetProductDimensionsBySKUsFn: func(_ context.Context, _ uint, _ []string) (map[string]domain.ProductDimensions, error) {
+			return nil, nil
+		},
+		GetBusinessPackageConfigFn: func(_ context.Context, _ uint, warehouseID *uint) (*domain.PackageConfig, error) {
+			if warehouseID == nil || *warehouseID != 22 {
+				t.Fatalf("debe buscar la config de la bodega de origen (22), llego %v", warehouseID)
+			}
+			return demoBoxConfig(), nil
+		},
+	}
+	h := newPackageTestHandlers(repo)
+	raw := map[string]interface{}{
+		"warehouse_id": 22.0,
+		"items":        []interface{}{map[string]interface{}{"sku": "JH313-3XL", "quantity": 6.0}},
+		"packages":     []interface{}{map[string]interface{}{"weight": 1.0, "height": 10.0, "width": 10.0, "length": 10.0}},
+	}
+	h.applyPackageFromItems(context.Background(), 46, parseQuoteItems(raw), raw)
+	pkg := raw["packages"].([]interface{})[0].(map[string]interface{})
+	if pkg["length"] != 30.0 || pkg["width"] != 40.0 || pkg["weight"] != 3.0 {
+		t.Fatalf("6 items sin dimensiones deben ir en la caja de 8 (30x40x30, 3kg), llego %v", pkg)
+	}
+}

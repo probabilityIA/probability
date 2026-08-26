@@ -275,6 +275,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
 
             const quotePayload: any = {
                 ...(business_id && { business_id }),
+                ...(selectedOriginWarehouse?.id && { warehouse_id: selectedOriginWarehouse.id }),
                 ...(quoteItems.length > 0 && { items: quoteItems }),
                 packages: [{
                     weight: data.weight,

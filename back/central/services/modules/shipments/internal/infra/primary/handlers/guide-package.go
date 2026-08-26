@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/secamc93/probability/back/central/shared/shippingpkg"
 )
@@ -35,7 +36,7 @@ func (h *Handlers) applyPackageConfig(ctx context.Context, businessID uint, orde
 	}
 
 	var items []shippingpkg.PackageItem
-	var whPtr *uint
+	whPtr := requestWarehouseID(raw)
 	if orderID != "" {
 		orderItems, warehouseID, err := h.uc.Repo().GetOrderPackageItems(ctx, orderID)
 		if err != nil {
@@ -123,12 +124,28 @@ func (h *Handlers) applyPackageFromItems(ctx context.Context, businessID uint, i
 
 	strategy := ""
 	var boxes []shippingpkg.Box
-	if cfg, err := h.uc.Repo().GetBusinessPackageConfig(ctx, businessID, nil); err == nil && cfg != nil {
+	if cfg, err := h.uc.Repo().GetBusinessPackageConfig(ctx, businessID, requestWarehouseID(raw)); err == nil && cfg != nil {
 		strategy = cfg.Strategy
 		boxes = cfg.Boxes
 	}
 
 	setPackageDims(pkg, shippingpkg.Resolve(strategy, boxes, shippingpkg.PackageInput{Items: items}))
+}
+
+func requestWarehouseID(raw map[string]interface{}) *uint {
+	switch v := raw["warehouse_id"].(type) {
+	case float64:
+		if v > 0 {
+			id := uint(v)
+			return &id
+		}
+	case string:
+		if n, err := strconv.ParseUint(v, 10, 64); err == nil && n > 0 {
+			id := uint(n)
+			return &id
+		}
+	}
+	return nil
 }
 
 func setPackageDims(pkg map[string]interface{}, resolved shippingpkg.ResolvedPackage) {

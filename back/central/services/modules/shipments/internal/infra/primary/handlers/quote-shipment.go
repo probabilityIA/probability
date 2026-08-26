@@ -59,6 +59,8 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		}
 	} else if items := parseQuoteItems(raw); len(items) > 0 {
 		h.applyPackageFromItems(c.Request.Context(), businessID, items, raw)
+	} else {
+		h.applyPackageConfig(c.Request.Context(), businessID, "", raw)
 	}
 	delete(raw, "items")
 

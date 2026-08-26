@@ -40,6 +40,9 @@ func (r *Repository) pickShippingConfig(ctx context.Context, businessID uint, wa
 			pick = i
 		}
 	}
+	if pick < 0 && len(rows) == 1 {
+		pick = 0
+	}
 	if pick < 0 {
 		return nil, nil
 	}

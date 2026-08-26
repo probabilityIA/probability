@@ -132,6 +132,7 @@ export interface EnvioClickQuoteRequest {
     order_uuid?: string;
     items?: EnvioClickQuoteItem[];
     auto_package?: boolean;
+    warehouse_id?: number;
     requestPickup?: boolean;
     pickupDate?: string;
     insurance?: boolean;
