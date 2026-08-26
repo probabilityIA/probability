@@ -10,6 +10,8 @@ import { quoteShipmentAction } from "@/services/modules/shipments/infra/actions"
 import { setQuoteSelectionAction } from "@/services/modules/shipping-quotes/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
+import ProductSelector from "@/services/modules/products/ui/components/ProductSelector";
+import { Product } from "@/services/modules/products/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { findDaneCode } from "@/shared/utils/dane-lookup";
 import { getActionError } from '@/shared/utils/action-result';
@@ -101,6 +103,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
     const [selectedRate, setSelectedRate] = useState<number | null>(null);
+    const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+    const hasProducts = selectedProducts.some(p => (p.quantity || 0) > 0);
 
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
@@ -207,6 +211,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
             setRates([]);
             setError(null);
             setSelectedOriginWarehouse(null);
+            setSelectedProducts([]);
             form.reset();
         }
     }, [isOpen]);
@@ -264,8 +269,13 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
             const firstName = contactNameParts[0] || "Warehouse";
             const lastName = contactNameParts.slice(1).join(" ") || "Contact";
 
+            const quoteItems = selectedProducts
+                .filter(p => p.sku && (p.quantity || 0) > 0)
+                .map(p => ({ sku: p.sku, quantity: p.quantity || 1 }));
+
             const quotePayload: any = {
                 ...(business_id && { business_id }),
+                ...(quoteItems.length > 0 && { items: quoteItems }),
                 packages: [{
                     weight: data.weight,
                     height: data.height,
@@ -547,7 +557,22 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
 
                                     <div className="bg-gray-50/80 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600/30 rounded-xl p-4">
                                         <h3 className="font-semibold text-base mb-3 text-gray-900 dark:text-gray-100">Paquete</h3>
-                                        <div className="grid grid-cols-4 gap-2">
+
+                                        <div className="mb-3">
+                                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Productos (opcional)</label>
+                                            <ProductSelector
+                                                businessId={business_id ?? 0}
+                                                selectedProducts={selectedProducts}
+                                                onSelect={setSelectedProducts}
+                                            />
+                                            <p className={`text-xs mt-1.5 ${hasProducts ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                {hasProducts
+                                                    ? 'Las medidas y el peso del paquete se calcularan con los productos agregados y la caja configurada del negocio. Los campos de abajo se ignoran.'
+                                                    : 'Si agregas productos, se tendran en cuenta sus dimensiones y la caja configurada del negocio: la cotizacion es mas realista.'}
+                                            </p>
+                                        </div>
+
+                                        <div className={`grid grid-cols-4 gap-2 ${hasProducts ? 'opacity-50 pointer-events-none' : ''}`}>
                                             <Input
                                                 compact
                                                 label="Peso (kg) *"

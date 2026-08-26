@@ -140,3 +140,39 @@ func TestApplyPackageConfig_RespetaPaqueteEditadoPorElUsuario(t *testing.T) {
 		t.Fatalf("paquete editado no debe cambiar, llego %v", pkg)
 	}
 }
+
+func TestApplyPackageFromItems_ExpresConProductosUsaDimensionesYCaja(t *testing.T) {
+	repo := &mocks.RepositoryMock{
+		GetProductDimensionsBySKUsFn: func(_ context.Context, _ uint, skus []string) (map[string]domain.ProductDimensions, error) {
+			if len(skus) != 1 || skus[0] != "SKU-A" {
+				t.Fatalf("debe consultar las dimensiones de los SKUs del request, llego %v", skus)
+			}
+			return map[string]domain.ProductDimensions{"SKU-A": {Weight: f64(2), Length: f64(20), Width: f64(15), Height: f64(12)}}, nil
+		},
+		GetBusinessPackageConfigFn: func(_ context.Context, _ uint, warehouseID *uint) (*domain.PackageConfig, error) {
+			if warehouseID != nil {
+				t.Fatal("el expres no tiene bodega de orden, debe usar la config del negocio")
+			}
+			return demoBoxConfig(), nil
+		},
+	}
+	h := newPackageTestHandlers(repo)
+	raw := map[string]interface{}{
+		"items":    []interface{}{map[string]interface{}{"sku": "SKU-A", "quantity": 3.0}},
+		"packages": []interface{}{map[string]interface{}{"weight": 7.0, "height": 50.0, "width": 50.0, "length": 50.0}},
+	}
+
+	items := parseQuoteItems(raw)
+	if len(items) != 1 || items[0].Quantity != 3 {
+		t.Fatalf("items mal parseados: %+v", items)
+	}
+	h.applyPackageFromItems(context.Background(), 26, items, raw)
+
+	pkg := raw["packages"].([]interface{})[0].(map[string]interface{})
+	if pkg["length"] != 30.0 || pkg["width"] != 40.0 || pkg["height"] != 30.0 {
+		t.Fatalf("con productos debe ganar la caja 30x40x30 aunque el usuario haya escrito 50x50x50, llego %v", pkg)
+	}
+	if pkg["weight"] != 6.0 {
+		t.Fatalf("peso debe ser 3 x 2kg = 6kg (mayor que la caja), llego %v", pkg["weight"])
+	}
+}

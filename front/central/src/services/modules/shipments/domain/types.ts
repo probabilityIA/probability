@@ -118,6 +118,11 @@ export interface EnvioClickPackage {
     length: number;
 }
 
+export interface EnvioClickQuoteItem {
+    sku: string;
+    quantity: number;
+}
+
 export interface EnvioClickQuoteRequest {
     business_id?: number;
     idRate?: number;
@@ -125,6 +130,7 @@ export interface EnvioClickQuoteRequest {
     myShipmentReference?: string;
     external_order_id?: string;
     order_uuid?: string;
+    items?: EnvioClickQuoteItem[];
     requestPickup?: boolean;
     pickupDate?: string;
     insurance?: boolean;
