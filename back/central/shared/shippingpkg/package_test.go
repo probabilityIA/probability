@@ -118,5 +118,30 @@ func TestSelectBox_EquivalenteAlSelectorAnterior(t *testing.T) {
 		}
 	}
 
-	assert.Nil(t, SelectBox(StrategyStandardBox, boxes, 9, 0, 0, 0), "9 items supera la caja mas grande")
+	overflow := SelectBox(StrategyStandardBox, boxes, 9, 0, 0, 0)
+	if assert.NotNil(t, overflow, "9 items supera la caja mas grande, pero se combina con otra") {
+		assert.Equal(t, "Caja Mediana + Caja muy chica", overflow.Name)
+	}
+}
+
+func TestSelectBox_CombinaCajasCuandoNingunaSolaAlcanza(t *testing.T) {
+	boxes := []Box{
+		{Name: "Caja Chica", Weight: f(1), Length: f(15), Width: f(10), Height: f(15), MaxItems: 2},
+		{Name: "Caja Mediana", Weight: f(2), Length: f(20), Width: f(20), Height: f(20), MaxItems: 4},
+		{Name: "Caja Grande", Weight: f(4), Length: f(20), Width: f(20), Height: f(20), MaxItems: 8},
+	}
+
+	combo10 := SelectBox(StrategyStandardBox, boxes, 10, 0, 0, 0)
+	if assert.NotNil(t, combo10) {
+		assert.Equal(t, "Caja Grande + Caja Chica", combo10.Name)
+		assert.Equal(t, 20.0, *combo10.Length)
+		assert.Equal(t, 20.0, *combo10.Width)
+		assert.Equal(t, 35.0, *combo10.Height, "alto de grande + alto de chica, van apiladas")
+		assert.Equal(t, 5.0, *combo10.Weight, "peso base de grande + chica")
+	}
+
+	combo12 := SelectBox(StrategyStandardBox, boxes, 12, 0, 0, 0)
+	if assert.NotNil(t, combo12) {
+		assert.Equal(t, "Caja Grande + Caja Mediana", combo12.Name)
+	}
 }
