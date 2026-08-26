@@ -2,14 +2,40 @@ package consumer
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/constants"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// RetryConsumer procesa reintentos de facturas fallidas
+const (
+	retryBatchSize = 50
+	retryBaseDelay = 15 * time.Minute
+	retryMaxDelay  = 6 * time.Hour
+)
+
+type retryOutcome int
+
+const (
+	outcomeDispatched retryOutcome = iota
+	outcomeRetired
+	outcomeDeferred
+	outcomeHandled
+)
+
+var permanentRetryErrors = []error{
+	domainerrors.ErrRetryNotAllowed,
+	domainerrors.ErrMaxRetriesExceeded,
+	domainerrors.ErrInvoiceNotFound,
+	domainerrors.ErrProviderNotConfigured,
+	domainerrors.ErrSyncLogNotFound,
+}
+
 type RetryConsumer struct {
 	repo    ports.IRepository
 	useCase ports.IUseCase
@@ -17,7 +43,6 @@ type RetryConsumer struct {
 	ticker  *time.Ticker
 }
 
-// NewRetryConsumer crea un nuevo retry consumer
 func NewRetryConsumer(
 	repo ports.IRepository,
 	useCase ports.IUseCase,
@@ -30,17 +55,13 @@ func NewRetryConsumer(
 	}
 }
 
-// Start inicia el procesamiento de reintentos (cada ~5 minutos con jitter)
 func (c *RetryConsumer) Start(ctx context.Context) {
-	// Agregar jitter aleatorio (0-60s) para evitar thundering herd en múltiples instancias
 	jitter := time.Duration(rand.Intn(60)) * time.Second
 	interval := 5*time.Minute + jitter
 	c.ticker = time.NewTicker(interval)
 
-	// Primera ejecución inmediata
 	c.processRetries(ctx)
 
-	// Luego ejecutar cada 5 minutos
 	go func() {
 		for {
 			select {
@@ -54,7 +75,6 @@ func (c *RetryConsumer) Start(ctx context.Context) {
 	}()
 }
 
-// Stop detiene el retry consumer
 func (c *RetryConsumer) Stop() {
 	if c.ticker != nil {
 		c.ticker.Stop()
@@ -62,13 +82,8 @@ func (c *RetryConsumer) Stop() {
 	}
 }
 
-// processRetries procesa todos los reintentos pendientes
 func (c *RetryConsumer) processRetries(ctx context.Context) {
-	// Obtener logs con reintentos pendientes
-	// - status IN (failed, pending)
-	// - retry_count < max_retries (3)
-	// - next_retry_at <= now
-	logs, err := c.repo.GetPendingSyncLogRetries(ctx, 50) // Máximo 50 por batch
+	logs, err := c.repo.GetPendingSyncLogRetries(ctx, retryBatchSize)
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al obtener reintentos pendientes")
 		return
@@ -78,39 +93,166 @@ func (c *RetryConsumer) processRetries(ctx context.Context) {
 		return
 	}
 
-	c.log.Info(ctx).
-		Int("count", len(logs)).
-		Msg("Found pending retries/checks")
-
-	successCount := 0
-	failCount := 0
-
+	var dispatched, retired, deferred, handled int
 	for _, syncLog := range logs {
-		var err error
-		if syncLog.Status == "pending" {
-			// Pending DIAN: solo buscar documento, NO re-enviar POST
-			err = c.useCase.CheckPendingInvoice(ctx, syncLog.InvoiceID)
-		} else {
-			// Failed: reintentar con POST (incluye verificación de idempotencia)
-			err = c.useCase.RetryInvoice(ctx, syncLog.InvoiceID, false)
-		}
-
-		if err != nil {
-			c.log.Error(ctx).
-				Err(err).
-				Uint("invoice_id", syncLog.InvoiceID).
-				Str("sync_status", syncLog.Status).
-				Msg("Failed to process invoice")
-			failCount++
-		} else {
-			successCount++
+		switch c.processOne(ctx, syncLog) {
+		case outcomeDispatched:
+			dispatched++
+		case outcomeRetired:
+			retired++
+		case outcomeDeferred:
+			deferred++
+		case outcomeHandled:
+			handled++
 		}
 	}
 
-	c.log.Info(ctx).
-		Int("success", successCount).
-		Int("failed", failCount).
+	event := c.log.Info(ctx)
+	if retired > 0 || deferred > 0 {
+		event = c.log.Warn(ctx)
+	}
+	event.
 		Int("total", len(logs)).
+		Int("dispatched", dispatched).
+		Int("retired", retired).
+		Int("deferred", deferred).
+		Int("handled", handled).
 		Msg("Retry/check batch completed")
 }
 
+func (c *RetryConsumer) processOne(ctx context.Context, syncLog *entities.InvoiceSyncLog) retryOutcome {
+	invoice, err := c.repo.GetInvoiceByID(ctx, syncLog.InvoiceID)
+	if err != nil || invoice == nil {
+		c.retire(ctx, syncLog, "la factura referenciada ya no existe")
+		return outcomeRetired
+	}
+
+	switch invoice.Status {
+	case constants.InvoiceStatusPending:
+		err = c.useCase.CheckPendingInvoice(ctx, syncLog.InvoiceID)
+	case constants.InvoiceStatusFailed:
+		err = c.useCase.RetryInvoice(ctx, syncLog.InvoiceID, false)
+	default:
+		c.retire(ctx, syncLog, "la factura quedo en "+invoice.Status+" y no necesita reintento")
+		return outcomeRetired
+	}
+
+	if err == nil {
+		c.settle(ctx, syncLog)
+		return outcomeDispatched
+	}
+
+	if !c.stillEligible(ctx, syncLog) {
+		return outcomeHandled
+	}
+
+	if isPermanentRetryError(err) {
+		c.retire(ctx, syncLog, err.Error())
+		return outcomeRetired
+	}
+
+	c.deferRetry(ctx, syncLog, err)
+	return outcomeDeferred
+}
+
+func (c *RetryConsumer) settle(ctx context.Context, syncLog *entities.InvoiceSyncLog) {
+	if !c.stillEligible(ctx, syncLog) {
+		return
+	}
+
+	syncLog.NextRetryAt = nil
+	if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+		c.log.Error(ctx).
+			Err(err).
+			Uint("invoice_id", syncLog.InvoiceID).
+			Uint("sync_log_id", syncLog.ID).
+			Msg("No se pudo cerrar el sync log despachado: vuelve a disparar en la proxima vuelta")
+	}
+}
+
+func (c *RetryConsumer) stillEligible(ctx context.Context, syncLog *entities.InvoiceSyncLog) bool {
+	logs, err := c.repo.GetSyncLogsByInvoiceID(ctx, syncLog.InvoiceID)
+	if err != nil {
+		return false
+	}
+	for _, l := range logs {
+		if l.ID != syncLog.ID {
+			continue
+		}
+		if l.NextRetryAt == nil || l.RetryCount >= l.MaxRetries {
+			return false
+		}
+		return l.Status == constants.SyncStatusFailed || l.Status == constants.SyncStatusPending
+	}
+	return false
+}
+
+func (c *RetryConsumer) retire(ctx context.Context, syncLog *entities.InvoiceSyncLog, reason string) {
+	syncLog.Status = constants.SyncStatusCancelled
+	syncLog.NextRetryAt = nil
+	syncLog.ErrorMessage = &reason
+
+	if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+		c.log.Error(ctx).
+			Err(err).
+			Uint("invoice_id", syncLog.InvoiceID).
+			Uint("sync_log_id", syncLog.ID).
+			Msg("No se pudo retirar el sync log: vuelve en la proxima vuelta")
+		return
+	}
+
+	c.log.Warn(ctx).
+		Uint("invoice_id", syncLog.InvoiceID).
+		Uint("sync_log_id", syncLog.ID).
+		Str("reason", reason).
+		Msg("Reintento retirado: repetirlo no puede cambiar el resultado")
+}
+
+func (c *RetryConsumer) deferRetry(ctx context.Context, syncLog *entities.InvoiceSyncLog, cause error) {
+	syncLog.RetryCount++
+	nextRetry := time.Now().Add(retryBackoff(syncLog.RetryCount))
+	syncLog.NextRetryAt = &nextRetry
+	message := cause.Error()
+	syncLog.ErrorMessage = &message
+
+	if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+		c.log.Error(ctx).
+			Err(err).
+			Uint("invoice_id", syncLog.InvoiceID).
+			Uint("sync_log_id", syncLog.ID).
+			Msg("No se pudo aplazar el sync log: vuelve en la proxima vuelta")
+		return
+	}
+
+	c.log.Warn(ctx).
+		Err(cause).
+		Uint("invoice_id", syncLog.InvoiceID).
+		Uint("sync_log_id", syncLog.ID).
+		Int("retry_count", syncLog.RetryCount).
+		Int("max_retries", syncLog.MaxRetries).
+		Time("next_retry_at", nextRetry).
+		Msg("Reintento aplazado por error transitorio")
+}
+
+func retryBackoff(attempt int) time.Duration {
+	delay := retryBaseDelay
+	for i := 1; i < attempt; i++ {
+		if delay >= retryMaxDelay {
+			break
+		}
+		delay *= 2
+	}
+	if delay > retryMaxDelay {
+		return retryMaxDelay
+	}
+	return delay
+}
+
+func isPermanentRetryError(err error) bool {
+	for _, target := range permanentRetryErrors {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+	return false
+}

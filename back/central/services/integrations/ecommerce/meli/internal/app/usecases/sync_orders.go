@@ -152,7 +152,7 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 				}
 			}
 
-			uc.enrichBillingInfo(ctx, accessToken, &order)
+			uc.enrichBillingInfo(ctx, integrationID, accessToken, &order)
 
 			dto := mapper.MapMeliOrderToProbability(&order, shippingDetail, rawJSON, shipmentRaw)
 			dto.IntegrationID = integration.ID

@@ -45,12 +45,29 @@ func (uc *meliUseCase) GetShipmentLabel(ctx context.Context, shipmentID uint, bu
 		return nil, err
 	}
 
-	label, err := uc.clientFor(ctx, integration).GetShipmentLabel(ctx, token, ref.MeliShipmentID, responseType)
+	cli := uc.clientFor(ctx, integration)
+
+	label, err := cli.GetShipmentLabel(ctx, token, ref.MeliShipmentID, responseType)
+	if err == domain.ErrTokenExpired {
+		newToken, refreshErr := uc.refreshAccessToken(ctx, integrationID, integration)
+		if refreshErr != nil {
+			uc.logger.Error(ctx).Err(refreshErr).
+				Uint("shipment_id", shipmentID).
+				Msg("No se pudo refrescar el token para descargar la etiqueta")
+			return nil, domain.ErrTokenRefreshFailed
+		}
+		label, err = cli.GetShipmentLabel(ctx, newToken, ref.MeliShipmentID, responseType)
+	}
+
 	if err != nil {
-		uc.logger.Error(ctx).Err(err).
+		event := uc.logger.Error(ctx)
+		if err == domain.ErrLabelAlreadyShipped || err == domain.ErrLabelNotAvailable {
+			event = uc.logger.Warn(ctx)
+		}
+		event.Err(err).
 			Uint("shipment_id", shipmentID).
 			Int64("meli_shipment_id", ref.MeliShipmentID).
-			Msg("Error descargando etiqueta de MercadoLibre")
+			Msg("No se pudo descargar la etiqueta del canal")
 		return nil, err
 	}
 

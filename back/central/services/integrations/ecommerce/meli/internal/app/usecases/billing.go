@@ -14,11 +14,23 @@ type billingRetryMessage struct {
 	Attempts      int    `json:"attempts"`
 }
 
-func (uc *meliUseCase) enrichBillingInfo(ctx context.Context, accessToken string, order *domain.MeliOrder) bool {
+func (uc *meliUseCase) enrichBillingInfo(ctx context.Context, integrationID string, accessToken string, order *domain.MeliOrder) bool {
 	if order.Buyer.BillingInfo != nil && order.Buyer.BillingInfo.DocNumber != "" {
 		return false
 	}
+
 	info, err := uc.client.GetBillingInfo(ctx, accessToken, order.ID)
+	if err == domain.ErrTokenExpired && integrationID != "" {
+		newToken, refreshErr := uc.EnsureValidToken(ctx, integrationID)
+		if refreshErr != nil {
+			uc.logger.Error(ctx).Err(refreshErr).
+				Int64("order_id", order.ID).
+				Msg("Token refresh failed fetching billing_info: la orden queda sin documento del comprador")
+			return false
+		}
+		info, err = uc.client.GetBillingInfo(ctx, newToken, order.ID)
+	}
+
 	if err != nil {
 		if err == domain.ErrBillingInfoNotFound {
 			return true
@@ -26,6 +38,7 @@ func (uc *meliUseCase) enrichBillingInfo(ctx context.Context, accessToken string
 		uc.logger.Warn(ctx).Err(err).Int64("order_id", order.ID).Msg("Failed to fetch billing_info")
 		return false
 	}
+
 	order.Buyer.BillingInfo = info
 	return false
 }

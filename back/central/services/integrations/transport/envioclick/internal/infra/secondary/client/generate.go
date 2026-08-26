@@ -19,6 +19,15 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest, meta 
 		baseURL = DefaultBaseURL
 	}
 
+	if err := normalizeQuoteRequest(&req); err != nil {
+		c.log.Warn(ctx).
+			Err(err).
+			Str("origin_dane", req.Origin.DaneCode).
+			Str("dest_dane", req.Destination.DaneCode).
+			Msg("Solicitud descartada antes de llamar a la transportadora")
+		return nil, err
+	}
+
 	if req.CODValue == 0 {
 		req.CODPaymentMethod = ""
 	}
