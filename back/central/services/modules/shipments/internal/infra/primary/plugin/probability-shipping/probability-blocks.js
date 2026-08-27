@@ -156,6 +156,26 @@
         validateTimer = setTimeout(validate, 900);
     }
 
+    var lastCodSynced = null;
+
+    function syncCodFlag() {
+        try {
+            var paymentStore = window.wp && window.wp.data && window.wp.data.select('wc/store/payment');
+            if (!paymentStore || !paymentStore.getActivePaymentMethod) return;
+            var active = paymentStore.getActivePaymentMethod();
+            if (!active) return;
+            var isCod = active === 'cod';
+            if (isCod === lastCodSynced) return;
+            lastCodSynced = isCod;
+            if (window.wc && window.wc.blocksCheckout && window.wc.blocksCheckout.extensionCartUpdate) {
+                window.wc.blocksCheckout.extensionCartUpdate({
+                    namespace: 'probability_shipping',
+                    data: { cod: isCod }
+                }).catch(function () {});
+            }
+        } catch (e) {}
+    }
+
     function start() {
         if (!isBlockCheckout()) return;
 
@@ -164,7 +184,7 @@
         observer.observe(document.body, { childList: true, subtree: true });
 
         if (window.wp && window.wp.data && window.wp.data.subscribe) {
-            window.wp.data.subscribe(function () { scheduleValidate(); });
+            window.wp.data.subscribe(function () { scheduleValidate(); syncCodFlag(); });
         }
     }
 
