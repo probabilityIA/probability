@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.6.5
+ * Version: 1.6.6
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -66,7 +66,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery', 'probability-leaflet'),
-        '1.6.5',
+        '1.6.6',
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -75,7 +75,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data', 'probability-leaflet'),
-        '1.6.5',
+        '1.6.6',
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
@@ -170,6 +170,11 @@ function probability_shipping_is_cod() {
 
 add_filter('woocommerce_cart_shipping_packages', function ($packages) {
     $is_cod = probability_shipping_is_cod() ? 'yes' : 'no';
+    if (!headers_sent()) {
+        $chosen = (function_exists('WC') && WC() && WC()->session) ? (string) WC()->session->get('chosen_payment_method') : 'NO_SESSION';
+        header('X-Probability-Debug-Chosen-Payment: ' . $chosen);
+        header('X-Probability-Debug-Package-Cod: ' . $is_cod);
+    }
     foreach ($packages as $i => $package) {
         $packages[$i]['probability_cod'] = $is_cod;
     }
@@ -178,10 +183,20 @@ add_filter('woocommerce_cart_shipping_packages', function ($packages) {
 
 add_action('woocommerce_store_api_checkout_update_order_from_request', function ($order, $request) {
     $payment_method = $request->get_param('payment_method');
+    if (!headers_sent()) {
+        header('X-Probability-Debug-Hook-Fired: 1');
+        header('X-Probability-Debug-Request-Payment: ' . (string) $payment_method);
+    }
     if (!$payment_method || !function_exists('WC') || !WC() || !WC()->session) {
+        if (!headers_sent()) {
+            header('X-Probability-Debug-Bail: ' . (!$payment_method ? 'no_payment_method' : (!WC() ? 'no_wc' : 'no_session')));
+        }
         return;
     }
     WC()->session->set('chosen_payment_method', $payment_method);
+    if (!headers_sent()) {
+        header('X-Probability-Debug-Session-After: ' . (string) WC()->session->get('chosen_payment_method'));
+    }
 }, 10, 2);
 
 add_action('woocommerce_checkout_update_order_review', function ($post_data) {
