@@ -88,7 +88,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         tax: order?.tax || 0,
         discount: order?.discount || 0,
         shipping_cost: order?.shipping_cost || 0,
-        total_amount: order?.total_amount || 0,
+        total_amount: (order?.subtotal || 0) + (order?.tax || 0) - (order?.discount || 0),
         currency: order?.currency || 'COP',
         cod_total: order?.cod_total || 0,
         is_cod: order?.is_cod ?? ((order?.cod_total || 0) > 0),
@@ -489,6 +489,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             const baseData = {
                 ...formData,
                 is_cod: isCOD,
+                // formData.total_amount es el valor de productos (sin envio); la BD
+                // guarda en total_amount el total CON envio, igual que cod_total.
+                total_amount: formData.total_amount + formData.shipping_cost,
                 cod_total: isCOD ? formData.total_amount + formData.shipping_cost : 0,
                 payment_method_id: formData.payment_method_id,
                 shipping_street: fullShippingStreet,
