@@ -5,7 +5,6 @@ export interface WooCommerceConfig {
     cod_quoting_disabled?: boolean;
     cod_includes_shipping?: boolean;
     always_insure?: boolean;
-    disable_city_selector?: boolean;
     disable_address_map?: boolean;
     allowed_carriers_cod?: string[];
     allowed_carriers_prepaid?: string[];

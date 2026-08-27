@@ -3,7 +3,7 @@ Contributors: probability
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPLv2 or later
 
 Cotiza tarifas de transportadoras (EnvioClick y otras) en el checkout de
@@ -22,12 +22,14 @@ de envio con su precio antes de pagar.
 
 == Changelog ==
 
-= 1.6.2 =
-* El selector de municipios (checkout clasico) y el mapa/validacion de
-  direccion ahora se controlan por separado desde Probability (Integraciones
-  -> WooCommerce), sin tocar WordPress. Utiles si tu tema ya trae su propio
-  campo de Localidad/Ciudad, o si el mapa no aplica para tu checkout. Ambos
-  activados por defecto.
+= 1.6.3 =
+* Se quita el selector de municipios del checkout clasico: cada tienda maneja
+  su propio campo de Localidad/Ciudad en WordPress, reemplazarlo generaba
+  campos duplicados. La validacion de direccion y el DANE/lat/lng que se
+  guardan para la guia siguen calculandose igual sobre ese mismo campo.
+* El mapa/validacion de direccion se controla desde Probability (Integraciones
+  -> WooCommerce -> Plantilla del checkout), sin tocar WordPress. Activado por
+  defecto.
 
 = 1.6.1 =
 * El "Costo de respaldo" ya no se aplica cuando el negocio tiene desactivada la

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.6.2
+ * Version: 1.6.3
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -42,11 +42,10 @@ add_action('wp_enqueue_scripts', function () {
     }
     $checkoutCfg = probability_shipping_fetch_checkout_config($cfg);
     $config = array(
-        'backendUrl'          => rtrim($cfg['url'], '/'),
-        'integrationId'       => (string) $cfg['integration_id'],
-        'token'               => $cfg['token'],
-        'citySelectorEnabled' => $checkoutCfg['city_selector_enabled'],
-        'showMap'             => $checkoutCfg['show_map'],
+        'backendUrl'    => rtrim($cfg['url'], '/'),
+        'integrationId' => (string) $cfg['integration_id'],
+        'token'         => $cfg['token'],
+        'showMap'       => $checkoutCfg['show_map'],
     );
 
     wp_enqueue_style(
@@ -67,7 +66,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery', 'probability-leaflet'),
-        '1.6.2',
+        '1.6.3',
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -76,14 +75,14 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data', 'probability-leaflet'),
-        '1.6.2',
+        '1.6.3',
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
 });
 
 function probability_shipping_fetch_checkout_config($cfg) {
-    $defaults = array('city_selector_enabled' => true, 'show_map' => true);
+    $defaults = array('show_map' => true);
 
     if (empty($cfg['url']) || empty($cfg['integration_id']) || empty($cfg['token'])) {
         return $defaults;
@@ -104,13 +103,8 @@ function probability_shipping_fetch_checkout_config($cfg) {
     $result = $defaults;
     if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
         $data = json_decode(wp_remote_retrieve_body($response), true);
-        if (is_array($data)) {
-            if (isset($data['city_selector_enabled'])) {
-                $result['city_selector_enabled'] = (bool) $data['city_selector_enabled'];
-            }
-            if (isset($data['show_map'])) {
-                $result['show_map'] = (bool) $data['show_map'];
-            }
+        if (is_array($data) && isset($data['show_map'])) {
+            $result['show_map'] = (bool) $data['show_map'];
         }
     }
 

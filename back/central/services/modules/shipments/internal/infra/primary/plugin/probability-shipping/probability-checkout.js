@@ -8,7 +8,6 @@
     var headers = { 'Content-Type': 'application/json', 'X-Probability-Token': cfg.token };
     var validateTimer = null;
     var lastValidated = '';
-    var lastDept = {};
     var pmap = null;
     var pmarker = null;
 
@@ -73,85 +72,6 @@
 
     function cityField(prefix) {
         return document.getElementById(prefix + '_city');
-    }
-
-    function enhance(el, prefix) {
-        var $ = window.jQuery;
-        if (!$ || !$.fn) return;
-        try {
-            if ($.fn.selectWoo) {
-                $(el).selectWoo({ width: '100%', placeholder: 'Selecciona tu ciudad', allowClear: false });
-            } else if ($.fn.select2) {
-                $(el).select2({ width: '100%', placeholder: 'Selecciona tu ciudad' });
-            }
-        } catch (e) {}
-        $(el).on('change', function () { scheduleValidate(prefix); });
-    }
-
-    function destroyEnhance(el) {
-        var $ = window.jQuery;
-        if (!$ || !$.fn) return;
-        try {
-            if ($.fn.selectWoo && $(el).data('select2')) {
-                $(el).selectWoo('destroy');
-            } else if ($.fn.select2 && $(el).data('select2')) {
-                $(el).select2('destroy');
-            }
-        } catch (e) {}
-    }
-
-    function buildOptions(select, cities, currentVal) {
-        select.innerHTML = '';
-        var empty = document.createElement('option');
-        empty.value = '';
-        empty.textContent = 'Selecciona tu ciudad';
-        select.appendChild(empty);
-        cities.forEach(function (c) {
-            var opt = document.createElement('option');
-            opt.value = c.name;
-            opt.textContent = c.name;
-            if (currentVal && c.name.toLowerCase() === currentVal.toLowerCase()) {
-                opt.selected = true;
-            }
-            select.appendChild(opt);
-        });
-    }
-
-    function loadCities(prefix, force) {
-        var field = cityField(prefix);
-        if (!field) return;
-        var dept = stateName(prefix);
-        if (!dept) return;
-        if (!force && lastDept[prefix] === dept) return;
-        lastDept[prefix] = dept;
-
-        var currentVal = field.value || '';
-
-        fetch(apiBase + '/dane/' + cfg.integrationId + '/cities?state=' + encodeURIComponent(dept), { headers: headers })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!data || !data.cities) return;
-                var el = cityField(prefix);
-                if (!el) return;
-
-                if (el.tagName === 'SELECT' && el.getAttribute('data-probability-city')) {
-                    destroyEnhance(el);
-                    buildOptions(el, data.cities, currentVal);
-                    enhance(el, prefix);
-                    return;
-                }
-
-                var select = document.createElement('select');
-                select.id = el.id;
-                select.name = el.name;
-                select.className = el.className;
-                select.setAttribute('data-probability-city', '1');
-                if (el.required) select.required = true;
-                buildOptions(select, data.cities, currentVal);
-                el.parentNode.replaceChild(select, el);
-                enhance(select, prefix);
-            })
-            .catch(function () {});
     }
 
     function ensureHidden(name) {
@@ -241,22 +161,14 @@
     }
 
     function wire() {
-        var citySelectorEnabled = cfg.citySelectorEnabled !== false;
-
         prefixes().forEach(function (prefix) {
             var stateSel = document.getElementById(prefix + '_state');
             var addrInput = document.getElementById(prefix + '_address_1');
             if (!cityField(prefix)) return;
 
-            if (citySelectorEnabled) {
-                loadCities(prefix, false);
-            }
-
             if (stateSel && !stateSel.getAttribute('data-probability')) {
                 stateSel.setAttribute('data-probability', '1');
-                var onStateChange = citySelectorEnabled
-                    ? function () { loadCities(prefix, true); scheduleValidate(prefix); }
-                    : function () { scheduleValidate(prefix); };
+                var onStateChange = function () { scheduleValidate(prefix); };
                 if (window.jQuery) {
                     window.jQuery(stateSel).on('change', onStateChange);
                 } else {

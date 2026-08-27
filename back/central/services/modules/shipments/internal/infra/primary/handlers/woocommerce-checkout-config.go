@@ -15,14 +15,12 @@ func (h *Handlers) WooCommerceCheckoutConfig(c *gin.Context) {
 	resolved, err := h.resolveWoo(c.Request.Context(), integrationID)
 	if err != nil || resolved == nil {
 		c.JSON(http.StatusOK, gin.H{
-			"city_selector_enabled": true,
-			"show_map":              true,
+			"show_map": true,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"city_selector_enabled": !resolved.DisableCitySelector,
-		"show_map":              !resolved.DisableAddressMap,
+		"show_map": !resolved.DisableAddressMap,
 	})
 }

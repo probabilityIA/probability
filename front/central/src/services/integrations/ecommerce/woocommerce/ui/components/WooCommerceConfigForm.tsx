@@ -176,7 +176,6 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [codQuotingDisabled, setCodQuotingDisabled] = useState<boolean>(!!initialData?.config?.cod_quoting_disabled);
     const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(initialData?.config?.cod_includes_shipping !== false);
     const [alwaysInsure, setAlwaysInsure] = useState<boolean>(!!initialData?.config?.always_insure);
-    const [disableCitySelector, setDisableCitySelector] = useState<boolean>(!!initialData?.config?.disable_city_selector);
     const [disableAddressMap, setDisableAddressMap] = useState<boolean>(!!initialData?.config?.disable_address_map);
     const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean>(!!initialData?.config?.free_shipping_enabled);
     const [freeShippingMin, setFreeShippingMin] = useState<string>(
@@ -348,7 +347,6 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 cod_quoting_disabled: codQuotingDisabled,
                 cod_includes_shipping: codIncludesShipping,
                 always_insure: alwaysInsure,
-                disable_city_selector: disableCitySelector,
                 disable_address_map: disableAddressMap,
                 allowed_carriers_cod: allowedCarriersCOD,
                 allowed_carriers_prepaid: allowedCarriersPrepaid,
@@ -912,26 +910,6 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${alwaysInsure ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${alwaysInsure ? 'translate-x-6' : 'translate-x-1'}`} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">Selector de municipios (checkout clasico)</span>
-                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">
-                                    Por defecto reemplazamos el campo de ciudad por un selector de municipios validados. Desactivalo si tu tema ya trae su propio campo de Localidad/Ciudad funcionando, para no duplicarlo.
-                                </span>
-                            </div>
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={!disableCitySelector}
-                                onClick={() => setDisableCitySelector((v) => !v)}
-                                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${!disableCitySelector ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
-                            >
-                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${!disableCitySelector ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
                         </div>
                     </div>
