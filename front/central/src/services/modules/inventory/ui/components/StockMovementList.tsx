@@ -104,6 +104,7 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
         { key: 'quantity', label: 'Cantidad', align: 'center' as const },
         { key: 'before_after', label: 'Stock Total', align: 'center' as const },
         { key: 'reserved_info', label: 'Reservado / Disponible', align: 'center' as const },
+        { key: 'order', label: 'Orden' },
         { key: 'reason', label: 'Razón' },
     ];
 
@@ -192,6 +193,16 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
 
                 return <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>;
             })(),
+            order: movement.reference_type === 'order' && movement.reference_id ? (
+                <span
+                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                    title={movement.reference_id}
+                >
+                    {movement.reference_id.slice(0, 8)}
+                </span>
+            ) : (
+                <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+            ),
             reason: (
                 <div>
                     <span className="text-sm text-gray-700 dark:text-gray-200">{movement.reason}</span>
