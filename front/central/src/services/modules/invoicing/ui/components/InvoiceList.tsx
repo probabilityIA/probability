@@ -570,6 +570,11 @@ export const InvoiceList = forwardRef(function InvoiceList(
           <div className="text-xs text-gray-400 font-mono">
             {invoice.order_id ? `${invoice.order_id.substring(0, 8)}...` : '—'}
           </div>
+          {invoice.source_channel_name && (
+            <span className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+              {invoice.source_channel_name}
+            </span>
+          )}
         </div>
       ),
     },

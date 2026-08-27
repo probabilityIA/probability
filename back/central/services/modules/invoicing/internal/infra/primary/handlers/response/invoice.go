@@ -32,6 +32,7 @@ type Invoice struct {
 	ProviderResponse    map[string]interface{} `json:"provider_response,omitempty"` // Respuesta completa del proveedor (incluye full_document)
 	ProviderLogoURL     *string                `json:"provider_logo_url,omitempty"` // URL del logo del proveedor de facturación
 	ProviderName        *string                `json:"provider_name,omitempty"`     // Nombre del tipo de integración de facturación
+	SourceChannelName   string                 `json:"source_channel_name,omitempty"` // Canal de venta de origen de la orden
 	Items               []InvoiceItem          `json:"items,omitempty"`
 }
 

@@ -60,9 +60,10 @@ type Invoice struct {
 	ProviderResponse map[string]interface{}
 
 	// Datos derivados de relaciones (no almacenados en tabla invoices)
-	OrderNumber     string  // Número visible de la orden (de tabla orders)
-	ProviderLogoURL *string // Logo del proveedor de facturación
-	ProviderName    *string // Nombre del tipo de integración de facturación
+	OrderNumber       string  // Número visible de la orden (de tabla orders)
+	ProviderLogoURL   *string // Logo del proveedor de facturación
+	ProviderName      *string // Nombre del tipo de integración de facturación
+	SourceChannelName string  // Canal de venta de origen de la orden (ej: WooCommerce, MercadoLibre, Plataforma)
 
 	// Items de la factura (relación)
 	Items []InvoiceItem

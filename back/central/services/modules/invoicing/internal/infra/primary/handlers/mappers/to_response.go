@@ -32,6 +32,25 @@ func buildImageURL(relativePath string, baseURL string, fallbackBucket string) s
 	return relativePath
 }
 
+func channelDisplayName(integrationType string) string {
+	switch integrationType {
+	case "woocommerce":
+		return "WooCommerce"
+	case "mercado_libre":
+		return "MercadoLibre"
+	case "shopify":
+		return "Shopify"
+	case "amazon":
+		return "Amazon"
+	case "platform":
+		return "Plataforma"
+	case "":
+		return ""
+	default:
+		return integrationType
+	}
+}
+
 // InvoiceToResponse convierte entidad de dominio a response
 func InvoiceToResponse(invoice *entities.Invoice, includeItems bool, baseURL string, bucket string) *response.Invoice {
 	// Convert *uint to uint (dereference with default 0 if nil)
@@ -68,6 +87,7 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool, baseURL str
 		Metadata:            invoice.Metadata,
 		ProviderResponse:    invoice.ProviderResponse, // Incluir respuesta completa del proveedor
 		ProviderName:        invoice.ProviderName,
+		SourceChannelName:   channelDisplayName(invoice.SourceChannelName),
 	}
 
 	if invoice.ProviderLogoURL != nil {

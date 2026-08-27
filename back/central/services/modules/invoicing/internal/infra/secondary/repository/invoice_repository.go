@@ -163,22 +163,28 @@ func (r *Repository) ListInvoices(ctx context.Context, filters map[string]interf
 		}
 
 		var orderRows []struct {
-			ID          string
-			OrderNumber string
+			ID              string
+			OrderNumber     string
+			IntegrationType string
 		}
 		if err := r.db.Conn(ctx).
 			Table("orders").
-			Select("id, order_number").
+			Select("id, order_number, integration_type").
 			Where("id IN (?)", orderIDs).
 			Where("deleted_at IS NULL").
 			Scan(&orderRows).Error; err == nil {
 			orderNumberMap := make(map[string]string, len(orderRows))
+			channelMap := make(map[string]string, len(orderRows))
 			for _, row := range orderRows {
 				orderNumberMap[row.ID] = row.OrderNumber
+				channelMap[row.ID] = row.IntegrationType
 			}
 			for _, inv := range domainList {
 				if num, ok := orderNumberMap[inv.OrderID]; ok {
 					inv.OrderNumber = num
+				}
+				if channel, ok := channelMap[inv.OrderID]; ok {
+					inv.SourceChannelName = channel
 				}
 			}
 		}
