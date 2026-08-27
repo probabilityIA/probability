@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.6.3
+ * Version: 1.6.4
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -66,7 +66,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery', 'probability-leaflet'),
-        '1.6.3',
+        '1.6.4',
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -75,7 +75,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data', 'probability-leaflet'),
-        '1.6.3',
+        '1.6.4',
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
@@ -175,6 +175,25 @@ add_filter('woocommerce_cart_shipping_packages', function ($packages) {
     }
     return $packages;
 });
+
+add_action('woocommerce_store_api_checkout_update_order_from_request', function ($order, $request) {
+    $payment_method = $request->get_param('payment_method');
+    if (!$payment_method || !function_exists('WC') || !WC() || !WC()->session) {
+        return;
+    }
+
+    $previous = WC()->session->get('chosen_payment_method');
+    WC()->session->set('chosen_payment_method', $payment_method);
+
+    if ($previous === $payment_method) {
+        return;
+    }
+
+    foreach (array_keys(WC()->cart->get_shipping_packages()) as $key) {
+        WC()->session->set('shipping_for_package_' . $key, null);
+    }
+    WC()->cart->calculate_shipping();
+}, 10, 2);
 
 function probability_shipping_b64url_decode($data) {
     $pad = strlen($data) % 4;

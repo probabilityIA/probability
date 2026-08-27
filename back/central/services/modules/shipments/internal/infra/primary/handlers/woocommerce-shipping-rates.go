@@ -173,7 +173,7 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 		}
 	}
 
-	rates := mapQuoteRatesToWoo(ratesList, currency, quoteID, h.pluginBaseURL, req.COD)
+	rates := mapQuoteRatesToWoo(ratesList, currency, quoteID, h.pluginBaseURL, req.COD, resolved.AlwaysInsure)
 
 	if req.COD && len(rates) == 0 && len(ratesList) > 0 {
 		c.JSON(http.StatusOK, gin.H{"rates": []wooRate{}, "cod_blocked": true})
@@ -343,7 +343,7 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 	}
 }
 
-func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quoteID uint, logoBaseURL string, isCOD bool) []wooRate {
+func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quoteID uint, logoBaseURL string, isCOD bool, alwaysInsure bool) []wooRate {
 	out := make([]wooRate, 0)
 
 	for i, rate := range ratesList {
@@ -355,7 +355,11 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 		}
 
 		minimumInsurance := toFloat(rate["minimumInsurance"])
-		cost := flete + minimumInsurance
+		extraInsurance := 0.0
+		if alwaysInsure {
+			extraInsurance = toFloat(rate["extraInsurance"])
+		}
+		cost := flete + minimumInsurance + extraInsurance
 		codCarrierFee := 0.0
 		codProbabilityMargin := 0.0
 		if isCOD {
@@ -365,7 +369,7 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			}
 			codCarrierFee = toFloat(rate["codCarrierFee"])
 			codProbabilityMargin = toFloat(rate["codProbabilityMargin"])
-			cost = flete + minimumInsurance + codCarrierFee + codProbabilityMargin
+			cost += codCarrierFee + codProbabilityMargin
 		}
 
 		logoURL := ""
@@ -405,6 +409,9 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			"cod":          isCOD,
 			"flete":        flete,
 			"insurance":    minimumInsurance,
+		}
+		if alwaysInsure {
+			meta["extra_insurance"] = extraInsurance
 		}
 		if isCOD {
 			meta["cod_carrier_fee"] = codCarrierFee
