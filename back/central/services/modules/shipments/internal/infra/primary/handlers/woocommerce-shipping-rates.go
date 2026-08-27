@@ -314,7 +314,7 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 		"length": pkgDims.Length,
 	}
 
-	return map[string]interface{}{
+	payload := map[string]interface{}{
 		"requestPickup": false,
 		"insurance":     alwaysInsure,
 		"description":   "Compra en linea",
@@ -341,6 +341,13 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 			"daneCode":  destDane,
 		},
 	}
+
+	if req.COD {
+		payload["codValue"] = contentValue
+		payload["codPaymentMethod"] = "cash"
+	}
+
+	return payload
 }
 
 func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quoteID uint, logoBaseURL string, isCOD bool, alwaysInsure bool) []wooRate {
