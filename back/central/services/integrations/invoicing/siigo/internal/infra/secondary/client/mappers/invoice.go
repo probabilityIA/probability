@@ -56,12 +56,21 @@ func BuildCreateInvoiceRequest(req *dtos.CreateInvoiceRequest, customerID string
 		currency = "COP"
 	}
 
+	// Siigo valida que la suma de payments sea exactamente igual al total
+	// que calcula sumando items[]. req.Total puede no incluir el envio (viene
+	// de otro modulo), pero items si trae la linea "Envio" agregada arriba,
+	// asi que el pago se calcula sobre los items ya armados, no sobre req.Total.
+	var itemsTotal float64
+	for _, it := range items {
+		itemsTotal += it.Price*it.Quantity - it.Discount
+	}
+
 	var payments []request.SiigoPayment
 	if paymentMethodID > 0 {
 		payments = []request.SiigoPayment{
 			{
 				ID:    paymentMethodID,
-				Value: req.Total,
+				Value: itemsTotal,
 			},
 		}
 	}
