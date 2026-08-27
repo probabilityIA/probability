@@ -34,7 +34,7 @@ export default function ProductSelector({
         try {
             const params: GetProductsParams = {
                 business_id: businessId,
-                name: term,
+                search: term,
                 page: 1,
                 page_size: 10
             };

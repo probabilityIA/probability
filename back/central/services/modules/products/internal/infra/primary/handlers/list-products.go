@@ -85,6 +85,10 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		filters["name"] = strings.TrimSpace(name)
 	}
 
+	if search := c.Query("search"); search != "" {
+		filters["search"] = strings.TrimSpace(search)
+	}
+
 	if externalID := c.Query("external_id"); externalID != "" {
 		filters["external_id"] = strings.TrimSpace(externalID)
 	}

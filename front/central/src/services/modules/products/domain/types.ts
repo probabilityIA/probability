@@ -203,6 +203,7 @@ export interface GetProductsParams {
     sku?: string;
     skus?: string;
     name?: string;
+    search?: string;
     barcode?: string;
     family_id?: number;
     external_id?: string;

@@ -107,6 +107,11 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 		query = query.Where("products.name ILIKE ?", "%"+name+"%")
 	}
 
+	if search, ok := filters["search"].(string); ok && search != "" {
+		like := "%" + search + "%"
+		query = query.Where("products.name ILIKE ? OR products.sku ILIKE ?", like, like)
+	}
+
 	if barcode, ok := filters["barcode"].(string); ok && barcode != "" {
 		query = query.Where("products.barcode = ?", barcode)
 	}
