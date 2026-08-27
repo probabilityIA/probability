@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -92,7 +93,7 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 
 	rawJSON := []byte(`{"id":12345,"number":"WOO-5001"}`)
 
-	dto := MapWooOrderToProbability(order, rawJSON)
+	dto := MapWooOrderToProbability(context.Background(), order, rawJSON, nil)
 
 	// Basic fields
 	if dto.ExternalID != "12345" {
@@ -268,7 +269,7 @@ func TestMapWooOrderToProbability_MinimalOrder(t *testing.T) {
 		Total:    "50.00",
 	}
 
-	dto := MapWooOrderToProbability(order, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
 
 	if dto.ExternalID != "1" {
 		t.Errorf("ExternalID esperado '1', recibí '%s'", dto.ExternalID)
@@ -365,7 +366,7 @@ func TestMapWooOrderToProbability_PaymentPending(t *testing.T) {
 		// DatePaid es nil
 	}
 
-	dto := MapWooOrderToProbability(order, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
 
 	if len(dto.Payments) != 1 {
 		t.Fatalf("esperaba 1 pago, recibí %d", len(dto.Payments))
@@ -393,7 +394,7 @@ func TestMapWooOrderToProbability_MultipleCoupons(t *testing.T) {
 		},
 	}
 
-	dto := MapWooOrderToProbability(order, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
 
 	if dto.Coupon == nil {
 		t.Fatal("Coupon no debe ser nil con 2 cupones")
@@ -465,7 +466,7 @@ func TestMapWooOrderToProbability_FreeShipping(t *testing.T) {
 				ShippingLines: tt.shippingLines,
 			}
 
-			dto := MapWooOrderToProbability(order, nil)
+			dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
 
 			if dto.FreeShipping != tt.want {
 				t.Errorf("FreeShipping = %v, se esperaba %v", dto.FreeShipping, tt.want)
@@ -494,7 +495,7 @@ func TestMapWooOrderToProbability_ShippingVacioUsaBilling(t *testing.T) {
 		},
 	}
 
-	dto := MapWooOrderToProbability(order, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
 
 	var shipping *canonical.ProbabilityAddressDTO
 	for i := range dto.Addresses {

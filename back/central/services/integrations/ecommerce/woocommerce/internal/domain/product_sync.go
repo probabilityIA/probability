@@ -132,4 +132,5 @@ type IProductRepository interface {
 	ERPFeedsInventory(ctx context.Context, businessID uint) (bool, error)
 	SaveCompareSnapshot(ctx context.Context, businessID, integrationID uint, rows []inventorycompare.Row, checkedAt time.Time) error
 	LoadCompareSnapshot(ctx context.Context, businessID, integrationID uint, opts inventorycompare.LoadOptions) (*inventorycompare.Page, error)
+	GetShippingQuoteRate(ctx context.Context, quoteID uint, rateIndex int) (*ShippingQuoteRate, error)
 }

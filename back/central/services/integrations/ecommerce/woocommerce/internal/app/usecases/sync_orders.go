@@ -113,7 +113,7 @@ func (uc *wooCommerceUseCase) syncOrdersAsync(ctx context.Context, integration *
 				rawJSON = rawOrders[i]
 			}
 
-			dto := mapper.MapWooOrderToProbability(&order, rawJSON)
+			dto := mapper.MapWooOrderToProbability(ctx, &order, rawJSON, uc.productRepo)
 			dto.IntegrationID = integration.ID
 			dto.BusinessID = integration.BusinessID
 
