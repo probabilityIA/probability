@@ -47,10 +47,11 @@ func (c *Client) ListDocumentTypes(ctx context.Context, credentials dtos.Credent
 		return nil, err
 	}
 
+	inactiveCount := 0
 	items := make([]dtos.CatalogItem, 0, len(listResp))
 	for _, r := range listResp {
 		if !r.Active {
-			continue
+			inactiveCount++
 		}
 		detalle := r.Description
 		if r.ElectronicTyp != "" {
@@ -60,13 +61,24 @@ func (c *Client) ListDocumentTypes(ctx context.Context, credentials dtos.Credent
 				detalle = detalle + " (electronico)"
 			}
 		}
+		if !r.Active {
+			detalle = detalle + " (inactivo en Siigo)"
+		}
 		items = append(items, dtos.CatalogItem{
 			ID:     r.ID,
 			Code:   r.Code,
 			Name:   r.Name,
 			Detail: detalle,
+			Active: r.Active,
 		})
 	}
+
+	c.log.Info(ctx).
+		Str("document_type", documentType).
+		Int("total", len(listResp)).
+		Int("inactive", inactiveCount).
+		Msg("Siigo document-types: catalogo crudo recibido (incluye inactivos)")
+
 	return items, nil
 }
 

@@ -6,6 +6,7 @@ type CatalogItem struct {
 	Name    string `json:"name"`
 	Detail  string `json:"detail,omitempty"`
 	Percent string `json:"percent,omitempty"`
+	Active  bool   `json:"active"`
 }
 
 type Catalogs struct {
