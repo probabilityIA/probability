@@ -7,5 +7,5 @@ var Files embed.FS
 
 const (
 	FolderName = "probability-shipping"
-	Version    = "1.6.4"
+	Version    = "1.6.5"
 )

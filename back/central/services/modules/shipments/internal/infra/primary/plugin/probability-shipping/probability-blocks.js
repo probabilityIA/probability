@@ -110,7 +110,7 @@
     }
 
     function validate() {
-        if (cfg.showMap === false) return;
+        if (!cfg.showMap || cfg.showMap === 'false') return;
 
         var addr = shippingAddress();
         if (!addr) return;

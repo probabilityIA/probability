@@ -132,7 +132,7 @@
                 if (lat) lat.value = res.lat || '';
                 if (lng) lng.value = res.lng || '';
 
-                if (cfg.showMap === false) return;
+                if (!cfg.showMap || cfg.showMap === 'false') return;
 
                 var note = ensureNote(prefix);
                 if (!note) return;
