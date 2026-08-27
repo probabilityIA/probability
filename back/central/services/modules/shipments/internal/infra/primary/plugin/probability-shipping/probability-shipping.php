@@ -181,19 +181,15 @@ add_action('woocommerce_store_api_checkout_update_order_from_request', function 
     if (!$payment_method || !function_exists('WC') || !WC() || !WC()->session) {
         return;
     }
-
-    $previous = WC()->session->get('chosen_payment_method');
     WC()->session->set('chosen_payment_method', $payment_method);
-
-    if ($previous === $payment_method) {
-        return;
-    }
-
-    foreach (array_keys(WC()->cart->get_shipping_packages()) as $key) {
-        WC()->session->set('shipping_for_package_' . $key, null);
-    }
-    WC()->cart->calculate_shipping();
 }, 10, 2);
+
+add_action('woocommerce_checkout_update_order_review', function ($post_data) {
+    parse_str($post_data, $data);
+    if (!empty($data['payment_method']) && function_exists('WC') && WC() && WC()->session) {
+        WC()->session->set('chosen_payment_method', $data['payment_method']);
+    }
+});
 
 function probability_shipping_b64url_decode($data) {
     $pad = strlen($data) % 4;
