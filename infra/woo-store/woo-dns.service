@@ -1,0 +1,14 @@
+[Unit]
+Description=Actualiza woo.probabilityia.com.co con la IP publica actual
+After=network-online.target cloud-init.service
+Wants=network-online.target
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/woo-dns-update.sh
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
