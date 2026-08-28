@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useResourceConfig } from '@/services/auth/business/ui/hooks/useResourceConfig';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const IAMSubNavbar = memo(function IAMSubNavbar() {
     const pathname = usePathname();
@@ -75,6 +76,7 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
                         ))}
                     </div>
                     <div className="flex items-center gap-3 ml-auto">
+                        <TourLauncher />
                         {isSuperAdmin && (
                             <SuperAdminBusinessSelector
                                 value={selectedBusinessId}

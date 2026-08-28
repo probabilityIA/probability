@@ -15,6 +15,7 @@ import {
     disableConfigAction,
 } from '@/services/modules/invoicing/infra/actions';
 import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
     const pathname = usePathname();
@@ -117,6 +118,7 @@ export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                         <MyIntegrationsButton businessId={selectedBusinessId} />
+                        <TourLauncher />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}

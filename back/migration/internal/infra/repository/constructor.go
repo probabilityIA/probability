@@ -24,6 +24,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {
+	if err := r.migrateUserTourProgress(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateWalletTxBusinessID(ctx); err != nil {
 		return err
 	}

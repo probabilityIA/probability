@@ -8,6 +8,7 @@ import { useStorefrontBusiness } from '@/shared/contexts/storefront-business-con
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
     const pathname = usePathname();
@@ -57,6 +58,7 @@ export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                         <MyIntegrationsButton businessId={selectedBusinessId} />
+                        <TourLauncher />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={handleBusinessChange}
