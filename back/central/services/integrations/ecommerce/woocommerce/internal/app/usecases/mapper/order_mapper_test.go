@@ -93,7 +93,7 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 
 	rawJSON := []byte(`{"id":12345,"number":"WOO-5001"}`)
 
-	dto := MapWooOrderToProbability(context.Background(), order, rawJSON, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, rawJSON, nil, 0)
 
 	// Basic fields
 	if dto.ExternalID != "12345" {
@@ -118,8 +118,10 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 	}
 
 	// Amounts
-	if dto.TotalAmount != 250000 {
-		t.Errorf("TotalAmount esperado 250000, recibí %f", dto.TotalAmount)
+	// TotalAmount es solo el valor de productos (igual que ordenes manuales):
+	// total(250000) - tax(39000) - shipping(15000) + discount(10000) = 206000
+	if dto.TotalAmount != 206000 {
+		t.Errorf("TotalAmount esperado 206000, recibí %f", dto.TotalAmount)
 	}
 	if dto.Tax != 39000 {
 		t.Errorf("Tax esperado 39000, recibí %f", dto.Tax)
@@ -269,7 +271,7 @@ func TestMapWooOrderToProbability_MinimalOrder(t *testing.T) {
 		Total:    "50.00",
 	}
 
-	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil, 0)
 
 	if dto.ExternalID != "1" {
 		t.Errorf("ExternalID esperado '1', recibí '%s'", dto.ExternalID)
@@ -366,7 +368,7 @@ func TestMapWooOrderToProbability_PaymentPending(t *testing.T) {
 		// DatePaid es nil
 	}
 
-	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil, 0)
 
 	if len(dto.Payments) != 1 {
 		t.Fatalf("esperaba 1 pago, recibí %d", len(dto.Payments))
@@ -394,7 +396,7 @@ func TestMapWooOrderToProbability_MultipleCoupons(t *testing.T) {
 		},
 	}
 
-	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil, 0)
 
 	if dto.Coupon == nil {
 		t.Fatal("Coupon no debe ser nil con 2 cupones")
@@ -466,7 +468,7 @@ func TestMapWooOrderToProbability_FreeShipping(t *testing.T) {
 				ShippingLines: tt.shippingLines,
 			}
 
-			dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
+			dto := MapWooOrderToProbability(context.Background(), order, nil, nil, 0)
 
 			if dto.FreeShipping != tt.want {
 				t.Errorf("FreeShipping = %v, se esperaba %v", dto.FreeShipping, tt.want)
@@ -495,7 +497,7 @@ func TestMapWooOrderToProbability_ShippingVacioUsaBilling(t *testing.T) {
 		},
 	}
 
-	dto := MapWooOrderToProbability(context.Background(), order, nil, nil)
+	dto := MapWooOrderToProbability(context.Background(), order, nil, nil, 0)
 
 	var shipping *canonical.ProbabilityAddressDTO
 	for i := range dto.Addresses {

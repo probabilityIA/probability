@@ -54,7 +54,7 @@ func (uc *wooCommerceUseCase) ProcessWebhookOrder(ctx context.Context, topic str
 		Msg("Processing WooCommerce webhook order")
 
 	// 2. Mapear a DTO canónico
-	dto := mapper.MapWooOrderToProbability(ctx, &order, rawBody, uc.productRepo)
+	dto := mapper.MapWooOrderToProbability(ctx, &order, rawBody, uc.productRepo, integration.ID)
 	dto.IntegrationID = integration.ID
 	dto.BusinessID = integration.BusinessID
 

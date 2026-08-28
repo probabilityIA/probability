@@ -135,7 +135,7 @@ func (uc *wooCommerceUseCase) ImportChannelOrders(ctx context.Context, integrati
 			continue
 		}
 
-		dto := mapper.MapWooOrderToProbability(ctx, order, rawJSON, uc.productRepo)
+		dto := mapper.MapWooOrderToProbability(ctx, order, rawJSON, uc.productRepo, access.integration.ID)
 		dto.IntegrationID = access.integration.ID
 		dto.BusinessID = access.integration.BusinessID
 		skip, _ := orderscompare.SkipsInventory(dto.Status)

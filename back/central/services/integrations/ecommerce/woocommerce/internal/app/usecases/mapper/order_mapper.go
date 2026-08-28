@@ -37,7 +37,7 @@ func metaValue(meta []domain.WooCommerceMetaData, key string) string {
 // quoteRepo se usa para recuperar, por quote_id/rate_index, la tarifa exacta cotizada por
 // Probability (flete, seguro minimo, comision y margen COD) cuando el metodo de envio
 // vino del cotizador propio. Puede ser nil (metodo de envio ajeno o sin datos de quote).
-func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrder, rawJSON []byte, quoteRepo domain.IProductRepository) *canonical.ProbabilityOrderDTO {
+func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrder, rawJSON []byte, quoteRepo domain.IProductRepository, integrationID uint) *canonical.ProbabilityOrderDTO {
 	now := time.Now()
 	totalAmount := parseFloat(order.Total)
 	totalTax := parseFloat(order.TotalTax)
@@ -79,7 +79,10 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		Discount:        discount,
 		ShippingCost:    shippingCost,
 		FreeShipping:    freeShipping,
-		TotalAmount:     totalAmount,
+		// TotalAmount es solo el valor de productos, igual que en las ordenes
+		// manuales (ver .claude/bitacora): el total con envio/comision se arma
+		// sumando ShippingCost/CodTotal, no se guarda un total distinto aqui.
+		TotalAmount:     subtotal,
 		Currency:        order.Currency,
 		CustomerName:    customerName,
 		CustomerEmail:   order.Billing.Email,
@@ -231,7 +234,13 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 				rateIndex, errR := strconv.Atoi(rateIndexStr)
 				if errQ == nil && errR == nil {
 					if rate, err := quoteRepo.GetShippingQuoteRate(ctx, uint(quoteID64), rateIndex); err == nil && rate != nil {
-						correctedShippingCost = rate.Flete + rate.MinimumInsurance
+						// guia = flete + seguro minimo + seguro extra + margen COD
+						// (solo si la orden es contra entrega y la tarifa lo soporta),
+						// ver .claude/rules/guias-contra-entrega.md.
+						correctedShippingCost = rate.Flete + rate.MinimumInsurance + rate.ExtraInsurance
+						if isCOD && rate.COD {
+							correctedShippingCost += rate.CODProbabilityMargin
+						}
 						shippingCostResolved = true
 					}
 				}
@@ -251,8 +260,26 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 	}
 
 	if isCOD {
-		codTotal := subtotal + dto.ShippingCost
-		dto.CodTotal = &codTotal
+		codIncludesShipping := true
+		if quoteRepo != nil {
+			if v, err := quoteRepo.GetIntegrationCodIncludesShipping(ctx, integrationID); err == nil {
+				codIncludesShipping = v
+			}
+		}
+
+		if codIncludesShipping {
+			// La tienda ya le cobro el envio (con comision incluida) al cliente en
+			// el checkout: se recauda el total tal cual, igual que en ordenes
+			// manuales donde shipping_cost es el valor completo cobrado.
+			codTotal := totalAmount - totalTax
+			dto.CodTotal = &codTotal
+		} else {
+			// Las guias de contra entrega se generan en Probability aparte: el
+			// total del canal trae solo productos, se le suma el flete real de
+			// la guia (sin comision, que se agrega despues al generarla).
+			codTotal := subtotal + dto.ShippingCost
+			dto.CodTotal = &codTotal
+		}
 	}
 
 	if len(shippingLineDetails) > 0 {
