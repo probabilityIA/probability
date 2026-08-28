@@ -234,7 +234,13 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 				rateIndex, errR := strconv.Atoi(rateIndexStr)
 				if errQ == nil && errR == nil {
 					if rate, err := quoteRepo.GetShippingQuoteRate(ctx, uint(quoteID64), rateIndex); err == nil && rate != nil {
+						// guia = flete + seguro minimo + seguro extra + margen COD
+						// (solo si la orden es contra entrega y la tarifa lo soporta),
+						// ver .claude/rules/guias-contra-entrega.md.
 						correctedShippingCost = rate.Flete + rate.MinimumInsurance + rate.ExtraInsurance
+						if isCOD && rate.COD {
+							correctedShippingCost += rate.CODProbabilityMargin
+						}
 						shippingCostResolved = true
 					}
 				}
