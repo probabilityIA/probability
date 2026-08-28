@@ -10,6 +10,7 @@ import { StorefrontNav } from '@/services/modules/storefront/ui/components/Store
 import { SubscriptionGuard } from '@/shared/ui/SubscriptionGuard';
 import AnnouncementModal from '@/services/modules/announcements/ui/components/AnnouncementModal';
 import AnnouncementTicker from '@/services/modules/announcements/ui/components/AnnouncementTicker';
+import LegalAcceptanceGate from '@/services/modules/legal/ui/components/LegalAcceptanceGate';
 
 interface LayoutContentProps {
   user: {
@@ -62,6 +63,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         <main className="max-w-7xl mx-auto px-4 py-6">
           {children}
         </main>
+        <LegalAcceptanceGate />
       </div>
     );
   }
@@ -105,6 +107,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
       </main>
 
       <AnnouncementModal />
+      <LegalAcceptanceGate />
     </div>
   );
 }

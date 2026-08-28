@@ -18,6 +18,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/geozones"
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
+	"github.com/secamc93/probability/back/central/services/modules/legal"
 	"github.com/secamc93/probability/back/central/services/modules/marketingleads"
 	"github.com/secamc93/probability/back/central/services/modules/mobile"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
@@ -100,6 +101,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	shipmentsBundle.SetSubscriptionOverageChecker(subscriptionsBundle.UseCase.CheckShipmentOverage)
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "invoicing"))
 	warehouses.New(router, database)
+	legal.New(router, database, logger)
 	shippingconfig.New(router, database)
 	commercial.New(router, database, logger)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "inventory"))
