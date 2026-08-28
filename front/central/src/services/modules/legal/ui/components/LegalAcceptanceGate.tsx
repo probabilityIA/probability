@@ -81,17 +81,12 @@ export function LegalAcceptanceGate() {
                 </div>
 
                 <div className="flex-1 min-h-0 px-6 py-4">
-                    <div className="h-[46vh] overflow-y-auto rounded border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-900/40">
-                        <LegalDocumentText fileUrl={documentoActivo.file_url} />
+                    <div className="h-[52vh] overflow-y-auto rounded border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-900/40">
+                        <LegalDocumentText
+                            code={documentoActivo.code}
+                            version={documentoActivo.version}
+                        />
                     </div>
-                    <a
-                        href={documentoActivo.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-2 text-xs text-blue-600 hover:text-blue-700 underline"
-                    >
-                        {'Descargar este documento en PDF'}
-                    </a>
                 </div>
 
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
