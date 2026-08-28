@@ -12,9 +12,22 @@ import (
 
 func (r *Repository) Create(ctx context.Context, announcement *entities.Announcement) (*entities.Announcement, error) {
 	model := announcementFromEntity(announcement)
+	model.Targets = nil
+	model.Links = nil
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
 		return nil, err
+	}
+
+	if len(announcement.Targets) > 0 {
+		if err := r.ReplaceTargets(ctx, model.ID, announcement.Targets); err != nil {
+			return nil, err
+		}
+	}
+	if len(announcement.Links) > 0 {
+		if err := r.ReplaceLinks(ctx, model.ID, announcement.Links); err != nil {
+			return nil, err
+		}
 	}
 
 	return r.GetByID(ctx, model.ID)
