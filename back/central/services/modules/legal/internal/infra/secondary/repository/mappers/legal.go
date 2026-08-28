@@ -15,6 +15,7 @@ func ToDomainDocuments(filas []models.LegalDocument) []entities.LegalDocument {
 			Title:         f.Title,
 			FileURL:       f.FileURL,
 			SHA256:        f.SHA256,
+			ContentHTML:   f.ContentHTML,
 			EffectiveFrom: f.EffectiveFrom,
 			IsActive:      f.IsActive,
 		})

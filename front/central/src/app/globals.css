@@ -1556,3 +1556,27 @@ textarea:focus {
   white-space: nowrap;
   animation: announcement-marquee 14s linear infinite;
 }
+
+.legal-document h2 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgb(17 24 39);
+}
+
+.dark .legal-document h2 {
+  color: rgb(255 255 255);
+}
+
+.legal-document h2:first-child {
+  margin-top: 0;
+}
+
+.legal-document p {
+  margin-bottom: 0.5rem;
+}
+
+.legal-document p.item {
+  padding-left: 1rem;
+}

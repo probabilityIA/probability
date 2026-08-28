@@ -82,10 +82,7 @@ export function LegalAcceptanceGate() {
 
                 <div className="flex-1 min-h-0 px-6 py-4">
                     <div className="h-[52vh] overflow-y-auto rounded border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-900/40">
-                        <LegalDocumentText
-                            code={documentoActivo.code}
-                            version={documentoActivo.version}
-                        />
+                        <LegalDocumentText contentHtml={documentoActivo.content_html} />
                     </div>
                 </div>
 

@@ -7,6 +7,7 @@ type LegalDocument struct {
 	Title         string `json:"title"`
 	FileURL       string `json:"file_url"`
 	SHA256        string `json:"sha256"`
+	ContentHTML   string `json:"content_html"`
 	EffectiveFrom string `json:"effective_from"`
 }
 

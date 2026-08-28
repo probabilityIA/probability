@@ -17,6 +17,7 @@ func ToResponseDocuments(docs []entities.LegalDocument) []response.LegalDocument
 			Title:         d.Title,
 			FileURL:       d.FileURL,
 			SHA256:        d.SHA256,
+			ContentHTML:   d.ContentHTML,
 			EffectiveFrom: d.EffectiveFrom.Format(time.RFC3339),
 		})
 	}

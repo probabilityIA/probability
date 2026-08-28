@@ -9,6 +9,7 @@ type LegalDocument struct {
 	Title         string
 	FileURL       string
 	SHA256        string
+	ContentHTML   string
 	EffectiveFrom time.Time
 	IsActive      bool
 }
