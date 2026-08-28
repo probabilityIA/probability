@@ -61,5 +61,6 @@ type CreateInvoiceResult struct {
 	IssuedAt       string
 	AlreadyExisted bool
 	ProviderInfo   map[string]interface{}
+	Document       map[string]interface{}
 	AuditData      *AuditData
 }

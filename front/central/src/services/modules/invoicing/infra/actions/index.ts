@@ -130,6 +130,12 @@ export async function retryInvoiceAction(id: number): Promise<Invoice> {
   });
 }
 
+export async function refreshInvoiceAction(id: number): Promise<Invoice> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/refresh`, {
+    method: 'POST',
+  });
+}
+
 export async function cancelRetryAction(id: number): Promise<void> {
   return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/retry`, {
     method: 'DELETE',

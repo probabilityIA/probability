@@ -13,6 +13,7 @@ type SiigoClientMock struct {
 	CreateCustomerFn              func(ctx context.Context, credentials dtos.Credentials, req *dtos.CreateCustomerRequest) (*dtos.CustomerResult, error)
 	ListInvoicesFn                func(ctx context.Context, credentials dtos.Credentials, params dtos.ListInvoicesParams) (*dtos.ListInvoicesResult, error)
 	GetInvoiceByIDFn              func(ctx context.Context, credentials dtos.Credentials, invoiceID string) (*dtos.InvoiceDetail, error)
+	GetInvoicePDFFn               func(ctx context.Context, credentials dtos.Credentials, invoiceID string) ([]byte, string, error)
 	GetStampErrorsFn              func(ctx context.Context, credentials dtos.Credentials, invoiceID string) ([]dtos.StampError, error)
 	AnnulInvoiceFn                func(ctx context.Context, credentials dtos.Credentials, invoiceID string) (*dtos.AnnulInvoiceResult, error)
 	ListProductsFn                func(ctx context.Context, credentials dtos.Credentials, page, pageSize int) ([]dtos.ProductItem, error)
@@ -120,6 +121,17 @@ func (m *SiigoClientMock) GetInvoiceByID(
 		return m.GetInvoiceByIDFn(ctx, credentials, invoiceID)
 	}
 	return &dtos.InvoiceDetail{}, nil
+}
+
+func (m *SiigoClientMock) GetInvoicePDF(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	invoiceID string,
+) ([]byte, string, error) {
+	if m.GetInvoicePDFFn != nil {
+		return m.GetInvoicePDFFn(ctx, credentials, invoiceID)
+	}
+	return nil, "", nil
 }
 
 func (m *SiigoClientMock) GetStampErrors(

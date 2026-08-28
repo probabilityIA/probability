@@ -290,7 +290,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		if result != nil {
 			auditData = result.AuditData
 		}
-		return c.createErrorResponse(request, "api_error", err.Error(), startTime, auditData)
+		return c.createOperationErrorResponse(request, "create", codigoDeError(err), err.Error(), startTime, auditData)
 	}
 
 	var issuedAt *time.Time
@@ -310,6 +310,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		ExternalID:     result.ExternalID,
 		CUFE:           result.CUFE,
 		IssuedAt:       issuedAt,
+		DocumentJSON:   result.Document,
 		CorrelationID:  request.CorrelationID,
 		Timestamp:      time.Now(),
 		ProcessingTime: processingTime,

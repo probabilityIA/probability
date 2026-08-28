@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/client/mappers"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/client/response"
 )
 
 type invoiceDetailResponse struct {
@@ -72,7 +74,14 @@ func (c *Client) GetInvoiceByID(ctx context.Context, credentials dtos.Credential
 		cufe = detail.Metadata.CUFE
 	}
 
+	var completa response.CreateInvoiceResponse
+	documento := map[string]interface{}(nil)
+	if err := json.Unmarshal(resp.Body(), &completa); err == nil {
+		documento = mappers.DocumentoDeFactura(completa, resp.Body())
+	}
+
 	return &dtos.InvoiceDetail{
+		Document:               documento,
 		ID:                     detail.ID,
 		Name:                   detail.Name,
 		Prefix:                 detail.Prefix,

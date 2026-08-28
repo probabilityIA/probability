@@ -22,6 +22,8 @@ type ISiigoClient interface {
 
 	GetInvoiceByID(ctx context.Context, credentials dtos.Credentials, invoiceID string) (*dtos.InvoiceDetail, error)
 
+	GetInvoicePDF(ctx context.Context, credentials dtos.Credentials, invoiceID string) ([]byte, string, error)
+
 	GetStampErrors(ctx context.Context, credentials dtos.Credentials, invoiceID string) ([]dtos.StampError, error)
 
 	AnnulInvoice(ctx context.Context, credentials dtos.Credentials, invoiceID string) (*dtos.AnnulInvoiceResult, error)
@@ -60,6 +62,7 @@ type IInvoiceUseCase interface {
 	ListWebhooks(ctx context.Context, integrationID string) ([]dtos.WebhookItem, error)
 
 	ListCatalogs(ctx context.Context, integrationID uint) (*dtos.Catalogs, error)
+	GetInvoicePDF(ctx context.Context, integrationID uint, siigoInvoiceID string) ([]byte, string, error)
 	SearchProducts(ctx context.Context, integrationID uint, termino string, limite int) ([]dtos.CatalogItem, error)
 	CreateWebhooks(ctx context.Context, integrationID string, baseURL string) (*WebhookCreateResult, error)
 	DeleteWebhook(ctx context.Context, integrationID string, webhookID string) error

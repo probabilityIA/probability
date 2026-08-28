@@ -15,6 +15,7 @@ type Handler struct {
 	coreIntegration core.IIntegrationService
 	rabbit          rabbitmq.IQueue
 	useCase         ports.IInvoiceUseCase
+	invoiceRead     IInvoiceReadRepository
 	log             log.ILogger
 }
 
@@ -23,6 +24,7 @@ func New(
 	coreIntegration core.IIntegrationService,
 	rabbit rabbitmq.IQueue,
 	useCase ports.IInvoiceUseCase,
+	invoiceRead IInvoiceReadRepository,
 	logger log.ILogger,
 ) *Handler {
 	return &Handler{
@@ -30,6 +32,7 @@ func New(
 		coreIntegration: coreIntegration,
 		rabbit:          rabbit,
 		useCase:         useCase,
+		invoiceRead:     invoiceRead,
 		log:             logger.WithModule("siigo.webhook_handler"),
 	}
 }
@@ -40,5 +43,6 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 		group.POST("/webhook", h.HandleWebhook)
 		group.GET("/catalogs", middleware.JWT(), h.ListCatalogs)
 		group.GET("/products/search", middleware.JWT(), h.SearchProducts)
+		group.GET("/invoices/:invoiceID/pdf", middleware.JWT(), h.GetInvoicePDF)
 	}
 }

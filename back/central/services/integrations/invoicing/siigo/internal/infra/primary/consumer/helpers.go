@@ -9,6 +9,7 @@ import (
 
 	siigoDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/entities"
+	siigoerrors "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/queue"
 )
 
@@ -149,4 +150,8 @@ func getIntFromConfigMap(config map[string]interface{}, key string) int {
 		return n
 	}
 	return 0
+}
+
+func codigoDeError(err error) string {
+	return siigoerrors.CodeFromError(err)
 }

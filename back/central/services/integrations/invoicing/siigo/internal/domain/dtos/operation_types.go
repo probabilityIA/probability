@@ -15,6 +15,7 @@ type InvoiceDetail struct {
 	StampStatus            string
 	CUFE                   string
 	PublicURL              string
+	Document               map[string]interface{}
 }
 
 type StampError struct {
@@ -104,4 +105,11 @@ type CreateCreditNoteResult struct {
 	CUFE             string
 	ProviderInfo     map[string]interface{}
 	AuditData        *AuditData
+}
+
+type InvoiceRef struct {
+	ID            uint
+	BusinessID    uint
+	ExternalID    string
+	IntegrationID uint
 }

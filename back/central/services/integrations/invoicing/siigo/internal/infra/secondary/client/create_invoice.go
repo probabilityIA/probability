@@ -57,6 +57,10 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			if detail, derr := c.GetInvoiceByID(ctx, req.Credentials, existing.ID); derr == nil && detail != nil {
 				result.CUFE = detail.CUFE
 				result.ProviderInfo["public_url"] = detail.PublicURL
+				if detail.Document != nil {
+					detail.Document["already_existed"] = true
+					result.Document = detail.Document
+				}
 			}
 			return result, nil
 		}
@@ -162,7 +166,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			Int("status", resp.StatusCode()).
 			Str("body", string(resp.Body())).
 			Msg("Siigo invoice creation failed")
-		return result, fmt.Errorf("error al crear factura en Siigo (codigo %d): %s", resp.StatusCode(), string(resp.Body()))
+		return result, errorSiigo(resp.Body(), resp.StatusCode(), "la factura")
 	}
 
 	if invoiceResp.ID == "" && invoiceResp.Name == "" {
@@ -172,7 +176,11 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	result.InvoiceNumber = invoiceResp.Name
 	result.ExternalID = invoiceResp.ID
 	result.CUFE = invoiceResp.Metadata.CUFE
+	if result.CUFE == "" {
+		result.CUFE = invoiceResp.Stamp.CUFE
+	}
 	result.QRCode = invoiceResp.Metadata.QR
+	result.Document = mappers.DocumentoDeFactura(invoiceResp, resp.Body())
 	result.ProviderInfo = map[string]interface{}{
 		"siigo_id":      invoiceResp.ID,
 		"invoice_name":  invoiceResp.Name,

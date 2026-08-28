@@ -114,7 +114,7 @@ func (c *Client) CreateCreditNote(ctx context.Context, req *dtos.CreateCreditNot
 			Int("status", resp.StatusCode()).
 			Str("body", string(resp.Body())).
 			Msg("Siigo credit note creation failed")
-		return result, fmt.Errorf("error al crear nota de credito en Siigo (codigo %d): %s", resp.StatusCode(), string(resp.Body()))
+		return result, errorSiigo(resp.Body(), resp.StatusCode(), "la nota de credito")
 	}
 
 	if ncResp.ID == "" && ncResp.Name == "" {

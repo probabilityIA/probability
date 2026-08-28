@@ -168,6 +168,7 @@ type IUseCase interface {
 	MarkInvoiceAsCancelled(ctx context.Context, dto *dtos.MarkInvoiceAsCancelledDTO) error
 	RetryInvoice(ctx context.Context, invoiceID uint, manual bool) error
 	CheckPendingInvoice(ctx context.Context, invoiceID uint) error
+	RefreshInvoiceFromProvider(ctx context.Context, invoiceID uint) error
 	CancelRetry(ctx context.Context, invoiceID uint) error
 	EnableRetry(ctx context.Context, invoiceID uint) error
 	GenerateCashReceipt(ctx context.Context, invoiceID uint) error

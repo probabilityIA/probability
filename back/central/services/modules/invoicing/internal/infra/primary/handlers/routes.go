@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
-// RegisterRoutes registra todas las rutas del módulo de facturación
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	invoicing := router.Group("/invoicing")
 	invoicing.Use(middleware.JWT())
@@ -13,81 +12,71 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		invoicing.Use(h.moduleAccessMW)
 	}
 	{
-		// Facturas
 		invoices := invoicing.Group("/invoices")
 		{
-			invoices.POST("", middleware.JWT(), h.CreateInvoice)                                // Crear factura (envía al proveedor)
-			invoices.POST("/manual", middleware.JWT(), h.RegisterManualInvoice)                 // Registrar factura externa (sin proveedor)
-			invoices.GET("", middleware.JWT(), h.ListInvoices)                                  // Listar facturas
-			invoices.GET("/:id", middleware.JWT(), h.GetInvoice)                                // Obtener factura
-			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice)                     // Cancelar factura
-			invoices.POST("/:id/mark-as-cancelled", middleware.JWT(), h.MarkInvoiceAsCancelled) // Marcar como cancelada (sin enviar al proveedor)
-			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)                       // Reintentar factura
-			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)                      // Cancelar reintentos pendientes
-			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)                         // Habilitar reintentos automáticos
-			invoices.POST("/:id/cash-receipt", middleware.JWT(), h.GenerateCashReceipt)         // Generar recibo de caja para factura emitida
-			invoices.DELETE("/:id", middleware.JWT(), h.DeleteInvoice)                          // Eliminar factura pendiente (3+ consultas)
-			invoices.GET("/:id/sync-logs", middleware.JWT(), h.GetInvoiceSyncLogs)              // Historial de sincronización
-			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote)            // Crear nota de crédito
+			invoices.POST("", middleware.JWT(), h.CreateInvoice)
+			invoices.POST("/manual", middleware.JWT(), h.RegisterManualInvoice)
+			invoices.GET("", middleware.JWT(), h.ListInvoices)
+			invoices.GET("/:id", middleware.JWT(), h.GetInvoice)
+			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice)
+			invoices.POST("/:id/mark-as-cancelled", middleware.JWT(), h.MarkInvoiceAsCancelled)
+			invoices.POST("/:id/refresh", middleware.JWT(), h.RefreshInvoice)
+			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)
+			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)
+			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)
+			invoices.POST("/:id/cash-receipt", middleware.JWT(), h.GenerateCashReceipt)
+			invoices.DELETE("/:id", middleware.JWT(), h.DeleteInvoice)
+			invoices.GET("/:id/sync-logs", middleware.JWT(), h.GetInvoiceSyncLogs)
+			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote)
 
-			// Creación masiva de facturas
-			invoices.GET("/invoiceable-orders", middleware.JWT(), h.ListInvoiceableOrders) // Listar órdenes facturables
-			invoices.POST("/bulk", middleware.JWT(), h.BulkCreateInvoices)                 // Crear facturas masivamente
-			invoices.POST("/retry-failed", middleware.JWT(), h.RetryFailedInvoices)        // Reintento masivo de fallidas (reconcilia primero)
+			invoices.GET("/invoiceable-orders", middleware.JWT(), h.ListInvoiceableOrders)
+			invoices.POST("/bulk", middleware.JWT(), h.BulkCreateInvoices)
+			invoices.POST("/retry-failed", middleware.JWT(), h.RetryFailedInvoices)
 
-			// Comparación con proveedor (auditoría esporádica)
-			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices)                               // Iniciar comparación
-			invoices.GET("/compare/:correlationId", middleware.JWT(), h.GetCompareResult)                // Obtener resultado de comparación
-			invoices.POST("/sync-cancellations", middleware.JWT(), h.SyncCancellations)                  // Sincronizar anuladas y liberar ordenes
-			invoices.POST("/items", middleware.JWT(), h.ListItems)                                       // Comparar ítems del proveedor vs productos del sistema
-			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)                // Obtener resultado de comparación de ítems
-			invoices.POST("/bank-accounts", middleware.JWT(), h.ListBankAccounts)                        // Listar cuentas bancarias del proveedor
-			invoices.GET("/bank-accounts/:correlationId", middleware.JWT(), h.GetListBankAccountsResult) // Obtener resultado de cuentas bancarias
+			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices)
+			invoices.GET("/compare/:correlationId", middleware.JWT(), h.GetCompareResult)
+			invoices.POST("/sync-cancellations", middleware.JWT(), h.SyncCancellations)
+			invoices.POST("/items", middleware.JWT(), h.ListItems)
+			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)
+			invoices.POST("/bank-accounts", middleware.JWT(), h.ListBankAccounts)
+			invoices.GET("/bank-accounts/:correlationId", middleware.JWT(), h.GetListBankAccountsResult)
 		}
 
-		// Journals (comprobantes contables Siigo)
 		invoicing.POST("/journals", middleware.JWT(), h.CreateJournal)
 
-		// Sincronizacion de inventario Siigo -> Probability (una via)
 		invoicing.POST("/inventory/sync", middleware.JWT(), h.SyncInventory)
 		invoicing.POST("/inventory/siigo-warehouses", middleware.JWT(), h.ListSiigoWarehouses)
 
-		// Proveedores de facturación (DEPRECADO - Migrado a integrations/core)
-		// NOTA: Estas rutas están deprecadas y serán eliminadas en una futura versión
-		// Usar endpoints de integrations/core para gestión de proveedores de facturación
 		providers := invoicing.Group("/providers")
 		{
-			providers.POST("", middleware.JWT(), h.CreateProvider)        // DEPRECATED: Crear proveedor
-			providers.GET("", middleware.JWT(), h.ListProviders)          // DEPRECATED: Listar proveedores
-			providers.GET("/:id", middleware.JWT(), h.GetProvider)        // DEPRECATED: Obtener proveedor
-			providers.PUT("/:id", middleware.JWT(), h.UpdateProvider)     // DEPRECATED: Actualizar proveedor
-			providers.POST("/:id/test", middleware.JWT(), h.TestProvider) // DEPRECATED: Probar conexión
+			providers.POST("", middleware.JWT(), h.CreateProvider)
+			providers.GET("", middleware.JWT(), h.ListProviders)
+			providers.GET("/:id", middleware.JWT(), h.GetProvider)
+			providers.PUT("/:id", middleware.JWT(), h.UpdateProvider)
+			providers.POST("/:id/test", middleware.JWT(), h.TestProvider)
 		}
 
-		// Configuraciones de facturación
 		configs := invoicing.Group("/configs")
 		{
-			configs.POST("", middleware.JWT(), h.CreateConfig)                                // Crear configuración
-			configs.GET("", middleware.JWT(), h.ListConfigs)                                  // Listar configuraciones
-			configs.GET("/:id", middleware.JWT(), h.GetConfig)                                // Obtener configuración
-			configs.PUT("/:id", middleware.JWT(), h.UpdateConfig)                             // Actualizar configuración
-			configs.DELETE("/:id", middleware.JWT(), h.DeleteConfig)                          // Eliminar configuración
-			configs.POST("/:id/enable", middleware.JWT(), h.EnableConfig)                     // Activar configuración
-			configs.POST("/:id/disable", middleware.JWT(), h.DisableConfig)                   // Desactivar configuración
-			configs.POST("/:id/enable-auto-invoice", middleware.JWT(), h.EnableAutoInvoice)   // Activar facturación automática
-			configs.POST("/:id/disable-auto-invoice", middleware.JWT(), h.DisableAutoInvoice) // Desactivar facturación automática
+			configs.POST("", middleware.JWT(), h.CreateConfig)
+			configs.GET("", middleware.JWT(), h.ListConfigs)
+			configs.GET("/:id", middleware.JWT(), h.GetConfig)
+			configs.PUT("/:id", middleware.JWT(), h.UpdateConfig)
+			configs.DELETE("/:id", middleware.JWT(), h.DeleteConfig)
+			configs.POST("/:id/enable", middleware.JWT(), h.EnableConfig)
+			configs.POST("/:id/disable", middleware.JWT(), h.DisableConfig)
+			configs.POST("/:id/enable-auto-invoice", middleware.JWT(), h.EnableAutoInvoice)
+			configs.POST("/:id/disable-auto-invoice", middleware.JWT(), h.DisableAutoInvoice)
 		}
 
-		// Estadísticas y resúmenes (NUEVO)
-		invoicing.GET("/summary", middleware.JWT(), h.GetSummary) // Resumen general con KPIs
-		invoicing.GET("/stats", middleware.JWT(), h.GetStats)     // Estadísticas detalladas
-		invoicing.GET("/trends", middleware.JWT(), h.GetTrends)   // Tendencias temporales
+		invoicing.GET("/summary", middleware.JWT(), h.GetSummary)
+		invoicing.GET("/stats", middleware.JWT(), h.GetStats)
+		invoicing.GET("/trends", middleware.JWT(), h.GetTrends)
 
-		// Jobs de facturación masiva (NUEVO - Asíncrono)
 		bulkJobs := invoicing.Group("/bulk-jobs")
 		{
-			bulkJobs.GET("", middleware.JWT(), h.ListBulkJobs)         // Listar jobs
-			bulkJobs.GET("/:id", middleware.JWT(), h.GetBulkJobStatus) // Estado de job
+			bulkJobs.GET("", middleware.JWT(), h.ListBulkJobs)
+			bulkJobs.GET("/:id", middleware.JWT(), h.GetBulkJobStatus)
 		}
 	}
 }

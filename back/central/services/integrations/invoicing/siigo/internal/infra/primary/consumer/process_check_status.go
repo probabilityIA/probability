@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	siigoDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/queue"
 )
 
@@ -87,23 +88,15 @@ func (c *InvoiceRequestConsumer) processCheckStatus(
 
 	processingTime := time.Since(startTime).Milliseconds()
 	return &queue.InvoiceResponseMessage{
-		InvoiceID:     request.InvoiceID,
-		Provider:      "siigo",
-		Status:        "success",
-		InvoiceNumber: detail.Name,
-		ExternalID:    detail.ID,
-		CUFE:          detail.CUFE,
-		InvoiceURL:    detail.PublicURL,
-		IssuedAt:      issuedAt,
-		DocumentJSON: map[string]interface{}{
-			"siigo_id":     detail.ID,
-			"invoice_name": detail.Name,
-			"total":        detail.Total,
-			"balance":      detail.Balance,
-			"status":       detail.Status,
-			"stamp_status": detail.StampStatus,
-			"public_url":   detail.PublicURL,
-		},
+		InvoiceID:      request.InvoiceID,
+		Provider:       "siigo",
+		Status:         "success",
+		InvoiceNumber:  detail.Name,
+		ExternalID:     detail.ID,
+		CUFE:           detail.CUFE,
+		InvoiceURL:     detail.PublicURL,
+		IssuedAt:       issuedAt,
+		DocumentJSON:   documentoDeDetalle(detail),
 		CorrelationID:  request.CorrelationID,
 		Timestamp:      time.Now(),
 		ProcessingTime: processingTime,
@@ -123,5 +116,23 @@ func (c *InvoiceRequestConsumer) pendingValidationResponse(
 		Timestamp:      time.Now(),
 		ProcessingTime: time.Since(startTime).Milliseconds(),
 		Error:          message,
+	}
+}
+
+func documentoDeDetalle(detail *siigoDtos.InvoiceDetail) map[string]interface{} {
+	if detail.Document != nil {
+		return detail.Document
+	}
+	return map[string]interface{}{
+		"preview_version": 1,
+		"provider":        "siigo",
+		"document_number": detail.Name,
+		"document_prefix": detail.Prefix,
+		"document_date":   detail.Date,
+		"total":           detail.Total,
+		"balance":         detail.Balance,
+		"stamp_status":    detail.StampStatus,
+		"public_url":      detail.PublicURL,
+		"external_id":     detail.ID,
 	}
 }

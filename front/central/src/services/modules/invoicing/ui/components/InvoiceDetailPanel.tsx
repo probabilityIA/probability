@@ -1,6 +1,3 @@
-/**
- * Modal de detalle de factura con historial de sincronización
- */
 
 'use client';
 
@@ -16,11 +13,14 @@ import {
   enableRetryAction,
   retryInvoiceAction,
   getInvoiceByIdAction,
+  refreshInvoiceAction,
   deletePendingInvoiceAction,
   generateCashReceiptAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
 import type { Invoice, SyncLog, InvoiceSSEEventData } from '../../domain/types';
+import { normalizeInvoicePreview } from '../../domain/invoice-preview';
+import { InvoicePreview } from './InvoicePreview';
 
 interface InvoiceDetailModalProps {
   invoice: Invoice | null;
@@ -53,6 +53,8 @@ export function InvoiceDetailModal({
   const [deleting, setDeleting] = useState(false);
   const [generatingCashReceipt, setGeneratingCashReceipt] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [consultandoProveedor, setConsultandoProveedor] = useState(false);
+  const [pdfVisible, setPdfVisible] = useState(false);
 
   const copyToClipboard = (text: string, fieldId: string) => {
     navigator.clipboard.writeText(text);
@@ -77,8 +79,6 @@ export function InvoiceDetailModal({
     );
   };
 
-  // SSE para escuchar resultado del retry en tiempo real
-  // NOTA: No mostrar toasts aquí - InvoiceList ya los muestra (evitar duplicados)
   const handleInvoiceCreated = useCallback((data: InvoiceSSEEventData) => {
     if (!invoice || !retrying) return;
     if (data.invoice_id === invoice.id || data.order_id === invoice.order_id) {
@@ -137,7 +137,6 @@ export function InvoiceDetailModal({
     }
   }, [isOpen, invoiceProp?.id]);
 
-  // Progreso simulado mientras espera SSE
   useEffect(() => {
     if (!retrying) return;
     setRetryProgress(5);
@@ -156,6 +155,23 @@ export function InvoiceDetailModal({
       setFreshInvoice(await getInvoiceByIdAction(invoiceProp.id));
     } catch {
       setFreshInvoice(null);
+    }
+  };
+
+  const handleRefreshFromProvider = async () => {
+    if (!invoice) return;
+    try {
+      setConsultandoProveedor(true);
+      await refreshInvoiceAction(invoice.id);
+      showToast('Consultando el documento en el proveedor...', 'success');
+      setTimeout(async () => {
+        await refreshInvoice();
+        await loadSyncLogs();
+        setConsultandoProveedor(false);
+      }, 3000);
+    } catch (error: any) {
+      setConsultandoProveedor(false);
+      showToast('Error al consultar el proveedor: ' + error.message, 'error');
     }
   };
 
@@ -179,7 +195,6 @@ export function InvoiceDetailModal({
       setRetryProgress(0);
       setRetryResult(null);
       await retryInvoiceAction(invoice.id);
-      // No cerrar ni mostrar éxito aquí - SSE lo hará cuando llegue el resultado
     } catch (error: any) {
       setRetrying(false);
       setRetryProgress(0);
@@ -193,10 +208,10 @@ export function InvoiceDetailModal({
       setCancellingRetry(true);
       if (autoRetriesEnabled) {
         await cancelRetryAction(invoice.id);
-        showToast('Reintentos automáticos deshabilitados', 'success');
+        showToast('Reintentos autom\u00e1ticos deshabilitados', 'success');
       } else {
         await enableRetryAction(invoice.id);
-        showToast('Reintentos automáticos habilitados', 'success');
+        showToast('Reintentos autom\u00e1ticos habilitados', 'success');
       }
       loadSyncLogs();
       onRefresh();
@@ -209,7 +224,7 @@ export function InvoiceDetailModal({
 
   const handleDelete = async () => {
     if (!invoice) return;
-    if (!confirm('¿Estás seguro de eliminar esta factura? Esta acción no se puede deshacer.')) return;
+    if (!confirm('\u00bfEst\u00e1s seguro de eliminar esta factura? Esta acci\u00f3n no se puede deshacer.')) return;
     try {
       setDeleting(true);
       await deletePendingInvoiceAction(invoice.id);
@@ -240,23 +255,35 @@ export function InvoiceDetailModal({
     }
   };
 
-  // Detectar si el recibo de caja falló (desde provider_response)
-  // No depender del status — si tiene invoice_number, la factura fue creada en el proveedor
   const cashReceiptFailed = !!invoice?.invoice_number &&
     (invoice.provider_response as Record<string, any>)?.cash_receipt?.status === 'failed';
 
   const isSoftpymesProvider = (invoice?.provider_name ?? '').toLowerCase().includes('softpymes');
+  const isSiigoProvider = (invoice?.provider_name ?? '').toLowerCase().includes('siigo');
+
+  const previewFactura = normalizeInvoicePreview(invoice?.provider_response, {
+    customerName: invoice?.customer_name,
+    customerIdentification: invoice?.customer_dni,
+    total: invoice?.total_amount,
+    tax: invoice?.tax,
+    discount: invoice?.discount,
+  });
+
+  const puedeConsultarProveedor = isSiigoProvider && !!invoice?.external_id &&
+    (invoice?.status === 'issued' || invoice?.status === 'pending');
+
+  const pdfProveedorUrl = isSiigoProvider && invoice?.external_id && invoice?.status === 'issued'
+    ? `/internal/invoice-pdf/${invoice.id}${businessId ? `?business_id=${businessId}` : ''}`
+    : null;
 
   const hasPendingRetries = syncLogs.some(
     log => (log.status === 'failed' || log.status === 'pending') && log.next_retry_at
   );
 
-  // Detectar si los reintentos automáticos están cancelados
   const hasCancelledRetries = syncLogs.some(
     log => log.status === 'cancelled'
   );
 
-  // Calcular estado de reintentos desde el último sync log
   const lastLog = syncLogs.length > 0 ? syncLogs[0] : null;
   const autoRetriesExhausted = invoice?.status !== 'pending' && lastLog
     ? lastLog.retry_count >= lastLog.max_retries
@@ -264,11 +291,9 @@ export function InvoiceDetailModal({
   const retriesUsed = lastLog ? lastLog.retry_count : 0;
   const maxRetries = lastLog ? lastLog.max_retries : 3;
 
-  // Estado del toggle: reintentos activos o deshabilitados
   const autoRetriesEnabled = hasPendingRetries;
   const autoRetriesDisabled = hasCancelledRetries && !hasPendingRetries;
 
-  // Puede eliminarse: pending + 3+ intentos de consulta (query)
   const queryAttempts = syncLogs.filter(log => log.operation_type === 'query').length;
   const canDelete = invoice?.status === 'pending' && queryAttempts >= 3;
 
@@ -308,7 +333,7 @@ export function InvoiceDetailModal({
 
   const getTriggerLabel = (trigger: string) => {
     const labels: Record<string, string> = {
-      auto: 'Automático',
+      auto: 'Autom\u00e1tico',
       manual: 'Manual',
       retry_job: 'Reintento',
     };
@@ -320,16 +345,13 @@ export function InvoiceDetailModal({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
-        {/* Backdrop - fondo claro opaco, se ve la plataforma detrás */}
-        <div
+                <div
           className="fixed inset-0 bg-white dark:bg-gray-800/60 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
 
-        {/* Modal */}
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[85vh] flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b">
+                <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[85vh] flex flex-col">
+                    <div className="flex items-center justify-between px-6 py-4 border-b">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-bold">
                 Factura {invoice.invoice_number || `#${invoice.id}`}
@@ -344,10 +366,8 @@ export function InvoiceDetailModal({
             </button>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {/* Info de la factura */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="flex-1 overflow-y-auto p-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Orden</p>
                 <p className="font-mono text-sm mt-1 flex items-center gap-1">
@@ -374,10 +394,9 @@ export function InvoiceDetailModal({
               </div>
             </div>
 
-            {/* Datos de la factura emitida */}
-            {invoice.status === 'issued' && (invoice.cufe || invoice.pdf_url || invoice.xml_url || invoice.invoice_url) && (
+                        {invoice.status === 'issued' && (invoice.cufe || invoice.pdf_url || invoice.xml_url || invoice.invoice_url || pdfProveedorUrl) && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-xs text-green-600 uppercase tracking-wide font-semibold mb-3">Datos de Factura Electrónica</p>
+                <p className="text-xs text-green-600 uppercase tracking-wide font-semibold mb-3">{'Datos de Factura Electr\u00f3nica'}</p>
                 <div className="space-y-2">
                   {invoice.cufe && (
                     <div className="flex items-start gap-2">
@@ -405,194 +424,56 @@ export function InvoiceDetailModal({
                         Descargar XML
                       </a>
                     )}
+                    {pdfProveedorUrl && (
+                      <>
+                        <button type="button" onClick={() => setPdfVisible(v => !v)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
+                          {pdfVisible ? 'Ocultar PDF' : 'Ver PDF de la factura'}
+                        </button>
+                        <a href={pdfProveedorUrl} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
+                          {'Abrir PDF en otra pestana'}
+                        </a>
+                      </>
+                    )}
                   </div>
+
+                  {pdfProveedorUrl && pdfVisible && (
+                    <object
+                      data={pdfProveedorUrl}
+                      type="application/pdf"
+                      className="w-full h-[60vh] mt-3 rounded border border-green-200 bg-white"
+                    >
+                      <p className="p-3 text-xs text-gray-700 dark:text-gray-200">
+                        {'Tu navegador no puede mostrar el PDF aqui: usa el enlace para abrirlo.'}
+                      </p>
+                    </object>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Documento completo del proveedor (Softpymes) */}
-            {invoice.provider_response && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-blue-600 uppercase tracking-wide font-semibold mb-3">
-                  Vista Previa de Factura
-                </p>
-                <details className="group" open>
-                  <summary className="text-xs text-gray-700 dark:text-gray-200 cursor-pointer hover:text-blue-600 font-medium flex items-center gap-2">
-                    <span>Detalles del documento</span>
-                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-                  </summary>
-                  <div className="mt-3 space-y-3">
-                    {/* Info básica del documento */}
-                    <div className="grid grid-cols-2 gap-3">
-                      {invoice.provider_response.documentNumber && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Número de Documento</p>
-                          <p className="text-xs font-mono font-medium text-gray-700 dark:text-gray-200">
-                            {invoice.provider_response.documentNumber}
-                          </p>
-                        </div>
-                      )}
-                      {invoice.provider_response.documentDate && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Fecha</p>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                            {invoice.provider_response.documentDate}
-                          </p>
-                        </div>
-                      )}
-                      {invoice.provider_response.customerName && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Cliente</p>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                            {invoice.provider_response.customerName}
-                          </p>
-                        </div>
-                      )}
-                      {invoice.provider_response.customerIdentification && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Identificación</p>
-                          <p className="text-xs font-mono font-medium text-gray-700 dark:text-gray-200">
-                            {invoice.provider_response.customerIdentification}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Totales */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white dark:bg-gray-800/60 rounded">
-                      {invoice.provider_response.total && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</p>
-                          <p className="text-xs font-semibold text-gray-900 dark:text-white">
-                            ${invoice.provider_response.total}
-                          </p>
-                        </div>
-                      )}
-                      {invoice.provider_response.totalIva && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">IVA</p>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                            ${invoice.provider_response.totalIva}
-                          </p>
-                        </div>
-                      )}
-                      {invoice.provider_response.totalDiscount && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Descuento</p>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                            ${invoice.provider_response.totalDiscount}
-                          </p>
-                        </div>
-                      )}
-                      {invoice.provider_response.totalWithholdingTax && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Retención</p>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                            ${invoice.provider_response.totalWithholdingTax}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Items del documento */}
-                    {invoice.provider_response.details && invoice.provider_response.details.length > 0 && (
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Items ({invoice.provider_response.details.length})</p>
-                        <div className="space-y-2">
-                          {invoice.provider_response.details.map((detail: any, idx: number) => (
-                            <div key={idx} className="p-2 bg-white dark:bg-gray-800/80 rounded text-xs border border-gray-200 dark:border-gray-700">
-                              <div className="flex justify-between items-start mb-1">
-                                <span className="font-medium text-gray-900 dark:text-white">{detail.itemName || detail.itemCode}</span>
-                                <span className="font-semibold text-gray-900 dark:text-white">${detail.value}</span>
-                              </div>
-                              <div className="flex gap-3 text-gray-600 dark:text-gray-300">
-                                <span>Cant: {detail.quantity}</span>
-                                {detail.iva && <span>IVA: ${detail.iva}</span>}
-                                {detail.discount && detail.discount !== '0' && detail.discount !== '0.00' && (
-                                  <span>Desc: ${detail.discount}</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Información de envío */}
-                    {invoice.provider_response.shipInformation && (
-                      <div className="p-3 bg-white dark:bg-gray-800/60 rounded">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Información de Envío</p>
-                        <div className="space-y-1 text-xs text-gray-700 dark:text-gray-200">
-                          {invoice.provider_response.shipInformation.shipAddress && (
-                            <p>📍 {invoice.provider_response.shipInformation.shipAddress}</p>
-                          )}
-                          {invoice.provider_response.shipInformation.shipCity && (
-                            <p>🏙️ {invoice.provider_response.shipInformation.shipCity}, {invoice.provider_response.shipInformation.shipDepartment}</p>
-                          )}
-                          {invoice.provider_response.shipInformation.shipPhone && (
-                            <p>📞 {invoice.provider_response.shipInformation.shipPhone}</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Recibo de Caja */}
-                    {invoice.provider_response.cash_receipt && (
-                      <div className={`p-3 rounded ${invoice.provider_response.cash_receipt.status === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                        <p className={`text-xs uppercase tracking-wide font-medium mb-2 ${invoice.provider_response.cash_receipt.status === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                          Recibo de Caja {invoice.provider_response.cash_receipt.status === 'success' ? '— Registrado' : '— Error'}
-                        </p>
-                        {invoice.provider_response.cash_receipt.status === 'success' ? (
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <span className="text-gray-500 dark:text-gray-400">Medio de pago: </span>
-                              <span className="font-medium text-gray-700 dark:text-gray-200">{invoice.provider_response.cash_receipt.payment_type}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 dark:text-gray-400">Monto: </span>
-                              <span className="font-medium text-gray-700 dark:text-gray-200">${Number(invoice.provider_response.cash_receipt.amount).toLocaleString()}</span>
-                            </div>
-                            {invoice.provider_response.cash_receipt.message && (
-                              <div className="col-span-2">
-                                <span className="text-gray-500 dark:text-gray-400">Respuesta: </span>
-                                <span className="font-medium text-gray-700 dark:text-gray-200">{invoice.provider_response.cash_receipt.message}</span>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-red-700">{invoice.provider_response.cash_receipt.error}</p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* JSON completo (colapsado) */}
-                    <details className="mt-3">
-                      <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:text-gray-200 flex items-center gap-1">
-                        <span>Ver JSON completo</span>
-                        <CopyButton
-                          text={JSON.stringify(invoice.provider_response, null, 2)}
-                          fieldId="full-document-json"
-                        />
-                      </summary>
-                      <pre className="mt-2 text-xs bg-white dark:bg-gray-800/80 rounded p-3 overflow-x-auto max-h-64 border border-gray-200 dark:border-gray-700 font-mono text-gray-700 dark:text-gray-200">
-                        {JSON.stringify(invoice.provider_response, null, 2)}
-                      </pre>
-                    </details>
-                  </div>
-                </details>
-              </div>
+            {previewFactura && (
+              <InvoicePreview
+                data={previewFactura}
+                raw={invoice.provider_response}
+                copySlot={
+                  <CopyButton
+                    text={JSON.stringify(invoice.provider_response, null, 2)}
+                    fieldId="full-document-json"
+                  />
+                }
+              />
             )}
 
-            {/* Error message si existe */}
-            {invoice.error_message && (
+                        {invoice.error_message && (
               <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-xs text-red-500 uppercase tracking-wide mb-1">Error</p>
                 <p className="text-sm text-red-700 font-mono break-all">{invoice.error_message}</p>
               </div>
             )}
 
-            {/* Barra de progreso del retry */}
-            {(retrying || retryResult) && (
+                        {(retrying || retryResult) && (
               <div className="mb-6 p-4 bg-gray-50 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -601,8 +482,8 @@ export function InvoiceDetailModal({
                       : retryResult === 'failed'
                         ? (invoice.status === 'pending' ? 'Consulta fallida' : 'Reintento fallido')
                         : retryResult === 'pending_validation'
-                          ? 'DIAN aún validando — se consultará de nuevo automáticamente'
-                          : (invoice.status === 'pending' ? 'Consultando estado DIAN...' : 'Reintentando emisión...')}
+                          ? 'DIAN a\u00fan validando - se consultar\u00e1 de nuevo autom\u00e1ticamente'
+                          : (invoice.status === 'pending' ? 'Consultando estado DIAN...' : 'Reintentando emisi\u00f3n...')}
                   </span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     {Math.round(retryProgress)}%
@@ -631,8 +512,7 @@ export function InvoiceDetailModal({
               </p>
             )}
 
-            {/* Acciones */}
-            <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
               {invoice.status === 'failed' && !cashReceiptFailed && (
                 <Button
                   variant="primary"
@@ -687,6 +567,16 @@ export function InvoiceDetailModal({
                   {generatingCashReceipt ? 'Reintentando...' : 'Reintentar Recibo de Caja'}
                 </Button>
               )}
+              {puedeConsultarProveedor && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleRefreshFromProvider}
+                  disabled={consultandoProveedor || retrying}
+                >
+                  {consultandoProveedor ? 'Consultando...' : 'Actualizar desde el proveedor'}
+                </Button>
+              )}
               {canDelete && (
                 <Button
                   variant="danger"
@@ -699,10 +589,9 @@ export function InvoiceDetailModal({
               )}
             </div>
 
-            {/* Historial de sincronización */}
-            <div>
+                        <div>
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
-                Historial de Sincronización
+                {'Historial de Sincronizaci\u00f3n'}
               </h4>
 
               {loadingLogs ? (
@@ -711,7 +600,7 @@ export function InvoiceDetailModal({
                 </div>
               ) : syncLogs.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-                  Sin registros de sincronización
+                  {'Sin registros de sincronizaci\u00f3n'}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -745,25 +634,22 @@ export function InvoiceDetailModal({
                         </span>
                       </div>
 
-                      {/* Info de reintentos */}
-                      <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
+                                            <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
                         <span>Intento {log.retry_count + 1} de {log.max_retries}</span>
                         {log.next_retry_at && (log.status === 'failed' || log.status === 'pending') && (
                           <span className="text-orange-600">
-                            Próximo reintento: {formatDate(log.next_retry_at)}
+                            {'Pr\u00f3ximo reintento: '}{formatDate(log.next_retry_at)}
                           </span>
                         )}
                       </div>
 
-                      {/* Error message */}
-                      {log.error_message && (
+                                            {log.error_message && (
                         <div className="mt-2 p-2 bg-white dark:bg-gray-800/60 rounded text-xs text-red-700 font-mono break-all">
                           {log.error_message}
                         </div>
                       )}
 
-                      {/* Request/Response audit data - Factura */}
-                      {(log.request_payload || log.response_body) && (
+                                            {(log.request_payload || log.response_body) && (
                         <details className="mt-2">
                           <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:text-gray-200">
                             Ver request/response (Factura)
@@ -811,8 +697,7 @@ export function InvoiceDetailModal({
                         </details>
                       )}
 
-                      {/* Request/Response audit data - Recibo de Caja */}
-                      {(log.cash_receipt_request_url || log.cash_receipt_request_payload || log.cash_receipt_response_body) && (
+                                            {(log.cash_receipt_request_url || log.cash_receipt_request_payload || log.cash_receipt_response_body) && (
                         <details className="mt-2">
                           <summary className="text-xs text-orange-600 dark:text-orange-400 cursor-pointer hover:text-orange-800 dark:text-orange-200">
                             Ver request/response (Recibo de Caja)

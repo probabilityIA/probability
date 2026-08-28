@@ -173,7 +173,7 @@ func (c *Client) CreateCashReceipt(ctx context.Context, req *dtos.CreateCashRece
 			Int("status", resp.StatusCode()).
 			Str("body", string(resp.Body())).
 			Msg("Siigo voucher creation failed")
-		return result, fmt.Errorf("error al crear recibo de caja en Siigo (codigo %d): %s", resp.StatusCode(), string(resp.Body()))
+		return result, errorSiigo(resp.Body(), resp.StatusCode(), "el recibo de caja")
 	}
 
 	if voucherResp.ID == "" && voucherResp.Name == "" {

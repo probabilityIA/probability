@@ -370,7 +370,13 @@ func (c *ResponseConsumer) handleError(
 
 		c.populateSyncLogAudit(syncLog, response)
 
-		if isProviderUnavailableError(response.Error) {
+		if esErrorDeConfiguracion(response.ErrorCode) {
+			syncLog.NextRetryAt = nil
+			c.log.Warn(ctx).
+				Uint("invoice_id", invoice.ID).
+				Str("error_code", response.ErrorCode).
+				Msg("Error de configuracion en el proveedor: no se reintenta, hay que corregirlo antes de volver a facturar")
+		} else if isProviderUnavailableError(response.Error) {
 			if syncLog.RetryCount > 0 {
 				syncLog.RetryCount--
 			}
@@ -1062,6 +1068,26 @@ var providerUnavailableErrorMarkers = []string{
 	"status 502",
 	"status 503",
 	"status 504",
+}
+
+var codigosDeConfiguracion = map[string]bool{
+	"document_inactive":               true,
+	"document_not_electronic":         true,
+	"document_settings":               true,
+	"product_inactive":                true,
+	"customer_inactive":               true,
+	"payment_method_inactive":         true,
+	"seller_inactive":                 true,
+	"parameter_inactive":              true,
+	"invalid_reference":               true,
+	"invalid_product_code":            true,
+	"invalid_credentials":             true,
+	"incomplete_siigo_config":         true,
+	"missing_customer_identification": true,
+}
+
+func esErrorDeConfiguracion(codigo string) bool {
+	return codigosDeConfiguracion[codigo]
 }
 
 func isProviderUnavailableError(errMsg string) bool {
