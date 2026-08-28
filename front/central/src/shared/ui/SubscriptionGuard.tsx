@@ -1,43 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
-/**
- * SubscriptionGuard: wraps the main content area.
- * If the logged-in user is a business user and their subscription is expired/suspended,
- * it shows a full-screen wall instead of the content, and only allows access to /subscription.
- *
- * "subscriptionStatus" field comes from the decoded JWT or the user's profile object.
- * If not available yet, we default to showing content (no false positives).
- */
+const SUBSCRIPTION_GUARD_ENABLED = false;
+
 export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
     const { permissions, isSuperAdmin } = usePermissions();
     const pathname = usePathname();
 
-    // Super admins are never blocked
+    if (!SUBSCRIPTION_GUARD_ENABLED) return <>{children}</>;
     if (isSuperAdmin) return <>{children}</>;
 
-    // Only block if we explicitly know the status is expired
     const isExpired = permissions?.subscription_status === 'expired' ||
         permissions?.subscription_status === 'cancelled';
 
-    // If not expired, show content normally
     if (!isExpired) return <>{children}</>;
-
-    // On the subscription page itself, always allow
     if (pathname?.startsWith('/subscription')) return <>{children}</>;
 
-    // For all other routes: show suspended wall
     return <SuspendedWall />;
 }
 
 function SuspendedWall() {
     const [tick, setTick] = useState(0);
 
-    // Animate the icon slightly
     useEffect(() => {
         const id = setInterval(() => setTick((t) => t + 1), 1000);
         return () => clearInterval(id);
@@ -46,7 +34,6 @@ function SuspendedWall() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
             <div className="max-w-md w-full text-center">
-                {/* Animated lock */}
                 <div
                     className="text-7xl mb-6 transition-transform duration-300"
                     style={{ transform: tick % 2 === 0 ? 'scale(1)' : 'scale(1.07)' }}
