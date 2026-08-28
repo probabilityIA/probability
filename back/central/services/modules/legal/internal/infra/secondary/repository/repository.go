@@ -4,12 +4,15 @@ import (
 	"context"
 	"time"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/secamc93/probability/back/central/services/modules/legal/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/legal/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
+
+const scopeCodePlatform = "platform"
 
 func (r *Repository) GetActiveDocuments(ctx context.Context) ([]entities.LegalDocument, error) {
 	var docs []models.LegalDocument
@@ -68,15 +71,19 @@ func (r *Repository) SaveAcceptances(ctx context.Context, aceptaciones []entitie
 }
 
 func (r *Repository) IsPlatformUser(ctx context.Context, userID uint) (bool, error) {
-	var total int64
+	var usuario models.User
 	err := r.db.Conn(ctx).
-		Table("user_roles").
-		Joins("JOIN roles ON roles.id = user_roles.role_id").
-		Joins("JOIN scopes ON scopes.id = roles.scope_id").
-		Where("user_roles.user_id = ? AND scopes.code = ? AND roles.deleted_at IS NULL", userID, "platform").
-		Count(&total).Error
+		Preload("Scope").
+		Where("id = ?", userID).
+		First(&usuario).Error
+	if err == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
-	return total > 0, nil
+	if usuario.Scope == nil {
+		return false, nil
+	}
+	return usuario.Scope.Code == scopeCodePlatform, nil
 }
