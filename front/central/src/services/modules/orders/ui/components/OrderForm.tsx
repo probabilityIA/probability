@@ -1035,6 +1035,16 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 <p className="mt-1.5 text-[11px] leading-snug text-slate-400">
                                     Se actualiza con el costo de la guia al generarla, o ingresalo manualmente.
                                 </p>
+                                {(() => {
+                                    if (!isCOD || yaLiquidadaEnCorte || formData.cod_total <= 0) return null;
+                                    const comision = formData.cod_total - formData.total_amount - formData.shipping_cost;
+                                    if (comision <= 0) return null;
+                                    return (
+                                        <p className="mt-1 text-[11px] leading-snug text-slate-400">
+                                            + comision contra entrega: <strong>{formData.currency} {comision.toLocaleString('es-CO')}</strong>
+                                        </p>
+                                    );
+                                })()}
                             </div>
 
                             <div className="mt-3 border-t border-slate-100 pt-3 dark:border-gray-700">
