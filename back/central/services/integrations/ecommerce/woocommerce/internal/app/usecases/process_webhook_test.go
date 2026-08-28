@@ -192,8 +192,9 @@ func TestProcessWebhookOrder_VerifyDTOMapping(t *testing.T) {
 	}
 
 	// Verificar total amount
-	if dto.TotalAmount != 150000 {
-		t.Errorf("TotalAmount esperado 150000, recibí %f", dto.TotalAmount)
+	// TotalAmount es solo el valor de productos: total(150000) - shipping(10000) = 140000
+	if dto.TotalAmount != 140000 {
+		t.Errorf("TotalAmount esperado 140000, recibí %f", dto.TotalAmount)
 	}
 
 	// Verificar order items

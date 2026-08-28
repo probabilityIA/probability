@@ -29,10 +29,32 @@ func (r *ProductRepository) GetShippingQuoteRate(ctx context.Context, quoteID ui
 	return &domain.ShippingQuoteRate{
 		Flete:                toFloatJSON(rate["flete"]),
 		MinimumInsurance:     toFloatJSON(rate["minimumInsurance"]),
+		ExtraInsurance:       toFloatJSON(rate["extraInsurance"]),
 		COD:                  cod,
 		CODCarrierFee:        toFloatJSON(rate["codCarrierFee"]),
 		CODProbabilityMargin: toFloatJSON(rate["codProbabilityMargin"]),
 	}, nil
+}
+
+func (r *ProductRepository) GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error) {
+	var result struct {
+		Value *bool `gorm:"column:value"`
+	}
+
+	err := r.db.Conn(ctx).
+		Table("integrations").
+		Select("(config->>'cod_includes_shipping')::boolean AS value").
+		Where("id = ? AND deleted_at IS NULL", integrationID).
+		Limit(1).
+		Scan(&result).Error
+
+	if err != nil {
+		return true, err
+	}
+	if result.Value == nil {
+		return true, nil
+	}
+	return *result.Value, nil
 }
 
 func toFloatJSON(v interface{}) float64 {
