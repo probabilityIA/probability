@@ -72,6 +72,8 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [itemsData, setItemsData] = useState<ItemCompareResponseData | null>(null);
   const [newInvoiceIds, setNewInvoiceIds] = useState<Set<number>>(new Set());
 
+  const effectiveBusinessId = isSuperAdmin ? (selectedBusinessId ?? businessId) : businessId;
+
   useImperativeHandle(ref, () => ({
     openBulkModal: () => setShowBulkModal(true),
   }));
@@ -904,7 +906,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
           setShowCancelModal(true);
         }}
         onRefresh={() => loadInvoices(currentPage, pageSize)}
-        businessId={businessId}
+        businessId={effectiveBusinessId}
       />
 
       <ConfirmModal
@@ -933,7 +935,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         isOpen={showBulkModal}
         onClose={() => setShowBulkModal(false)}
         onSuccess={() => loadInvoices(currentPage, pageSize)}
-        businessId={businessId}
+        businessId={effectiveBusinessId}
       />
 
       <InvoiceComparisonModal
@@ -976,7 +978,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         isOpen={showManualModal}
         onClose={() => setShowManualModal(false)}
         onSuccess={() => loadInvoices(currentPage, pageSize)}
-        businessId={businessId}
+        businessId={effectiveBusinessId}
       />
 
       <ConfigsModal
