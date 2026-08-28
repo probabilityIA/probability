@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { findTourForRoute, shouldAutoStart } from './use-cases';
+import { afterEach, describe, expect, it } from 'vitest';
+import { findTourForRoute, resolveVisibleSteps, shouldAutoStart } from './use-cases';
 import { TOUR_LIST } from '../content';
 import type { TourDefinition, TourProgress, TourStatus } from '../domain/types';
 
@@ -116,5 +116,55 @@ describe('registro de tours', () => {
                 expect(encontrado?.routes).toContain(ruta);
             }
         }
+    });
+});
+
+describe('resolveVisibleSteps', () => {
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    it('descarta los pasos opcionales cuyo elemento no existe en la pagina', () => {
+        document.body.innerHTML = '<a href="/orders">Ordenes</a>';
+
+        const definicion = tour({
+            steps: [
+                { id: 'welcome', title: 'Hola', body: 'b' },
+                { id: 'orders', title: 'Ordenes', body: 'b', target: 'a[href="/orders"]', optional: true },
+                { id: 'invoicing', title: 'Facturacion', body: 'b', target: 'a[href="/invoicing/invoices"]', optional: true },
+            ],
+        });
+
+        const resuelto = resolveVisibleSteps(definicion);
+
+        expect(resuelto.steps.map((s) => s.id)).toEqual(['welcome', 'orders']);
+    });
+
+    it('conserva los pasos obligatorios aunque el elemento no exista todavia', () => {
+        const definicion = tour({
+            steps: [
+                { id: 'welcome', title: 'Hola', body: 'b' },
+                { id: 'create', title: 'Crear', body: 'b', target: '[data-tour="x"]' },
+            ],
+        });
+
+        expect(resolveVisibleSteps(definicion).steps).toHaveLength(2);
+    });
+
+    it('conserva los pasos que navegan antes de anclarse', () => {
+        const definicion = tour({
+            steps: [
+                { id: 'welcome', title: 'Hola', body: 'b' },
+                { id: 'otro', title: 'Otro', body: 'b', target: '#x', route: '/otro', optional: true },
+            ],
+        });
+
+        expect(resolveVisibleSteps(definicion).steps).toHaveLength(2);
+    });
+
+    it('devuelve la misma definicion cuando todos los pasos aplican', () => {
+        const definicion = tour({ steps: [{ id: 'welcome', title: 'Hola', body: 'b' }] });
+
+        expect(resolveVisibleSteps(definicion)).toBe(definicion);
     });
 });

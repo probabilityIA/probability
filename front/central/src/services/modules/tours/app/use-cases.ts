@@ -24,6 +24,20 @@ export function shouldAutoStart(tour: TourDefinition, progress?: TourProgress): 
     return true;
 }
 
+export function resolveVisibleSteps(tour: TourDefinition): TourDefinition {
+    if (typeof document === 'undefined') return tour;
+
+    const visibles = tour.steps.filter((step) => {
+        if (!step.target) return true;
+        if (step.route) return true;
+        if (!step.optional) return true;
+        return Boolean(document.querySelector(step.target));
+    });
+
+    if (visibles.length === tour.steps.length) return tour;
+    return { ...tour, steps: visibles };
+}
+
 export function readLegacySeen(tour: TourDefinition): boolean {
     if (!tour.legacyStorageKey) return false;
     try {

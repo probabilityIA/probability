@@ -13,7 +13,13 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { TOUR_REGISTRY, TOUR_LIST } from '../../content';
-import { clearLegacySeen, findTourForRoute, readLegacySeen, shouldAutoStart } from '../../app/use-cases';
+import {
+    clearLegacySeen,
+    findTourForRoute,
+    readLegacySeen,
+    resolveVisibleSteps,
+    shouldAutoStart,
+} from '../../app/use-cases';
 import {
     listTourProgressAction,
     resetAllToursAction,
@@ -59,6 +65,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     const [progress, setProgress] = useState<Record<string, TourProgress>>({});
     const [cargado, setCargado] = useState(false);
     const [activeKey, setActiveKey] = useState<string | null>(null);
+    const [activeTour, setActiveTour] = useState<TourDefinition | null>(null);
     const [stepIndex, setStepIndex] = useState(0);
     const [inlineLaunchers, setInlineLaunchers] = useState(0);
     const autoStartIntentado = useRef<Set<string>>(new Set());
@@ -111,7 +118,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     const tourDisponible = useMemo(() => {
         const encontrado = findTourForRoute(TOUR_LIST, pathname ?? '');
         if (!encontrado) return undefined;
-        if (encontrado.resource && !isSuperAdmin && !hasPermission(encontrado.resource, 'List')) {
+        if (encontrado.resource && !isSuperAdmin && !hasPermission(encontrado.resource, 'Read')) {
             return undefined;
         }
         return encontrado;
@@ -140,7 +147,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
         if (!shouldAutoStart(tourDisponible, guardado)) return;
 
         const timer = setTimeout(() => {
+            const resuelto = resolveVisibleSteps(tourDisponible);
+            if (resuelto.steps.length <= 1) return;
             setStepIndex(0);
+            setActiveTour(resuelto);
             setActiveKey(tourDisponible.key);
         }, 600);
 
@@ -148,9 +158,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
     }, [cargado, permisosCargando, activeKey, tourDisponible, progress, persistir]);
 
     const startTour = useCallback((tourKey: string) => {
-        if (!TOUR_REGISTRY[tourKey]) return;
+        const tour = TOUR_REGISTRY[tourKey];
+        if (!tour) return;
         autoStartIntentado.current.add(tourKey);
         setStepIndex(0);
+        setActiveTour(resolveVisibleSteps(tour));
         setActiveKey(tourKey);
     }, []);
 
@@ -176,12 +188,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
         await resetAllToursAction(businessId);
     }, [businessId]);
 
-    const tourActivo = activeKey ? TOUR_REGISTRY[activeKey] : undefined;
+    const tourActivo = activeKey ? activeTour ?? TOUR_REGISTRY[activeKey] : undefined;
 
     const cerrar = useCallback(
         (status: TourStatus, indice: number) => {
             if (tourActivo) persistir(tourActivo, status, indice);
             setActiveKey(null);
+            setActiveTour(null);
             setStepIndex(0);
         },
         [tourActivo, persistir],
@@ -201,6 +214,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         }
         setProgress(omitidos);
         setActiveKey(null);
+        setActiveTour(null);
         setStepIndex(0);
         try {
             await skipAllToursAction(
