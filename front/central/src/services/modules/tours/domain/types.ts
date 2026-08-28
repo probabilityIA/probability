@@ -31,6 +31,7 @@ export interface TourStep {
     placement?: TourPlacement;
     route?: string;
     optional?: boolean;
+    superAdminOnly?: boolean;
 }
 
 export interface TourDefinition {
@@ -40,6 +41,7 @@ export interface TourDefinition {
     routes: string[];
     resource?: string;
     autoStart: boolean;
+    superAdminOnly?: boolean;
     legacyStorageKey?: string;
     steps: TourStep[];
 }

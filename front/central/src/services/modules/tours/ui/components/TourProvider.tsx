@@ -118,17 +118,23 @@ export function TourProvider({ children }: { children: ReactNode }) {
     const tourDisponible = useMemo(() => {
         const encontrado = findTourForRoute(TOUR_LIST, pathname ?? '');
         if (!encontrado) return undefined;
+        if (encontrado.superAdminOnly && !isSuperAdmin) return undefined;
         if (encontrado.resource && !isSuperAdmin && !hasPermission(encontrado.resource, 'Read')) {
             return undefined;
         }
         return encontrado;
     }, [pathname, hasPermission, isSuperAdmin]);
 
+    const toursVisibles = useMemo(
+        () => TOUR_LIST.filter((tour) => !tour.superAdminOnly || isSuperAdmin),
+        [isSuperAdmin],
+    );
+
     const toursDisabled = useMemo(() => {
         if (!cargado) return false;
-        const omitidos = TOUR_LIST.filter((tour) => progress[tour.key]?.status === 'skipped').length;
-        return omitidos === TOUR_LIST.length;
-    }, [cargado, progress]);
+        const omitidos = toursVisibles.filter((tour) => progress[tour.key]?.status === 'skipped').length;
+        return omitidos === toursVisibles.length;
+    }, [cargado, progress, toursVisibles]);
 
     useEffect(() => {
         if (!cargado || permisosCargando || activeKey) return;
@@ -147,7 +153,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         if (!shouldAutoStart(tourDisponible, guardado)) return;
 
         const timer = setTimeout(() => {
-            const resuelto = resolveVisibleSteps(tourDisponible);
+            const resuelto = resolveVisibleSteps(tourDisponible, isSuperAdmin);
             if (resuelto.steps.length <= 1) return;
             setStepIndex(0);
             setActiveTour(resuelto);
@@ -155,16 +161,20 @@ export function TourProvider({ children }: { children: ReactNode }) {
         }, 600);
 
         return () => clearTimeout(timer);
-    }, [cargado, permisosCargando, activeKey, tourDisponible, progress, persistir]);
+    }, [cargado, permisosCargando, activeKey, tourDisponible, progress, persistir, isSuperAdmin]);
 
-    const startTour = useCallback((tourKey: string) => {
-        const tour = TOUR_REGISTRY[tourKey];
-        if (!tour) return;
-        autoStartIntentado.current.add(tourKey);
-        setStepIndex(0);
-        setActiveTour(resolveVisibleSteps(tour));
-        setActiveKey(tourKey);
-    }, []);
+    const startTour = useCallback(
+        (tourKey: string) => {
+            const tour = TOUR_REGISTRY[tourKey];
+            if (!tour) return;
+            if (tour.superAdminOnly && !isSuperAdmin) return;
+            autoStartIntentado.current.add(tourKey);
+            setStepIndex(0);
+            setActiveTour(resolveVisibleSteps(tour, isSuperAdmin));
+            setActiveKey(tourKey);
+        },
+        [isSuperAdmin],
+    );
 
     const resetTour = useCallback(
         async (tourKey: string) => {
@@ -182,11 +192,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
     );
 
     const resetAllTours = useCallback(async () => {
-        for (const tour of TOUR_LIST) clearLegacySeen(tour);
+        for (const tour of toursVisibles) clearLegacySeen(tour);
         autoStartIntentado.current.clear();
         setProgress({});
         await resetAllToursAction(businessId);
-    }, [businessId]);
+    }, [businessId, toursVisibles]);
 
     const tourActivo = activeKey ? activeTour ?? TOUR_REGISTRY[activeKey] : undefined;
 
@@ -202,7 +212,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     const omitirTodos = useCallback(async () => {
         const omitidos: Record<string, TourProgress> = {};
-        for (const tour of TOUR_LIST) {
+        for (const tour of toursVisibles) {
             clearLegacySeen(tour);
             autoStartIntentado.current.add(tour.key);
             omitidos[tour.key] = {
@@ -218,18 +228,18 @@ export function TourProvider({ children }: { children: ReactNode }) {
         setStepIndex(0);
         try {
             await skipAllToursAction(
-                TOUR_LIST.map((tour) => ({ tour_key: tour.key, version: tour.version })),
+                toursVisibles.map((tour) => ({ tour_key: tour.key, version: tour.version })),
                 businessId,
             );
         } catch {
             return;
         }
-    }, [businessId]);
+    }, [businessId, toursVisibles]);
 
     const value = useMemo<TourContextValue>(
         () => ({
             availableTour: tourDisponible,
-            allTours: TOUR_LIST,
+            allTours: toursVisibles,
             progress,
             isRunning: Boolean(activeKey),
             toursDisabled,
@@ -241,6 +251,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         }),
         [
             tourDisponible,
+            toursVisibles,
             progress,
             activeKey,
             toursDisabled,

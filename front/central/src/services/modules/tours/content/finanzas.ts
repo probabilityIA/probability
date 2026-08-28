@@ -22,6 +22,7 @@ export const walletTour: TourDefinition = {
         },
         {
             id: 'finanzas',
+            superAdminOnly: true,
             title: 'Finanzas',
             body: 'La vista de analisis: cuanto gastas en envios, en que transportadoras y como evoluciona mes a mes.',
             target: 'a[href="/wallet/finanzas"]',
@@ -42,6 +43,7 @@ export const accountingTour: TourDefinition = {
     title: 'Contabilidad',
     routes: ['/accounting'],
     autoStart: true,
+    superAdminOnly: true,
     steps: [
         {
             id: 'welcome',

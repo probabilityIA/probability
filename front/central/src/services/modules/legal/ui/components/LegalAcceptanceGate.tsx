@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { Spinner } from '@/shared/ui/spinner';
 import { acceptLegalDocumentsAction, getPendingLegalDocumentsAction } from '../../infra/actions';
 import type { LegalDocument } from '../../domain/types';
+import { LegalDocumentText } from './LegalDocumentText';
 
 export function LegalAcceptanceGate() {
     const [documentos, setDocumentos] = useState<LegalDocument[]>([]);
@@ -79,31 +80,17 @@ export function LegalAcceptanceGate() {
                     ))}
                 </div>
 
-                <div className="flex-1 min-h-[320px] px-6 py-4">
-                    <object
-                        data={`${documentoActivo.file_url}#view=FitH`}
-                        type="application/pdf"
-                        className="w-full h-[46vh] rounded border border-gray-200 dark:border-gray-700"
-                    >
-                        <div className="p-4 text-sm text-gray-700 dark:text-gray-200">
-                            {'Tu navegador no puede mostrar el PDF integrado. '}
-                            <a
-                                href={documentoActivo.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 underline"
-                            >
-                                {'Abrir el documento en otra pestana'}
-                            </a>
-                        </div>
-                    </object>
+                <div className="flex-1 min-h-0 px-6 py-4">
+                    <div className="h-[46vh] overflow-y-auto rounded border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-900/40">
+                        <LegalDocumentText fileUrl={documentoActivo.file_url} />
+                    </div>
                     <a
                         href={documentoActivo.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block mt-2 text-xs text-blue-600 hover:text-blue-700 underline"
                     >
-                        {'Abrir o descargar este documento'}
+                        {'Descargar este documento en PDF'}
                     </a>
                 </div>
 

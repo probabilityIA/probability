@@ -24,10 +24,11 @@ export function shouldAutoStart(tour: TourDefinition, progress?: TourProgress): 
     return true;
 }
 
-export function resolveVisibleSteps(tour: TourDefinition): TourDefinition {
+export function resolveVisibleSteps(tour: TourDefinition, isSuperAdmin = false): TourDefinition {
     if (typeof document === 'undefined') return tour;
 
     const visibles = tour.steps.filter((step) => {
+        if (step.superAdminOnly && !isSuperAdmin) return false;
         if (!step.target) return true;
         if (step.route) return true;
         if (!step.optional) return true;

@@ -112,6 +112,7 @@ export const shippingMarginsTour: TourDefinition = {
     title: 'Margenes de envio',
     routes: ['/shipping-margins'],
     autoStart: true,
+    superAdminOnly: true,
     steps: [
         {
             id: 'welcome',

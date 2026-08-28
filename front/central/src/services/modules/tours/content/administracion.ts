@@ -14,6 +14,7 @@ export const iamTour: TourDefinition = {
         },
         {
             id: 'businesses',
+            superAdminOnly: true,
             title: 'Empresas',
             body: 'Cada negocio es un inquilino aislado: sus ordenes, productos y clientes no se cruzan con los de otro.',
             target: 'a[href="/businesses"]',
@@ -89,6 +90,7 @@ export const announcementsTour: TourDefinition = {
     title: 'Anuncios',
     routes: ['/announcements'],
     autoStart: true,
+    superAdminOnly: true,
     steps: [
         {
             id: 'welcome',
@@ -114,6 +116,7 @@ export const commercialTour: TourDefinition = {
     title: 'Comercial',
     routes: ['/commercial', '/marketing-leads', '/siigo-referrals'],
     autoStart: true,
+    superAdminOnly: true,
     steps: [
         {
             id: 'welcome',
