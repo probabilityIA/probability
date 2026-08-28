@@ -489,7 +489,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             const baseData = {
                 ...formData,
                 is_cod: isCOD,
-                cod_total: isCOD ? formData.total_amount + formData.shipping_cost : 0,
+                // formData.cod_total ya viene correcto desde la orden (o desde
+                // applyProducts al agregar productos); no se recalcula aqui para
+                // no perder comisiones/ajustes que no son solo producto+envio
+                // (p.ej. ordenes de WooCommerce donde el canal ya cobro el total).
+                cod_total: isCOD ? formData.cod_total : 0,
                 payment_method_id: formData.payment_method_id,
                 shipping_street: fullShippingStreet,
                 shipping_lat: addressCoords?.lat,
@@ -553,6 +557,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             total_amount: prev.subtotal + prev.tax - prev.discount,
         }));
     };
+
+    // Igual que "se cobrara contra entrega": si cod_total ya trae un valor distinto
+    // a producto+envio (p.ej. la comision completa que cobro WooCommerce en el
+    // checkout), se usa como el total real de la orden en vez de recalcularlo.
+    const yaLiquidadaEnCorte = order?.cod_cut_confirmed === true;
+    const displayTotal = isCOD && !yaLiquidadaEnCorte && formData.cod_total > 0
+        ? formData.cod_total
+        : formData.total_amount + formData.shipping_cost;
 
     return (
         <form onSubmit={handleSubmit} className="flex h-full flex-col bg-slate-100 dark:bg-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -1069,7 +1081,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             <div className="flex items-center justify-between rounded-xl px-4 py-3" style={{ backgroundColor: primaryColor }}>
                                 <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-white/60">Total con envio</span>
                                 <span className="text-lg font-bold tabular-nums text-white">
-                                    {formData.currency} {(formData.total_amount + formData.shipping_cost).toLocaleString('es-CO')}
+                                    {formData.currency} {displayTotal.toLocaleString('es-CO')}
                                 </span>
                             </div>
                         </div>
@@ -1373,7 +1385,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div className="mr-auto">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Total de la orden</p>
                     <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">
-                        {formData.currency} {(formData.total_amount + formData.shipping_cost).toLocaleString('es-CO')}
+                        {formData.currency} {displayTotal.toLocaleString('es-CO')}
                     </p>
                 </div>
                 {onCancel && (
