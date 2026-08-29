@@ -80,8 +80,8 @@ export const BusinessTypeList: React.FC = () => {
 
             <ConfirmModal
                 isOpen={!!deleteId}
-                title="Delete Business Type"
-                message="Are you sure?"
+                title="Eliminar tipo de negocio"
+                message="¿Estás seguro?"
                 onConfirm={handleDelete}
                 onClose={() => setDeleteId(null)}
             />

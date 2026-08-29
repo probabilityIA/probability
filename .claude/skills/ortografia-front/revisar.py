@@ -14,6 +14,7 @@ DEFAULT_PATHS = ["front/central/src", "front/website/src"]
 ASCII_ONLY_LINES = 500
 
 LETTER = "A-Za-z0-9_À-ſ"
+ESC_RX = re.compile(r"\\u00([0-9a-fA-F]{2})")
 ESCAPES = {
     "á": "\\u00e1", "é": "\\u00e9", "í": "\\u00ed",
     "ó": "\\u00f3", "ú": "\\u00fa", "ñ": "\\u00f1",
@@ -138,7 +139,7 @@ def scan_file(path, rx, table, want_apertura):
                         "type": "frase" if phrase else "tilde", "text": text,
                     })
             if want_apertura and "${" not in text:
-                stripped = text.strip()
+                stripped = ESC_RX.sub(lambda m: chr(int(m.group(1), 16)), text).strip()
                 if len(stripped) > 6 and " " in stripped:
                     if stripped.endswith("?") and "¿" not in stripped:
                         findings.append({"line": n, "col": off + 1, "kind": kind,

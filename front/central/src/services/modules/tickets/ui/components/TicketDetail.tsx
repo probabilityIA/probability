@@ -135,7 +135,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
     };
 
     const handleDelete = async () => {
-        if (!confirm('Eliminar este ticket de forma definitiva?')) return;
+        if (!confirm('¿Eliminar este ticket de forma definitiva?')) return;
         await deleteTicketAction(ticket.id);
         onClose();
         onChanged();
@@ -253,7 +253,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
                                     {(isSuperAdmin) && (
                                         <button
                                             onClick={async () => {
-                                                if (confirm('Eliminar este adjunto?')) {
+                                                if (confirm('¿Eliminar este adjunto?')) {
                                                     await deleteAttachmentAction(a.id);
                                                     refreshAll();
                                                 }
