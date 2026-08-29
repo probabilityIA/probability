@@ -229,6 +229,34 @@ recibira	recibirá	auto
 reintentara	reintentará	auto
 sincronizara	sincronizará	auto
 volvera	volverá	auto
+# --- adverbios en -mente y condicionales ---
+afectarian	afectarían	auto
+automaticamente	automáticamente	auto
+basicamente	básicamente	auto
+cambiarian	cambiarían	auto
+cuantas	cuántas	auto
+cuantos	cuántos	auto
+deberian	deberían	auto
+dejarian	dejarían	auto
+facilmente	fácilmente	auto
+generarian	generarían	auto
+harian	harían	auto
+indice	índice	auto
+indices	índices	auto
+invalido	inválido	auto
+invalidos	inválidos	auto
+irian	irían	auto
+llegarian	llegarían	auto
+podrian	podrían	auto
+practicamente	prácticamente	auto
+proximamente	próximamente	auto
+quedarian	quedarían	auto
+rapidamente	rápidamente	auto
+sincronizarian	sincronizarían	auto
+tecnicamente	técnicamente	auto
+tendrian	tendrían	auto
+unicamente	únicamente	auto
+validos	válidos	auto
 # --- nombres propios ---
 Bogota	Bogotá	auto
 Medellin	Medellín	auto
@@ -336,3 +364,6 @@ genero	generó	manual
 cambio	cambió	manual
 proceso	procesó	manual
 union	unión	manual
+invalida	inválida	manual
+valido	válido	manual
+especifica	específica	manual

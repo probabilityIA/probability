@@ -40,7 +40,7 @@ LINE_SKIP = re.compile(r"^\s*(?:import|export\s+(?:\*|\{)|//|/\*|\*)|require\s*\
 PATHY = re.compile(r"^[\w./@:#?&=%~+-]+$")
 CODEY = re.compile(r"^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)*$")
 WORDY = re.compile(r"[A-Za-zÀ-ſ]+")
-JSX_CODEY = re.compile(r"===|!==|&&|\|\||=>|\?\?|^\s*[:?]|\w\(|^\s*\d+\s")
+JSX_CODEY = re.compile(r"===|!==|&&|\|\||=>|\?\?|^\s*[:?(\[]|[)\]]\s*$|\w\(|^\s*\d+\s")
 
 
 def load_pairs(path, phrase):
@@ -86,7 +86,7 @@ SPAN_RX = [
     ("s", re.compile(r"'((?:[^'\\\n]|\\.)*)'")),
     ("d", re.compile(r"\"((?:[^\"\\\n]|\\.)*)\"")),
     ("t", re.compile(r"`((?:[^`\\]|\\.)*)`")),
-    ("jsx", re.compile(r">([^<>{}]+)<")),
+    ("jsx", re.compile(r"(?<=[>}])([^<>{}]+)(?=[<{])")),
 ]
 
 
