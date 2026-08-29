@@ -358,7 +358,7 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
                 </div>
                 {data && data.total_pages > 1 && (
                     <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-sm">
-                        <span className="text-gray-500">Pagina {data.page} de {data.total_pages} ({data.total} totales)</span>
+                        <span className="text-gray-500">Página {data.page} de {data.total_pages} ({data.total} totales)</span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Anterior</Button>
                             <Button variant="outline" size="sm" disabled={page >= data.total_pages} onClick={() => setPage(page + 1)}>Siguiente</Button>

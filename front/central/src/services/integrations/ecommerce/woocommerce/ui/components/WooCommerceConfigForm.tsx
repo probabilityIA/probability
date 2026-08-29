@@ -104,7 +104,7 @@ const PLUGIN_STEPS = [
 const PLUGIN_INFO_FEATURES = [
     'Tarifas reales de las transportadoras (Coordinadora, Servientrega, Interrapid\u00edsimo, Envia y otras) con su precio y d\u00edas de entrega, calculadas por Probability seg\u00fan el destino.',
     'Logo de cada transportadora junto a la opci\u00f3n de env\u00edo en el checkout.',
-    'Sugerencia de municipios validos (c\u00f3digo DANE) seg\u00fan el departamento que elige el cliente.',
+    'Sugerencia de municipios v\u00e1lidos (c\u00f3digo DANE) seg\u00fan el departamento que elige el cliente.',
     'Validaci\u00f3n de la direcci\u00f3n de destino: le avisa al cliente si la direcci\u00f3n fue reconocida, para evitar gu\u00edas con datos incorrectos.',
 ];
 

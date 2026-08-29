@@ -321,7 +321,7 @@ function ProductList({ items }: { items: Brief[] }) {
                     <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
                 </div>
             ))}
-            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} mas...</div>}
+            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} más...</div>}
         </div>
     );
 }

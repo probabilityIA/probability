@@ -35,7 +35,7 @@ const GUIDE_STEPS = [
     'Haz clic en Conectar con Tiendanube',
     'Inicia sesión en tu tienda Tiendanube',
     'Autoriza el acceso a Probability',
-    'Regresas automaticamente y queda conectada',
+    'Regresas automáticamente y queda conectada',
 ];
 
 interface TiendanubeOAuthFormProps {

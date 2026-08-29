@@ -200,7 +200,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                 </button>
                 <Alert type="info">
                     <div className="space-y-3">
-                        <p className="font-semibold">Proximamente</p>
+                        <p className="font-semibold">{'Pr\u00f3ximamente'}</p>
                         <p>
                             La integración con <strong>{integrationType.name}</strong> estará disponible próximamente.
                             Estamos trabajando para habilitarla lo antes posible.

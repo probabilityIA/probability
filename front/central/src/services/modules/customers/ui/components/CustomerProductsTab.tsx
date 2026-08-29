@@ -62,7 +62,7 @@ export default function CustomerProductsTab({ customerId, businessId }: Props) {
                     </div>
                     <div className="text-right text-xs text-gray-400 flex-shrink-0">
                         <p>Primera: {new Date(prod.first_ordered_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</p>
-                        <p>Ultima: {new Date(prod.last_ordered_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</p>
+                        <p>Última: {new Date(prod.last_ordered_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</p>
                     </div>
                 </div>
             ))}

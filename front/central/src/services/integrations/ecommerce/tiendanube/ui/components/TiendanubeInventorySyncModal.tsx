@@ -208,7 +208,7 @@ export function TiendanubeInventorySyncModal({ isOpen, onClose, integrationId, b
                                     ))}
                                 </div>
                                 {items.length > 20 && (
-                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando los ultimos 20 de {items.length}.</p>
+                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando los últimos 20 de {items.length}.</p>
                                 )}
                             </div>
                         )}
@@ -223,7 +223,7 @@ export function TiendanubeInventorySyncModal({ isOpen, onClose, integrationId, b
                                     ))}
                                 </div>
                                 {failedHidden > 0 && (
-                                    <p className="mt-2 text-[11px] font-medium text-amber-700 dark:text-amber-400">y {failedHidden} mas...</p>
+                                    <p className="mt-2 text-[11px] font-medium text-amber-700 dark:text-amber-400">y {failedHidden} más...</p>
                                 )}
                             </div>
                         )}

@@ -161,7 +161,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
                         <span>Creado por: {ticket.created_by_name || `#${ticket.created_by_id}`}</span>
                         {ticket.business_name && <span>Negocio: {ticket.business_name}</span>}
                         {ticket.assigned_to_name && <span>Asignado a: {ticket.assigned_to_name}</span>}
-                        {ticket.category && <span>Categoria: {ticket.category}</span>}
+                        {ticket.category && <span>Categoría: {ticket.category}</span>}
                     </div>
                 </div>
                 {isSuperAdmin && (

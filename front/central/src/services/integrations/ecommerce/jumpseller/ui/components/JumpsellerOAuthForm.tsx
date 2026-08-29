@@ -36,7 +36,7 @@ const GUIDE_STEPS = [
     'Haz clic en Conectar con Jumpseller',
     'Inicia sesión en tu tienda Jumpseller',
     'Autoriza el acceso a Probability',
-    'Regresas automaticamente y queda conectada',
+    'Regresas automáticamente y queda conectada',
 ];
 
 export function JumpsellerOAuthForm({ onCancel }: JumpsellerOAuthFormProps) {

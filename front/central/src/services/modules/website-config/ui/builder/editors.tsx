@@ -461,7 +461,7 @@ export function LocationEditor({ content, onChange, businessId }: LocationEditor
                     onSelect={(s: AddressSuggestion) => set({ lat: s.lat, lng: s.lon })}
                     placeholder="Busca la direcci\u00f3n de tu negocio"
                 />
-                <p className="text-xs text-gray-400 mt-1">Al elegir una sugerencia se ubica el punto en el mapa automaticamente.</p>
+                <p className="text-xs text-gray-400 mt-1">Al elegir una sugerencia se ubica el punto en el mapa {'autom\u00e1ticamente'}.</p>
             </div>
 
             <Field label="Horarios" value={c.hours || ''} onChange={(v) => set({ hours: v })} textarea placeholder={'Lun-Vie: 9am - 6pm\nSab: 9am - 1pm'} />

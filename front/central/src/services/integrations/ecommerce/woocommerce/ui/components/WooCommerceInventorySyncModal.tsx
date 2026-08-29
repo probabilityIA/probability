@@ -211,7 +211,7 @@ export function WooCommerceInventorySyncModal({ isOpen, onClose, integrationId, 
                                     ))}
                                 </div>
                                 {items.length > 20 && (
-                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando los ultimos 20 de {items.length}.</p>
+                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando los últimos 20 de {items.length}.</p>
                                 )}
                             </div>
                         )}

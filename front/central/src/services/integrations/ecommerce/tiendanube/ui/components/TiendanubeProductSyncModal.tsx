@@ -447,7 +447,7 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
                                         ))}
                                     </div>
                                     {failedHidden > 0 && (
-                                        <p className="mt-2 text-[11px] font-medium text-amber-700 dark:text-amber-400">y {failedHidden} mas...</p>
+                                        <p className="mt-2 text-[11px] font-medium text-amber-700 dark:text-amber-400">y {failedHidden} {'m\u00e1s'}...</p>
                                     )}
                                 </div>
                             )}
@@ -480,7 +480,7 @@ function ProductList({ items }: { items: Brief[] }) {
                     <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
                 </div>
             ))}
-            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} mas...</div>}
+            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} {'m\u00e1s'}...</div>}
         </div>
     );
 }

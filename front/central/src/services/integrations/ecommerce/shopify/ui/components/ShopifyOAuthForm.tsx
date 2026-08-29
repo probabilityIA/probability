@@ -137,7 +137,7 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 11,
         title: 'Publica la primera versi\u00f3n',
-        description: 'Shopify crea automaticamente una versi\u00f3n de la app. La veras activa en la secci\u00f3n "Versiones".',
+        description: 'Shopify crea autom\u00e1ticamente una versi\u00f3n de la app. La veras activa en la secci\u00f3n "Versiones".',
         image: `${SHOPIFY_ASSETS_BASE}/09-shopify-app-versiones-publicada.png`,
     },
     {
@@ -498,7 +498,7 @@ export default function ShopifyOAuthForm({
                             />
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Obtenido automaticamente durante el flujo OAuth</span>
+                                <span>Obtenido {'autom\u00e1ticamente'} durante el flujo OAuth</span>
                             </p>
                         </div>
                     )}

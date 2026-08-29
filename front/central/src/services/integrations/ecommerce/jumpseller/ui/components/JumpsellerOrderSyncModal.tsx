@@ -253,7 +253,7 @@ export function JumpsellerOrderSyncModal({ isOpen, onClose, integrationId, busin
                                     ))}
                                 </div>
                                 {orders.length > 20 && (
-                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando las ultimas 20 de {orders.length}.</p>
+                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando las últimas 20 de {orders.length}.</p>
                                 )}
                             </div>
                         )}

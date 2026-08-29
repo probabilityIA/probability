@@ -421,7 +421,7 @@ export function ConfigView({ concepts, taxes, services, dianConfig, error }: Con
                                 <div className="mt-2 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
                                     <p>API: {dianConfig.api_url || 'Producción'}</p>
                                     <p>Usuario: {dianConfig.username || '-'}</p>
-                                    <p>Rango de numeracion: {dianConfig.numbering_range_id || 'Automático'}</p>
+                                    <p>Rango de numeración: {dianConfig.numbering_range_id || 'Automático'}</p>
                                     <p>Medio de pago: {dianConfig.payment_method_code ? `Código ${dianConfig.payment_method_code}` : 'No definido'}</p>
                                 </div>
                             ) : (

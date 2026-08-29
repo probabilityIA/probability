@@ -34,7 +34,7 @@ const GUIDE_STEPS = [
     'Haz clic en Conectar con MercadoLibre',
     'Inicia sesión con tu cuenta vendedor',
     'Autoriza el acceso a Probability',
-    'Regresas automaticamente y queda conectada',
+    'Regresas automáticamente y queda conectada',
 ];
 
 export function MercadoLibreOAuthForm({ onCancel }: MercadoLibreOAuthFormProps) {

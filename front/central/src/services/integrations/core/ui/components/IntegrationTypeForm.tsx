@@ -90,7 +90,7 @@ function summarizeJSON(raw: string): string {
         if (keys.length === 0) return 'vacio';
         return `${keys.length} campo(s)`;
     } catch {
-        return 'JSON invalido';
+        return 'JSON inv\u00e1lido';
     }
 }
 

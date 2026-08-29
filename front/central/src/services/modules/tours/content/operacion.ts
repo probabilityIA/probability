@@ -90,7 +90,7 @@ export const deliveryTour: TourDefinition = {
         {
             id: 'vehicles',
             title: 'Vehículos',
-            body: 'La flota y su capacidad. La capacidad limita cuantas paradas caben en una ruta.',
+            body: 'La flota y su capacidad. La capacidad limita cuántas paradas caben en una ruta.',
             target: 'a[href="/delivery/vehicles"]',
             placement: 'bottom',
             optional: true,
