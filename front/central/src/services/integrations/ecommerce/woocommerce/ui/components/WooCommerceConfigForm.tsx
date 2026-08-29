@@ -44,7 +44,7 @@ const HELP_IMAGES = [
     },
     {
         src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/step-2-crear-key.png',
-        caption: 'Paso 2: escribe una descripcion, elige permisos "Lectura/Escritura" y genera la clave. Copia el Consumer Key y el Consumer Secret.',
+        caption: 'Paso 2: escribe una descripci\u00f3n, elige permisos "Lectura/Escritura" y genera la clave. Copia el Consumer Key y el Consumer Secret.',
     },
 ];
 
@@ -86,7 +86,7 @@ const GUIDE_STEPS = [
 const CARRIER_OPTIONS = [
     { code: 'COORDINADORA', label: 'Coordinadora' },
     { code: 'DEPRISA', label: 'Deprisa' },
-    { code: 'INTERRAPIDISIMO', label: 'Interrapidisimo' },
+    { code: 'INTERRAPIDISIMO', label: 'Interrapid\u00edsimo' },
     { code: 'ENVIA', label: 'Envia' },
     { code: 'SERVIENTREGA', label: 'Servientrega' },
     { code: 'TCC', label: 'TCC' },
@@ -94,32 +94,32 @@ const CARRIER_OPTIONS = [
 ];
 
 const PLUGIN_STEPS = [
-    'Descarga el plugin con el boton de abajo',
-    'En WordPress: Plugins → Anadir nuevo → Subir plugin',
+    'Descarga el plugin con el bot\u00f3n de abajo',
+    'En WordPress: Plugins → A\u00f1adir nuevo → Subir plugin',
     'Sube el .zip y activa el plugin',
-    'WooCommerce → Ajustes → Envio → tu zona → Anadir "Probability (Transportadoras)"',
-    'Pega la Clave de conexion y guarda',
+    'WooCommerce → Ajustes → Env\u00edo → tu zona → A\u00f1adir "Probability (Transportadoras)"',
+    'Pega la Clave de conexi\u00f3n y guarda',
 ];
 
 const PLUGIN_INFO_FEATURES = [
-    'Tarifas reales de las transportadoras (Coordinadora, Servientrega, Interrapidisimo, Envia y otras) con su precio y dias de entrega, calculadas por Probability segun el destino.',
-    'Logo de cada transportadora junto a la opcion de envio en el checkout.',
-    'Sugerencia de municipios validos (codigo DANE) segun el departamento que elige el cliente.',
-    'Validacion de la direccion de destino: le avisa al cliente si la direccion fue reconocida, para evitar guias con datos incorrectos.',
+    'Tarifas reales de las transportadoras (Coordinadora, Servientrega, Interrapid\u00edsimo, Envia y otras) con su precio y d\u00edas de entrega, calculadas por Probability seg\u00fan el destino.',
+    'Logo de cada transportadora junto a la opci\u00f3n de env\u00edo en el checkout.',
+    'Sugerencia de municipios validos (c\u00f3digo DANE) seg\u00fan el departamento que elige el cliente.',
+    'Validaci\u00f3n de la direcci\u00f3n de destino: le avisa al cliente si la direcci\u00f3n fue reconocida, para evitar gu\u00edas con datos incorrectos.',
 ];
 
 const PLUGIN_INFO_IMAGES = [
     {
         src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/checkout-tarifas-logos.png',
-        caption: 'Opciones de envio con las tarifas reales y el logo de cada transportadora.',
+        caption: 'Opciones de env\u00edo con las tarifas reales y el logo de cada transportadora.',
     },
     {
         src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/checkout-municipios-dane.png',
-        caption: 'Sugerencia de municipios segun el departamento elegido.',
+        caption: 'Sugerencia de municipios seg\u00fan el departamento elegido.',
     },
     {
         src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/checkout-validacion-direccion.png',
-        caption: 'Validacion de la direccion de destino con mensaje de confianza.',
+        caption: 'Validaci\u00f3n de la direcci\u00f3n de destino con mensaje de confianza.',
     },
 ];
 
@@ -326,7 +326,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
             if (result.success) {
                 showToast('Conexion exitosa con WooCommerce', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexi\u00f3n');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con WooCommerce');
@@ -371,7 +371,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 });
 
                 if (!response || response.success === false) {
-                    throw new Error(response?.message || 'Error al actualizar integracion');
+                    throw new Error(response?.message || 'Error al actualizar integraci\u00f3n');
                 }
                 showToast('Integracion WooCommerce actualizada', 'success');
                 onSuccess?.();
@@ -379,7 +379,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
             }
 
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integraci\u00f3n.');
                 setLoading(false);
                 return;
             }
@@ -406,10 +406,10 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 showToast('Integracion WooCommerce creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integraci\u00f3n');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al guardar la integracion de WooCommerce');
+            setErrorModal(err.message || 'Error al guardar la integraci\u00f3n de WooCommerce');
         } finally {
             setLoading(false);
         }
@@ -460,7 +460,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                         <Cog6ToothIcon className="w-4.5 h-4.5" style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Configuracion general</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">{'Configuraci\u00f3n'} general</h3>
                 </div>
 
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
@@ -479,7 +479,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta {'integraci\u00f3n'}</span>
                         </p>
                     </div>
 
@@ -533,7 +533,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Negocio al que pertenecera esta integracion</span>
+                                <span>Negocio al que pertenecera esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}
@@ -626,8 +626,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                                 </h4>
                                 <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
                                     {isSuperAdmin
-                                        ? 'Redirige las peticiones a la tienda de pruebas (mock) configurada en el tipo de integracion, sin tocar tu tienda real.'
-                                        : 'Esta integracion esta en modo de pruebas. Solo un super admin puede cambiarlo.'}
+                                        ? 'Redirige las peticiones a la tienda de pruebas (mock) configurada en el tipo de integraci\u00f3n, sin tocar tu tienda real.'
+                                        : 'Esta integraci\u00f3n esta en modo de pruebas. Solo un super admin puede cambiarlo.'}
                                 </p>
                             </div>
                         </div>
@@ -824,8 +824,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">Envio gratis por monto minimo</span>
-                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">Si el total de la orden alcanza el monto, el envio se muestra en $0 en el checkout.</span>
+                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">{'Env\u00edo'} gratis por monto {'m\u00ednimo'}</span>
+                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">Si el total de la orden alcanza el monto, el {'env\u00edo'} se muestra en $0 en el checkout.</span>
                             </div>
                             <button
                                 type="button"
@@ -839,7 +839,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         </div>
                         {freeShippingEnabled && (
                             <div className="mt-3">
-                                <label className={fieldLabel}>Monto minimo de la orden</label>
+                                <label className={fieldLabel}>Monto {'m\u00ednimo'} de la orden</label>
                                 <input
                                     type="number"
                                     min={0}
@@ -858,7 +858,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         <div className="flex items-center justify-between gap-3">
                             <div>
                                 <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">No cotizar pedidos contra entrega</span>
-                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">Si el comprador elige contra entrega, no se muestran tarifas de Probability en el checkout. Necesitas otro metodo de envio configurado en la zona.</span>
+                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">Si el comprador elige contra entrega, no se muestran tarifas de Probability en el checkout. Necesitas otro {'m\u00e9todo'} de {'env\u00edo'} configurado en la zona.</span>
                             </div>
                             <button
                                 type="button"
@@ -875,7 +875,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">El total del pedido ya incluye el envio</span>
+                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">El total del pedido ya incluye el {'env\u00edo'}</span>
                                 <span className="block text-[11px] text-gray-500 dark:text-gray-400">
                                     Activado: la tienda ya le cobro el envio al cliente en el checkout, asi que en contra entrega se recauda el total tal cual.
                                     Desactivalo cuando las guias de contra entrega se generan en Probability y no llegan del canal de ventas: ahi el total
@@ -917,9 +917,9 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">Mapa y validacion de direccion</span>
+                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">Mapa y {'validaci\u00f3n'} de {'direcci\u00f3n'}</span>
                                 <span className="block text-[11px] text-gray-500 dark:text-gray-400">
-                                    Muestra el mapa de confirmacion del punto de entrega y el mensaje de "direccion validada/reconocida" en el checkout. Es solo informativo para el comprador, no afecta la cotizacion.
+                                    Muestra el mapa de confirmacion del punto de entrega y el mensaje de "direcci\u00f3n validada/reconocida" en el checkout. Es solo informativo para el comprador, no afecta la cotizacion.
                                 </span>
                             </div>
                             <button
@@ -1011,12 +1011,12 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         </button>
 
                         <div>
-                            <label className={fieldLabel}>Clave de conexion</label>
+                            <label className={fieldLabel}>Clave de {'conexi\u00f3n'}</label>
                             <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-1.5">
                                 Copiala y pegala en los ajustes del metodo de envio "Probability" en tu WordPress.
                             </p>
                             {loadingConn ? (
-                                <div className="text-[12px] text-gray-400 py-2">Cargando clave de conexion...</div>
+                                <div className="text-[12px] text-gray-400 py-2">Cargando clave de {'conexi\u00f3n'}...</div>
                             ) : connInfo && connInfo.revoked ? (
                                 <div className="flex flex-col gap-2">
                                     <div
@@ -1106,8 +1106,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 isOpen={showRevokeConfirm}
                 onClose={() => setShowRevokeConfirm(false)}
                 onConfirm={doRevokeKey}
-                title="Revocar clave de conexion"
-                message="Al revocar, la tienda dejara de cotizar envios hasta que generes una clave nueva. Esta accion invalida la clave actual. Deseas continuar?"
+                title="Revocar clave de conexi\u00f3n"
+                message="Al revocar, la tienda dejar\u00e1 de cotizar env\u00edos hasta que generes una clave nueva. Esta acci\u00f3n invalida la clave actual. \u00bfDeseas continuar?"
                 confirmText="Revocar"
                 type="danger"
             />
@@ -1159,7 +1159,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                             {isEdit ? 'Guardando...' : 'Conectando...'}
                         </>
                     ) : (
-                        isEdit ? 'Guardar integracion' : 'Crear integracion'
+                        isEdit ? 'Guardar integraci\u00f3n' : 'Crear integraci\u00f3n'
                     )}
                 </button>
             </div>
