@@ -75,7 +75,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
     }, [fetchRoute]);
 
     const handleStartRoute = async () => {
-        if (!confirm('Iniciar esta ruta? El estado cambiará a "En progreso".')) return;
+        if (!confirm('¿Iniciar esta ruta? El estado cambiará a "En progreso".')) return;
         setActionLoading('start');
         try {
             const updated = await startRouteAction(routeId, businessId);
@@ -89,7 +89,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
     };
 
     const handleCompleteRoute = async () => {
-        if (!confirm('Completar esta ruta? El estado cambiará a "Completada".')) return;
+        if (!confirm('¿Completar esta ruta? El estado cambiará a "Completada".')) return;
         setActionLoading('complete');
         try {
             const updated = await completeRouteAction(routeId, businessId);

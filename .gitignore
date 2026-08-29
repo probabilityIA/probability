@@ -100,3 +100,7 @@ probability.pem
 
 # Go build artifacts / scratch
 .gotmp/
+
+.claude/skills/ortografia-front/index.dic
+.claude/skills/ortografia-front/index.aff
+.claude/skills/ortografia-front/__pycache__/

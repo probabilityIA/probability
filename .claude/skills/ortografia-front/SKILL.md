@@ -53,6 +53,29 @@ Datos:
   `Estas seguro` -> `¿Estás seguro`).
 - `reglas.md` - las reglas de espanol y los casos que el script NO puede decidir.
 
+### auditar.py: cuando el diccionario del skill no alcanza
+
+`diccionario.tsv` son ~450 pares elegidos a mano. **No es el espanol.** Para
+saber que se le escapa, `auditar.py` contrasta cada palabra del texto visible
+contra un diccionario hunspell de verdad y propone las que se vuelven validas
+al ponerles una tilde.
+
+```bash
+pip install spylls
+cd .claude/skills/ortografia-front
+curl -sSLO https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/es/index.dic
+curl -sSLO https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/es/index.aff
+cd - && python3 .claude/skills/ortografia-front/auditar.py
+```
+
+No corrige: imprime candidatos. Se revisan a mano y los reales se agregan a
+`diccionario.tsv`. Buena parte son falsos positivos, porque el diccionario
+espanol "arregla" palabras tecnicas o en ingles: `min` -> `mín`, `items` ->
+`ítems`, `COD` -> `CÓD`, `ROI` -> `ROÍ`, `Record` -> `Récord`.
+
+Correrlo despues de cada limpieza grande. En la primera pasada real encontro
+122 formas (461 ocurrencias) que el diccionario a mano no veia.
+
 ## Como se escribe la tilde (regla de UTF-8 del repo)
 
 `CLAUDE.md` prohibe caracteres non-ASCII en archivos de 500+ lineas por el bug

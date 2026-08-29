@@ -15,6 +15,8 @@ ASCII_ONLY_LINES = 500
 
 LETTER = "A-Za-z0-9_À-ſ"
 ESC_RX = re.compile(r"\\u00([0-9a-fA-F]{2})")
+CODE_HINT = re.compile(r"\$\{|`|=>|\?:|\bprev\b|!==|!=")
+PROSE_RX = re.compile(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}")
 ESCAPES = {
     "á": "\\u00e1", "é": "\\u00e9", "í": "\\u00ed",
     "ó": "\\u00f3", "ú": "\\u00fa", "ñ": "\\u00f1",
@@ -39,6 +41,13 @@ ATTR_SKIP = re.compile(
 LINE_SKIP = re.compile(r"^\s*(?:import|export\s+(?:\*|\{)|//|/\*|\*)|require\s*\(|\bfrom\s+['\"]")
 PATHY = re.compile(r"^[\w./@:#?&=%~+-]+$")
 CODEY = re.compile(r"^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)*$")
+CSSY = re.compile(
+    r"\b(?:bg|text|border|ring|from|via|to|fill|stroke|shadow|grid|flex|gap|"
+    r"[pm][xytrbl]?|w|h|min|max|rounded|font|leading|tracking|z|opacity)-"
+    r"(?:\[|\d|x|y|full|auto|none|sm|md|lg|xl|white|black|gray|slate|zinc|red|"
+    r"blue|green|yellow|purple|indigo|pink|orange|teal|cyan|emerald|amber|violet)"
+    r"|\b(?:hover|focus|active|dark|group|peer|sm|md|lg|xl|2xl):"
+)
 WORDY = re.compile(r"[A-Za-zÀ-ſ]+")
 JSX_CODEY = re.compile(r"===|!==|&&|\|\||=>|\?\?|^\s*[:?(\[]|[)\]]\s*$|\w\(|^\s*\d+\s")
 
@@ -111,6 +120,8 @@ def spans(line):
                     continue
             if kind == "jsx" and JSX_CODEY.search(text):
                 continue
+            if CSSY.search(text):
+                continue
             taken.append((a, b))
             yield kind, a, text
 
@@ -138,17 +149,17 @@ def scan_file(path, rx, table, want_apertura):
                         "phrase": phrase, "span_start": off, "in_span": m.start(),
                         "type": "frase" if phrase else "tilde", "text": text,
                     })
-            if want_apertura and "${" not in text:
+            if want_apertura and not CODE_HINT.search(text):
                 stripped = ESC_RX.sub(lambda m: chr(int(m.group(1), 16)), text).strip()
-                if len(stripped) > 6 and " " in stripped:
-                    if stripped.endswith("?") and "¿" not in stripped:
-                        findings.append({"line": n, "col": off + 1, "kind": kind,
-                                         "bad": stripped[:48], "good": "falta ¿ de apertura",
-                                         "mode": "manual", "type": "apertura", "text": text})
-                    if stripped.endswith("!") and "¡" not in stripped and not stripped.endswith("!!"):
-                        findings.append({"line": n, "col": off + 1, "kind": kind,
-                                         "bad": stripped[:48], "good": "falta ¡ de apertura",
-                                         "mode": "manual", "type": "apertura", "text": text})
+                if len(PROSE_RX.findall(stripped)) >= 3:
+                    for sign, opener, name in (("?", "¿", "¿"), ("!", "¡", "¡")):
+                        i = stripped.find(sign)
+                        if i > 0 and opener not in stripped[:i]:
+                            findings.append({
+                                "line": n, "col": off + 1, "kind": kind,
+                                "bad": stripped[max(0, i - 44):i + 1],
+                                "good": "falta %s de apertura" % name,
+                                "mode": "manual", "type": "apertura", "text": text})
     return findings, len(lines)
 
 
