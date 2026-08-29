@@ -143,7 +143,7 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
         correlationRef.current = null;
         const res: any = await applyShopifyProductsAction(integrationId, dir, businessId ?? undefined);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la operacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la operación');
             setPhase('error');
             return;
         }
@@ -244,7 +244,7 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
                             <ArrowRightLeft size={18} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronizacion de Productos</h2>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronización de Productos</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Probability &harr; Shopify</p>
                         </div>
                     </div>
@@ -281,7 +281,7 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
-                                            <p className="text-[11px] text-gray-400 mt-0.5">Crea la relacion (sin tocar stock) para que el canal los reconozca como propios.</p>
+                                            <p className="text-[11px] text-gray-400 mt-0.5">Crea la relación (sin tocar stock) para que el canal los reconozca como propios.</p>
                                         </div>
                                         <button onClick={() => handleAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                             <Link2 size={14} /> Asociar todos
@@ -325,7 +325,7 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Shopify hay {diff.onlyInShopify.length} producto{diff.onlyInShopify.length !== 1 ? 's' : ''} que no estan en Probability</p>
-                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuracion de bodegas.</p>
+                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuración de bodegas.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                                     <ArrowDownToLine size={14} /> Crear en Probability

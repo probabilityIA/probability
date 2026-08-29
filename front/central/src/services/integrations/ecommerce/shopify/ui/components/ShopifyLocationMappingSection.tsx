@@ -62,7 +62,7 @@ export function ShopifyLocationMappingSection({ mappings, onChangeMappings, defa
             <div className="flex items-start gap-2 mb-3">
                 <BuildingStorefrontIcon className="w-4 h-4 mt-0.5" style={{ color: ACCENT }} />
                 <div>
-                    <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100">Emparejamiento de locations (multi-ubicacion)</h4>
+                    <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100">Emparejamiento de locations (multi-ubicación)</h4>
                     <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
                         Acopla una bodega de Probability a una location de Shopify. Si defines emparejamientos,
                         el stock se envia por location; si no, se usa la location por defecto.
