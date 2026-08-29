@@ -92,10 +92,10 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
             if (result.success) {
                 showToast('Conexion exitosa con Enviame', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al probar conexion'));
+            setError(getActionError(err, 'Error al probar conexión'));
             showToast('Error al conectar con Enviame: ' + err.message, 'error');
         } finally {
             setTestingConnection(false);
@@ -138,10 +138,10 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                 showToast('Integracion Enviame creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al crear integracion'));
+            setError(getActionError(err, 'Error al crear integración'));
             showToast('Error al crear integracion Enviame', 'error');
         } finally {
             setLoading(false);
@@ -194,7 +194,7 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -229,7 +229,7 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecera esta integración</span>
                         </p>
                     </div>
                 )}
