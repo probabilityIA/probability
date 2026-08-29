@@ -18,7 +18,7 @@ function VerifyEmailContent() {
 
     if (!token) {
       setStatus('error');
-      setMessage('El enlace es invalido o esta incompleto.');
+      setMessage('El enlace es inválido o esta incompleto.');
       return;
     }
     (async () => {
@@ -28,7 +28,7 @@ function VerifyEmailContent() {
         setMessage(result.message || 'Cuenta verificada. Ya puedes iniciar sesión.');
       } else {
         setStatus('error');
-        setMessage(result.error || 'El enlace es invalido o ha expirado.');
+        setMessage(result.error || 'El enlace es inválido o ha expirado.');
       }
     })();
   }, [token]);

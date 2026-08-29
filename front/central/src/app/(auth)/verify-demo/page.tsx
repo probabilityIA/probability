@@ -29,7 +29,7 @@ function VerifyDemoContent() {
         setDone(true);
         setTimeout(() => router.push('/login'), 2500);
       } else {
-        setError(result.error || 'Código invalido o expirado');
+        setError(result.error || 'Código inválido o expirado');
       }
     } catch {
       setError('Error al conectar con el servidor');

@@ -24,7 +24,7 @@ function ResetPasswordContent() {
     setError('');
 
     if (!token) {
-      setError('El enlace es invalido. Solicita uno nuevo.');
+      setError('El enlace es inválido. Solicita uno nuevo.');
       return;
     }
     if (password.length < 6) {

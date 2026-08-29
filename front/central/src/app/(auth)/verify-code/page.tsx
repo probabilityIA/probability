@@ -32,7 +32,7 @@ function VerifyCodeContent() {
       if (result.success && result.token) {
         router.push(`/reset-password?token=${result.token}`);
       } else {
-        setError(result.error || 'Código invalido o expirado');
+        setError(result.error || 'Código inválido o expirado');
       }
     } catch {
       setError('Error al conectar con el servidor');
