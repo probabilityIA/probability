@@ -20,8 +20,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/ratelimit"
 	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/retention"
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
+
+const syncLogRetentionDays = 30
 
 type Bundle struct {
 	handlers *handlers.Handlers
@@ -35,6 +38,8 @@ func (b *Bundle) SetSubscriptionOverageChecker(checker domain.ShipmentOverageChe
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service) *Bundle {
 	repo := repository.New(database)
 	pdfUploader := pdfstorage.New(s3)
+
+	startSyncLogRetention(context.Background(), logger, repo)
 
 	transportPub := queue.NewTransportRequestPublisher(rabbitMQ, logger)
 
@@ -92,4 +97,18 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	h.RegisterRoutes(router)
 
 	return &Bundle{handlers: h}
+}
+
+func startSyncLogRetention(c context.Context, logger log.ILogger, repo any) {
+	purger, ok := repo.(interface {
+		PurgeSyncLogsOlderThan(ctx context.Context, days, batchSize int) (int64, error)
+	})
+	if !ok {
+		return
+	}
+	go retention.Start(c, logger, retention.Task{
+		Name: "shipments.sync_logs",
+		Days: syncLogRetentionDays,
+		Run:  purger.PurgeSyncLogsOlderThan,
+	})
 }

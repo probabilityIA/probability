@@ -335,7 +335,7 @@ type OrderChannelMetadata struct {
 	ChannelSource string `gorm:"size:50;not null;index"`
 	IntegrationID uint   `gorm:"not null;index"`
 
-	RawData datatypes.JSON `gorm:"type:jsonb;not null"`
+	RawData datatypes.JSON `gorm:"type:jsonb"`
 
 	Version     string    `gorm:"size:20"`
 	ReceivedAt  time.Time `gorm:"index"`

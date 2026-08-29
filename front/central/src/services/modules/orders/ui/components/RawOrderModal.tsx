@@ -100,11 +100,10 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
             const response = await getOrderRawAction(orderId);
             if (response.success && response.data) {
                 setData(response.data);
-                // Intentar parsear raw_data si existe
                 if (response.data.raw_data) {
                     try {
-                        const rawData = typeof response.data.raw_data === 'string' 
-                            ? JSON.parse(response.data.raw_data) 
+                        const rawData = typeof response.data.raw_data === 'string'
+                            ? JSON.parse(response.data.raw_data)
                             : response.data.raw_data;
                         setShopifyOrder(rawData);
                     } catch (e) {
@@ -112,19 +111,18 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                         setError('Error al parsear los datos crudos de la orden');
                     }
                 } else {
-                    setError('Esta orden todavía no tiene el JSON del canal guardado. Se guarda al recibir la próxima sincronización o notificación del canal para esta orden.');
+                    setError('El JSON del canal no esta disponible para esta orden. Se guarda al sincronizar con el canal y se depura a los 90 dias.');
                 }
             } else {
                 setError(response.message || 'Error al cargar los datos crudos');
             }
         } catch (err: any) {
-            // Si el error es 404 o "not found", mostrar mensaje más amigable
             const errorMessage = err.message || '';
-            if (errorMessage.includes('not found') || 
+            if (errorMessage.includes('not found') ||
                 errorMessage.includes('no encontrado') ||
                 errorMessage.includes('raw data not found') ||
                 errorMessage.includes('Datos crudos no encontrados')) {
-                setError('Esta orden todavía no tiene el JSON del canal guardado. Se guarda al recibir la próxima sincronización o notificación del canal para esta orden.');
+                setError('El JSON del canal no esta disponible para esta orden. Se guarda al sincronizar con el canal y se depura a los 90 dias.');
             } else {
                 setError(getActionError(err, 'Error al cargar los datos crudos'));
             }
@@ -166,8 +164,8 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                 <div className="flex items-center gap-3">
                     {integrationLogoUrl ? (
                         <div className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-                            <img 
-                                src={integrationLogoUrl} 
+                            <img
+                                src={integrationLogoUrl}
                                 alt={platform || 'Integración'}
                                 className="h-full w-full object-contain p-1"
                             />
@@ -192,10 +190,10 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                         {error}
                     </div>
                 )}
-                
+
                 {shopifyOrder && !showRaw && (
                     <div className="space-y-4">
-                        {/* Botón para ver JSON crudo */}
+                        {}
                         <div className="flex justify-end mb-4">
                             <button
                                 onClick={() => setShowRaw(true)}
@@ -205,7 +203,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                             </button>
                         </div>
 
-                        {/* Información General */}
+                        {}
                         <div className="bg-gray-50 rounded-lg p-5">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Información General</h3>
                             <div className="grid grid-cols-3 gap-4">
@@ -252,7 +250,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                             </div>
                         </div>
 
-                        {/* Cliente */}
+                        {}
                         {shopifyOrder.customer && (
                             <div className="bg-gray-50 rounded-lg p-5">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cliente</h3>
@@ -279,7 +277,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                             </div>
                         )}
 
-                        {/* Items de Línea */}
+                        {}
                         {shopifyOrder.line_items && shopifyOrder.line_items.length > 0 && (
                             <div className="bg-gray-50 rounded-lg p-5">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Items de la Orden</h3>
@@ -310,9 +308,9 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                             </div>
                         )}
 
-                        {/* Direcciones en grid */}
+                        {}
                         <div className="grid grid-cols-2 gap-4">
-                            {/* Dirección de Envío */}
+                            {}
                             {shopifyOrder.shipping_address && (
                                 <div className="bg-gray-50 rounded-lg p-5">
                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Dirección de Envío</h3>
@@ -337,7 +335,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                                 </div>
                             )}
 
-                            {/* Dirección de Facturación */}
+                            {}
                             {shopifyOrder.billing_address && (
                                 <div className="bg-gray-50 rounded-lg p-5">
                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Dirección de Facturación</h3>
@@ -363,7 +361,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                             )}
                         </div>
 
-                        {/* Fulfillments */}
+                        {}
                         {shopifyOrder.fulfillments && shopifyOrder.fulfillments.length > 0 && (
                             <div className="bg-gray-50 rounded-lg p-5">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Fulfillments</h3>
@@ -406,7 +404,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                     </div>
                 )}
 
-                {/* Vista JSON Crudo */}
+                {}
                 {showRaw && data && (
                     <div>
                         <div className="flex justify-between items-center mb-4">

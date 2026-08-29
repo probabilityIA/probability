@@ -15,7 +15,10 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/retention"
 )
+
+const syncLogRetentionDays = 30
 
 // New inicializa el módulo de facturación
 func New(
@@ -38,6 +41,8 @@ func New(
 	// Repositorio único (GORM) - implementa TODAS las interfaces
 	// Usa el servicio de caché para configuraciones de facturación
 	repo := repository.New(database, configCache, moduleLogger)
+
+	startSyncLogRetention(ctx, moduleLogger, repo)
 
 	// Event publisher (RabbitMQ)
 	eventPublisher := queue.New(rabbitMQ, moduleLogger)
@@ -139,4 +144,18 @@ func New(
 	} else {
 		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de facturación deshabilitados")
 	}
+}
+
+func startSyncLogRetention(c context.Context, logger log.ILogger, repo any) {
+	purger, ok := repo.(interface {
+		PurgeSyncLogsOlderThan(ctx context.Context, days, batchSize int) (int64, error)
+	})
+	if !ok {
+		return
+	}
+	go retention.Start(c, logger, retention.Task{
+		Name: "invoicing.sync_logs",
+		Days: syncLogRetentionDays,
+		Run:  purger.PurgeSyncLogsOlderThan,
+	})
 }

@@ -93,6 +93,9 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateWooCommerceTestURL(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateChannelRawDataNullable(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateJumpsellerIntegrationType(ctx); err != nil {
 		return err
 	}

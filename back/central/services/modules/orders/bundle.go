@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecasecreateorder"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdateorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdatestatus"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
@@ -19,7 +19,10 @@ import (
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/retention"
 )
+
+const channelRawDataRetentionDays = 90
 
 type Bundle struct {
 	CreateUC                ports.IOrderCreateUseCase
@@ -47,6 +50,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	h := handlers.New(orderCRUD, createUC, requestConfirmationUC, sendGuideNotificationUC, statusUC, logger)
 	h.RegisterRoutes(router)
+
+	startChannelRawDataRetention(context.Background(), logger, repo)
 
 	startRabbitMQConsumer(rabbitMQ, logger, createUC, repo, integrationEventPub)
 	startWhatsAppConsumer(rabbitMQ, logger, repo, rabbitPublisher)
@@ -163,4 +168,18 @@ func startInventoryFeedbackConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger
 
 	consumer := queue.NewInventoryConsumer(rabbitMQ, repo, rabbitPublisher, logger)
 	consumer.Start(context.Background())
+}
+
+func startChannelRawDataRetention(c context.Context, logger log.ILogger, repo any) {
+	purger, ok := repo.(interface {
+		PurgeChannelRawDataOlderThan(ctx context.Context, days, batchSize int) (int64, error)
+	})
+	if !ok {
+		return
+	}
+	go retention.Start(c, logger, retention.Task{
+		Name: "orders.channel_raw_data",
+		Days: channelRawDataRetentionDays,
+		Run:  purger.PurgeChannelRawDataOlderThan,
+	})
 }
