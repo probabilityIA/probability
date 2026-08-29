@@ -91,7 +91,7 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
             if (result.success) {
                 showToast('Conexion exitosa con Magento', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Magento');
@@ -106,7 +106,7 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -136,10 +136,10 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
                 showToast('Integracion Magento creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Magento');
+            setErrorModal(err.message || 'Error al crear la integración de Magento');
         } finally {
             setLoading(false);
         }
@@ -185,7 +185,7 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -240,7 +240,7 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecera esta integración</span>
                         </p>
                     </div>
                 )}
@@ -309,7 +309,7 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
                     <ol className="text-xs text-orange-800 space-y-2 list-decimal list-inside ml-1">
                         <li>Ingresa al Admin de Magento</li>
                         <li>Ve a <strong>System &rarr; Extensions &rarr; Integrations</strong></li>
-                        <li>Crea una nueva integracion y copia el <strong>Access Token</strong></li>
+                        <li>Crea una nueva integración y copia el <strong>Access Token</strong></li>
                     </ol>
                 </div>
             </div>
