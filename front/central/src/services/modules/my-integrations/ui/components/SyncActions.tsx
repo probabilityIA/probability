@@ -40,7 +40,7 @@ const ACTIONS: EnvironmentAction[] = [
         key: 'invoicing',
         label: 'Facturar',
         icon: ReceiptText,
-        hint: 'Facturación desde el hub: proximamente',
+        hint: 'Facturación desde el hub: próximamente',
         disabled: true,
     },
 ];
@@ -91,7 +91,7 @@ export function SyncActions() {
             <button
                 onClick={() => { reset(); setEnvironment(null); }}
                 disabled={running}
-                title="Resumen de órdenes: cuantas entraron por cada canal y como van"
+                title="Resumen de órdenes: cuántas entraron por cada canal y como van"
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                     environment === null
                         ? 'border-white bg-white text-[#0d5c80] shadow-sm'
