@@ -88,7 +88,7 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
             if (result.success) {
                 showToast('Conexion exitosa con Alegra', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Alegra');
@@ -103,7 +103,7 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -130,10 +130,10 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
                 showToast('Integracion Alegra creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Alegra');
+            setErrorModal(err.message || 'Error al crear la integración de Alegra');
         } finally {
             setLoading(false);
         }
@@ -173,13 +173,13 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Alegra Facturacion Principal"
+                        placeholder="Ej: Alegra Facturación Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -214,7 +214,7 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecera esta integración</span>
                         </p>
                     </div>
                 )}
@@ -232,7 +232,7 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
                     <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <span>
                         Obten tus credenciales desde el panel de Alegra en
-                        <strong> Configuracion &rarr; Integraciones &rarr; API</strong>
+                        <strong> Configuración &rarr; Integraciones &rarr; API</strong>
                     </span>
                 </p>
 
@@ -283,7 +283,7 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de produccion de Alegra.</span>
+                        <span>Dejar vacio para usar la URL de producción de Alegra.</span>
                     </p>
                 </div>
 
@@ -320,7 +320,7 @@ export function AlegraConfigForm({ onSuccess, onCancel }: AlegraConfigFormProps)
                     </h4>
                     <ol className="text-xs text-purple-800 space-y-2 list-decimal list-inside ml-1">
                         <li>Ingresa a tu cuenta en <strong>app.alegra.com</strong></li>
-                        <li>Ve a <strong>Configuracion &rarr; Integraciones &rarr; API</strong></li>
+                        <li>Ve a <strong>Configuración &rarr; Integraciones &rarr; API</strong></li>
                         <li>Copia tu <strong>Email</strong> y <strong>Token API</strong></li>
                     </ol>
                 </div>
