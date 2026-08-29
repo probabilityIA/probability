@@ -480,7 +480,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 </div>
                                 {desglose.carrierFee > 0 && (
                                     <div className="px-3 pb-2 text-[11px] text-gray-400">
-                                        Envio {money(desglose.guideCost)} + comision {money(desglose.carrierFee)}
+                                        Envio {money(desglose.guideCost)} + {'comisi\u00f3n'} {money(desglose.carrierFee)}
                                     </div>
                                 )}
                             </div>
@@ -602,7 +602,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 {isCOD && (
                                     <>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            Se cobrara al cliente (estimado): <strong className="text-emerald-600">{money(codToCollect)}</strong> (producto + envio{codFee > 0 ? ' + cargo COD' : ''})
+                                            Se cobrara al cliente (estimado): <strong className="text-emerald-600">{money(codToCollect)}</strong> (producto + {'env\u00edo'}{codFee > 0 ? ' + cargo COD' : ''})
                                         </p>
                                         {codFee > 0 && (
                                             <p className="text-[11px] text-gray-400">
@@ -625,7 +625,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
 
                         <div className="mt-2 flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2.5">
                             <div>
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Generar {'gu\u00eda'} automaticamente</p>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Generar {'gu\u00eda'} {'autom\u00e1ticamente'}</p>
                                 <p className="text-xs text-gray-400">Al crear la orden se solicita la {'gu\u00eda'} con la tarifa seleccionada.</p>
                             </div>
                             <button
