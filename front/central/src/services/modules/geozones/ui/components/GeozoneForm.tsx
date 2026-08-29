@@ -44,10 +44,10 @@ export default function GeozoneForm({ onSuccess, onCancel, businessId, contextLa
                 const parsed = JSON.parse(pasted);
                 geometry = parsed.geometry || parsed;
                 if (!geometry?.type || !geometry?.coordinates) {
-                    throw new Error('GeoJSON invalido (falta type o coordinates)');
+                    throw new Error('GeoJSON inválido (falta type o coordinates)');
                 }
             } catch (err: any) {
-                setError('GeoJSON invalido: ' + err.message);
+                setError('GeoJSON inválido: ' + err.message);
                 return;
             }
         }
