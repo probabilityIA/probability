@@ -186,7 +186,7 @@ export function BoldConfigForm({ integrationTypeId, onSuccess, onCancel }: BoldC
                 onChange={setIsActive}
                 titleOn="Activo"
                 titleOff="Desactivado"
-                description={isActive ? 'Bold procesara pagos para este negocio.' : 'Bold no procesara pagos para este negocio.'}
+                description={isActive ? 'Bold procesará pagos para este negocio.' : 'Bold no procesará pagos para este negocio.'}
                 icon={<CheckCircleIcon className="w-5 h-5 text-green-600" />}
                 color="green"
             />
