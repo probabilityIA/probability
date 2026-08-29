@@ -73,7 +73,7 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
                     className="mb-2 flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800"
                 >
                     <span>&larr;</span>
-                    <span>Volver a categorias</span>
+                    <span>Volver a categorías</span>
                 </button>
 
                 <h2 className="text-base font-bold text-gray-900 dark:text-white">

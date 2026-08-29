@@ -450,7 +450,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             }
         } catch (err: any) {
             console.error('Error saving integration type:', err);
-            setError(getActionError(err, 'Error al guardar el tipo de integracion'));
+            setError(getActionError(err, 'Error al guardar el tipo de integraci\u00f3n'));
         } finally {
             setLoading(false);
         }
@@ -464,7 +464,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </Alert>
             )}
 
-            <SectionCard icon={Cog6ToothIcon} title="Informacion basica">
+            <SectionCard icon={Cog6ToothIcon} title="Informaci\u00f3n b\u00e1sica">
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                     <div>
                         <label className={fieldLabel}>
@@ -502,7 +502,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     </div>
 
                     <div className="md:col-span-2">
-                        <label className={fieldLabel}>Logo del Tipo de Integracion</label>
+                        <label className={fieldLabel}>Logo del Tipo de {'Integraci\u00f3n'}</label>
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                             <img
                                 src={imagePreview || ''}
@@ -515,7 +515,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     accept="image/*"
                                     onChange={handleImageChange}
                                     buttonText="Seleccionar imagen"
-                                    helperText="Formatos soportados: JPG, PNG, GIF, WEBP. Tamano maximo: 10MB"
+                                    helperText="Formatos soportados: JPG, PNG, GIF, WEBP. Tama\u00f1o m\u00e1ximo: 10MB"
                                 />
                                 {imagePreview && (
                                     <p className={fieldHint}>
@@ -547,7 +547,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     </div>
 
                     <div className="md:col-span-2">
-                        <label className={fieldLabel}>Descripcion</label>
+                        <label className={fieldLabel}>{'Descripci\u00f3n'}</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -588,7 +588,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                             />
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Campos de configuracion (no sensibles)</span>
+                                <span>Campos de {'configuraci\u00f3n'} (no sensibles)</span>
                             </p>
                         </div>
 
@@ -620,7 +620,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 <SectionCard icon={GlobeAltIcon} title="URLs del API">
                     <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                         <div>
-                            <label className={fieldLabel}>URL de Produccion</label>
+                            <label className={fieldLabel}>URL de {'Producci\u00f3n'}</label>
                             <input
                                 type="url"
                                 value={formData.base_url}
@@ -631,7 +631,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                             />
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>URL base del API en produccion</span>
+                                <span>URL base del API en {'producci\u00f3n'}</span>
                             </p>
                         </div>
                         <div>
@@ -653,14 +653,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </SectionCard>
             )}
 
-            <SectionCard icon={DocumentTextIcon} title="Instrucciones de Configuracion" bg="#ffffff">
+            <SectionCard icon={DocumentTextIcon} title="Instrucciones de Configuraci\u00f3n" bg="#ffffff">
                 <textarea
                     value={formData.setup_instructions}
                     onChange={(e) => setFormData({ ...formData, setup_instructions: e.target.value })}
                     rows={6}
                     className={inputCls}
                     style={{ borderColor: INPUT_BORDER }}
-                    placeholder="Pasos para configurar esta integracion:&#10;&#10;1. Ve a...&#10;2. Configura...&#10;3. Copia..."
+                    placeholder="Pasos para configurar esta integraci\u00f3n:&#10;&#10;1. Ve a...&#10;2. Configura...&#10;3. Copia..."
                 />
                 <p className={fieldHint}>
                     <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -749,7 +749,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         readOnly={!showPlatformCredentials}
                         rows={6}
                         className={`${jsonCls} ${showPlatformCredentials ? '' : 'text-gray-500 cursor-default'}`}
-                        placeholder={showPlatformCredentials ? '{\n  "api_key": "tu-api-key-aqui"\n}' : ''}
+                        placeholder={showPlatformCredentials ? '{\n  "api_key": "tu-api-key-aqu\u00ed"\n}' : ''}
                         spellCheck={false}
                     />
                     <p className={fieldHint}>
@@ -782,7 +782,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         {formData.is_active ? 'Activo' : 'Desactivado'}
                     </span>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
-                        {formData.is_active ? 'Este tipo de integracion esta disponible para los negocios.' : 'Este tipo de integracion esta oculto para los negocios.'}
+                        {formData.is_active ? 'Este tipo de integraci\u00f3n est\u00e1 disponible para los negocios.' : 'Este tipo de integraci\u00f3n esta oculto para los negocios.'}
                     </p>
                 </div>
             </div>

@@ -41,7 +41,7 @@ export function ProductMatchRulesCard({ integrationId, businessId, channelName }
             setConfig(res.data);
             setRule(res.data.rules[0] ?? null);
         } else {
-            setMessage({ tone: 'error', text: res?.message || 'No se pudo cargar la configuracion de match' });
+            setMessage({ tone: 'error', text: res?.message || 'No se pudo cargar la configuración de match' });
         }
         setLoading(false);
     }, [integrationId, businessId]);
@@ -104,7 +104,7 @@ export function ProductMatchRulesCard({ integrationId, businessId, channelName }
     if (!config) {
         return (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-                {message?.text || 'No se pudo cargar la configuracion de match'}
+                {message?.text || 'No se pudo cargar la configuración de match'}
             </div>
         );
     }
@@ -166,7 +166,7 @@ export function ProductMatchRulesCard({ integrationId, businessId, channelName }
 
             <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                    {config.is_override ? 'Configuracion propia de esta integracion' : 'Usando el valor por defecto del canal'}
+                    {config.is_override ? 'Configuración propia de esta integración' : 'Usando el valor por defecto del canal'}
                 </span>
                 <div className="flex gap-2">
                     <button
