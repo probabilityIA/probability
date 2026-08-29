@@ -343,7 +343,7 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
               type="text"
               value={phoneSearch}
               onChange={(e) => setPhoneSearch(e.target.value)}
-              placeholder="Buscar por telefono..."
+              placeholder="Buscar por tel\u00e9fono..."
               className="w-full px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500"
             />
             <select
@@ -353,7 +353,7 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
             >
               <option value="">Todos los estados</option>
               <option value="START">Inicio</option>
-              <option value="AWAITING_CONFIRMATION">Esperando confirmacion</option>
+              <option value="AWAITING_CONFIRMATION">Esperando {'confirmaci\u00f3n'}</option>
               <option value="COMPLETED">Completada</option>
             </select>
           </div>

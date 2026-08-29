@@ -166,7 +166,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                 <th className="text-left py-2 px-2 font-medium text-white">Orden</th>
                 <th className="text-left py-2 px-2 font-medium text-white">Plantilla</th>
                 <th className="text-center py-2 px-2 font-medium text-white">Estado</th>
-                <th className="text-center py-2 px-2 font-medium text-white">Direccion</th>
+                <th className="text-center py-2 px-2 font-medium text-white">Dirección</th>
               </tr>
             </thead>
             <tbody>
