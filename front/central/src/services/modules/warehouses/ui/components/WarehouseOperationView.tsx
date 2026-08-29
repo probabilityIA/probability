@@ -329,7 +329,7 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                                         <rect x={2} y={(selectedRack.levels || []).length * 44 + 6} width={196} height={5} fill="#475569" />
                                     </svg>
                                 )}
-                                <p className="text-[10px] text-gray-400">Vista de frente (nivel mas alto arriba). Click en una ubicacion para ver su stock.</p>
+                                <p className="text-[10px] text-gray-400">Vista de frente (nivel más alto arriba). Click en una ubicación para ver su stock.</p>
                             </div>
                         )}
                     </div>

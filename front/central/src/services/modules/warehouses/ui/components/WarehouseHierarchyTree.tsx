@@ -174,7 +174,7 @@ export default function WarehouseHierarchyTree({ zones, onCreateChild, onEdit, o
     if (zones.length === 0) {
         return (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
-                <p className="text-gray-500 dark:text-gray-400 mb-4 text-sm">Esta bodega aun no tiene jerarquia configurada.</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-4 text-sm">Esta bodega aún no tiene jerarquia configurada.</p>
                 {canEdit && (
                     <button
                         onClick={() => onCreateChild?.('root', null)}

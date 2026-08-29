@@ -129,7 +129,7 @@ export default function HierarchyNodeModal({ warehouseId, businessId, mode, type
                 {type === 'zone' && (
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Proposito</label>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Propósito</label>
                             <select
                                 value={form.purpose}
                                 onChange={(e) => handleChange('purpose', e.target.value)}

@@ -35,7 +35,7 @@ const TYPE_LABEL: Record<LayoutRefType, string> = {
     aisle: 'Pasillo',
     rack: 'Rack',
     level: 'Nivel',
-    location: 'Ubicacion',
+    location: 'Ubicaci\u00f3n',
     wall: 'Muro',
     dock: 'Muelle',
     label: 'Texto',
@@ -633,7 +633,7 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                                             <rect x={2} y={rackDetail.levels.length * 44 + 6} width={196} height={5} fill="#475569" />
                                         </svg>
                                     )}
-                                    <p className="text-[10px] text-gray-400 mt-1">Vista de frente (nivel mas alto arriba)</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">Vista de frente (nivel {'m\u00e1s'} alto arriba)</p>
                                 </div>
                             )}
                             <button className="w-full px-2 py-1 rounded bg-rose-600 text-white" onClick={() => removeNode(selected.node_id)}>

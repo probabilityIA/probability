@@ -252,7 +252,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                 <div className="space-y-5">
 
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Informacion basica</h3>
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{'Informaci\u00f3n'} {'b\u00e1sica'}</h3>
                         <div>
                             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
                                 Nombre <span className="text-red-500">*</span>
@@ -325,7 +325,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Bodega principal</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Por defecto para nuevas ordenes</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Por defecto para nuevas {'\u00f3rdenes'}</p>
                             </div>
                             <button
                                 type="button"
@@ -357,10 +357,10 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                 <div className="space-y-4">
 
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Direccion</h3>
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{'Direcci\u00f3n'}</h3>
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Direccion</label>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Direcci\u00f3n'}</label>
                                 <AddressAutocomplete
                                     value={formData.address}
                                     onChange={(val) => handleChange('address', val)}
@@ -401,7 +401,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Pais</label>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Pa\u00eds'}</label>
                                     <Input
                                         type="text"
                                         value={formData.country}
@@ -458,7 +458,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Contacto</h3>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Telefono</label>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Tel\u00e9fono'}</label>
                                 <Input
                                     type="tel"
                                     value={formData.phone}
