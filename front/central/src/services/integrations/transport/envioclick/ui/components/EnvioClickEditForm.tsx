@@ -96,10 +96,10 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
             if (result.success) {
                 showToast('Conexion exitosa con EnvioClick', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al probar conexion'));
+            setError(getActionError(err, 'Error al probar conexión'));
             showToast('Error al conectar con EnvioClick: ' + err.message, 'error');
         } finally {
             setTestingConnection(false);
@@ -129,10 +129,10 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                 showToast('Integracion EnvioClick actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al actualizar integracion'));
+            setError(getActionError(err, 'Error al actualizar integración'));
             showToast('Error al actualizar integracion EnvioClick', 'error');
         } finally {
             setLoading(false);
@@ -185,7 +185,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -221,7 +221,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
+                            <span>El negocio no puede ser modificado después de la creación</span>
                         </p>
                     </div>
                 )}
