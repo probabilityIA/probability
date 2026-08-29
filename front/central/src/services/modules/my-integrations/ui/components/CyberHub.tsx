@@ -81,7 +81,7 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
     const statusText = mode === 'inventory'
         ? 'Enviando stock a los canales...'
         : mode === 'products'
-            ? 'Recibiendo catalogos de los canales...'
+            ? 'Recibiendo catálogos de los canales...'
             : finished
                 ? 'Sincronización completada'
                 : '';
@@ -241,7 +241,7 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                             disabled={running || (!vaAlInforme && !onSyncClick && !canRun)}
                             title={
                                 environment === 'products'
-                                    ? 'Iniciar comparacion de productos'
+                                    ? 'Iniciar comparación de productos'
                                     : environment === 'inventory'
                                         ? 'Comparar el stock de cada canal contra Probability'
                                         : environment === 'data'

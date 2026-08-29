@@ -164,7 +164,7 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
                                 : environment === 'inventory'
                                     ? 'Compara el stock de cada canal contra Probability antes de enviarlo.'
                                     : environment === 'orders_compare'
-                                        ? 'Cruza las órdenes del canal contra las de Probability y crea aca las que faltan.'
+                                        ? 'Cruza las órdenes del canal contra las de Probability y crea acá las que faltan.'
                                         : 'Facturación desde el hub: próximamente.'}
                     </p>
                 )}

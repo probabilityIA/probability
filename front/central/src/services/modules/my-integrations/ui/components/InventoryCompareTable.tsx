@@ -45,9 +45,9 @@ function hora(iso: string) {
 }
 
 function fechaGuardada(iso: string) {
-    if (!iso) return 'de una comparacion anterior';
+    if (!iso) return 'de una comparaci\u00f3n anterior';
     const fecha = new Date(iso);
-    if (Number.isNaN(fecha.getTime()) || fecha.getFullYear() < 2000) return 'de una comparacion anterior';
+    if (Number.isNaN(fecha.getTime()) || fecha.getFullYear() < 2000) return 'de una comparaci\u00f3n anterior';
     const minutos = Math.floor((Date.now() - fecha.getTime()) / 60000);
     if (minutos < 1) return 'de hace un momento';
     if (minutos < 60) return `de hace ${minutos} min`;
@@ -144,7 +144,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
             setSeleccion(new Set());
         } catch (e) {
             setDatos(null);
-            setError(e instanceof Error ? e.message : 'No se pudo leer la \u00faltima comparacion guardada');
+            setError(e instanceof Error ? e.message : 'No se pudo leer la \u00faltima comparaci\u00f3n guardada');
         } finally {
             setCargando(false);
         }
@@ -268,7 +268,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     }`}
                 >
                     <Filter size={11} />
-                    {compacto ? 'Solo diferentes' : 'Solo los que no estan iguales'}
+                    {compacto ? 'Solo diferentes' : 'Solo los que no est\u00e1n iguales'}
                 </button>
 
                 <button
@@ -297,13 +297,13 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     {guardado ? (
                         <span
                             className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 font-bold text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/25 dark:text-amber-200"
-                            title="Estos n\u00fameros salen de la \u00faltima comparacion guardada, no se le pregunto al canal ahora"
+                            title="Estos n\u00fameros salen de la \u00faltima comparaci\u00f3n guardada, no se le pregunto al canal ahora"
                         >
                             <History size={11} />
                             Foto guardada {fechaGuardada(datos.checked_at)} · vuelve a comparar para confirmar
                         </span>
                     ) : (
-                        <span className="text-gray-400">Stock del canal leido a las {hora(datos.checked_at)}</span>
+                        <span className="text-gray-400">Stock del canal {'le\u00eddo'} a las {hora(datos.checked_at)}</span>
                     )}
                 </div>
             )}
@@ -421,7 +421,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     <p className="flex items-center justify-center gap-2 py-10 text-[12px] text-gray-500">
                         <Loader2 size={14} className="animate-spin" />
                         {guardado
-                            ? 'Leyendo la \u00faltima comparacion guardada'
+                            ? 'Leyendo la \u00faltima comparaci\u00f3n guardada'
                             : `Preguntandole a ${canal?.name ?? 'el canal'} cuanto stock tiene ahora mismo`}
                     </p>
                 )}
@@ -436,12 +436,12 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                 {!cargando && !error && visibles.length === 0 && (
                     <p className="px-3 py-10 text-center text-[12px] italic text-gray-400">
                         {filas.length === 0 && guardado && (datos?.totals.total ?? 0) === 0
-                            ? 'Todav\u00eda no hay una comparacion guardada de este canal. Dale a "Comparar ahora" para preguntarle su stock.'
+                            ? 'Todav\u00eda no hay una comparaci\u00f3n guardada de este canal. Dale a "Comparar ahora" para preguntarle su stock.'
                             : filas.length === 0
                                 ? 'Este canal no tiene productos asociados para comparar.'
                                 : soloCambios
                                     ? 'En este grupo todo esta igual, no hay nada que enviar.'
-                                    : 'Ningun producto de este grupo coincide con la b\u00fasqueda.'}
+                                    : 'Ning\u00fan producto de este grupo coincide con la b\u00fasqueda.'}
                     </p>
                 )}
             </div>

@@ -364,7 +364,7 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
 
                 {!loading && rows.length === 0 && (
                     <p className="px-3 py-8 text-center text-[12px] italic text-gray-400">
-                        {hayFiltros ? 'Ningun producto cumple los filtros elegidos' : 'Sin productos'}
+                        {hayFiltros ? 'Ningún producto cumple los filtros elegidos' : 'Sin productos'}
                     </p>
                 )}
             </div>

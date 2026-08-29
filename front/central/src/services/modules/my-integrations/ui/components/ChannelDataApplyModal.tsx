@@ -134,7 +134,7 @@ export function ChannelDataApplyModal({ objetivo, businessId, onClose, onApplied
                             Se escribe en los productos de Probability con lo que dice{' '}
                             <span className="font-semibold">{objetivo.cell.integration_name}</span>. El canal no se modifica.
                             {objetivo.mode === 'fill_empty'
-                                ? ' Solo se tocan los productos que hoy tienen ese campo vacio.'
+                                ? ' Solo se tocan los productos que hoy tienen ese campo vacío.'
                                 : ' Se reemplaza el dato actual, incluso donde ya hay algo escrito.'}
                         </p>
                     </div>
@@ -197,7 +197,7 @@ export function ChannelDataApplyModal({ objetivo, businessId, onClose, onApplied
                                             <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">
                                                 <th className="px-3 py-2">SKU</th>
                                                 <th className="px-3 py-2">Hoy en Probability</th>
-                                                <th className="px-3 py-2">Quedaria</th>
+                                                <th className="px-3 py-2">Quedaría</th>
                                             </tr>
                                         </thead>
                                         <tbody>

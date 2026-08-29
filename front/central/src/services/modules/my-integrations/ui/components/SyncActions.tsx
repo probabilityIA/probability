@@ -28,13 +28,13 @@ const ACTIONS: EnvironmentAction[] = [
         key: 'inventory',
         label: 'Sincronizar inventario',
         icon: RefreshCw,
-        hint: 'Cuanto stock tiene cada canal y cual quedaria distinto al de Probability',
+        hint: 'Cuanto stock tiene cada canal y cual quedaría distinto al de Probability',
     },
     {
         key: 'orders_compare',
         label: 'Comparar órdenes',
         icon: ClipboardList,
-        hint: 'Que orden existe en el canal y no en Probability, y crearla aca',
+        hint: 'Que orden existe en el canal y no en Probability, y crearla acá',
     },
     {
         key: 'invoicing',
@@ -50,7 +50,7 @@ const VIEWS: { key: HubView; label: string; icon: LucideIcon; hint: string }[] =
         key: 'diagrama',
         label: 'Diagrama',
         icon: Share2,
-        hint: 'Ver tus canales conectados al nucleo, con el resumen de cada uno',
+        hint: 'Ver tus canales conectados al núcleo, con el resumen de cada uno',
     },
     {
         key: 'informe',

@@ -245,7 +245,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                                 onClick={() => setComparandoInventario(true)}
                                 disabled={!inventoryEnabled || running}
                                 title={inventoryEnabled
-                                    ? 'Ver que cambiaria antes de enviar el stock'
+                                    ? 'Ver que cambiar\u00eda antes de enviar el stock'
                                     : 'Activa la sincronizaci\u00f3n para poder comparar'}
                                 className="flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10.5px] font-bold text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-violet-500/40 dark:bg-violet-900/30 dark:text-violet-300"
                             >
@@ -405,7 +405,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                             </span>
                         )}
                         {lastRunTime && (
-                            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. comparacion {lastRunTime}</span>
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. {'comparaci\u00f3n'} {lastRunTime}</span>
                         )}
                     </div>
                 ) : envView === 'data' ? (

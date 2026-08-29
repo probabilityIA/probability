@@ -440,7 +440,7 @@ export function SyncDetailPanel({
                                 ? `Sin resultados aqui. "${term}" aparece en: ${elsewhere.map(group => groupLabel(group, providerLabel)).join(', ')}`
                                 : `Sin resultados para "${term}"`
                             : staleDetail
-                                ? `Los ${groupTotal} productos son de una comparacion anterior. Vuelve a comparar para ver el listado.`
+                                ? `Los ${groupTotal} productos son de una comparaci\u00f3n anterior. Vuelve a comparar para ver el listado.`
                                 : 'Sin productos en este grupo'}
                     </p>
                 )}

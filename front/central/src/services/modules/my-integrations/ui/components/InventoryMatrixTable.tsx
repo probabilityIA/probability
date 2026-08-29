@@ -93,10 +93,10 @@ function EstadoFoto({
             onClick={onComparar}
             disabled={ocupado}
             title={!guardada
-                ? 'Recien consultado. Clic para volver a preguntar'
+                ? 'Reci\u00e9n consultado. Clic para volver a preguntar'
                 : cuando === ''
-                    ? 'Este canal no tiene comparacion guardada. Clic para preguntarle su stock ahora'
-                    : 'Estos n\u00fameros son de la \u00faltima comparacion guardada. Clic para preguntarle el stock a este canal ahora'}
+                    ? 'Este canal no tiene comparaci\u00f3n guardada. Clic para preguntarle su stock ahora'
+                    : 'Estos n\u00fameros son de la \u00faltima comparaci\u00f3n guardada. Clic para preguntarle el stock a este canal ahora'}
             className={`mx-auto mt-1 flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9.5px] font-bold transition-colors disabled:opacity-40 ${
                 !guardada
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-900/25 dark:text-emerald-200'
@@ -106,7 +106,7 @@ function EstadoFoto({
             }`}
         >
             {guardada ? <History size={9} /> : <RefreshCw size={9} />}
-            {!guardada ? 'recien leido' : cuando === '' ? 'sin comparar' : `guardado ${cuando}`}
+            {!guardada ? 'reci\u00e9n le\u00eddo' : cuando === '' ? 'sin comparar' : `guardado ${cuando}`}
         </button>
     );
 }
@@ -137,7 +137,7 @@ function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: b
         return (
             <span
                 className="text-[10.5px] italic text-amber-600 dark:text-amber-400"
-                title="Esta publicado en este canal pero la comparacion no lo devolvio. Vuelve a comparar este canal"
+                title="Esta publicado en este canal pero la comparaci\u00f3n no lo devolvi\u00f3. Vuelve a comparar este canal"
             >
                 sin dato
             </span>
@@ -352,7 +352,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
             <p className="text-[12px] text-gray-500 dark:text-gray-400">
                 Una fila por producto. Se lee de izquierda a derecha: primero el ERP que te sirve de origen de inventario,
                 despues lo que tiene Probability, y despues cada canal de venta. Arranca con la
-                <span className="font-semibold text-amber-700 dark:text-amber-300"> {'\u00faltima'} comparacion guardada</span>, para no
+                <span className="font-semibold text-amber-700 dark:text-amber-300"> {'\u00faltima'} {'comparaci\u00f3n'} guardada</span>, para no
                 pegarle a la API de cada canal cada vez que abres. Usa el boton bajo cada canal para preguntarle su stock
                 ahora mismo. La flecha muestra en cuanto quedaria el canal si lo envias.
             </p>
@@ -396,7 +396,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                     {barriendo ? <Loader2 size={11} className="animate-spin" /> : <Filter size={11} />}
                     {barriendo
                         ? `Revisando grupo ${avanceBarrido.grupo} de ${avanceBarrido.grupos} · parar`
-                        : 'Solo los que no estan iguales'}
+                        : 'Solo los que no est\u00e1n iguales'}
                 </button>
 
                 {[...origenes, ...ventas].map(canal => (
@@ -419,7 +419,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                     {cargando ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
                     Comparar todos ahora
                 </button>
-                {leidoA && <span className="text-[11px] text-gray-400">Stock leido a las {leidoA}</span>}
+                {leidoA && <span className="text-[11px] text-gray-400">Stock {'le\u00eddo'} a las {leidoA}</span>}
             </div>
 
             <div className="min-h-0 flex-1 overflow-auto rounded-xl border" style={{ borderColor: CARD_BORDER }}>
@@ -531,7 +531,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                         <Loader2 size={14} className="animate-spin" />
                         {barriendo
                             ? `Revisando todo el catalogo, grupo ${avanceBarrido.grupo} de ${avanceBarrido.grupos}. Lo encontrado ya se ve arriba.`
-                            : 'Preguntandole a cada canal cuanto stock tiene ahora mismo'}
+                            : 'Pregunt\u00e1ndole a cada canal cuanto stock tiene ahora mismo'}
                     </p>
                 )}
 
@@ -545,7 +545,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                 {!cargando && !error && visibles.length === 0 && (
                     <p className="px-3 py-10 text-center text-[12px] italic text-gray-400">
                         {soloCambios
-                            ? 'En este grupo todos los productos ya estan iguales en sus canales.'
+                            ? 'En este grupo todos los productos ya est\u00e1n iguales en sus canales.'
                             : 'No hay productos en este grupo.'}
                     </p>
                 )}

@@ -257,7 +257,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                         backgroundColor: soloDiferencias ? ACCENT_SOFT : '#ffffff',
                         color: soloDiferencias ? ACCENT : '#4b5563',
                     }}
-                    title="Ocultar las órdenes que ya estan iguales en los dos lados"
+                    title="Ocultar las órdenes que ya están iguales en los dos lados"
                 >
                     <Filter size={13} />
                     Solo diferencias
@@ -284,7 +284,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11.5px] text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-900/25 dark:text-emerald-100">
                     <p className="font-semibold">
                         {resultado.queued.length} orden{resultado.queued.length === 1 ? '' : 'es'} enviada{resultado.queued.length === 1 ? '' : 's'} a crear.
-                        {resultado.skipped.length > 0 && ` ${resultado.skipped.length} ya existian.`}
+                        {resultado.skipped.length > 0 && ` ${resultado.skipped.length} ya existían.`}
                     </p>
                     {resultado.note && <p className="mt-0.5">{resultado.note}</p>}
                     {resultado.failed && Object.keys(resultado.failed).length > 0 && (
