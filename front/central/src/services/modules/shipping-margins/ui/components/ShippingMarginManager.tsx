@@ -53,11 +53,11 @@ export default function ShippingMarginManager({ selectedBusinessId = null }: Pro
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Margenes de envio</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Márgenes de envío</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         {tab === 'config'
-                            ? 'Configura los margenes (flete, seguro, COD) por transportadora aplicados a cada guia'
-                            : 'Reporte de ganancias por guia (precio cobrado al cliente vs costo real del carrier)'}
+                            ? 'Configura los márgenes (flete, seguro, COD) por transportadora aplicados a cada guía'
+                            : 'Reporte de ganancias por guía (precio cobrado al cliente vs costo real del carrier)'}
                     </p>
                 </div>
                 {tab === 'config' && !requiresBusinessSelection && (

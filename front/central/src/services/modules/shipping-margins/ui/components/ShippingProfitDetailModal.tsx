@@ -64,7 +64,7 @@ export default function ShippingProfitDetailModal({ isOpen, onClose, carrier, ca
     const totalPages = data?.total_pages ?? 0;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="6xl" title={`Detalle de guias - ${carrierLabel}`}>
+        <Modal isOpen={isOpen} onClose={onClose} size="6xl" title={`Detalle de guías - ${carrierLabel}`}>
             <div className="space-y-4">
                 <div className="text-sm text-gray-600 dark:text-gray-300">
                     Rango: <span className="font-medium">{from}</span> a <span className="font-medium">{to}</span>
@@ -83,7 +83,7 @@ export default function ShippingProfitDetailModal({ isOpen, onClose, carrier, ca
                             <tr>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Fecha</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Orden</th>
-                                <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guia</th>
+                                <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guía</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Tipo</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Estado</th>
                                 <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Cobrado</th>
@@ -108,7 +108,7 @@ export default function ShippingProfitDetailModal({ isOpen, onClose, carrier, ca
                                                     ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                                                     : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                                             }`}>
-                                                {r.service_type === 'cod' ? 'COD' : 'Guia'}
+                                                {r.service_type === 'cod' ? 'COD' : 'Guía'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.status}</td>
@@ -119,7 +119,7 @@ export default function ShippingProfitDetailModal({ isOpen, onClose, carrier, ca
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={8} className="text-center py-10 text-gray-400">Sin guias en el rango</td>
+                                    <td colSpan={8} className="text-center py-10 text-gray-400">Sin guías en el rango</td>
                                 </tr>
                             )}
                         </tbody>
