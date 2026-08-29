@@ -131,8 +131,8 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                             <FileText size={20} className="text-indigo-600 dark:text-indigo-300" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Manifiesto de Recoleccion</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Selecciona los envios pendientes a entregar al transportador</p>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Manifiesto de Recolección</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Selecciona los envíos pendientes a entregar al transportador</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/60 dark:hover:bg-gray-700 text-gray-500">
@@ -165,7 +165,7 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Buscar en pagina actual..."
+                            placeholder="Buscar en página actual..."
                             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                     </div>
@@ -189,11 +189,11 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                             <RefreshCw size={18} className="animate-spin" /> Cargando...
                         </div>
                     ) : !businessId ? (
-                        <div className="text-center py-16 text-gray-400 text-sm">Selecciona un negocio para ver los envios pendientes.</div>
+                        <div className="text-center py-16 text-gray-400 text-sm">Selecciona un negocio para ver los envíos pendientes.</div>
                     ) : carriers.length === 0 ? (
-                        <div className="text-center py-16 text-gray-400 text-sm">No hay envios pendientes de recoleccion.</div>
+                        <div className="text-center py-16 text-gray-400 text-sm">No hay envíos pendientes de recolección.</div>
                     ) : filteredRows.length === 0 ? (
-                        <div className="text-center py-16 text-gray-400 text-sm">Sin resultados para esta pagina.</div>
+                        <div className="text-center py-16 text-gray-400 text-sm">Sin resultados para esta página.</div>
                     ) : (
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50 dark:bg-gray-700/40 sticky top-0">
@@ -201,12 +201,12 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                                     <th className="px-3 py-2 w-10 text-left">
                                         <input type="checkbox" checked={allPageSelected} onChange={togglePage} className="rounded" />
                                     </th>
-                                    <th className="px-2 py-2 text-left font-bold">Guia</th>
+                                    <th className="px-2 py-2 text-left font-bold">Guía</th>
                                     <th className="px-2 py-2 text-left font-bold">Orden</th>
                                     <th className="px-2 py-2 text-left font-bold">Cliente</th>
                                     <th className="px-2 py-2 text-left font-bold">Ciudad</th>
                                     <th className="px-2 py-2 text-left font-bold">F. Orden</th>
-                                    <th className="px-2 py-2 text-left font-bold">F. Guia</th>
+                                    <th className="px-2 py-2 text-left font-bold">F. Guía</th>
                                     <th className="px-2 py-2 text-left font-bold">Estados</th>
                                 </tr>
                             </thead>
@@ -225,9 +225,9 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                                         <td className="px-2 py-2">
                                             <div className="flex flex-col gap-0.5">
                                                 {s.tracking_number?.trim() ? (
-                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 truncate">Guia generada</span>
+                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 truncate">Guía generada</span>
                                                 ) : (
-                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 truncate">Sin guia</span>
+                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 truncate">Sin guía</span>
                                                 )}
                                                 <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 truncate">Ord: {s.order_status || '—'}</span>
                                             </div>
