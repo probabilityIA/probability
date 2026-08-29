@@ -23,7 +23,7 @@ export class ShippingConfigApiRepository implements IShippingConfigRepository {
         const response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers, cache: 'no-store' });
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error || data.message || 'Error en la configuracion de envios');
+            throw new Error(data.error || data.message || 'Error en la configuración de envíos');
         }
         return data.data as T;
     }
