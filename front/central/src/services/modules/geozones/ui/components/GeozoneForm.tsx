@@ -54,7 +54,7 @@ export default function GeozoneForm({ onSuccess, onCancel, businessId, contextLa
 
         const parent_id = parentIdRaw.trim() ? Number(parentIdRaw.trim()) : null;
         if (parentIdRaw.trim() && Number.isNaN(parent_id as number)) {
-            setError('parent_id debe ser un numero');
+            setError('parent_id debe ser un número');
             return;
         }
 
@@ -88,7 +88,7 @@ export default function GeozoneForm({ onSuccess, onCancel, businessId, contextLa
                     <input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Ej: Zona Norte Bogota"
+                        placeholder="Ej: Zona Norte Bogotá"
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                 </div>
@@ -104,11 +104,11 @@ export default function GeozoneForm({ onSuccess, onCancel, businessId, contextLa
                         <option value="locality">Localidad</option>
                         <option value="city">Municipio</option>
                         <option value="state">Departamento</option>
-                        <option value="country">Pais</option>
+                        <option value="country">País</option>
                     </select>
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Codigo (opcional)</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Código (opcional)</label>
                     <input
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
@@ -125,7 +125,7 @@ export default function GeozoneForm({ onSuccess, onCancel, businessId, contextLa
                 <input
                     value={parentIdRaw}
                     onChange={(e) => setParentIdRaw(e.target.value)}
-                    placeholder="Ej: 183 (Bogota DC ciudad)"
+                    placeholder="Ej: 183 (Bogotá DC ciudad)"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                 />
             </div>

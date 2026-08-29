@@ -63,7 +63,7 @@ export function DeliveryProbabilityByCarrier({ businessId, orderId }: Props) {
                         <li
                             key={r.carrier}
                             className="flex items-center gap-2 px-2 py-1.5 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
-                            title={r.stats?.geozone_name ? `Zona: ${r.stats.geozone_name} (${r.stats.total} envios)` : 'Sin muestra suficiente'}
+                            title={r.stats?.geozone_name ? `Zona: ${r.stats.geozone_name} (${r.stats.total} envíos)` : 'Sin muestra suficiente'}
                         >
                             <div className="w-7 h-7 rounded bg-gray-50 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {logo ? (

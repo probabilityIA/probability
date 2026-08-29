@@ -48,7 +48,7 @@ const typeLabel: Record<string, string> = {
     locality: 'Corregimiento',
     city: 'Municipio',
     state: 'Departamento',
-    country: 'Pais',
+    country: 'País',
 };
 
 const typeColor: Record<string, string> = {

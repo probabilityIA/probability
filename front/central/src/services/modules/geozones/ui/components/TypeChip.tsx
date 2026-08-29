@@ -3,7 +3,7 @@
 import { GeozoneType } from '../../domain/types';
 
 const STYLES: Record<GeozoneType, { bg: string; text: string; border: string; label: string; emoji: string }> = {
-    country:        { bg: 'bg-sky-100 dark:bg-sky-900/40',         text: 'text-sky-700 dark:text-sky-300',         border: 'border-sky-300 dark:border-sky-700',         label: 'Pais',          emoji: '🌎' },
+    country:        { bg: 'bg-sky-100 dark:bg-sky-900/40',         text: 'text-sky-700 dark:text-sky-300',         border: 'border-sky-300 dark:border-sky-700',         label: 'País',          emoji: '🌎' },
     state:          { bg: 'bg-violet-100 dark:bg-violet-900/40',   text: 'text-violet-700 dark:text-violet-300',   border: 'border-violet-300 dark:border-violet-700',   label: 'Departamento',  emoji: '🗺️' },
     city:           { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-700', label: 'Municipio',     emoji: '🏙️' },
     admin_district: { bg: 'bg-indigo-100 dark:bg-indigo-900/40',   text: 'text-indigo-700 dark:text-indigo-300',   border: 'border-indigo-300 dark:border-indigo-700',   label: 'Localidad',     emoji: '🏛️' },
