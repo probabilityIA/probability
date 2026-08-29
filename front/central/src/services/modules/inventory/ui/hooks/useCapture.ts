@@ -106,7 +106,7 @@ export function useSyncLogs(initial: GetSyncLogsParams = {}) {
             setTotal(r.total || 0);
             setTotalPages(r.total_pages || 1);
         } catch (e: any) {
-            setError(getActionError(e, 'Error al cargar logs de sincronizacion'));
+            setError(getActionError(e, 'Error al cargar logs de sincronización'));
         } finally {
             setLoading(false);
         }

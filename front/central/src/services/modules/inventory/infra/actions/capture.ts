@@ -131,7 +131,7 @@ export const inboundSyncAction = async (integrationId: number, data: InboundSync
         revalidateCapture();
         return { success: true as const, data: result };
     } catch (error: any) {
-        return { success: false as const, error: error.message || 'Error en sincronizacion entrante' };
+        return { success: false as const, error: error.message || 'Error en sincronización entrante' };
     }
 };
 

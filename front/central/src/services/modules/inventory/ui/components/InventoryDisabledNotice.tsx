@@ -11,11 +11,11 @@ export function InventoryDisabledNotice({ businessName }: InventoryDisabledNotic
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
             </svg>
             <div className="flex-1">
-                <p className="font-semibold text-amber-900 dark:text-amber-100">Modulo de inventario desactivado</p>
+                <p className="font-semibold text-amber-900 dark:text-amber-100">Módulo de inventario desactivado</p>
                 <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
                     {businessName
-                        ? `El negocio "${businessName}" no tiene activo el modulo de inventario.`
-                        : 'Este negocio no tiene activo el modulo de inventario.'}
+                        ? `El negocio "${businessName}" no tiene activo el módulo de inventario.`
+                        : 'Este negocio no tiene activo el módulo de inventario.'}
                     {' '}Las ordenes no afectan el stock y no se generan novedades de inventario.
                     Activalo desde Tus Integraciones -&gt; Modulos Internos.
                 </p>

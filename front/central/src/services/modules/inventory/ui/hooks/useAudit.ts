@@ -107,7 +107,7 @@ export function useCountLines(params: GetCountLinesParams) {
             setLines(r.data || []);
             setTotal(r.total || 0);
         } catch (e: any) {
-            setError(getActionError(e, 'Error al cargar lineas de conteo'));
+            setError(getActionError(e, 'Error al cargar líneas de conteo'));
         } finally {
             setLoading(false);
         }

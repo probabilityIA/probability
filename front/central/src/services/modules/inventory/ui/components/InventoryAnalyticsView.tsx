@@ -237,7 +237,7 @@ export default function InventoryAnalyticsView({ businessId }: Props) {
                     <thead>
                         <tr>
                             <th>Bodega</th>
-                            <th>Codigo</th>
+                            <th>Código</th>
                             <th>Productos con stock</th>
                             <th>Unidades totales</th>
                         </tr>

@@ -139,7 +139,7 @@ export default function MovementsByFamilyView({ businessId }: Props) {
                     <thead>
                         <tr>
                             <th className="text-left">Familia</th>
-                            <th className="text-left">Categoria</th>
+                            <th className="text-left">Categoría</th>
                             <th className="text-left">Marca</th>
                             <th className="text-center">Productos con mov.</th>
                             <th className="text-center w-12"></th>
@@ -204,7 +204,7 @@ export default function MovementsByFamilyView({ businessId }: Props) {
                                                     <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Tipo</th>
                                                     <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 text-center">Cantidad</th>
                                                     <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 text-center">Stock Total</th>
-                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Razon</th>
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Razón</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
