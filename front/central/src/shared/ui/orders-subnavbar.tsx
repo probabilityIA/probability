@@ -54,8 +54,8 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
             canViewShipments && { href: '/shipments/cod', label: 'Recaudo contra entrega', icon: '\u{1F4B5}' },
             canViewShipments && { href: '/shipments/quotes', label: 'Cotizaciones', icon: '\u{1F9FE}' },
         ].filter(Boolean) },
-        { section: 'CONFIGURACION', items: [
-            isSuperAdmin && { href: '/shipping-margins', label: 'Margenes de envio', icon: '\u{1F4B0}' },
+        { section: 'CONFIGURACIÓN', items: [
+            isSuperAdmin && { href: '/shipping-margins', label: 'Márgenes de envío', icon: '\u{1F4B0}' },
         ].filter(Boolean) },
     ];
 
