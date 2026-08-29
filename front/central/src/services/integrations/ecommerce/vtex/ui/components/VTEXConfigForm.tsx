@@ -216,7 +216,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
             if (result.success) {
                 showToast('Conexion exitosa con VTEX', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexi\u00f3n');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con VTEX');
@@ -276,10 +276,10 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
             if (res?.success !== false) {
                 showToast('Sincronizacion de ordenes iniciada', 'success');
             } else {
-                setErrorModal(res?.message || 'Error al sincronizar ordenes');
+                setErrorModal(res?.message || 'Error al sincronizar \u00f3rdenes');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al sincronizar ordenes');
+            setErrorModal(err.message || 'Error al sincronizar \u00f3rdenes');
         } finally {
             setSyncingOrders(false);
         }
@@ -319,7 +319,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 });
 
                 if (!response || response.success === false) {
-                    throw new Error(response?.message || 'Error al actualizar integracion');
+                    throw new Error(response?.message || 'Error al actualizar integraci\u00f3n');
                 }
                 showToast('Integracion VTEX actualizada', 'success');
                 onSuccess?.();
@@ -327,7 +327,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
             }
 
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integraci\u00f3n.');
                 setLoading(false);
                 return;
             }
@@ -353,10 +353,10 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 showToast('Integracion VTEX creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integraci\u00f3n');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al guardar la integracion de VTEX');
+            setErrorModal(err.message || 'Error al guardar la integraci\u00f3n de VTEX');
         } finally {
             setLoading(false);
         }
@@ -395,7 +395,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 </div>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuraci\u00f3n General">
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -412,7 +412,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta {'integraci\u00f3n'}</span>
                         </p>
                     </div>
 
@@ -466,7 +466,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                                <span>Selecciona el negocio al que pertenecera esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}
@@ -474,7 +474,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                     {isEdit && (
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
+                            <span>El negocio no puede ser modificado {'despu\u00e9s'} de la {'creaci\u00f3n'}</span>
                         </p>
                     )}
                 </div>
@@ -498,7 +498,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                             />
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Lo encuentras en VTEX: Configuracion de la cuenta &gt; Claves de API</span>
+                                <span>Lo encuentras en VTEX: {'Configuraci\u00f3n'} de la cuenta &gt; Claves de API</span>
                             </p>
                         </div>
                         <div>
@@ -552,10 +552,10 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                         </h4>
                         <ol className="text-[11px] text-gray-600 dark:text-gray-300 space-y-1 list-decimal list-inside ml-1">
                             <li>Ingresa al <strong>Admin de VTEX</strong> de tu tienda</li>
-                            <li>Ve a <strong>Configuracion de la cuenta</strong> y luego a <strong>Claves de API</strong></li>
+                            <li>Ve a <strong>{'Configuraci\u00f3n'} de la cuenta</strong> y luego a <strong>Claves de API</strong></li>
                             <li>Crea una nueva clave y copia el valor de <strong>App Key</strong></li>
                             <li>Copia el valor de <strong>App Token</strong> (solo se muestra una vez)</li>
-                            <li>Asigna a la clave los roles de <strong>OMS</strong>, <strong>Catalogo</strong> y <strong>Logistica</strong></li>
+                            <li>Asigna a la clave los roles de <strong>OMS</strong>, <strong>Catalogo</strong> y <strong>{'Log\u00edstica'}</strong></li>
                         </ol>
                     </div>
                 </div>
@@ -569,7 +569,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 />
             )}
 
-            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizacion">
+            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizaci\u00f3n">
                 <div className="rounded-lg bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700" style={{ border: `1px solid ${INPUT_BORDER}` }}>
                     <ToggleRow
                         icon={<ArrowPathIcon className="w-4 h-4" style={{ color: GREEN }} />}
@@ -581,14 +581,14 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                     <ToggleRow
                         icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar estados hacia VTEX"
-                        subtitle="Actualiza el estado de las ordenes en VTEX cuando cambian en Probability"
+                        subtitle="Actualiza el estado de las \u00f3rdenes en VTEX cuando cambian en Probability"
                         checked={statusSyncEnabled}
                         onToggle={() => setStatusSyncEnabled(!statusSyncEnabled)}
                     />
                     <ToggleRow
                         icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Recibir estados desde VTEX"
-                        subtitle="Deja que VTEX mueva el estado de las ordenes aca. Las cancelaciones entran igual"
+                        subtitle="Deja que VTEX mueva el estado de las \u00f3rdenes aca. Las cancelaciones entran igual"
                         checked={statusInboundEnabled}
                         onToggle={() => setStatusInboundEnabled(!statusInboundEnabled)}
                     />
@@ -614,8 +614,8 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                         {!inventorySyncSaved && (
                             <p className="mt-3 text-[11px] text-amber-600 dark:text-amber-500">
                                 {inventorySyncEnabled
-                                    ? 'Activaste el toggle de inventario pero aun no guardaste. Guarda la integracion para poder sincronizar ahora.'
-                                    : 'Activa el toggle de inventario y guarda la integracion para poder sincronizar ahora.'}
+                                    ? 'Activaste el toggle de inventario pero a\u00fan no guardaste. Guarda la integraci\u00f3n para poder sincronizar ahora.'
+                                    : 'Activa el toggle de inventario y guarda la integraci\u00f3n para poder sincronizar ahora.'}
                             </p>
                         )}
                         <button
@@ -655,7 +655,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
             )}
 
             {isEdit && integrationId && (
-                <SectionCard icon={<ShoppingBagIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizar ordenes">
+                <SectionCard icon={<ShoppingBagIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizar \u00f3rdenes">
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
                         Trae las ordenes de VTEX del periodo elegido. Los estados de VTEX (ready-for-handling, payment-pending, canceled) se traducen automaticamente a los de Probability.
                     </p>
@@ -734,7 +734,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                     ) : (
                         <>
                             <CheckBadgeIcon className="w-4 h-4" />
-                            {isEdit ? 'Guardar Integracion' : 'Crear Integracion'}
+                            {isEdit ? 'Guardar Integraci\u00f3n' : 'Crear Integraci\u00f3n'}
                         </>
                     )}
                 </button>
