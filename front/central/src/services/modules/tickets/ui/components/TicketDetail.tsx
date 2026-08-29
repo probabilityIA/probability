@@ -285,7 +285,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
                         </div>
                     ))}
                     {!loading && comments.length === 0 && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Sin comentarios todavia</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Sin comentarios todavía</div>
                     )}
                 </div>
                 <div className="space-y-2">

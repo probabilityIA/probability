@@ -69,9 +69,9 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
     }, [isSuperAdmin]);
 
     const availableFilters: FilterOption[] = useMemo(() => [
-        { key: 'search', label: 'Buscar', type: 'text', placeholder: 'titulo, codigo, descripcion...' },
+        { key: 'search', label: 'Buscar', type: 'text', placeholder: 'título, código, descripción...' },
         { key: 'status', label: 'Estado', type: 'select', options: TICKET_STATUSES.map(s => ({ value: s, label: STATUS_META[s].label })) },
-        { key: 'area', label: 'Area', type: 'select', options: TICKET_AREAS.map(a => ({ value: a, label: AREA_META[a].label })) },
+        { key: 'area', label: 'Área', type: 'select', options: TICKET_AREAS.map(a => ({ value: a, label: AREA_META[a].label })) },
         { key: 'priority', label: 'Prioridad', type: 'select', options: TICKET_PRIORITIES.map(p => ({ value: p, label: PRIORITY_META[p].label })) },
         { key: 'type', label: 'Tipo', type: 'select', options: TICKET_TYPES.map(t => ({ value: t, label: TYPE_META[t].label })) },
         { key: 'source', label: 'Origen', type: 'select', options: [{ value: 'internal', label: 'Interno' }, { value: 'business', label: 'Negocio' }] },
@@ -83,7 +83,7 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
         const out: ActiveFilter[] = [];
         if (filters.search) out.push({ key: 'search', label: 'Buscar', value: filters.search, type: 'text' });
         if (filters.status) out.push({ key: 'status', label: 'Estado', value: STATUS_META[filters.status as keyof typeof STATUS_META]?.label || filters.status, type: 'select' });
-        if (filters.area) out.push({ key: 'area', label: 'Area', value: AREA_META[filters.area as keyof typeof AREA_META]?.label || filters.area, type: 'select' });
+        if (filters.area) out.push({ key: 'area', label: 'Área', value: AREA_META[filters.area as keyof typeof AREA_META]?.label || filters.area, type: 'select' });
         if (filters.priority) out.push({ key: 'priority', label: 'Prioridad', value: PRIORITY_META[filters.priority as keyof typeof PRIORITY_META]?.label || filters.priority, type: 'select' });
         if (filters.type) out.push({ key: 'type', label: 'Tipo', value: TYPE_META[filters.type as keyof typeof TYPE_META]?.label || filters.type, type: 'select' });
         if (filters.source) out.push({ key: 'source', label: 'Origen', value: filters.source === 'internal' ? 'Interno' : 'Negocio', type: 'select' });
@@ -147,7 +147,7 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
             const updated = await changeTicketAreaAction(id, area);
             updateLocalTicket(updated as Ticket);
         } catch (e) {
-            console.error('cambio de area fallo', e);
+            console.error('cambio de área fallo', e);
         } finally {
             setUpdatingId(null);
         }
@@ -240,13 +240,13 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
                     sortOrder={sortOrder}
                     onSortChange={(by, order) => { setSortBy(by); setSortOrder(order); setPage(1); }}
                     sortOptions={[
-                        { value: 'created_at', label: 'Ordenar por fecha de creacion' },
-                        { value: 'updated_at', label: 'Ordenar por ultima actualizacion' },
+                        { value: 'created_at', label: 'Ordenar por fecha de creación' },
+                        { value: 'updated_at', label: 'Ordenar por última actualización' },
                         { value: 'priority', label: 'Ordenar por prioridad' },
                         { value: 'status', label: 'Ordenar por estado' },
-                        { value: 'area', label: 'Ordenar por area' },
-                        { value: 'code', label: 'Ordenar por codigo' },
-                        { value: 'due_date', label: 'Ordenar por fecha limite' },
+                        { value: 'area', label: 'Ordenar por área' },
+                        { value: 'code', label: 'Ordenar por código' },
+                        { value: 'due_date', label: 'Ordenar por fecha límite' },
                     ]}
                     className="!p-0 !border-0 !shadow-none"
                 />
@@ -257,10 +257,10 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                         <thead className="bg-gray-50 dark:bg-gray-900">
                             <tr className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                <th className="px-4 py-3">Codigo</th>
-                                <th className="px-4 py-3">Titulo</th>
+                                <th className="px-4 py-3">Código</th>
+                                <th className="px-4 py-3">Título</th>
                                 <th className="px-4 py-3">Tipo</th>
-                                <th className="px-4 py-3">Area</th>
+                                <th className="px-4 py-3">Área</th>
                                 <th className="px-4 py-3">Prioridad</th>
                                 <th className="px-4 py-3">Estado</th>
                                 <th className="px-4 py-3">Asignado</th>
