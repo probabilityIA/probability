@@ -227,15 +227,15 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
         const errs: Record<string, string> = {};
         if (!firstName.trim()) errs.firstName = 'Escribe el nombre del cliente';
         if (!lastName.trim()) errs.lastName = 'Escribe el apellido del cliente';
-        if (!phone.trim()) errs.phone = 'Escribe el telefono del cliente';
-        else if (!/^[\d\s+\-()]{7,}$/.test(phone.trim())) errs.phone = 'El telefono no parece valido';
+        if (!phone.trim()) errs.phone = 'Escribe el tel\u00e9fono del cliente';
+        else if (!/^[\d\s+\-()]{7,}$/.test(phone.trim())) errs.phone = 'El tel\u00e9fono no parece valido';
         if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errs.email = 'El email no parece valido';
-        if (!address.trim()) errs.address = 'Escribe la direccion de entrega';
+        if (!address.trim()) errs.address = 'Escribe la direcci\u00f3n de entrega';
         if (!city.trim()) errs.city = 'Escribe la ciudad de entrega';
         if (!state.trim()) errs.state = 'Escribe el departamento';
         if (!productValue || productValue <= 0) errs.productValue = 'El valor de los productos debe ser mayor a 0';
         if (!paymentMethodId || paymentMethodId <= 0) errs.paymentMethod = 'Selecciona el medio de pago del cliente';
-        if (autoGuide && !selectedRate) errs.rate = 'Selecciona una tarifa para generar la guia';
+        if (autoGuide && !selectedRate) errs.rate = 'Selecciona una tarifa para generar la gu\u00eda';
         return errs;
     };
 
@@ -328,7 +328,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                 const guideRes: any = await generateGuideAction(guidePayload);
                 guideOk = guideRes?.success !== false;
                 if (!guideOk) {
-                    showToast(guideRes?.message || 'La orden se creo pero la guia fallo; generala desde la orden', 'error');
+                    showToast(guideRes?.message || 'La orden se creo pero la gu\u00eda fallo; generala desde la orden', 'error');
                 }
             }
 
@@ -339,12 +339,12 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                 guide_requested: guideOk,
             }, businessId);
             if (!assocRes.success) {
-                showToast(assocRes.message || 'Orden creada, pero no se pudo asociar la cotizacion', 'error');
+                showToast(assocRes.message || 'Orden creada, pero no se pudo asociar la cotizaci\u00f3n', 'error');
             }
 
             showToast(
                 guideOk
-                    ? `Orden ${orderNumber} creada y guia solicitada con ${selectedRate?.carrier}`
+                    ? `Orden ${orderNumber} creada y gu\u00eda solicitada con ${selectedRate?.carrier}`
                     : `Orden ${orderNumber} creada`,
                 'success'
             );
@@ -363,7 +363,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2">
                         <Package size={18} className="text-purple-600" />
-                        <h2 className="text-base font-bold text-gray-900 dark:text-white">Crear orden desde cotizacion</h2>
+                        <h2 className="text-base font-bold text-gray-900 dark:text-white">Crear orden desde {'cotizaci\u00f3n'}</h2>
                         <span className="text-xs text-gray-400">#{quote.id}</span>
                     </div>
                     <button onClick={onClose} className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
@@ -440,7 +440,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                     </label>
                                 );
                             })}
-                            {rates.length === 0 && <p className="text-xs text-gray-400">La cotizacion no tiene tarifas guardadas.</p>}
+                            {rates.length === 0 && <p className="text-xs text-gray-400">La {'cotizaci\u00f3n'} no tiene tarifas guardadas.</p>}
                         </div>
                         {fieldError('rate')}
 
@@ -457,7 +457,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                     </div>
                                     {desglose.minimumInsurance > 0 && (
                                         <div className="flex justify-between text-xs">
-                                            <span className="text-gray-600 dark:text-gray-300">Seguro minimo</span>
+                                            <span className="text-gray-600 dark:text-gray-300">Seguro {'m\u00ednimo'}</span>
                                             <span className="font-medium text-gray-900 dark:text-white tabular-nums">{money(desglose.minimumInsurance)}</span>
                                         </div>
                                     )}
@@ -469,7 +469,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                     )}
                                     {desglose.carrierFee > 0 && (
                                         <div className="flex justify-between text-xs">
-                                            <span className="text-gray-600 dark:text-gray-300">Comision carrier</span>
+                                            <span className="text-gray-600 dark:text-gray-300">{'Comisi\u00f3n'} carrier</span>
                                             <span className="font-medium text-gray-900 dark:text-white tabular-nums">{money(desglose.carrierFee)}</span>
                                         </div>
                                     )}
@@ -528,7 +528,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 {fieldError('lastName')}
                             </div>
                             <div>
-                                <input value={phone} onChange={e => { setPhone(e.target.value); clearFieldError('phone'); }} placeholder="Telefono *" className={`w-full ${inputCls('phone')}`} />
+                                <input value={phone} onChange={e => { setPhone(e.target.value); clearFieldError('phone'); }} placeholder="Tel\u00e9fono *" className={`w-full ${inputCls('phone')}`} />
                                 {fieldError('phone')}
                             </div>
                             <div>
@@ -545,7 +545,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
-                                <input value={address} onChange={e => { setAddress(e.target.value); clearFieldError('address'); }} placeholder="Direccion *" className={`w-full ${inputCls('address')}`} />
+                                <input value={address} onChange={e => { setAddress(e.target.value); clearFieldError('address'); }} placeholder="Direcci\u00f3n *" className={`w-full ${inputCls('address')}`} />
                                 {fieldError('address')}
                             </div>
                             <div>
@@ -565,7 +565,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                         </h3>
                         <div className="grid grid-cols-2 gap-3 items-center">
                             <div>
-                                <label className="block text-[11px] uppercase text-gray-400 mb-1">Valor productos (sin envio) *</label>
+                                <label className="block text-[11px] uppercase text-gray-400 mb-1">Valor productos (sin {'env\u00edo'}) *</label>
                                 <input
                                     type="number"
                                     value={productValue}
@@ -575,7 +575,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 {fieldError('productValue')}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5 pt-4">
-                                <p>Envio estimado: <strong>{money(fleteEstimate)}</strong></p>
+                                <p>{'Env\u00edo'} estimado: <strong>{money(fleteEstimate)}</strong></p>
                                 {isCOD && codFee > 0 && <p>Cargo COD carrier: <strong>{money(codFee)}</strong></p>}
                             </div>
                         </div>
@@ -625,8 +625,8 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
 
                         <div className="mt-2 flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2.5">
                             <div>
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Generar guia automaticamente</p>
-                                <p className="text-xs text-gray-400">Al crear la orden se solicita la guia con la tarifa seleccionada.</p>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Generar {'gu\u00eda'} automaticamente</p>
+                                <p className="text-xs text-gray-400">Al crear la orden se solicita la {'gu\u00eda'} con la tarifa seleccionada.</p>
                             </div>
                             <button
                                 type="button"
@@ -661,7 +661,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                         className="px-4 py-2 text-sm rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold disabled:opacity-60 flex items-center gap-2"
                     >
                         {submitting && <Loader2 size={14} className="animate-spin" />}
-                        {submitting ? 'Creando...' : autoGuide ? 'Crear orden + guia' : 'Crear orden'}
+                        {submitting ? 'Creando...' : autoGuide ? 'Crear orden + gu\u00eda' : 'Crear orden'}
                     </button>
                 </div>
             </div>
@@ -709,9 +709,9 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 <AlertTriangle size={18} className="text-amber-600" />
                             </span>
                             <div>
-                                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Generar guia real</h3>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Generar {'gu\u00eda'} real</h3>
                                 <p className="text-xs text-gray-600 dark:text-gray-300">
-                                    Al crear la orden se generara una <strong>guia real</strong> con
+                                    Al crear la orden se generara una <strong>{'gu\u00eda'} real</strong> con
                                     {selectedRate ? ` ${selectedRate.carrier}` : ' la transportadora seleccionada'} por un costo estimado
                                     de <strong>{money(fleteEstimate)}</strong>. Este valor se descuenta de la billetera del negocio y
                                     la transportadora programara la recoleccion. Esta accion no se puede deshacer desde aqui.

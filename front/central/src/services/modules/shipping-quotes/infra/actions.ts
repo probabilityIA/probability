@@ -109,7 +109,7 @@ export async function associateQuoteAction(
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            return { success: false, message: data?.error || 'No se pudo asociar la cotizacion' };
+            return { success: false, message: data?.error || 'No se pudo asociar la cotización' };
         }
         return { success: true };
     } catch (e: any) {
@@ -171,7 +171,7 @@ export async function retryQuoteGuideAction(
         if (!res.ok) {
             return {
                 success: false,
-                message: data?.error || 'No se pudo reintentar la guia',
+                message: data?.error || 'No se pudo reintentar la guía',
                 expired: data?.expired === true,
                 needsData: data?.needs_data === true,
             };
