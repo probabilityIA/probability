@@ -206,7 +206,7 @@ export async function demoVerifyOtpAction(email: string, code: string): Promise<
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-            return { success: false, error: data.message || data.error || 'Codigo invalido o expirado' };
+            return { success: false, error: data.message || data.error || 'Código invalido o expirado' };
         }
         return { success: true, message: data.message };
     } catch (error: any) {
@@ -260,7 +260,7 @@ export async function verifyOtpAction(email: string, code: string): Promise<{ su
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-            return { success: false, error: data.message || data.error || 'Codigo invalido o expirado' };
+            return { success: false, error: data.message || data.error || 'Código invalido o expirado' };
         }
         return { success: true, token: data.token, message: data.message };
     } catch (error: any) {
@@ -278,7 +278,7 @@ export async function resetPasswordAction(token: string, newPassword: string): P
         });
         const data = await res.json();
         if (!res.ok) {
-            return { success: false, error: data.error || data.message || 'No se pudo restablecer la contrasena' };
+            return { success: false, error: data.error || data.message || 'No se pudo restablecer la contraseña' };
         }
         return { success: true, message: data.message };
     } catch (error: any) {
