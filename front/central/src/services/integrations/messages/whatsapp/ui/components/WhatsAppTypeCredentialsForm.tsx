@@ -60,7 +60,7 @@ export default function WhatsAppTypeCredentialsForm({
         }
 
         if (!credentials.test_phone_number.trim()) {
-            setTestResult({ type: 'error', message: 'Ingresa un numero de pruebas para enviar el mensaje' });
+            setTestResult({ type: 'error', message: 'Ingresa un número de pruebas para enviar el mensaje' });
             setTesting(false);
             return;
         }
@@ -83,7 +83,7 @@ export default function WhatsAppTypeCredentialsForm({
                 setTestResult({ type: 'error', message: result.message || 'Error al enviar mensaje de prueba' });
             }
         } catch (err: any) {
-            setTestResult({ type: 'error', message: err.message || 'Error al probar la conexion' });
+            setTestResult({ type: 'error', message: err.message || 'Error al probar la conexión' });
         } finally {
             setTesting(false);
         }
@@ -221,7 +221,7 @@ export default function WhatsAppTypeCredentialsForm({
                             disabled={testing}
                             loading={testing}
                         >
-                            {testing ? 'Enviando...' : 'Probar conexion'}
+                            {testing ? 'Enviando...' : 'Probar conexión'}
                         </Button>
                     </div>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -358,7 +358,7 @@ export default function WhatsAppTypeCredentialsForm({
                             <XCircleIcon className="w-16 h-16 text-red-500 mb-4" />
                         )}
                         <h3 className={`text-lg font-semibold mb-2 ${testResult.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
-                            {testResult.type === 'success' ? 'Conexion exitosa' : 'Error de conexion'}
+                            {testResult.type === 'success' ? 'Conexión exitosa' : 'Error de conexión'}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
                             {testResult.message}
