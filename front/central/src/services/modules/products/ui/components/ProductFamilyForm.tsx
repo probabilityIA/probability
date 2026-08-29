@@ -133,7 +133,7 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
                         />
                     </div>
                     <div>
-                        <label className={labelClass}>Categoria</label>
+                        <label className={labelClass}>Categoría</label>
                         <input
                             type="text"
                             placeholder="Ej: Calzado"
@@ -173,10 +173,10 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
                 </div>
 
                 <div>
-                    <label className={labelClass}>Descripcion</label>
+                    <label className={labelClass}>Descripción</label>
                     <textarea
                         rows={5}
-                        placeholder="Descripcion de la familia de productos"
+                        placeholder="Descripción de la familia de productos"
                         value={formData.description}
                         onChange={e => set('description', e.target.value)}
                         className={inputClass}
