@@ -22,7 +22,7 @@ const ACTIONS: EnvironmentAction[] = [
         key: 'data',
         label: 'Actualizar productos',
         icon: ArrowDownToLine,
-        hint: 'Que dato del canal (nombre, imagen, categoria) puede entrar a Probability',
+        hint: 'Que dato del canal (nombre, imagen, categoría) puede entrar a Probability',
     },
     {
         key: 'inventory',
@@ -32,7 +32,7 @@ const ACTIONS: EnvironmentAction[] = [
     },
     {
         key: 'orders_compare',
-        label: 'Comparar ordenes',
+        label: 'Comparar órdenes',
         icon: ClipboardList,
         hint: 'Que orden existe en el canal y no en Probability, y crearla aca',
     },
@@ -40,7 +40,7 @@ const ACTIONS: EnvironmentAction[] = [
         key: 'invoicing',
         label: 'Facturar',
         icon: ReceiptText,
-        hint: 'Facturacion desde el hub: proximamente',
+        hint: 'Facturación desde el hub: proximamente',
         disabled: true,
     },
 ];
@@ -91,7 +91,7 @@ export function SyncActions() {
             <button
                 onClick={() => { reset(); setEnvironment(null); }}
                 disabled={running}
-                title="Resumen de ordenes: cuantas entraron por cada canal y como van"
+                title="Resumen de órdenes: cuantas entraron por cada canal y como van"
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                     environment === null
                         ? 'border-white bg-white text-[#0d5c80] shadow-sm'

@@ -149,7 +149,7 @@ export function buildApplyMessage(
     if (firstError) {
         const sample = items[0]?.sku ? `${items[0].sku}: ${firstError}` : firstError;
         message += ` — ${sample}`;
-        if (items.length > 1) message += ` (y ${items.length - 1} mas)`;
+        if (items.length > 1) message += ` (y ${items.length - 1} m\u00e1s)`;
     }
     return message;
 }

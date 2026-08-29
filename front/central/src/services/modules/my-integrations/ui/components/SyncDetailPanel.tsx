@@ -425,7 +425,7 @@ export function SyncDetailPanel({
                 <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-[10.5px] leading-snug text-red-700 dark:border-red-500/40 dark:bg-red-900/25 dark:text-red-300">
                     <AlertTriangle size={12} className="mt-px flex-shrink-0" />
                     <span>
-                        <strong>{noSkuCount}</strong> {noSkuCount === 1 ? 'publicacion o variante' : 'publicaciones o variantes'} en {providerLabel} no {noSkuCount === 1 ? 'tiene' : 'tienen'} SKU.
+                        <strong>{noSkuCount}</strong> {noSkuCount === 1 ? 'publicaci\u00f3n o variante' : 'publicaciones o variantes'} en {providerLabel} no {noSkuCount === 1 ? 'tiene' : 'tienen'} SKU.
                         El emparejamiento se hace por SKU, asi que no hay forma de asociarlas ni de sincronizarles stock.
                         Hay que asignarles el SKU en {providerLabel}.
                     </span>
@@ -482,7 +482,7 @@ export function SyncDetailPanel({
                             {parent ? (
                                 <span className="flex min-w-0 flex-1 items-center gap-1">
                                     <span
-                                        title={`Variante de la publicacion ${item.parentLabel || item.parentRef} (${item.parentRef})`}
+                                        title={`Variante de la publicaci\u00f3n ${item.parentLabel || item.parentRef} (${item.parentRef})`}
                                         className={`flex-shrink-0 truncate rounded-full px-1.5 py-0.5 font-semibold ${parent.chip} ${
                                             firstOfParent ? 'max-w-[9rem]' : 'max-w-[9rem] opacity-60'
                                         }`}
@@ -525,7 +525,7 @@ export function SyncDetailPanel({
                         className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
                         {allVisibleSelected
-                            ? 'Quitar seleccion'
+                            ? 'Quitar selecci\u00f3n'
                             : creaEnCanal
                                 ? `Seleccionar ${Math.min(tope, selectableItems.length)}`
                                 : `Seleccionar los ${selectableItems.length} cargados`}
@@ -566,7 +566,7 @@ export function SyncDetailPanel({
                     {selected.size === 0 && (
                         <span className="text-[11px] italic text-gray-400 dark:text-gray-500">
                             {creaEnCanal
-                                ? `marca los productos que quieras crear, maximo ${MAX_CREACION_POR_LOTE} por lote`
+                                ? `marca los productos que quieras crear, m\u00e1ximo ${MAX_CREACION_POR_LOTE} por lote`
                                 : term === ''
                                     ? 'o marca productos para aplicar solo a esos'
                                     : 'marca los productos que quieras aplicar'}
@@ -595,7 +595,7 @@ export function SyncDetailPanel({
                                     }`}
                                 />
                             </span>
-                            {creacionDesbloqueada ? 'Creacion habilitada' : 'Creacion bloqueada'}
+                            {creacionDesbloqueada ? 'Creaci\u00f3n habilitada' : 'Creaci\u00f3n bloqueada'}
                         </button>
                     )}
                 </div>

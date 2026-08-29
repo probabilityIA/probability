@@ -139,7 +139,7 @@ const CAMPOS_BUSQUEDA: { key: MatrixSearchBy; label: string; hint: string }[] = 
     { key: 'all', label: 'Todo', hint: 'Buscar SKU, producto o ean' },
     { key: 'sku', label: 'SKU', hint: 'Buscar por SKU' },
     { key: 'name', label: 'Producto', hint: 'Buscar por nombre' },
-    { key: 'barcode', label: 'Ean', hint: 'Buscar por codigo de barras' },
+    { key: 'barcode', label: 'Ean', hint: 'Buscar por código de barras' },
 ];
 
 export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
@@ -177,7 +177,7 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
 
     const opcionesFiltro: FilterOption[] = useMemo(() => {
         const verbo = (col: MatrixColumn) => (col.is_sales ? 'Se vende en' : 'Esta en');
-        const negado = (col: MatrixColumn) => (col.is_sales ? 'No se vende en' : 'No esta en');
+        const negado = (col: MatrixColumn) => (col.is_sales ? 'No se vende en' : 'No está en');
         return [
             ...columns.map(col => ({
                 key: `${PREFIJO_ESTA}${col.integration_id}`,

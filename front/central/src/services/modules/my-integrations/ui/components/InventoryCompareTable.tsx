@@ -54,7 +54,7 @@ function fechaGuardada(iso: string) {
     const horas = Math.floor(minutos / 60);
     if (horas < 24) return `de hace ${horas} h`;
     const dias = Math.floor(horas / 24);
-    return `de hace ${dias} d`;
+    return `de hace ${d\u00edas} d`;
 }
 
 function LogoCanal({ integracion, size = 20 }: { integracion: Integration; size?: number }) {
@@ -144,7 +144,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
             setSeleccion(new Set());
         } catch (e) {
             setDatos(null);
-            setError(e instanceof Error ? e.message : 'No se pudo leer la ultima comparacion guardada');
+            setError(e instanceof Error ? e.message : 'No se pudo leer la \u00faltima comparacion guardada');
         } finally {
             setCargando(false);
         }
@@ -297,7 +297,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     {guardado ? (
                         <span
                             className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 font-bold text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/25 dark:text-amber-200"
-                            title="Estos numeros salen de la ultima comparacion guardada, no se le pregunto al canal ahora"
+                            title="Estos n\u00fameros salen de la \u00faltima comparacion guardada, no se le pregunto al canal ahora"
                         >
                             <History size={11} />
                             Foto guardada {fechaGuardada(datos.checked_at)} · vuelve a comparar para confirmar
@@ -325,7 +325,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                                 Probability
                             </th>
                             <th className={`${compacto ? 'w-14' : 'w-28'} px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400`}>
-                                {compacto ? 'Aqui' : 'Stock aqui'}
+                                {compacto ? 'Aqu\u00ed' : 'Stock aqu\u00ed'}
                             </th>
                             <th className={`${compacto ? 'min-w-[6rem]' : 'min-w-[11rem]'} px-3 py-2 text-center`}>
                                 <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[11.5px] font-semibold text-gray-700 dark:text-gray-200">
@@ -421,7 +421,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     <p className="flex items-center justify-center gap-2 py-10 text-[12px] text-gray-500">
                         <Loader2 size={14} className="animate-spin" />
                         {guardado
-                            ? 'Leyendo la ultima comparacion guardada'
+                            ? 'Leyendo la \u00faltima comparacion guardada'
                             : `Preguntandole a ${canal?.name ?? 'el canal'} cuanto stock tiene ahora mismo`}
                     </p>
                 )}
@@ -436,12 +436,12 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                 {!cargando && !error && visibles.length === 0 && (
                     <p className="px-3 py-10 text-center text-[12px] italic text-gray-400">
                         {filas.length === 0 && guardado && (datos?.totals.total ?? 0) === 0
-                            ? 'Todavia no hay una comparacion guardada de este canal. Dale a "Comparar ahora" para preguntarle su stock.'
+                            ? 'Todav\u00eda no hay una comparacion guardada de este canal. Dale a "Comparar ahora" para preguntarle su stock.'
                             : filas.length === 0
                                 ? 'Este canal no tiene productos asociados para comparar.'
                                 : soloCambios
                                     ? 'En este grupo todo esta igual, no hay nada que enviar.'
-                                    : 'Ningun producto de este grupo coincide con la busqueda.'}
+                                    : 'Ningun producto de este grupo coincide con la b\u00fasqueda.'}
                     </p>
                 )}
             </div>
@@ -454,7 +454,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                             className="rounded-lg border px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                             style={{ borderColor: CARD_BORDER }}
                         >
-                            {todasMarcadas ? 'Quitar seleccion' : `Seleccionar los ${seleccionables.length} de este grupo`}
+                            {todasMarcadas ? 'Quitar selecci\u00f3n' : `Seleccionar los ${seleccionables.length} de este grupo`}
                         </button>
                     )}
                     {seleccion.size > 0 && (

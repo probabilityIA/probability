@@ -96,7 +96,7 @@ function EstadoFoto({
                 ? 'Recien consultado. Clic para volver a preguntar'
                 : cuando === ''
                     ? 'Este canal no tiene comparacion guardada. Clic para preguntarle su stock ahora'
-                    : 'Estos numeros son de la ultima comparacion guardada. Clic para preguntarle el stock a este canal ahora'}
+                    : 'Estos n\u00fameros son de la \u00faltima comparacion guardada. Clic para preguntarle el stock a este canal ahora'}
             className={`mx-auto mt-1 flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9.5px] font-bold transition-colors disabled:opacity-40 ${
                 !guardada
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-900/25 dark:text-emerald-200'
@@ -117,7 +117,7 @@ function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: b
             return (
                 <span
                     className="inline-flex items-center gap-1 text-[10.5px] italic text-gray-400 dark:text-gray-500"
-                    title="Segun el comparador de productos, este producto no esta publicado en este canal"
+                    title="Seg\u00fan el comparador de productos, este producto no est\u00e1 publicado en este canal"
                 >
                     <Ban size={9} />
                     no esta aqui
@@ -128,7 +128,7 @@ function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: b
             return (
                 <span
                     className="text-[10.5px] italic text-gray-300 dark:text-gray-600"
-                    title="Esta publicado en este canal, pero todavia no se ha comparado su stock"
+                    title="Esta publicado en este canal, pero todav\u00eda no se ha comparado su stock"
                 >
                     sin comparar
                 </span>
@@ -158,7 +158,7 @@ function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: b
     }
     return (
         <span className="text-[10.5px] italic text-amber-600 dark:text-amber-400" title={fila.reason}>
-            {fila.channel_qty === null ? 'sin publicacion' : 'no aplica'}
+            {fila.channel_qty === null ? 'sin publicaci\u00f3n' : 'no aplica'}
         </span>
     );
 }
@@ -352,7 +352,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
             <p className="text-[12px] text-gray-500 dark:text-gray-400">
                 Una fila por producto. Se lee de izquierda a derecha: primero el ERP que te sirve de origen de inventario,
                 despues lo que tiene Probability, y despues cada canal de venta. Arranca con la
-                <span className="font-semibold text-amber-700 dark:text-amber-300"> ultima comparacion guardada</span>, para no
+                <span className="font-semibold text-amber-700 dark:text-amber-300"> {'\u00faltima'} comparacion guardada</span>, para no
                 pegarle a la API de cada canal cada vez que abres. Usa el boton bajo cada canal para preguntarle su stock
                 ahora mismo. La flecha muestra en cuanto quedaria el canal si lo envias.
             </p>
@@ -360,7 +360,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500">
                 <span className="inline-flex items-center gap-1">
                     <Ban size={9} />
-                    <span className="italic">no esta aqui</span>: el producto no esta publicado en ese canal (sale del comparador de productos)
+                    <span className="italic">{'no est\u00e1'} {'aqu\u00ed'}</span>: el producto no esta publicado en ese canal (sale del comparador de productos)
                 </span>
                 <span className="inline-flex items-center gap-1">
                     <span className="italic">sin comparar</span>: si esta publicado, pero todavia no le hemos preguntado su stock
@@ -578,7 +578,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                     >
                         {running ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
                         {seleccion.size > 0
-                            ? `Igualar ${seleccion.size} en sus canales`
+                            ? `Igualar ${selecci\u00f3n.size} en sus canales`
                             : `Igualar los ${conCambios.length} que cambian`}
                     </button>
                 </div>

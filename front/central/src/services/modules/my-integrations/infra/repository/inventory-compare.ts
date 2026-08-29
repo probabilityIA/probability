@@ -49,7 +49,7 @@ export async function compararInventario(
 ): Promise<ComparePage> {
     const provider = getSyncProvider(integrationTypeId);
     if (!provider?.compareInventory) {
-        throw new Error('Este canal todavia no permite comparar inventario');
+        throw new Error('Este canal todavía no permite comparar inventario');
     }
 
     const respuesta = await provider.compareInventory(
