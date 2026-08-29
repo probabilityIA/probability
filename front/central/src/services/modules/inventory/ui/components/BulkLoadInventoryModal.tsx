@@ -73,7 +73,7 @@ export default function BulkLoadInventoryModal({ warehouseId, businessId, onSucc
             }
 
             if (parsed.length === 0) {
-                setError('No se encontraron items validos en el CSV. Formato: sku,quantity,min_stock,max_stock,reorder_point');
+                setError('No se encontraron items válidos en el CSV. Formato: sku,quantity,min_stock,max_stock,reorder_point');
                 return;
             }
 
@@ -89,7 +89,7 @@ export default function BulkLoadInventoryModal({ warehouseId, businessId, onSucc
 
     const handlePreview = () => {
         if (validItems.length === 0) {
-            setError('Agrega al menos un item con SKU y cantidad validos');
+            setError('Agrega al menos un item con SKU y cantidad válidos');
             return;
         }
         setError(null);
