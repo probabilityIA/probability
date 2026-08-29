@@ -18,7 +18,7 @@ export function GuidePreviewModal({ isOpen, onClose, shipmentId, orderLabel, car
     const downloadUrl = `/internal/shipment-guide/${shipmentId}?download=1`;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="4xl" title={`Guia de transporte${orderLabel ? ` - ${orderLabel}` : ''}`}>
+        <Modal isOpen={isOpen} onClose={onClose} size="4xl" title={`Guía de transporte${orderLabel ? ` - ${orderLabel}` : ''}`}>
             <div className="flex flex-col gap-3" style={{ height: '80vh' }}>
                 <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -43,7 +43,7 @@ export function GuidePreviewModal({ isOpen, onClose, shipmentId, orderLabel, car
                 </div>
                 <iframe
                     src={previewUrl}
-                    title="Guia de transporte"
+                    title="Guía de transporte"
                     className="flex-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white"
                 />
             </div>

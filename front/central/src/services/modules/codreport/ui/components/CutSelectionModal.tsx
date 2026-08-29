@@ -61,7 +61,7 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                 firstLoad.current = false;
             }
         } else {
-            setError((res as any).message || 'Error al cargar las ordenes del periodo');
+            setError((res as any).message || 'Error al cargar las órdenes del periodo');
             setOrders([]);
         }
         setLoading(false);
@@ -147,7 +147,7 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                                 type="text"
                                 value={guideFilter}
                                 onChange={e => setGuideFilter(e.target.value)}
-                                placeholder="Buscar por numero de guia u orden (una o varias)"
+                                placeholder="Buscar por número de guía u orden (una o varias)"
                                 className="w-full pl-8 pr-8 py-1.5 text-xs rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             />
                             {guideFilter && (
@@ -189,8 +189,8 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                         <div className="text-center py-12 text-gray-400 text-sm">
                             <Package size={28} className="mx-auto mb-2 opacity-50" />
                             {terms.length > 0
-                                ? 'Ninguna orden coincide con la busqueda en este periodo.'
-                                : 'No hay ordenes entregadas por pagar en este periodo.'}
+                                ? 'Ninguna orden coincide con la búsqueda en este periodo.'
+                                : 'No hay órdenes entregadas por pagar en este periodo.'}
                         </div>
                     ) : (
                         <table className="w-full text-sm">
@@ -200,7 +200,7 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                                         <input type="checkbox" checked={allVisiblePicked} onChange={toggleAllVisible} className="accent-emerald-600 cursor-pointer" />
                                     </th>
                                     <th className="text-left py-2 font-semibold">Orden</th>
-                                    <th className="text-left py-2 font-semibold">Numero de guia</th>
+                                    <th className="text-left py-2 font-semibold">Número de guía</th>
                                     <th className="text-left py-2 font-semibold">Cliente</th>
                                     <th className="text-left py-2 font-semibold">Transportadora</th>
                                     <th className="text-right py-2 font-semibold">COD orden</th>

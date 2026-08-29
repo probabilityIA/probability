@@ -186,7 +186,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
             {!loading && cuts.length === 0 && !error && (
                 <div className="text-center py-16 text-gray-400 text-sm">
                     <Calendar size={30} className="mx-auto mb-2 opacity-50" />
-                    {isAdmin ? 'No hay cortes de pago todavia.' : 'No hay cortes confirmados todavia.'}
+                    {isAdmin ? 'No hay cortes de pago todavía.' : 'No hay cortes confirmados todavía.'}
                 </div>
             )}
 
@@ -244,7 +244,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                                     <button
                                         onClick={() => setDeleteTarget(cut)}
                                         className="px-3 py-1.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-semibold rounded-md inline-flex items-center gap-1.5"
-                                        title="Cancelar borrador (libera sus ordenes)"
+                                        title="Cancelar borrador (libera sus órdenes)"
                                     >
                                         <Trash2 size={13} /> Cancelar
                                     </button>
@@ -254,7 +254,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                                 <button
                                     onClick={() => setEmailTarget({ cut, justConfirmed: false })}
                                     className="px-3 py-1.5 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-xs font-semibold rounded-md inline-flex items-center gap-1.5"
-                                    title="Enviar por correo la relacion de este corte"
+                                    title="Enviar por correo la relación de este corte"
                                 >
                                     <Mail size={13} /> Enviar correo
                                 </button>
@@ -263,7 +263,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                                 <button
                                     onClick={() => setDeleteTarget(cut)}
                                     className="p-1.5 rounded-md border border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-                                    title="Eliminar corte (libera sus ordenes)"
+                                    title="Eliminar corte (libera sus órdenes)"
                                 >
                                     <Trash2 size={14} />
                                 </button>
