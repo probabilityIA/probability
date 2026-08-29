@@ -97,7 +97,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
     };
 
     const handleDelete = async (route: RouteInfo) => {
-        if (!confirm(`Eliminar la ruta del ${formatDate(route.date)}? Esta accion no se puede deshacer.`)) return;
+        if (!confirm(`Eliminar la ruta del ${formatDate(route.date)}? Esta acción no se puede deshacer.`)) return;
         try {
             await deleteRouteAction(route.id, selectedBusinessId);
             fetchRoutes();
@@ -115,7 +115,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
         { key: 'date', label: 'Fecha' },
         { key: 'status', label: 'Estado', align: 'center' as const },
         { key: 'driver_name', label: 'Conductor' },
-        { key: 'vehicle_plate', label: 'Vehiculo' },
+        { key: 'vehicle_plate', label: 'Vehículo' },
         { key: 'progress', label: 'Progreso', align: 'center' as const },
         { key: 'actions', label: 'Acciones', align: 'right' as const },
     ];
@@ -196,7 +196,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
                         type="text"
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
-                        placeholder="Buscar por conductor, vehiculo..."
+                        placeholder="Buscar por conductor, vehículo..."
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     />
                     <button
