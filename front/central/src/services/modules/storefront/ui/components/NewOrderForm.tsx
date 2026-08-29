@@ -142,7 +142,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
             <div className="text-center py-12">
                 <div className="text-green-500 text-6xl mb-4">&#10003;</div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Pedido enviado</h2>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Tu pedido esta siendo procesado. Recibiras una notificacion cuando este listo.</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Tu pedido esta siendo procesado. Recibiras una notificación cuando este listo.</p>
                 <button
                     onClick={() => { setSuccess(false); setCart([]); }}
                     className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -218,7 +218,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
 
                             {/* Address */}
                             <div className="space-y-2 mb-4">
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300">Direccion de envio (opcional)</h4>
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300">Dirección de envío (opcional)</h4>
                                 <input
                                     type="text"
                                     placeholder="Nombre"
@@ -228,7 +228,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
                                 />
                                 <input
                                     type="text"
-                                    placeholder="Direccion"
+                                    placeholder="Dirección"
                                     value={address.street}
                                     onChange={e => setAddress(prev => ({ ...prev, street: e.target.value }))}
                                     className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -243,7 +243,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
                                     />
                                     <input
                                         type="text"
-                                        placeholder="Telefono"
+                                        placeholder="Teléfono"
                                         value={address.phone}
                                         onChange={e => setAddress(prev => ({ ...prev, phone: e.target.value }))}
                                         className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
