@@ -163,7 +163,7 @@ export function WebsiteConfigManager() {
                         />
                         <SectionToggle
                             label="Sobre Nosotros"
-                            description="Sección con información de la empresa, mision y vision"
+                            description="Sección con información de la empresa, misión y visión"
                             checked={config.show_about}
                             onChange={(v) => handleToggle('show_about', v)}
                         />
@@ -193,7 +193,7 @@ export function WebsiteConfigManager() {
                         />
                         <SectionToggle
                             label="Formulario de Contacto"
-                            description="Formulario para que los visitantes envien mensajes"
+                            description="Formulario para que los visitantes envíen mensajes"
                             checked={config.show_contact}
                             onChange={(v) => handleToggle('show_contact', v)}
                         />

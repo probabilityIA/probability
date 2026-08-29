@@ -114,7 +114,7 @@ export function ImageField({ label, value, onChange, businessId, onDeleted }: Im
 }
 
 const HERO_BLOCK_TYPES: Array<{ value: string; label: string }> = [
-    { value: 'empty', label: 'Vacio' },
+    { value: 'empty', label: 'Vac\u00edo' },
     { value: 'text', label: 'Texto' },
     { value: 'image', label: 'Imagen' },
     { value: 'button', label: 'Bot\u00f3n' },
@@ -335,8 +335,8 @@ export function AboutEditor({ content, onChange, businessId, onImageDeleted }: E
     return (
         <div className="space-y-3">
             <Field label="Texto principal" value={c.text || ''} onChange={(v) => set('text', v)} textarea placeholder="Quienes somos..." />
-            <Field label="Mision" value={c.mission || ''} onChange={(v) => set('mission', v)} textarea />
-            <Field label="Vision" value={c.vision || ''} onChange={(v) => set('vision', v)} textarea />
+            <Field label="Misi\u00f3n" value={c.mission || ''} onChange={(v) => set('mission', v)} textarea />
+            <Field label="Visi\u00f3n" value={c.vision || ''} onChange={(v) => set('vision', v)} textarea />
             <ImageField label="Imagen" value={c.image || ''} onChange={(v) => set('image', v)} businessId={businessId} onDeleted={onImageDeleted} />
         </div>
     );
@@ -524,7 +524,7 @@ export function WhatsAppEditor({ content, onChange }: EditorProps) {
     return (
         <div className="space-y-3">
             <Field label="N\u00famero (con indicativo)" value={c.number || ''} onChange={(v) => set('number', v)} placeholder="573000000000" />
-            <Field label="Mensaje inicial" value={c.message || ''} onChange={(v) => set('message', v)} textarea placeholder="Hola, me gustaria m\u00e1s informaci\u00f3n" />
+            <Field label="Mensaje inicial" value={c.message || ''} onChange={(v) => set('message', v)} textarea placeholder="Hola, me gustar\u00eda m\u00e1s informaci\u00f3n" />
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                 <input
                     type="checkbox"
@@ -593,7 +593,7 @@ export function NavbarEditor({ content, onChange, businessId, onImageDeleted }: 
 
             {position === 'top' && (
                 <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Alineacion de los links</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Alineaci\u00f3n'} de los links</label>
                     <select
                         value={c.alignment || 'right'}
                         onChange={(e) => onChange({ ...c, alignment: e.target.value })}
@@ -617,7 +617,7 @@ export function NavbarEditor({ content, onChange, businessId, onImageDeleted }: 
             )}
 
             <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Enlaces del menu</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Enlaces del {'men\u00fa'}</p>
                 {links.map((link, i) => (
                     <div key={i} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 space-y-2">
                         <div className="flex gap-2">
@@ -719,13 +719,13 @@ export function NavbarEditor({ content, onChange, businessId, onImageDeleted }: 
                             />
                         </label>
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Animacion</label>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Animaci\u00f3n'}</label>
                             <select
                                 value={c.announcement_animation || 'none'}
                                 onChange={(e) => onChange({ ...c, announcement_animation: e.target.value })}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                             >
-                                <option value="none">Sin animacion</option>
+                                <option value="none">Sin {'animaci\u00f3n'}</option>
                                 <option value="fade">Desvanecer al cargar</option>
                                 <option value="slide">Deslizar desde arriba</option>
                                 <option value="marquee">Texto en movimiento (marquesina)</option>
