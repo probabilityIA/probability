@@ -124,7 +124,7 @@ export default function TiendanubeTypeCredentialsForm({
     webhookUrls,
 }: TiendanubeTypeCredentialsFormProps) {
     const set = (patch: Partial<TiendanubePlatformCredentials>) => onChange({ ...credentials, ...patch });
-    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'Client Secret de la aplicacion';
+    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'Client Secret de la aplicación';
 
     const [apiOrigin, setApiOrigin] = useState('');
 
@@ -153,7 +153,7 @@ export default function TiendanubeTypeCredentialsForm({
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                     <KeyIcon className="w-5 h-5 text-[var(--color-primary)]" />
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Credenciales de la Aplicacion Tiendanube</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Credenciales de la Aplicación Tiendanube</h3>
                 </div>
                 <a
                     href={PARTNERS_URL}
@@ -169,7 +169,7 @@ export default function TiendanubeTypeCredentialsForm({
             <p className="text-xs text-gray-600 dark:text-gray-300 flex items-start gap-1.5">
                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <span>
-                    Crea una aplicacion en <strong>partners.tiendanube.com</strong> y pega aqui su <strong>App ID</strong> y{' '}
+                    Crea una aplicacion en <strong>partners.tiendanube.com</strong> y pega aquí su <strong>App ID</strong> y{' '}
                     <strong>Client Secret</strong> (seccion &quot;Llaves de acceso&quot;). Todos los negocios instalan esta misma
                     aplicacion via OAuth y cada tienda queda con su propio access_token. Se guardan encriptadas (AES-256-GCM).
                 </span>
@@ -178,7 +178,7 @@ export default function TiendanubeTypeCredentialsForm({
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800 p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <GlobeAltIcon className="w-4 h-4 text-emerald-700" />
-                    <span className="text-xs font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-200">Produccion</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-200">Producción</span>
                 </div>
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                     <div>
@@ -191,7 +191,7 @@ export default function TiendanubeTypeCredentialsForm({
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />
-                        <p className={fieldHint}>Numero de la aplicacion en el panel de Partners.</p>
+                        <p className={fieldHint}>Número de la aplicación en el panel de Partners.</p>
                     </div>
                     <div>
                         <label className={fieldLabel}>Client Secret</label>
@@ -201,10 +201,10 @@ export default function TiendanubeTypeCredentialsForm({
                             placeholder={placeholderSecret}
                             className="bg-white dark:bg-gray-800 font-mono text-sm rounded-xl"
                         />
-                        <p className={fieldHint}>Tambien firma los webhooks (HMAC SHA-256).</p>
+                        <p className={fieldHint}>También firma los webhooks (HMAC SHA-256).</p>
                     </div>
                     <div>
-                        <label className={fieldLabel}>URL de redireccion despues de la instalacion</label>
+                        <label className={fieldLabel}>URL de redireccion después de la instalación</label>
                         <input
                             type="text"
                             value={credentials.redirect_uri}
@@ -220,7 +220,7 @@ export default function TiendanubeTypeCredentialsForm({
                         </p>
                     </div>
                     <div>
-                        <label className={fieldLabel}>Pagina de la aplicacion</label>
+                        <label className={fieldLabel}>Página de la aplicación</label>
                         <input
                             type="text"
                             value={credentials.app_url}
@@ -259,7 +259,7 @@ export default function TiendanubeTypeCredentialsForm({
 
                 {authorizeURL && (
                     <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-800">
-                        <label className={fieldLabel}>URL de autorizacion generada</label>
+                        <label className={fieldLabel}>URL de autorización generada</label>
                         <CopyField value={authorizeURL} />
                         <p className={fieldHint}>A esta URL se envia al comerciante para instalar la app en su tienda.</p>
                     </div>
@@ -276,7 +276,7 @@ export default function TiendanubeTypeCredentialsForm({
                     el Client Secret y lo manda en el header <code>x-linkedstore-hmac-sha256</code>.
                 </p>
                 <div>
-                    <label className={fieldLabel}>URL de webhook (produccion)</label>
+                    <label className={fieldLabel}>URL de webhook (producción)</label>
                     <CopyField value={prodWebhook} disabled={!prodWebhook} />
                 </div>
                 {testWebhook && (
@@ -380,7 +380,7 @@ export default function TiendanubeTypeCredentialsForm({
                             type="text"
                             value={credentials.test_client_id}
                             onChange={(e) => set({ test_client_id: e.target.value })}
-                            placeholder="App ID de la aplicacion en desarrollo"
+                            placeholder="App ID de la aplicación en desarrollo"
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />

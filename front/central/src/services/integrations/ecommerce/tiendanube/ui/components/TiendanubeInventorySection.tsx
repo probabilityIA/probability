@@ -100,13 +100,13 @@ export function TiendanubeInventorySection({ value, onChange, businessId }: Tien
                     )}
                     <p className="mt-1 flex items-start gap-1 text-[11px] text-gray-400 dark:text-gray-500">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Tiendanube maneja un solo stock por variante, asi que se envia el de esta bodega.</span>
+                        <span>Tiendanube maneja un solo stock por variante, así que se envia el de esta bodega.</span>
                     </p>
 
                     {!loading && warehouses.length === 0 && (
                         <p className="mt-2 flex items-start gap-1 text-[11px] text-amber-600 dark:text-amber-400">
                             <ExclamationTriangleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>No hay bodegas configuradas para este negocio: crea una antes de activar la sincronizacion.</span>
+                            <span>No hay bodegas configuradas para este negocio: crea una antes de activar la sincronización.</span>
                         </p>
                     )}
 
