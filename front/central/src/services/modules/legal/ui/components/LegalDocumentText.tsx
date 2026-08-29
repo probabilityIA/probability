@@ -8,7 +8,7 @@ export function LegalDocumentText({ contentHtml }: Props) {
     if (!contentHtml) {
         return (
             <p className="text-sm text-gray-600 dark:text-gray-300">
-                {'El texto de este documento no esta disponible.'}
+                {'El texto de este documento no está disponible.'}
             </p>
         );
     }

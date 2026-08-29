@@ -56,7 +56,7 @@ export function LegalAcceptanceGate() {
             <div className="w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-xl">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {'Terminos legales de Probability'}
+                        {'Términos legales de Probability'}
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                         {'Para continuar usando la plataforma debes leer y aceptar los siguientes documentos.'}
