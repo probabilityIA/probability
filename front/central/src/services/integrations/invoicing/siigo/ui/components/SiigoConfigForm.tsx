@@ -130,7 +130,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
             if (result.success) {
                 showToast('Conexion exitosa con Siigo', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Siigo');
@@ -145,7 +145,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -180,10 +180,10 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                 showToast('Integracion Siigo creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Siigo');
+            setErrorModal(err.message || 'Error al crear la integración de Siigo');
         } finally {
             setLoading(false);
         }
@@ -212,7 +212,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                         )}
                     </span>
                     <div>
-                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Siigo Facturacion Electronica</h2>
+                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Siigo Facturación Electrónica</h2>
                         <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                             Conecta tu cuenta de Siigo para facturar automaticamente desde Probability.
                         </p>
@@ -220,7 +220,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                 </div>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuración General">
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -229,7 +229,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                         <input
                             type="text"
                             required
-                            placeholder="Ej: Siigo Facturacion Principal"
+                            placeholder="Ej: Siigo Facturación Principal"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className={inputCls}
@@ -237,7 +237,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta integración</span>
                         </p>
                     </div>
 
@@ -267,7 +267,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                                <span>Selecciona el negocio al que pertenecera esta integración</span>
                             </p>
                         </div>
                     )}
@@ -312,7 +312,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                             <label className={fieldLabel}>Account ID</label>
                             <input
                                 type="text"
-                                placeholder="ID de cuenta/suscripcion"
+                                placeholder="ID de cuenta/suscripción"
                                 value={formData.account_id}
                                 onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
                                 autoComplete="off"
@@ -366,7 +366,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                         </h4>
                         <ol className="text-[11px] text-gray-600 dark:text-gray-300 space-y-1 list-decimal list-inside ml-1">
                             <li>Ingresa a tu cuenta Siigo Nube en <strong>siigo.com</strong></li>
-                            <li>Ve a <strong>Configuracion, Integraciones, API</strong></li>
+                            <li>Ve a <strong>Configuración, Integraciones, API</strong></li>
                             <li>Genera o copia tu <strong>Access Key</strong></li>
                             <li>Obten el <strong>Account ID</strong> (opcional) y <strong>Partner ID</strong> que te asigno Siigo</li>
                         </ol>

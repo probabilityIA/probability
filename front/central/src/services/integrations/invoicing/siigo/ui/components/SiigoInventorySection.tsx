@@ -144,12 +144,12 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
     );
 
     return (
-        <SectionCard icon={<CubeIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizacion de Inventario">
+        <SectionCard icon={<CubeIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronización de Inventario">
             <div className="rounded-lg bg-white dark:bg-gray-800" style={{ border: `1px solid ${INPUT_BORDER}` }}>
                 <ToggleRow
                     icon={<CubeIcon className="w-4 h-4" style={{ color: GREEN }} />}
                     title="Sincronizar inventario con Siigo"
-                    subtitle="El stock de Probability se actualiza con el de Siigo. Solo lectura, en una sola direccion: Siigo -> Probability."
+                    subtitle="El stock de Probability se actualiza con el de Siigo. Solo lectura, en una sola dirección: Siigo -> Probability."
                     checked={value.enabled}
                     onToggle={() => set({ enabled: !value.enabled })}
                 />
@@ -157,7 +157,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                 <ToggleRow
                     icon={<CubeIcon className="w-4 h-4" style={{ color: GREEN }} />}
                     title="Sincronizar productos de Siigo a Probability"
-                    subtitle="Cuando se crea o actualiza un producto en Siigo, se crea o actualiza tambien en Probability (aplicando la logica de bodegas configurada)."
+                    subtitle="Cuando se crea o actualiza un producto en Siigo, se crea o actualiza también en Probability (aplicando la logica de bodegas configurada)."
                     checked={value.product_sync_enabled}
                     onToggle={() => set({ product_sync_enabled: !value.product_sync_enabled })}
                 />
@@ -175,7 +175,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                         <ArrowPathIcon className="w-4 h-4" /> Sincronizar productos (detectar y crear)
                     </button>
                     {!integrationId && (
-                        <p className="mt-1 text-[11px] text-gray-400 text-center">Guarda la integracion para poder sincronizar productos.</p>
+                        <p className="mt-1 text-[11px] text-gray-400 text-center">Guarda la integración para poder sincronizar productos.</p>
                     )}
                 </div>
             )}
@@ -250,7 +250,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                             </div>
 
                             {!integrationId && (
-                                <p className="text-[11px] text-amber-600">Guarda la integracion primero para poder elegir bodegas de Siigo.</p>
+                                <p className="text-[11px] text-amber-600">Guarda la integración primero para poder elegir bodegas de Siigo.</p>
                             )}
 
                             <div className="grid grid-cols-[1fr_auto] gap-x-2 items-center px-0.5">
@@ -324,7 +324,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                         </button>
                     )}
                     {onSyncNow && !canSyncNow && (
-                        <p className="text-[11px] text-gray-400 text-center">Guarda la integracion para poder sincronizar.</p>
+                        <p className="text-[11px] text-gray-400 text-center">Guarda la integración para poder sincronizar.</p>
                     )}
                 </div>
             )}
