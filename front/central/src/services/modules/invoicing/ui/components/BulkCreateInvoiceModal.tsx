@@ -312,7 +312,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           >
             <div>
               <h2 className="text-2xl font-bold text-white">Crear Facturas</h2>
-              <p className="text-white/80 text-sm mt-1">Selecciona las {'\u00f3rdenes'} para generar facturas electronicas</p>
+              <p className="text-white/80 text-sm mt-1">Selecciona las {'\u00f3rdenes'} para generar facturas {'electr\u00f3nicas'}</p>
             </div>
             <div className="flex items-center gap-3">
               <div
@@ -417,7 +417,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Cliente</label>
-                      <input type="text" value={customerName} onChange={(e) => { setCustomerName(e.target.value); setPage(1); }} placeholder="Juan Perez" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded" />
+                      <input type="text" value={customerName} onChange={(e) => { setCustomerName(e.target.value); setPage(1); }} placeholder="Juan P\u00e9rez" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded" />
                     </div>
                     <div className="md:col-span-4 flex justify-end gap-2">
                       <button type="button" onClick={resetFilters} className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 underline">

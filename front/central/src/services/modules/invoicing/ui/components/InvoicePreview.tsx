@@ -175,7 +175,7 @@ export function InvoicePreview({ data, raw, copySlot }: InvoicePreviewProps) {
 
           {data.completedFields && data.completedFields.length > 0 && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {'El proveedor no devolvio '}
+              {'El proveedor no devolvió '}
               {data.completedFields.join(', ')}
               {': esos campos se muestran con los datos de la orden en Probability.'}
             </p>
