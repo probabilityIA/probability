@@ -252,7 +252,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     if (superAdminNeedsBusiness) { setShowBusinessAlert(true); return; }
     if (selectedOrderIds.size === 0) return;
     if (selectedOrderIds.size > MAX_BULK_ORDERS) {
-      alert(`Maximo ${MAX_BULK_ORDERS} ordenes por lote. Tienes ${selectedOrderIds.size} seleccionadas.`);
+      alert(`Maximo ${MAX_BULK_ORDERS} {'\u00f3rdenes'} por lote. Tienes ${selectedOrderIds.size} seleccionadas.`);
       return;
     }
     setShowConfirm(true);
@@ -438,7 +438,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                     onChange={handleSelectPage}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm font-medium">Pagina ({orders.length})</span>
+                  <span className="text-sm font-medium">{'P\u00e1gina'} ({orders.length})</span>
                   <button type="button" onClick={handleSelectAllMatching} disabled={total === 0} className="text-xs text-violet-600 hover:underline disabled:opacity-50">
                     Seleccionar todas las {Math.min(total, MAX_BULK_ORDERS)} coincidencias{total > MAX_BULK_ORDERS ? ` (max ${MAX_BULK_ORDERS})` : ''}
                   </button>
@@ -629,7 +629,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
         message={
           <span className="block space-y-2">
             <span className="block">
-              Se generaran <strong>{selectedOrderIds.size}</strong> factura{selectedOrderIds.size !== 1 ? 's' : ''} electronica{selectedOrderIds.size !== 1 ? 's' : ''} para el negocio{' '}
+              Se generaran <strong>{selectedOrderIds.size}</strong> factura{selectedOrderIds.size !== 1 ? 's' : ''} {'electr\u00f3nica'}{selectedOrderIds.size !== 1 ? 's' : ''} para el negocio{' '}
               <strong>{confirmBusinessLabel}</strong>.
             </span>
             <span className="block text-sm text-gray-500 dark:text-gray-400">

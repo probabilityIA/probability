@@ -406,7 +406,7 @@ export function InvoicingConfigForm({
             titulo="Facturaci\u00f3n autom\u00e1tica"
             descripcion={formData.inventory_exit_only
               ? 'Desactivada porque la salida de inventario sin facturar est\u00e1 activa'
-              : 'Las \u00f3rdenes que cumplan los filtros se facturaran automaticamente'}
+              : 'Las \u00f3rdenes que cumplan los filtros se facturaran autom\u00e1ticamente'}
             checked={formData.auto_invoice}
             onToggle={(v) => setFormData({ ...formData, auto_invoice: v, inventory_exit_only: v ? false : formData.inventory_exit_only })}
             disabled={loading || formData.inventory_exit_only}

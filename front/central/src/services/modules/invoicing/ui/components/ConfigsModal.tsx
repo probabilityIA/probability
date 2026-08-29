@@ -67,7 +67,7 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
             <div className="min-w-0">
               <h2 className="truncate text-xl font-bold" style={{ color: 'var(--color-primary)' }}>{titulo}</h2>
               {facturadorNombre && (
-                <p className="truncate text-xs text-gray-500">Facturador electronico: {facturadorNombre}</p>
+                <p className="truncate text-xs text-gray-500">Facturador electrónico: {facturadorNombre}</p>
               )}
             </div>
           </div>
