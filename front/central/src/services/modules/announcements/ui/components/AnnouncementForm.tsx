@@ -168,7 +168,7 @@ export default function AnnouncementForm({ announcement, onSuccess, onCancel }: 
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Titulo del anuncio"
+                        placeholder="Título del anuncio"
                         required
                         maxLength={255}
                     />
