@@ -172,7 +172,7 @@ export function ClientGroupsPanel({ businessId, groups, loading, onGroupsChanged
                         />
                         <input
                             type="text"
-                            placeholder="Descripcion (opcional)"
+                            placeholder="Descripción (opcional)"
                             value={form.description}
                             onChange={(e) => setForm({ ...form, description: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -221,7 +221,7 @@ export function ClientGroupsPanel({ businessId, groups, loading, onGroupsChanged
                 {loading ? (
                     <p className="text-sm text-gray-500">Cargando grupos...</p>
                 ) : groups.length === 0 ? (
-                    <p className="text-sm text-gray-500">Aun no hay grupos. Crea el primero.</p>
+                    <p className="text-sm text-gray-500">Aún no hay grupos. Crea el primero.</p>
                 ) : (
                     <div className="space-y-2 max-h-80 overflow-y-auto">
                         {groups.map((group) => (
@@ -332,7 +332,7 @@ export function ClientGroupsPanel({ businessId, groups, loading, onGroupsChanged
                         {membersLoading ? (
                             <p className="text-sm text-gray-500">Cargando clientes...</p>
                         ) : members.length === 0 ? (
-                            <p className="text-sm text-gray-500">Este grupo aun no tiene clientes.</p>
+                            <p className="text-sm text-gray-500">Este grupo aún no tiene clientes.</p>
                         ) : (
                             <div className="space-y-1 max-h-72 overflow-y-auto">
                                 {members.map((client) => (
