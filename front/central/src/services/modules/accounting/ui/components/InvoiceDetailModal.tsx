@@ -288,7 +288,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                         </div>
                         <div className="sm:text-right space-y-1 text-sm">
                             <p className="text-gray-700 dark:text-gray-300">
-                                <span className="text-gray-500 dark:text-gray-400">Emision:</span>{' '}
+                                <span className="text-gray-500 dark:text-gray-400">{'Emisi\u00f3n'}:</span>{' '}
                                 <span className="font-medium">{formatEntryDate(invoice.issue_date)}</span>
                             </p>
                             {invoice.due_date && (
@@ -530,7 +530,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                 message={
                     <span>
                         {isPaid
-                            ? `La factura ${invoice.number} esta PAGADA. Al cancelarla se revertira el movimiento contable del pago. Esta acci\u00f3n no se puede deshacer.`
+                            ? `La factura ${invoice.number} esta PAGADA. Al cancelarla se revertir\u00e1 el movimiento contable del pago. Esta acci\u00f3n no se puede deshacer.`
                             : `Se cancelara la factura ${invoice.number}. Esta acci\u00f3n no se puede deshacer.`}
                         {isDianValidated && (
                             <span className="block mt-2 font-medium">

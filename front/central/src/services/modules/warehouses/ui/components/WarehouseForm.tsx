@@ -48,7 +48,7 @@ const STRUCTURE_OPTIONS: {
             </svg>
         ),
         title: 'Con Zonas',
-        description: 'Areas funcionales diferenciadas.',
+        description: '\u00c1reas funcionales diferenciadas.',
         levels: 'Bodega → Zonas → Ubicaciones',
     },
     {
@@ -60,7 +60,7 @@ const STRUCTURE_OPTIONS: {
             </svg>
         ),
         title: 'WMS Completo',
-        description: 'Jerarquia completa avanzada.',
+        description: 'Jerarqu\u00eda completa avanzada.',
         levels: 'Zonas → Pasillos → Racks → Niveles → Posiciones',
     },
 ];
@@ -271,7 +271,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
 
                     <div>
                         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Estructura de la bodega</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Define como organizar el espacio fisico.</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Define como organizar el espacio {'f\u00edsico'}.</p>
                         <div className="flex flex-col gap-2">
                             {STRUCTURE_OPTIONS.map((opt) => {
                                 const selected = structureMode === opt.id;
@@ -284,7 +284,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                         type="button"
                                         disabled={blocked}
                                         onClick={() => !blocked && setStructureMode(opt.id)}
-                                        title={blocked ? 'No puedes reducir la estructura: ya tienes jerarquia creada' : undefined}
+                                        title={blocked ? 'No puedes reducir la estructura: ya tienes jerarqu\u00eda creada' : undefined}
                                         className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 flex items-start gap-3 ${
                                             blocked
                                                 ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 opacity-60 cursor-not-allowed'
@@ -312,7 +312,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                                 <span className="font-medium">Niveles:</span> {opt.levels}
                                             </p>
                                             {blocked && (
-                                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Tienes jerarquia ya creada en un nivel superior</p>
+                                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Tienes {'jerarqu\u00eda'} ya creada en un nivel superior</p>
                                             )}
                                         </div>
                                     </button>
@@ -473,7 +473,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                     type="text"
                                     value={formData.contact_name}
                                     onChange={(e) => handleChange('contact_name', e.target.value)}
-                                    placeholder="Juan Perez"
+                                    placeholder="Juan P\u00e9rez"
                                     maxLength={255}
                                 />
                             </div>

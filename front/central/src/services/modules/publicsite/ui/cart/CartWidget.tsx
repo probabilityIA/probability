@@ -260,7 +260,7 @@ export function CartWidget({ slug }: { slug: string }) {
                                 <StatusBlock text="Esperando confirmación del pago. No cierres esta ventana." spinner reference={reference} />
                             )}
                             {payState === 'success' && (
-                                <StatusBlock text="Pedido enviado. El vendedor se pondra en contacto contigo para coordinar el pago y la entrega." success reference={reference} />
+                                <StatusBlock text="Pedido enviado. El vendedor se pondrá en contacto contigo para coordinar el pago y la entrega." success reference={reference} />
                             )}
                             {payState === 'failed' && (
                                 <StatusBlock text={error || 'El pago no se pudo confirmar.'} failed reference={reference} />

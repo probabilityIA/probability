@@ -267,7 +267,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Selecciona el negocio al que pertenecera esta integración</span>
+                                <span>Selecciona el negocio al que pertenecerá esta integración</span>
                             </p>
                         </div>
                     )}
@@ -368,7 +368,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                             <li>Ingresa a tu cuenta Siigo Nube en <strong>siigo.com</strong></li>
                             <li>Ve a <strong>Configuración, Integraciones, API</strong></li>
                             <li>Genera o copia tu <strong>Access Key</strong></li>
-                            <li>Obten el <strong>Account ID</strong> (opcional) y <strong>Partner ID</strong> que te asigno Siigo</li>
+                            <li>Obtén el <strong>Account ID</strong> (opcional) y <strong>Partner ID</strong> que te asigno Siigo</li>
                         </ol>
                     </div>
                 </div>

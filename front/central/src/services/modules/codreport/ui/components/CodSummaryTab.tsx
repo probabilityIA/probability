@@ -189,7 +189,7 @@ export default function CodSummaryTab({ filters }: Props) {
 
                 <div className={`${CARD} p-5`}>
                     <div className="text-[14px] font-bold text-gray-900 dark:text-white">Recaudo por transportadora</div>
-                    <div className="text-[12px] text-gray-400 font-medium mb-4">Participacion sobre total COD</div>
+                    <div className="text-[12px] text-gray-400 font-medium mb-4">Participación sobre total COD</div>
                     {donutTotal === 0 ? (
                         <div className="py-10 text-center text-gray-400 text-sm">Sin movimientos en el periodo.</div>
                     ) : (

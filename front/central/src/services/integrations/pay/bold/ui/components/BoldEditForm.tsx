@@ -130,7 +130,7 @@ export function BoldEditForm({ integrationId, initialData, onSuccess, onCancel }
                 onChange={setIsTesting}
                 titleOn="Modo Sandbox activo"
                 titleOff="Modo Sandbox inactivo"
-                description={isTesting ? 'Las transacciones iran al ambiente de pruebas (sin cobros reales).' : 'Las transacciones iran al ambiente real.'}
+                description={isTesting ? 'Las transacciones irán al ambiente de pruebas (sin cobros reales).' : 'Las transacciones irán al ambiente real.'}
                 icon={<BeakerIcon className="w-5 h-5 text-amber-600" />}
                 color="amber"
             />

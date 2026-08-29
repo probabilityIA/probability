@@ -658,7 +658,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                                 setActiveSearchField('dni');
                                             }
                                         }}
-                                        placeholder="Buscar cliente por cedula..."
+                                        placeholder="Buscar cliente por c\u00e9dula..."
                                         autoComplete="off"
                                         className={`${clientLoading && activeSearchField === 'dni' ? 'pr-10' : ''}`}
                                         style={{ borderColor: '#e8e0f5', height: '38px' }}

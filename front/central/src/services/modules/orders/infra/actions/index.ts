@@ -220,9 +220,9 @@ export const downloadOrderTemplateAction = async () => {
     const exampleRows = [
         [
             'ORD-001',
-            'Juan Perez',
+            'Juan Pérez',
             'Juan',
-            'Perez',
+            'Pérez',
             'juan@example.com',
             '3001234567',
             '1234567890',
@@ -258,9 +258,9 @@ export const downloadOrderTemplateAction = async () => {
         ],
         [
             'ORD-002',
-            'Maria Lopez',
-            'Maria',
-            'Lopez',
+            'María López',
+            'María',
+            'López',
             'maria@example.com',
             '3109876543',
             '9876543210',

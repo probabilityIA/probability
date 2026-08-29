@@ -85,7 +85,7 @@ export function InvoicesView({ invoices, concepts, taxes, services, filters, det
         { key: 'number', label: 'Número' },
         { key: 'business', label: 'Negocio' },
         { key: 'concept', label: 'Concepto' },
-        { key: 'issue_date', label: 'Emision' },
+        { key: 'issue_date', label: 'Emisión' },
         { key: 'due_date', label: 'Vencimiento' },
         { key: 'status', label: 'Estado' },
         { key: 'total', label: 'Total', align: 'right' as const },

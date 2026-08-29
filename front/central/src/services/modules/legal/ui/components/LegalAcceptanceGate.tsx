@@ -46,7 +46,7 @@ export function LegalAcceptanceGate() {
             await acceptLegalDocumentsAction(documentos.map((d) => d.id));
             setDocumentos([]);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'No se pudo registrar la aceptacion');
+            setError(err instanceof Error ? err.message : 'No se pudo registrar la aceptación');
             setEnviando(false);
         }
     };
@@ -96,7 +96,7 @@ export function LegalAcceptanceGate() {
                             className="mt-0.5 h-4 w-4"
                         />
                         <span>
-                            {'Declaro que lei y acepto '}
+                            {'Declaro que leí y acepto '}
                             {documentos.map((doc, idx) => (
                                 <span key={doc.id}>
                                     {idx > 0 ? ' y ' : ''}
@@ -104,7 +104,7 @@ export function LegalAcceptanceGate() {
                                     {' (v'}{doc.version}{')'}
                                 </span>
                             ))}
-                            {'. Esta aceptacion queda registrada con mi usuario, fecha y hora.'}
+                            {'. Esta aceptación queda registrada con mi usuario, fecha y hora.'}
                         </span>
                     </label>
 

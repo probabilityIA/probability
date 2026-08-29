@@ -10,12 +10,12 @@ export const homeTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Bienvenido a Probability',
-            body: 'Este recorrido te muestra para que sirve cada módulo del menu lateral. Toma un minuto.\n\nPuedes cerrarlo con la X y retomarlo cuando quieras desde el botón de ayuda.',
+            body: 'Este recorrido te muestra para que sirve cada módulo del menú lateral. Toma un minuto.\n\nPuedes cerrarlo con la X y retomarlo cuando quieras desde el botón de ayuda.',
         },
         {
             id: 'orders',
             title: 'Ordenes',
-            body: 'El corazon de la operación. Aquí llegan los pedidos de todos tus canales (Shopify, MercadoLibre, WooCommerce, WhatsApp) y desde aquí generas las guías de envío.',
+            body: 'El corazón de la operación. Aquí llegan los pedidos de todos tus canales (Shopify, MercadoLibre, WooCommerce, WhatsApp) y desde aquí generas las guías de envío.',
             target: 'a[href="/orders"]',
             placement: 'right',
             optional: true,
@@ -63,7 +63,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'invoicing',
             title: 'Facturacion',
-            body: 'Facturas electronicas hacia la DIAN a traves de tu proveedor (Siigo, Factus). Se alimenta de las órdenes.',
+            body: 'Facturas electrónicas hacia la DIAN a través de tu proveedor (Siigo, Factus). Se alimenta de las órdenes.',
             target: 'a[href="/invoicing/invoices"]',
             placement: 'right',
             optional: true,

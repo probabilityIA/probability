@@ -223,7 +223,7 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
                         onChange={e => set('variant_axes', e.target.value)}
                         className={`${inputClass} font-mono text-xs`}
                     />
-                    <p className="text-xs text-slate-400 mt-1">Define los ejes de variacion de esta familia. Ej: color, talla, sabor.</p>
+                    <p className="text-xs text-slate-400 mt-1">Define los ejes de variación de esta familia. Ej: color, talla, sabor.</p>
                 </div>
             </div>
 

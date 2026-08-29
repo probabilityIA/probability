@@ -187,7 +187,7 @@ export function JumpsellerProductSyncModal({ isOpen, onClose, integrationId, bus
         correlationRef.current = null;
         const res: any = await associateJumpsellerProductsAction(integrationId, businessId ?? undefined, skus);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la asociacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la asociaci\u00f3n');
             setPhase('error');
             return;
         }
@@ -300,14 +300,14 @@ export function JumpsellerProductSyncModal({ isOpen, onClose, integrationId, bus
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
                                 <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya estan asociados a este canal</span>
+                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya {'est\u00e1n'} asociados a este canal</span>
                             </div>
 
                             {diff.matchedNotAssociated.length > 0 && (
                                 <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no {'est\u00e1n'} asociados a este canal</p>
                                             <p className="text-[11px] text-gray-400 mt-0.5">Crea la {'relaci\u00f3n'} (sin tocar stock) para que el canal los reconozca como propios.</p>
                                         </div>
                                         <button onClick={() => handleAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -336,7 +336,7 @@ export function JumpsellerProductSyncModal({ isOpen, onClose, integrationId, bus
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no estan en Jumpseller</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no {'est\u00e1n'} en Jumpseller</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en tu tienda Jumpseller con su precio y stock actual.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_jumpseller')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -351,7 +351,7 @@ export function JumpsellerProductSyncModal({ isOpen, onClose, integrationId, bus
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Jumpseller hay {diff.onlyInJumpseller.length} producto{diff.onlyInJumpseller.length !== 1 ? 's' : ''} que no estan en Probability</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Jumpseller hay {diff.onlyInJumpseller.length} producto{diff.onlyInJumpseller.length !== 1 ? 's' : ''} que no {'est\u00e1n'} en Probability</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu {'configuraci\u00f3n'} de bodegas.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">

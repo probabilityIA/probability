@@ -66,7 +66,7 @@ const defaultOrdersTo = () => toDateInput(new Date());
 const HELP_IMAGES = [
     {
         src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/jumpseller/step-1-credenciales-api.png',
-        caption: 'En el panel de Jumpseller entra a Cuenta > Preferencias. En el recuadro "API y MCP" (arriba a la derecha) estan el Login y el Auth Token: copialos con el bot\u00f3n de la derecha de cada campo.',
+        caption: 'En el panel de Jumpseller entra a Cuenta > Preferencias. En el recuadro "API y MCP" (arriba a la derecha) est\u00e1n el Login y el Auth Token: copialos con el bot\u00f3n de la derecha de cada campo.',
     },
 ];
 
@@ -400,7 +400,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Selecciona el negocio al que pertenecera esta {'integraci\u00f3n'}</span>
+                                <span>Selecciona el negocio al que {'pertenecer\u00e1'} esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}
@@ -473,7 +473,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                         </h4>
                         <ol className="text-[11px] text-gray-600 dark:text-gray-300 space-y-1 list-decimal list-inside ml-1">
                             <li>Ingresa al panel de {'administraci\u00f3n'} de tu tienda en <strong>jumpseller.com</strong></li>
-                            <li>En el menu lateral ve a <strong>Cuenta</strong> y luego a <strong>Preferencias</strong></li>
+                            <li>En el {'men\u00fa'} lateral ve a <strong>Cuenta</strong> y luego a <strong>Preferencias</strong></li>
                             <li>Busca el recuadro <strong>API y MCP</strong> (arriba a la derecha)</li>
                             <li>Copia el valor de <strong>Login</strong></li>
                             <li>Copia el valor de <strong>Auth Token</strong></li>
@@ -532,7 +532,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                     <ToggleRow
                         icon={<ArrowPathIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar inventario hacia Jumpseller"
-                        subtitle="Envia el stock de Probability a los productos de tu tienda Jumpseller"
+                        subtitle="Env\u00eda el stock de Probability a los productos de tu tienda Jumpseller"
                         checked={inventorySyncEnabled}
                         onToggle={() => setInventorySyncEnabled(!inventorySyncEnabled)}
                     />

@@ -40,7 +40,7 @@ export const iamTour: TourDefinition = {
         {
             id: 'permissions',
             title: 'Permisos',
-            body: 'La pieza atomica: recurso más acción. Por ejemplo Órdenes + Crear, o Productos + Eliminar.',
+            body: 'La pieza atómica: recurso más acción. Por ejemplo Órdenes + Crear, o Productos + Eliminar.',
             target: 'a[href="/permissions"]',
             placement: 'bottom',
             optional: true,
@@ -56,7 +56,7 @@ export const iamTour: TourDefinition = {
         {
             id: 'orden',
             title: 'El orden correcto',
-            body: 'Crea el recurso, luego sus permisos, luego el rol que los agrupa, y al final asignale el rol al usuario. Al reves no funciona.',
+            body: 'Crea el recurso, luego sus permisos, luego el rol que los agrupa, y al final asignale el rol al usuario. Al revés no funciona.',
         },
     ],
 };
@@ -76,7 +76,7 @@ export const ticketsTour: TourDefinition = {
         {
             id: 'estados',
             title: 'Estados',
-            body: 'Cada ticket avanza por estados y guarda quien lo movio y cuando. Eso permite medir cuanto se demora el soporte en responder.',
+            body: 'Cada ticket avanza por estados y guarda quien lo movió y cuando. Eso permite medir cuanto se demora el soporte en responder.',
             target: 'table',
             placement: 'top',
             optional: true,

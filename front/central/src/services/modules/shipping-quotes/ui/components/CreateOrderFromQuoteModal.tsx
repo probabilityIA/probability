@@ -535,7 +535,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 <input value={email} onChange={e => { setEmail(e.target.value); clearFieldError('email'); }} placeholder="Email" className={`w-full ${inputCls('email')}`} />
                                 {fieldError('email')}
                             </div>
-                            <input value={dni} onChange={e => setDni(e.target.value)} placeholder="Cedula / DNI" className={`col-span-2 ${inputCls('dni')}`} />
+                            <input value={dni} onChange={e => setDni(e.target.value)} placeholder="C\u00e9dula / DNI" className={`col-span-2 ${inputCls('dni')}`} />
                         </div>
                     </div>
 

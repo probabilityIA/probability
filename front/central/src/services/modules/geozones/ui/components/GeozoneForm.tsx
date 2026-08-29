@@ -38,7 +38,7 @@ export default function GeozoneForm({ onSuccess, onCancel, businessId, contextLa
         let geometry;
         if (mode === 'draw') {
             geometry = pointsToPolygon(points);
-            if (!geometry) { setError('Dibuja al menos 3 vertices en el mapa'); return; }
+            if (!geometry) { setError('Dibuja al menos 3 vértices en el mapa'); return; }
         } else {
             try {
                 const parsed = JSON.parse(pasted);

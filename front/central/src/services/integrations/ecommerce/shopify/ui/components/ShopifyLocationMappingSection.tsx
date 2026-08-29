@@ -80,7 +80,7 @@ export function ShopifyLocationMappingSection({ mappings, onChangeMappings, defa
                     className={`${inputCls} font-mono`}
                     style={{ borderColor: INPUT_BORDER }}
                 />
-                <p className="text-[11px] text-gray-400 mt-1">Si lo dejas vacio, se usa la primera location de la tienda.</p>
+                <p className="text-[11px] text-gray-400 mt-1">Si lo dejas vacío, se usa la primera location de la tienda.</p>
             </div>
 
             {loading ? (

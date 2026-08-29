@@ -240,7 +240,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
                                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Siigo hay {diff.onlyInSiigo.length} producto{diff.onlyInSiigo.length !== 1 ? 's' : ''} que no estan en Probability</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Siigo hay {diff.onlyInSiigo.length} producto{diff.onlyInSiigo.length !== 1 ? 's' : ''} que no están en Probability</p>
                                             <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability y quedaran asociados a este canal.</p>
                                         </div>
                                         <button onClick={handleCreate} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -253,7 +253,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
 
                             {diff.onlyInProbability.length > 0 && (
                                 <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-3">
-                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no estan en Siigo</p>
+                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no están en Siigo</p>
                                     <p className="text-[11px] text-gray-400 mt-0.5">Informativo. La integración Siigo es de solo lectura: estos no se crean en Siigo.</p>
                                     <ProductList items={diff.onlyInProbability} />
                                 </div>

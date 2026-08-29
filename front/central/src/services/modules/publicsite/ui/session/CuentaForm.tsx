@@ -40,7 +40,7 @@ export function CuentaForm({ slug }: CuentaFormProps) {
             router.push(`/tienda/${slug}`);
             router.refresh();
         } else {
-            setError(result.error || 'Ocurrio un error, intenta de nuevo');
+            setError(result.error || 'Ocurrió un error, intenta de nuevo');
         }
     };
 

@@ -122,7 +122,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                         placeholder="https://api-sandbox.factus.com.co"
                         className={inputClass}
                     />
-                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Vacio = producción</p>
+                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Vacío = producción</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -226,7 +226,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                             placeholder="2"
                             className={inputClass}
                         />
-                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Default 2 = persona natural, 1 = juridica</p>
+                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Default 2 = persona natural, 1 = jurídica</p>
                     </div>
                 </div>
 

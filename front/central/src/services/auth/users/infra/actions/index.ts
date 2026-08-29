@@ -77,7 +77,7 @@ export const resetPasswordAction = async (userId: number) => {
         const cookieStore = await cookies();
         const token = cookieStore.get('session_token')?.value;
         if (!token) {
-            return { success: false, email: '', password: '', message: 'No se encontro el token de sesión' };
+            return { success: false, email: '', password: '', message: 'No se encontró el token de sesión' };
         }
         return await generatePasswordAction({ user_id: userId }, token);
     } catch (error: any) {

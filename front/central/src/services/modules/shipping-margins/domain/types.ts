@@ -112,7 +112,7 @@ export const CARRIER_OPTIONS: CarrierOption[] = [
     { code: 'interrapidisimo', name: 'Interrapidísimo' },
     { code: 'coordinadora', name: 'Coordinadora' },
     { code: 'mipaquete', name: 'MiPaquete' },
-    { code: 'enviame', name: 'Enviame' },
+    { code: 'enviame', name: 'Envíame' },
     { code: 'tcc', name: 'TCC' },
-    { code: 'envia', name: 'Envia' },
+    { code: 'envia', name: 'Envía' },
 ];

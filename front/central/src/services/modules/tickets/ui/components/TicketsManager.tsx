@@ -75,7 +75,7 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
         { key: 'priority', label: 'Prioridad', type: 'select', options: TICKET_PRIORITIES.map(p => ({ value: p, label: PRIORITY_META[p].label })) },
         { key: 'type', label: 'Tipo', type: 'select', options: TICKET_TYPES.map(t => ({ value: t, label: TYPE_META[t].label })) },
         { key: 'source', label: 'Origen', type: 'select', options: [{ value: 'internal', label: 'Interno' }, { value: 'business', label: 'Negocio' }] },
-        { key: 'only_mine', label: 'Solo mios', type: 'select', options: [{ value: 'true', label: 'Si' }, { value: 'false', label: 'No' }] },
+        { key: 'only_mine', label: 'Solo míos', type: 'select', options: [{ value: 'true', label: 'Si' }, { value: 'false', label: 'No' }] },
         { key: 'escalated', label: 'Escalado a dev', type: 'select', options: [{ value: 'true', label: 'Si' }, { value: 'false', label: 'No' }] },
     ], []);
 
@@ -87,7 +87,7 @@ export default function TicketsManager({ selectedBusinessId = null, onBusinessCh
         if (filters.priority) out.push({ key: 'priority', label: 'Prioridad', value: PRIORITY_META[filters.priority as keyof typeof PRIORITY_META]?.label || filters.priority, type: 'select' });
         if (filters.type) out.push({ key: 'type', label: 'Tipo', value: TYPE_META[filters.type as keyof typeof TYPE_META]?.label || filters.type, type: 'select' });
         if (filters.source) out.push({ key: 'source', label: 'Origen', value: filters.source === 'internal' ? 'Interno' : 'Negocio', type: 'select' });
-        if (filters.only_mine) out.push({ key: 'only_mine', label: 'Solo mios', value: 'Si', type: 'select' });
+        if (filters.only_mine) out.push({ key: 'only_mine', label: 'Solo míos', value: 'Si', type: 'select' });
         if (filters.escalated) out.push({ key: 'escalated', label: 'Escalado a dev', value: 'Si', type: 'select' });
         return out;
     }, [filters]);

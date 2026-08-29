@@ -124,7 +124,7 @@ export function MercadoLibreOAuthForm({ onCancel }: MercadoLibreOAuthFormProps) 
                 throw new Error(data.error || data.message || 'Error al iniciar la conexión OAuth');
             }
             if (!data.authorization_url) {
-                throw new Error('No se recibio la URL de autorización');
+                throw new Error('No se recibió la URL de autorización');
             }
             window.location.href = data.authorization_url;
         } catch (err: any) {
@@ -229,7 +229,7 @@ export function MercadoLibreOAuthForm({ onCancel }: MercadoLibreOAuthFormProps) 
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Negocio al que pertenecera esta integración</span>
+                                <span>Negocio al que pertenecerá esta integración</span>
                             </p>
                         </div>
                     )}

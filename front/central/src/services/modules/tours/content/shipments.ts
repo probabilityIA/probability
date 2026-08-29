@@ -32,7 +32,7 @@ export const shipmentsTour: TourDefinition = {
         {
             id: 'quotes',
             title: 'Cotizaciones',
-            body: 'Historial de tarifas consultadas. Cada cotización guarda que transportadoras respondieron y a que precio, para poder auditar por que se eligio una.',
+            body: 'Historial de tarifas consultadas. Cada cotización guarda que transportadoras respondieron y a que precio, para poder auditar por que se eligió una.',
             target: 'a[href="/shipments/quotes"]',
             placement: 'bottom',
             optional: true,
@@ -98,7 +98,7 @@ export const shipmentsQuotesTour: TourDefinition = {
         {
             id: 'tabla',
             title: 'Historial',
-            body: 'Sirve para auditar: si un cliente reclama que le cobraron distinto, aquí esta que se le mostro y cuando.',
+            body: 'Sirve para auditar: si un cliente reclama que le cobraron distinto, aquí esta que se le mostró y cuando.',
             target: 'table',
             placement: 'top',
             optional: true,
@@ -117,7 +117,7 @@ export const shippingMarginsTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Márgenes de envío',
-            body: 'Configuración de plataforma: cuanto se le suma a la tarifa de la transportadora antes de mostrarsela al negocio.',
+            body: 'Configuración de plataforma: cuanto se le suma a la tarifa de la transportadora antes de mostrársela al negocio.',
         },
         {
             id: 'cod',

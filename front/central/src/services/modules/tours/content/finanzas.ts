@@ -88,7 +88,7 @@ export const invoicingTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Bienvenido a Facturación',
-            body: 'Desde aquí se emiten las facturas electronicas de tus ventas hacia la DIAN, a traves de tu proveedor tecnologico.',
+            body: 'Desde aquí se emiten las facturas electrónicas de tus ventas hacia la DIAN, a través de tu proveedor tecnológico.',
         },
         {
             id: 'facturas',

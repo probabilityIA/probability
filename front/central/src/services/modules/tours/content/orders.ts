@@ -15,7 +15,7 @@ export const ordersTour: TourDefinition = {
         },
         {
             id: 'menu',
-            title: 'Menu del módulo',
+            title: 'Menú del módulo',
             body: 'Estas cuatro pestanas son el flujo completo de una venta: la orden, su envío, el recaudo si es contra entrega, y las cotizaciones de tarifa.',
             target: 'a[href="/shipments"]',
             placement: 'bottom',
@@ -56,7 +56,7 @@ export const ordersTour: TourDefinition = {
         {
             id: 'table',
             title: 'Tabla de órdenes',
-            body: 'Aquí se listan las órdenes que coinciden con tus filtros. En cada fila tienes las acciones: ver, editar, cambiar estado, ver guía y la recomendacion de transportadora.',
+            body: 'Aquí se listan las órdenes que coinciden con tus filtros. En cada fila tienes las acciones: ver, editar, cambiar estado, ver guía y la recomendación de transportadora.',
             target: 'table',
             placement: 'top',
             optional: true,

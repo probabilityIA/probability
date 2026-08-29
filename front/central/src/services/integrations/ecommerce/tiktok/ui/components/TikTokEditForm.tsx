@@ -168,7 +168,7 @@ export function TikTokEditForm({ integrationId, initialData, onSuccess, onCancel
                 </div>
                 <p className="text-sm text-cyan-900 dark:text-cyan-200 -mt-2 mb-4 flex items-start gap-2">
                     <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <span>Deja los campos vacios para conservar las credenciales actuales</span>
+                    <span>Deja los campos vacíos para conservar las credenciales actuales</span>
                 </p>
 
                 <div>

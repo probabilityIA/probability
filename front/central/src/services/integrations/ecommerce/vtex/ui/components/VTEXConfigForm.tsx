@@ -466,7 +466,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Selecciona el negocio al que pertenecera esta {'integraci\u00f3n'}</span>
+                                <span>Selecciona el negocio al que {'pertenecer\u00e1'} esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}
@@ -574,7 +574,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                     <ToggleRow
                         icon={<ArrowPathIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar inventario hacia VTEX"
-                        subtitle="Envia el stock de Probability a los SKUs de tu tienda VTEX"
+                        subtitle="Env\u00eda el stock de Probability a los SKUs de tu tienda VTEX"
                         checked={inventorySyncEnabled}
                         onToggle={() => setInventorySyncEnabled(!inventorySyncEnabled)}
                     />
@@ -588,7 +588,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                     <ToggleRow
                         icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Recibir estados desde VTEX"
-                        subtitle="Deja que VTEX mueva el estado de las \u00f3rdenes aca. Las cancelaciones entran igual"
+                        subtitle="Deja que VTEX mueva el estado de las \u00f3rdenes ac\u00e1. Las cancelaciones entran igual"
                         checked={statusInboundEnabled}
                         onToggle={() => setStatusInboundEnabled(!statusInboundEnabled)}
                     />

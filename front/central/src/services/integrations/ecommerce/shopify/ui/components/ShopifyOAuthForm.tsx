@@ -70,7 +70,7 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 1,
         title: 'Entra a Integraciones en tu panel de Probability',
-        description: 'En el menu lateral, abre "Integraciones" y selecciona la pestana "Plataforma".',
+        description: 'En el men\u00fa lateral, abre "Integraciones" y selecciona la pestana "Plataforma".',
         image: `${SHOPIFY_ASSETS_BASE}/01-panel-probability-integraciones-plataforma.png`,
     },
     {
@@ -121,7 +121,7 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 9,
         title: 'Configura las URLs (paso critico)',
-        description: 'Justo debajo, llena "URLs de redireccionamiento" y "URL de la app" con los valores de abajo. Si dejas estos campos vacios, Shopify rechazara la conexi\u00f3n con un error de "hosts must match". Clic en "Publicar".',
+        description: 'Justo debajo, llena "URLs de redireccionamiento" y "URL de la app" con los valores de abajo. Si dejas estos campos vac\u00edos, Shopify rechazara la conexi\u00f3n con un error de "hosts must match". Clic en "Publicar".',
         image: `${SHOPIFY_ASSETS_BASE}/14-shopify-app-urls-redireccionamiento-correctas-FIX.png`,
         copyItems: [
             { label: 'URL de redireccionamiento', text: SHOPIFY_REDIRECT_URL },
@@ -378,7 +378,7 @@ export default function ShopifyOAuthForm({
             if (data.authorization_url) {
                 window.location.href = data.authorization_url;
             } else {
-                throw new Error('No se recibio URL de autorizaci\u00f3n');
+                throw new Error('No se recibi\u00f3 URL de autorizaci\u00f3n');
             }
         } catch (err: any) {
             console.error('Error al conectar con Shopify:', err);

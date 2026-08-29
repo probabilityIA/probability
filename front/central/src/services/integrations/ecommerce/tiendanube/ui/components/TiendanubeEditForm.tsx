@@ -357,7 +357,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                             />
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Dejalo como esta si no necesitas cambiarlo</span>
+                                <span>{'D\u00e9jalo'} como esta si no necesitas cambiarlo</span>
                             </p>
                         </div>
                     </div>
@@ -507,7 +507,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                             onClick={() => setInventoryCompareOpen(true)}
                             disabled={!inventory.enabled}
                             title={inventory.enabled
-                                ? 'Ver que cambiaria antes de enviar el stock'
+                                ? 'Ver que cambiar\u00eda antes de enviar el stock'
                                 : 'Activa la sincronizaci\u00f3n de inventario para poder comparar'}
                             className="inline-flex items-center justify-center gap-1.5 rounded-lg border py-2 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                             style={{ borderColor: GREEN_BORDER, backgroundColor: GREEN_SOFT, color: GREEN_DARK }}

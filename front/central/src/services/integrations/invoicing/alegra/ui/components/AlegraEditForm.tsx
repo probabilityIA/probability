@@ -270,7 +270,7 @@ export function AlegraEditForm({ integrationId, initialData, onSuccess, onCancel
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de producción de Alegra.</span>
+                        <span>Dejar vacío para usar la URL de producción de Alegra.</span>
                     </p>
                 </div>
 

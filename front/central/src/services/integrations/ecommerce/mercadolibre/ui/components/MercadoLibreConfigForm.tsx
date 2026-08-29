@@ -417,7 +417,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Negocio al que pertenecera esta {'integraci\u00f3n'}</span>
+                                <span>Negocio al que {'pertenecer\u00e1'} esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}

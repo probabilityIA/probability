@@ -184,7 +184,7 @@ export function EnviameEditForm({ integrationId, initialData, onSuccess, onCance
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Enviame Principal"
+                        placeholder="Ej: Envíame Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
@@ -255,7 +255,7 @@ export function EnviameEditForm({ integrationId, initialData, onSuccess, onCance
                         <SecretInput
                             value={formData.api_key}
                             onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
-                            placeholder="Ingresa tu API Key de Enviame"
+                            placeholder="Ingresa tu API Key de Envíame"
                             required
                             className="bg-white dark:bg-gray-800 font-mono text-sm"
                         />

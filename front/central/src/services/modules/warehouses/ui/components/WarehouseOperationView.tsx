@@ -165,7 +165,7 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                         </button>
                         <div>
                             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{warehouseName || `Bodega #${warehouseId}`}</h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Vista operativa - ocupacion en vivo</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Vista operativa - ocupación en vivo</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -186,7 +186,7 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                     {[
                         { label: 'Unidades', value: totals.units, color: 'text-indigo-600' },
                         { label: 'Ubicaciones ocupadas', value: `${totals.occupied}/${totals.total}`, color: 'text-emerald-600' },
-                        { label: 'Ocupacion', value: `${pct}%`, color: 'text-amber-600' },
+                        { label: 'Ocupación', value: `${pct}%`, color: 'text-amber-600' },
                         { label: 'Escala', value: `1 m = ${Math.round((layout.scale && layout.scale > 0 ? layout.scale : 40))} px`, color: 'text-gray-500' },
                     ].map((s) => (
                         <div key={s.label} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
@@ -199,7 +199,7 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                 <div className="flex items-center gap-3 flex-wrap text-xs text-gray-600 dark:text-gray-300">
                     <span className="font-medium">Leyenda:</span>
                     {[
-                        ['#e5e7eb', 'Vacio'],
+                        ['#e5e7eb', 'Vacío'],
                         ['#34d399', 'Bajo (<50%)'],
                         ['#fbbf24', 'Medio (50-85%)'],
                         ['#f87171', 'Lleno (>85%)'],

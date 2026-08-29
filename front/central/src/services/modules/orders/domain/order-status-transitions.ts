@@ -27,14 +27,14 @@ export const STATUS_FLOW: StatusStep[] = [
     { code: 'on_hold', name: 'En Espera', description: 'Orden pausada temporalmente (ej: esperando confirmación de pago). Puede volver a Pendiente.', color: '#6B7280', category: 'initial' },
 
     // Almacen
-    { code: 'picking', name: 'Seleccionando productos', description: 'Se estan seleccionando los productos del inventario', color: '#3B82F6', category: 'warehouse' },
+    { code: 'picking', name: 'Seleccionando productos', description: 'Se están seleccionando los productos del inventario', color: '#3B82F6', category: 'warehouse' },
     { code: 'inventory_issue', name: 'Novedad de inventario', description: 'Problema con el inventario (sin stock, producto danado). Puede volver a Picking.', color: '#FB923C', category: 'issue' },
     { code: 'packing', name: 'Empacando', description: 'El pedido esta siendo empacado para despacho', color: '#6366F1', category: 'warehouse' },
     { code: 'ready_to_ship', name: 'Listo para despacho', description: 'El pedido esta empacado y listo para ser recogido por el transportista', color: '#8B5CF6', category: 'warehouse' },
 
     // Asignacion
     { code: 'assigned_to_driver', name: 'Asignado a piloto', description: 'Un conductor/piloto ha sido asignado para recoger el pedido', color: '#A855F7', category: 'assignment' },
-    { code: 'picked_up', name: 'Recogido', description: 'El piloto recogio el pedido del almacén', color: '#D946EF', category: 'assignment' },
+    { code: 'picked_up', name: 'Recogido', description: 'El piloto recogió el pedido del almacén', color: '#D946EF', category: 'assignment' },
 
     // Transito
     { code: 'in_transit', name: 'En camino', description: 'El pedido esta en camino hacia el destino del cliente', color: '#EC4899', category: 'transit' },
@@ -113,7 +113,7 @@ const TERMINAL_STATUSES = new Set(['cancelled', 'refunded']);
 
 export const STATUS_METADATA_FIELDS: Record<string, MetadataField[]> = {
     assigned_to_driver: [
-        { key: 'driver_name', label: 'Nombre del piloto', type: 'text', required: true, placeholder: 'Ej: Carlos Ramirez' },
+        { key: 'driver_name', label: 'Nombre del piloto', type: 'text', required: true, placeholder: 'Ej: Carlos Ramírez' },
     ],
     in_transit: [
         { key: 'tracking_number', label: 'Número de seguimiento', type: 'text', required: false, placeholder: 'Ej: TRK-001' },

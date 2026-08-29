@@ -124,7 +124,7 @@ export default function TiendanubeTypeCredentialsForm({
     webhookUrls,
 }: TiendanubeTypeCredentialsFormProps) {
     const set = (patch: Partial<TiendanubePlatformCredentials>) => onChange({ ...credentials, ...patch });
-    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'Client Secret de la aplicación';
+    const placeholderSecret = isEditing ? 'Dejar vacío para mantener actual' : 'Client Secret de la aplicación';
 
     const [apiOrigin, setApiOrigin] = useState('');
 
@@ -261,7 +261,7 @@ export default function TiendanubeTypeCredentialsForm({
                     <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-800">
                         <label className={fieldLabel}>URL de autorización generada</label>
                         <CopyField value={authorizeURL} />
-                        <p className={fieldHint}>A esta URL se envia al comerciante para instalar la app en su tienda.</p>
+                        <p className={fieldHint}>A esta URL se envía al comerciante para instalar la app en su tienda.</p>
                     </div>
                 )}
             </div>
@@ -333,12 +333,12 @@ export default function TiendanubeTypeCredentialsForm({
                     <div>
                         <label className={fieldLabel}>URL webhook customers redact</label>
                         <CopyField value={customersRedactURL} disabled={!customersRedactURL} />
-                        <p className={fieldHint}>Un comprador pidio borrar sus datos personales.</p>
+                        <p className={fieldHint}>Un comprador pidió borrar sus datos personales.</p>
                     </div>
                     <div>
                         <label className={fieldLabel}>URL webhook customers data request</label>
                         <CopyField value={customersDataURL} disabled={!customersDataURL} />
-                        <p className={fieldHint}>Un comprador pidio una copia de sus datos personales.</p>
+                        <p className={fieldHint}>Un comprador pidió una copia de sus datos personales.</p>
                     </div>
                 </div>
             </div>

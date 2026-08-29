@@ -76,7 +76,7 @@ export function TiendanubeOAuthCallback() {
                 }
 
                 if (!tokenData.store_id) {
-                    throw new Error('Tiendanube no devolvio el ID de la tienda. Intenta conectar nuevamente.');
+                    throw new Error('Tiendanube no devolvió el ID de la tienda. Intenta conectar nuevamente.');
                 }
 
                 const pending = readPendingConfig();

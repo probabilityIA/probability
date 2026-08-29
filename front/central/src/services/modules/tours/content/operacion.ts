@@ -121,7 +121,7 @@ export const notificationsTour: TourDefinition = {
         {
             id: 'configs',
             title: 'Configuraciones',
-            body: 'La combinacion de evento más canal más plantilla. Por ejemplo: "orden despachada" por WhatsApp con la plantilla de guía.',
+            body: 'La combinación de evento más canal más plantilla. Por ejemplo: "orden despachada" por WhatsApp con la plantilla de guía.',
             target: 'a[href="/notification-config"]',
             placement: 'bottom',
             optional: true,

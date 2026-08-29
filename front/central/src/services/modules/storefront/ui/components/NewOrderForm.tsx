@@ -142,7 +142,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
             <div className="text-center py-12">
                 <div className="text-green-500 text-6xl mb-4">&#10003;</div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Pedido enviado</h2>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Tu pedido esta siendo procesado. Recibiras una notificación cuando este listo.</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Tu pedido esta siendo procesado. Recibirás una notificación cuando este listo.</p>
                 <button
                     onClick={() => { setSuccess(false); setCart([]); }}
                     className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"

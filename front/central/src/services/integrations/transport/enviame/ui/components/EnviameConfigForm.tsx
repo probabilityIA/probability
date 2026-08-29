@@ -188,7 +188,7 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Enviame Principal"
+                        placeholder="Ej: Envíame Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
@@ -229,7 +229,7 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integración</span>
+                            <span>Selecciona el negocio al que pertenecerá esta integración</span>
                         </p>
                     </div>
                 )}
@@ -259,7 +259,7 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                         <SecretInput
                             value={formData.api_key}
                             onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
-                            placeholder="Ingresa tu API Key de Enviame"
+                            placeholder="Ingresa tu API Key de Envíame"
                             required
                             className="bg-white dark:bg-gray-800 font-mono text-sm"
                         />

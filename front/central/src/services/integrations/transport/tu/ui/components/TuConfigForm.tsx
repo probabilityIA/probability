@@ -229,7 +229,7 @@ export function TuConfigForm({ onSuccess, onCancel }: TuConfigFormProps) {
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integración</span>
+                            <span>Selecciona el negocio al que pertenecerá esta integración</span>
                         </p>
                     </div>
                 )}

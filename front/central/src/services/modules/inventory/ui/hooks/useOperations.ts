@@ -169,7 +169,7 @@ export function useVelocities(initial: GetVelocitiesParams) {
             const r = await listVelocitiesAction(initial);
             setVelocities(r.data || []);
         } catch (e: any) {
-            setError(getActionError(e, 'Error al cargar rotacion'));
+            setError(getActionError(e, 'Error al cargar rotación'));
         } finally {
             setLoading(false);
         }

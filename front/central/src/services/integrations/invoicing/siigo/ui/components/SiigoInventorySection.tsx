@@ -157,7 +157,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                 <ToggleRow
                     icon={<CubeIcon className="w-4 h-4" style={{ color: GREEN }} />}
                     title="Sincronizar productos de Siigo a Probability"
-                    subtitle="Cuando se crea o actualiza un producto en Siigo, se crea o actualiza también en Probability (aplicando la logica de bodegas configurada)."
+                    subtitle="Cuando se crea o actualiza un producto en Siigo, se crea o actualiza también en Probability (aplicando la lógica de bodegas configurada)."
                     checked={value.product_sync_enabled}
                     onToggle={() => set({ product_sync_enabled: !value.product_sync_enabled })}
                 />

@@ -160,7 +160,7 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
         correlationRef.current = null;
         const res: any = await associateShopifyProductsAction(integrationId, businessId ?? undefined, skus);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la asociacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la asociación');
             setPhase('error');
             return;
         }
@@ -273,14 +273,14 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
                                 <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya estan asociados a este canal</span>
+                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya están asociados a este canal</span>
                             </div>
 
                             {diff.matchedNotAssociated.length > 0 && (
                                 <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no están asociados a este canal</p>
                                             <p className="text-[11px] text-gray-400 mt-0.5">Crea la relación (sin tocar stock) para que el canal los reconozca como propios.</p>
                                         </div>
                                         <button onClick={() => handleAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -309,7 +309,7 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no estan en Shopify</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no están en Shopify</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en tu tienda Shopify y quedaran asociados a este canal.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_shopify')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -324,7 +324,7 @@ export function ShopifyProductSyncModal({ isOpen, onClose, integrationId, busine
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Shopify hay {diff.onlyInShopify.length} producto{diff.onlyInShopify.length !== 1 ? 's' : ''} que no estan en Probability</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Shopify hay {diff.onlyInShopify.length} producto{diff.onlyInShopify.length !== 1 ? 's' : ''} que no están en Probability</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuración de bodegas.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">

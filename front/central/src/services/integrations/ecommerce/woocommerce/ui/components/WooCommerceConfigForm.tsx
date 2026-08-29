@@ -87,7 +87,7 @@ const CARRIER_OPTIONS = [
     { code: 'COORDINADORA', label: 'Coordinadora' },
     { code: 'DEPRISA', label: 'Deprisa' },
     { code: 'INTERRAPIDISIMO', label: 'Interrapid\u00edsimo' },
-    { code: 'ENVIA', label: 'Envia' },
+    { code: 'ENVIA', label: 'Env\u00eda' },
     { code: 'SERVIENTREGA', label: 'Servientrega' },
     { code: 'TCC', label: 'TCC' },
     { code: '99MINUTOS', label: '99 Minutos' },
@@ -102,7 +102,7 @@ const PLUGIN_STEPS = [
 ];
 
 const PLUGIN_INFO_FEATURES = [
-    'Tarifas reales de las transportadoras (Coordinadora, Servientrega, Interrapid\u00edsimo, Envia y otras) con su precio y d\u00edas de entrega, calculadas por Probability seg\u00fan el destino.',
+    'Tarifas reales de las transportadoras (Coordinadora, Servientrega, Interrapid\u00edsimo, Env\u00eda y otras) con su precio y d\u00edas de entrega, calculadas por Probability seg\u00fan el destino.',
     'Logo de cada transportadora junto a la opci\u00f3n de env\u00edo en el checkout.',
     'Sugerencia de municipios v\u00e1lidos (c\u00f3digo DANE) seg\u00fan el departamento que elige el cliente.',
     'Validaci\u00f3n de la direcci\u00f3n de destino: le avisa al cliente si la direcci\u00f3n fue reconocida, para evitar gu\u00edas con datos incorrectos.',
@@ -533,7 +533,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Negocio al que pertenecera esta {'integraci\u00f3n'}</span>
+                                <span>Negocio al que {'pertenecer\u00e1'} esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}

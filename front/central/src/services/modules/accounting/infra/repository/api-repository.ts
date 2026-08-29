@@ -63,7 +63,7 @@ export class AccountingApiRepository implements IAccountingRepository {
         const data = await res.json();
 
         if (!res.ok || data?.success === false) {
-            throw new Error(data?.error || data?.message || 'Ocurrio un error');
+            throw new Error(data?.error || data?.message || 'Ocurrió un error');
         }
 
         return data as Envelope<T>;

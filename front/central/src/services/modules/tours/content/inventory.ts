@@ -55,7 +55,7 @@ export const inventoryTour: TourDefinition = {
         {
             id: 'audit',
             title: 'Auditoria',
-            body: 'Conteos fisicos: cuentas lo que hay en el estante y el sistema te muestra la diferencia contra lo que debería haber.',
+            body: 'Conteos físicos: cuentas lo que hay en el estante y el sistema te muestra la diferencia contra lo que debería haber.',
             target: 'a[href="/inventory/audit"]',
             placement: 'bottom',
             optional: true,
@@ -81,7 +81,7 @@ export const warehousesTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Bodegas',
-            body: 'Cada bodega es un lugar fisico con su dirección y su contacto. El stock siempre vive en una bodega, nunca "en el aire".',
+            body: 'Cada bodega es un lugar físico con su dirección y su contacto. El stock siempre vive en una bodega, nunca "en el aire".',
         },
         {
             id: 'contacto',

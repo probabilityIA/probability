@@ -38,7 +38,7 @@ export default function MercadoLibreTypeCredentialsForm({
     isEditing = false,
 }: MercadoLibreTypeCredentialsFormProps) {
     const set = (patch: Partial<MercadoLibrePlatformCredentials>) => onChange({ ...credentials, ...patch });
-    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'Secret Key de la aplicación';
+    const placeholderSecret = isEditing ? 'Dejar vacío para mantener actual' : 'Secret Key de la aplicación';
 
     const [urls, setUrls] = useState({ redirect: '', notifications: '' });
     const [copiedKey, setCopiedKey] = useState<'redirect' | 'notifications' | null>(null);
@@ -231,7 +231,7 @@ export default function MercadoLibreTypeCredentialsForm({
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />
-                        <p className={fieldHint}>Opcional. Si vacio, usa el de producción.</p>
+                        <p className={fieldHint}>Opcional. Si vacío, usa el de producción.</p>
                     </div>
                 </div>
             </div>

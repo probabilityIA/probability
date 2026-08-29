@@ -41,7 +41,7 @@ export default function JumpsellerTypeCredentialsForm({
     isEditing = false,
 }: JumpsellerTypeCredentialsFormProps) {
     const set = (patch: Partial<JumpsellerPlatformCredentials>) => onChange({ ...credentials, ...patch });
-    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'APP SECRET de la aplicación';
+    const placeholderSecret = isEditing ? 'Dejar vacío para mantener actual' : 'APP SECRET de la aplicación';
 
     const [callbackURL, setCallbackURL] = useState('');
     const [copied, setCopied] = useState(false);
@@ -155,7 +155,7 @@ export default function JumpsellerTypeCredentialsForm({
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />
-                        <p className={fieldHint}>Opcional. Si vacio, se deriva del dominio actual. Debe ser identica a la de tu App.</p>
+                        <p className={fieldHint}>Opcional. Si vacío, se deriva del dominio actual. Debe ser idéntica a la de tu App.</p>
                     </div>
                     <div className="md:col-span-2">
                         <label className={fieldLabel}>Scopes</label>
@@ -208,7 +208,7 @@ export default function JumpsellerTypeCredentialsForm({
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />
-                        <p className={fieldHint}>Opcional. Si vacio, se deriva del host actual.</p>
+                        <p className={fieldHint}>Opcional. Si vacío, se deriva del host actual.</p>
                     </div>
                 </div>
             </div>
