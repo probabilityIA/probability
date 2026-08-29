@@ -111,7 +111,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                         setError('Error al parsear los datos crudos de la orden');
                     }
                 } else {
-                    setError('El JSON del canal no esta disponible para esta orden. Se guarda al sincronizar con el canal y se depura a los 90 dias.');
+                    setError('El JSON del canal no está disponible para esta orden. Se guarda al sincronizar con el canal y se depura a los 90 días.');
                 }
             } else {
                 setError(response.message || 'Error al cargar los datos crudos');
@@ -122,7 +122,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                 errorMessage.includes('no encontrado') ||
                 errorMessage.includes('raw data not found') ||
                 errorMessage.includes('Datos crudos no encontrados')) {
-                setError('El JSON del canal no esta disponible para esta orden. Se guarda al sincronizar con el canal y se depura a los 90 dias.');
+                setError('El JSON del canal no está disponible para esta orden. Se guarda al sincronizar con el canal y se depura a los 90 días.');
             } else {
                 setError(getActionError(err, 'Error al cargar los datos crudos'));
             }

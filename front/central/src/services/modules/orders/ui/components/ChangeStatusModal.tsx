@@ -160,7 +160,7 @@ export function ChangeStatusModal({ isOpen, onClose, order, onSuccess }: ChangeS
                                 {/* Metadata fields */}
                                 {selectedStatus && metadataFields.length > 0 && (
                                     <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Informacion adicional:</p>
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Información adicional:</p>
                                         {metadataFields.map((field) => (
                                             <div key={field.key}>
                                                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -242,7 +242,7 @@ export function ChangeStatusModal({ isOpen, onClose, order, onSuccess }: ChangeS
                         {isDestructive && (
                             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
                                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                                    <strong>Atencion:</strong> {selectedStatus.code === 'cancelled' ? 'La cancelacion' : 'El reembolso'} es un estado terminal. Una vez aplicado, no se podra revertir.
+                                    <strong>Atención:</strong> {selectedStatus.code === 'cancelled' ? 'La cancelación' : 'El reembolso'} es un estado terminal. Una vez aplicado, no se podra revertir.
                                 </p>
                             </div>
                         )}
