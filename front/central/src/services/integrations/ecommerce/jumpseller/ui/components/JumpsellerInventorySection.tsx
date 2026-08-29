@@ -126,7 +126,7 @@ export function JumpsellerInventorySection({ value, onChange, businessId, locati
                                 onClick={() => { if (!disabled) set({ mode: m.id }); }}
                                 disabled={disabled}
                                 aria-pressed={active}
-                                title={disabled ? 'Jumpseller todavia no permite enviar stock por bodega' : undefined}
+                                title={disabled ? 'Jumpseller todavía no permite enviar stock por bodega' : undefined}
                                 className="rounded-lg border px-3 py-2 text-left text-[12px] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                                 style={active
                                     ? { borderColor: ACCENT, backgroundColor: ACCENT_SOFT }

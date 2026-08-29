@@ -41,7 +41,7 @@ export default function JumpsellerTypeCredentialsForm({
     isEditing = false,
 }: JumpsellerTypeCredentialsFormProps) {
     const set = (patch: Partial<JumpsellerPlatformCredentials>) => onChange({ ...credentials, ...patch });
-    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'APP SECRET de la aplicacion';
+    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'APP SECRET de la aplicación';
 
     const [callbackURL, setCallbackURL] = useState('');
     const [copied, setCopied] = useState(false);
@@ -71,7 +71,7 @@ export default function JumpsellerTypeCredentialsForm({
         <div className="space-y-4">
             <div className="flex items-center gap-2">
                 <KeyIcon className="w-5 h-5 text-[var(--color-primary)]" />
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Credenciales de la Aplicacion Jumpseller</h3>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Credenciales de la Aplicación Jumpseller</h3>
             </div>
 
             <p className="text-xs text-gray-600 dark:text-gray-300 flex items-start gap-1.5">
@@ -122,7 +122,7 @@ export default function JumpsellerTypeCredentialsForm({
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800 p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <GlobeAltIcon className="w-4 h-4 text-emerald-700" />
-                    <span className="text-xs font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-200">Produccion</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-200">Producción</span>
                 </div>
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                     <div>
@@ -131,7 +131,7 @@ export default function JumpsellerTypeCredentialsForm({
                             type="text"
                             value={credentials.client_id}
                             onChange={(e) => set({ client_id: e.target.value })}
-                            placeholder="APP ID de tu aplicacion"
+                            placeholder="APP ID de tu aplicación"
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />
@@ -151,7 +151,7 @@ export default function JumpsellerTypeCredentialsForm({
                             type="text"
                             value={credentials.redirect_uri}
                             onChange={(e) => set({ redirect_uri: e.target.value })}
-                            placeholder="Pega aqui la misma Redirigir URL de arriba"
+                            placeholder="Pega aquí la misma Redirigir URL de arriba"
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />

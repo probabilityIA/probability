@@ -66,7 +66,7 @@ const defaultOrdersTo = () => toDateInput(new Date());
 const HELP_IMAGES = [
     {
         src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/jumpseller/step-1-credenciales-api.png',
-        caption: 'En el panel de Jumpseller entra a Cuenta > Preferencias. En el recuadro "API y MCP" (arriba a la derecha) estan el Login y el Auth Token: copialos con el boton de la derecha de cada campo.',
+        caption: 'En el panel de Jumpseller entra a Cuenta > Preferencias. En el recuadro "API y MCP" (arriba a la derecha) estan el Login y el Auth Token: copialos con el bot\u00f3n de la derecha de cada campo.',
     },
 ];
 
@@ -215,7 +215,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
             if (result.success) {
                 showToast('Conexion exitosa con Jumpseller', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexi\u00f3n');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Jumpseller');
@@ -278,7 +278,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                 });
 
                 if (!response || response.success === false) {
-                    throw new Error(response?.message || 'Error al actualizar integracion');
+                    throw new Error(response?.message || 'Error al actualizar integraci\u00f3n');
                 }
                 showToast('Integracion Jumpseller actualizada', 'success');
                 onSuccess?.();
@@ -286,7 +286,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
             }
 
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integraci\u00f3n.');
                 setLoading(false);
                 return;
             }
@@ -313,10 +313,10 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                 showToast('Integracion Jumpseller creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integraci\u00f3n');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al guardar la integracion de Jumpseller');
+            setErrorModal(err.message || 'Error al guardar la integraci\u00f3n de Jumpseller');
         } finally {
             setLoading(false);
         }
@@ -353,7 +353,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                 </div>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuraci\u00f3n General">
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -370,7 +370,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta {'integraci\u00f3n'}</span>
                         </p>
                     </div>
 
@@ -400,7 +400,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                                <span>Selecciona el negocio al que pertenecera esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}
@@ -472,7 +472,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                             Como obtener tus credenciales
                         </h4>
                         <ol className="text-[11px] text-gray-600 dark:text-gray-300 space-y-1 list-decimal list-inside ml-1">
-                            <li>Ingresa al panel de administracion de tu tienda en <strong>jumpseller.com</strong></li>
+                            <li>Ingresa al panel de {'administraci\u00f3n'} de tu tienda en <strong>jumpseller.com</strong></li>
                             <li>En el menu lateral ve a <strong>Cuenta</strong> y luego a <strong>Preferencias</strong></li>
                             <li>Busca el recuadro <strong>API y MCP</strong> (arriba a la derecha)</li>
                             <li>Copia el valor de <strong>Login</strong></li>
@@ -527,7 +527,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                 />
             )}
 
-            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizacion">
+            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizaci\u00f3n">
                 <div className="rounded-lg bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700" style={{ border: `1px solid ${INPUT_BORDER}` }}>
                     <ToggleRow
                         icon={<ArrowPathIcon className="w-4 h-4" style={{ color: GREEN }} />}
@@ -539,7 +539,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                     <ToggleRow
                         icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar estados hacia Jumpseller"
-                        subtitle="Actualiza el estado de las ordenes en Jumpseller cuando cambian en Probability"
+                        subtitle="Actualiza el estado de las \u00f3rdenes en Jumpseller cuando cambian en Probability"
                         checked={statusSyncEnabled}
                         onToggle={() => setStatusSyncEnabled(!statusSyncEnabled)}
                     />
@@ -565,8 +565,8 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                         {!inventorySyncSaved && (
                             <p className="mt-3 text-[11px] text-amber-600 dark:text-amber-500">
                                 {inventorySyncEnabled
-                                    ? 'Activaste el toggle de inventario pero aun no guardaste. Guarda la integracion para poder sincronizar ahora.'
-                                    : 'Activa el toggle de inventario y guarda la integracion para poder sincronizar ahora.'}
+                                    ? 'Activaste el toggle de inventario pero a\u00fan no guardaste. Guarda la integraci\u00f3n para poder sincronizar ahora.'
+                                    : 'Activa el toggle de inventario y guarda la integraci\u00f3n para poder sincronizar ahora.'}
                             </p>
                         )}
                         <button
@@ -723,7 +723,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                     ) : (
                         <>
                             <CheckBadgeIcon className="w-4 h-4" />
-                            {isEdit ? 'Guardar Integracion' : 'Crear Integracion'}
+                            {isEdit ? 'Guardar Integraci\u00f3n' : 'Crear Integraci\u00f3n'}
                         </>
                     )}
                 </button>

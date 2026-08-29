@@ -107,7 +107,7 @@ export function JumpsellerInventorySyncModal({ isOpen, onClose, integrationId, b
             const result: any = await syncJumpsellerInventoryAction(integrationId, businessId ?? undefined);
             if (cancelled) return;
             if (!result?.success || !result?.correlation_id) {
-                setErrorMessage(result?.message || 'No se pudo iniciar la sincronizacion');
+                setErrorMessage(result?.message || 'No se pudo iniciar la sincronización');
                 setPhase('error');
                 return;
             }
@@ -138,7 +138,7 @@ export function JumpsellerInventorySyncModal({ isOpen, onClose, integrationId, b
                             <RefreshCw size={18} className={`text-emerald-600 dark:text-emerald-400 ${busy ? 'animate-spin' : ''}`} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronizacion de Inventario</h2>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronización de Inventario</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                 <ArrowUpFromLine size={12} /> Probability &rarr; Jumpseller
                                 {phase === 'starting' && ' - Iniciando...'}
@@ -216,7 +216,7 @@ export function JumpsellerInventorySyncModal({ isOpen, onClose, integrationId, b
                         {failed > 0 && failedSkus.length > 0 && (
                             <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                                 <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">SKUs que fallaron</p>
-                                <p className="text-[11px] text-gray-400 mt-0.5">Puedes reintentarlos volviendo a ejecutar la operacion.</p>
+                                <p className="text-[11px] text-gray-400 mt-0.5">Puedes reintentarlos volviendo a ejecutar la operación.</p>
                                 <div className="mt-2 max-h-32 overflow-y-auto rounded-md bg-white dark:bg-gray-800/60 border border-amber-100 dark:border-amber-900/40 divide-y divide-gray-100 dark:divide-gray-700">
                                     {failedSkus.map((sku, i) => (
                                         <div key={i} className="px-2.5 py-1.5 font-mono text-[11px] text-gray-600 dark:text-gray-300 truncate">{sku || '(sin sku)'}</div>
