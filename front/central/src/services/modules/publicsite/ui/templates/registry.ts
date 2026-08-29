@@ -21,7 +21,7 @@ export function getTemplate(name: string): TemplateComponents {
  */
 export function getAvailableTemplates(): { id: string; name: string; description: string }[] {
     return [
-        { id: 'default', name: 'Clasico', description: 'Diseno limpio y profesional con secciones modulares' },
+        { id: 'default', name: 'Clasico', description: 'Diseño limpio y profesional con secciones modulares' },
         // { id: 'modern', name: 'Moderno', description: 'Diseno contemporaneo con animaciones' },
     ];
 }

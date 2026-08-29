@@ -92,7 +92,7 @@ export const tiendaLoginAction = async (email: string, password: string) => {
         const setCookieHeader = response.headers.get('set-cookie');
         const tokenMatch = setCookieHeader?.match(/session_token=([^;]+)/);
         if (!tokenMatch?.[1]) {
-            return { success: false as const, error: 'No se recibio la sesion del servidor' };
+            return { success: false as const, error: 'No se recibio la sesión del servidor' };
         }
 
         const maxAgeMatch = setCookieHeader?.match(/Max-Age=(\d+)/);

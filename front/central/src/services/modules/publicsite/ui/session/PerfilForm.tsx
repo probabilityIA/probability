@@ -96,9 +96,9 @@ export function PerfilForm({ slug }: { slug: string }) {
         if (result?.success) {
             setNewAddress({ street: '', city: '', state: '' });
             await loadAddresses();
-            flash('Direccion agregada');
+            flash('Dirección agregada');
         } else {
-            flash('No se pudo agregar la direccion');
+            flash('No se pudo agregar la dirección');
         }
     };
 
@@ -106,7 +106,7 @@ export function PerfilForm({ slug }: { slug: string }) {
         const result = await setTiendaPrimaryAddressAction(slug, id);
         if (result?.success) {
             await loadAddresses();
-            flash('Direccion principal actualizada');
+            flash('Dirección principal actualizada');
         }
     };
 
@@ -114,7 +114,7 @@ export function PerfilForm({ slug }: { slug: string }) {
         const result = await deleteTiendaAddressAction(slug, id);
         if (result?.success) {
             await loadAddresses();
-            flash('Direccion eliminada');
+            flash('Dirección eliminada');
         }
     };
 
@@ -125,7 +125,7 @@ export function PerfilForm({ slug }: { slug: string }) {
     if (state === 'anonymous' || !session) {
         return (
             <div className="text-center py-16 space-y-4">
-                <p className="text-gray-500">Inicia sesion para ver tu perfil.</p>
+                <p className="text-gray-500">Inicia sesión para ver tu perfil.</p>
                 <Link
                     href={`/tienda/${slug}/cuenta`}
                     className="inline-block px-6 py-3 rounded-lg text-white font-medium"
@@ -182,7 +182,7 @@ export function PerfilForm({ slug }: { slug: string }) {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Telefono</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
                             <input type="tel" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} className={inputCls} />
                         </div>
                         <div>
@@ -205,7 +205,7 @@ export function PerfilForm({ slug }: { slug: string }) {
                 <h2 className="font-semibold text-gray-900">Direcciones de entrega</h2>
 
                 {addresses.length === 0 && (
-                    <p className="text-sm text-gray-400">Aun no tienes direcciones guardadas.</p>
+                    <p className="text-sm text-gray-400">Aún no tienes direcciones guardadas.</p>
                 )}
 
                 {addresses.map(a => (
@@ -239,7 +239,7 @@ export function PerfilForm({ slug }: { slug: string }) {
                 <form onSubmit={handleAddAddress} className="space-y-2 border-t border-gray-100 pt-4">
                     <input
                         type="text"
-                        placeholder="Nueva direccion (calle, numero)"
+                        placeholder="Nueva dirección (calle, número)"
                         value={newAddress.street}
                         onChange={(e) => setNewAddress(a => ({ ...a, street: e.target.value }))}
                         className={inputCls}
@@ -265,7 +265,7 @@ export function PerfilForm({ slug }: { slug: string }) {
                         disabled={addingAddress || !newAddress.street.trim()}
                         className="w-full py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
                     >
-                        {addingAddress ? 'Agregando...' : 'Agregar direccion'}
+                        {addingAddress ? 'Agregando...' : 'Agregar dirección'}
                     </button>
                 </form>
             </div>

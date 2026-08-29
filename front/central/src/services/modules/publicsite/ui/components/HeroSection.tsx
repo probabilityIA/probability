@@ -103,7 +103,7 @@ function HeroBlockCell({ block, slug, onDark }: { block: HeroBlock; slug: string
                 className="inline-block px-8 py-4 bg-white dark:bg-gray-800 rounded-lg font-bold text-lg transition-transform hover:scale-105 whitespace-nowrap"
                 style={{ color: 'var(--brand-primary)' }}
             >
-                {block.button_text || 'Ver mas'}
+                {block.button_text || 'Ver más'}
             </Link>
         );
     }
