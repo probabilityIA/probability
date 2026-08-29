@@ -46,7 +46,7 @@ export default function StorefrontRegistroPage() {
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Crear Cuenta</h1>
-                    <p className="mt-2 text-gray-600 dark:text-gray-300 dark:text-gray-400">Registrate para hacer pedidos</p>
+                    <p className="mt-2 text-gray-600 dark:text-gray-300 dark:text-gray-400">Regístrate para hacer pedidos</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">

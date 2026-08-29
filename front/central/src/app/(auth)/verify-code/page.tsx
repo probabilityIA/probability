@@ -22,7 +22,7 @@ function VerifyCodeContent() {
     setInfo('');
 
     if (!/^\d{6}$/.test(code)) {
-      setError('El código debe tener 6 digitos');
+      setError('El código debe tener 6 dígitos');
       return;
     }
 

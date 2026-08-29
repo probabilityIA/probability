@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
     try {
       const result = await forgotPasswordAction(email.trim(), 'email');
       if (result.success) {
-        setMessage(result.message || 'Si el correo esta registrado, recibiras un enlace para restablecer tu contraseña.');
+        setMessage(result.message || 'Si el correo esta registrado, recibirás un enlace para restablecer tu contraseña.');
         setStep('sent');
       } else {
         setError(result.error || 'No se pudo procesar la solicitud');
