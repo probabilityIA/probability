@@ -46,22 +46,22 @@ export function InvoicePreview({ data, raw, copySlot }: InvoicePreviewProps) {
 
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Campo etiqueta="Numero de Documento" valor={data.documentNumber} mono />
+            <Campo etiqueta="Número de Documento" valor={data.documentNumber} mono />
             <Campo etiqueta="Fecha" valor={data.documentDate} />
             <Campo etiqueta="Cliente" valor={data.customerName} />
-            <Campo etiqueta="Identificacion" valor={data.customerIdentification} mono />
+            <Campo etiqueta="Identificación" valor={data.customerIdentification} mono />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white dark:bg-gray-800/60 rounded">
             <Campo etiqueta="Total" valor={moneda(data.total)} />
             <Campo etiqueta="IVA" valor={moneda(data.tax)} />
             <Campo etiqueta="Descuento" valor={moneda(data.discount)} />
-            <Campo etiqueta="Retencion" valor={moneda(data.withholding)} />
+            <Campo etiqueta="Retención" valor={moneda(data.withholding)} />
           </div>
 
           {(data.electronic || data.stampStatus || data.cufe) && (
             <div className="p-3 bg-white dark:bg-gray-800/60 rounded space-y-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Facturacion electronica</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Facturación electrónica</p>
               <div className="grid grid-cols-2 gap-3">
                 <Campo etiqueta="Estado DIAN" valor={data.stampStatus} />
                 <Campo etiqueta="CUFE" valor={data.cufe} mono />
@@ -126,7 +126,7 @@ export function InvoicePreview({ data, raw, copySlot }: InvoicePreviewProps) {
 
           {data.shipping && (
             <div className="p-3 bg-white dark:bg-gray-800/60 rounded">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Informacion de Envio</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Información de Envío</p>
               <div className="space-y-1 text-xs text-gray-700 dark:text-gray-200">
                 {data.shipping.address && <p>{data.shipping.address}</p>}
                 {data.shipping.city && (

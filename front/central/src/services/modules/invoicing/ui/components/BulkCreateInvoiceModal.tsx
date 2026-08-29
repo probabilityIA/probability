@@ -40,8 +40,8 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 const MAX_BULK_ORDERS = 1000;
 
 const SORT_OPTIONS: { value: `${SortKey}:${SortDir}`; label: string }[] = [
-  { value: 'created_at:desc',   label: 'Mas recientes' },
-  { value: 'created_at:asc',    label: 'Mas antiguas' },
+  { value: 'created_at:desc',   label: 'M\u00e1s recientes' },
+  { value: 'created_at:asc',    label: 'M\u00e1s antiguas' },
   { value: 'total_amount:desc', label: 'Mayor valor' },
   { value: 'total_amount:asc',  label: 'Menor valor' },
   { value: 'order_number:asc',  label: 'Orden # asc' },
@@ -148,7 +148,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       setOrders(result.data || []);
       setTotal(result.total || 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar las ordenes facturables');
+      setError(err instanceof Error ? err.message : 'Error al cargar las \u00f3rdenes facturables');
     } finally {
       setLoading(false);
     }
@@ -312,7 +312,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           >
             <div>
               <h2 className="text-2xl font-bold text-white">Crear Facturas</h2>
-              <p className="text-white/80 text-sm mt-1">Selecciona las ordenes para generar facturas electronicas</p>
+              <p className="text-white/80 text-sm mt-1">Selecciona las {'\u00f3rdenes'} para generar facturas electronicas</p>
             </div>
             <div className="flex items-center gap-3">
               <div
@@ -356,7 +356,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
             {superAdminNeedsBusiness ? (
               <div className="py-8 text-center text-gray-400">
                 <ExclamationTriangleIcon className="w-12 h-12 mx-auto mb-3 text-amber-300" />
-                <p className="text-gray-500 dark:text-gray-400">Selecciona un negocio para ver las ordenes facturables</p>
+                <p className="text-gray-500 dark:text-gray-400">Selecciona un negocio para ver las {'\u00f3rdenes'} facturables</p>
               </div>
             ) : (
               <div className="flex-1 flex flex-col min-h-0">
@@ -459,7 +459,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-12 text-center text-gray-500 dark:text-gray-400">
-                      <p className="mb-2">No hay ordenes facturables que coincidan con los filtros</p>
+                      <p className="mb-2">No hay {'\u00f3rdenes'} facturables que coincidan con los filtros</p>
                     </div>
                   ) : orders.map(order => {
                     const orderStatus = orderStatuses[order.id];
@@ -524,7 +524,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                             )}
                             {orderStatus?.status === 'pending_validation' && (
                               <div className="mt-2 p-2 bg-amber-100 border border-amber-300 rounded text-xs text-amber-800">
-                                <p className="font-semibold">Pendiente validacion DIAN</p>
+                                <p className="font-semibold">Pendiente {'validaci\u00f3n'} DIAN</p>
                                 {orderStatus.invoice_number && <p className="font-mono">{orderStatus.invoice_number}</p>}
                               </div>
                             )}
@@ -543,7 +543,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
 
                 <div className="flex items-center justify-between mt-3 text-sm">
                   <span className="text-gray-600 dark:text-gray-300">
-                    {total === 0 ? '0 resultados' : `Pagina ${page} de ${totalPages} - ${total} total`}
+                    {total === 0 ? '0 resultados' : `P\u00e1gina ${page} de ${totalPages} - ${total} total`}
                   </span>
                   <div className="flex items-center gap-2">
                     <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1 || loading} className="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40">
@@ -624,7 +624,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
         onClose={() => setShowConfirm(false)}
         onConfirm={handleSubmit}
         type="warning"
-        title="Confirmar facturacion"
+        title="Confirmar facturaci\u00f3n"
         confirmText={`Facturar ${selectedOrderIds.size} orden${selectedOrderIds.size !== 1 ? 'es' : ''}`}
         message={
           <span className="block space-y-2">

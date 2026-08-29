@@ -43,7 +43,7 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
   if (!isOpen) return null;
 
   const configUnica = configs.length === 1 ? configs[0] : null;
-  const titulo = configUnica ? 'Configuracion de Facturacion' : 'Configuraciones de Facturacion';
+  const titulo = configUnica ? 'Configuración de Facturación' : 'Configuraciones de Facturación';
   const facturadorNombre = configUnica?.provider_name ?? '';
   const facturadorLogo = configUnica?.provider_image_url ?? '';
 
