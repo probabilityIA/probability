@@ -95,7 +95,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
             if (result.success) {
                 showToast('Conexion exitosa con Amazon', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Amazon');
@@ -110,7 +110,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -142,10 +142,10 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                 showToast('Integracion Amazon creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Amazon');
+            setErrorModal(err.message || 'Error al crear la integración de Amazon');
         } finally {
             setLoading(false);
         }
@@ -185,13 +185,13 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Amazon Mexico Principal"
+                        placeholder="Ej: Amazon México Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -226,7 +226,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecera esta integración</span>
                         </p>
                     </div>
                 )}
@@ -246,7 +246,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>ID del marketplace de Amazon (ej: A1AM78C64UM0Y8 para Mexico)</span>
+                        <span>ID del marketplace de Amazon (ej: A1AM78C64UM0Y8 para México)</span>
                     </p>
                 </div>
 
@@ -265,7 +265,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Region del marketplace: na (North America), eu (Europe), fe (Far East)</span>
+                        <span>Región del marketplace: na (North America), eu (Europe), fe (Far East)</span>
                     </p>
                 </div>
             </div>
@@ -282,7 +282,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                     <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <span>
                         Obten tus credenciales desde
-                        <strong> Amazon Seller Central &rarr; Configuracion de la cuenta &rarr; Autorizacion de apps</strong>
+                        <strong> Amazon Seller Central &rarr; Configuración de la cuenta &rarr; Autorización de apps</strong>
                     </span>
                 </p>
 
@@ -351,7 +351,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                     </h4>
                     <ol className="text-xs text-amber-800 space-y-2 list-decimal list-inside ml-1">
                         <li>Ingresa a <strong>Amazon Seller Central</strong></li>
-                        <li>Ve a <strong>Configuracion &rarr; Autorizacion de apps</strong></li>
+                        <li>Ve a <strong>Configuración &rarr; Autorización de apps</strong></li>
                         <li>Autoriza la app de Probability y copia el <strong>Refresh Token</strong></li>
                     </ol>
                 </div>
