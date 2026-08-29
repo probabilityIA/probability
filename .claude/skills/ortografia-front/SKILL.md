@@ -158,6 +158,23 @@ Prefiere callarse antes que reportar codigo. Por eso NO revisa:
 - Valores de atributos tecnicos (`className`, `href`, `fill`, `style`, ...).
 - Interpolaciones de template (`${...}`): no revisa los signos de apertura ahi.
 - Comentarios: no son texto de usuario y pueden quedarse sin tilde.
+- Archivos `*.test.*`, `*.spec.*`, `*.stories.*`, `__tests__/`, `__mocks__/`:
+  sus cadenas son fixtures y aserciones, no UI.
+- **Literales protegidos.** Antes de revisar, el script recorre el front y
+  junta toda cadena usada como identificador: argumentos de `hasPermission()`
+  y valores de `resource:`, `permission:`, `code:`, `slug:`, `key:`, `event:`,
+  `queue:`, `status:`, `provider:`. Una cadena igual a alguna de esas no se
+  toca **en ningun lado**, aunque parezca un label.
+
+  Esto no es teorico: los tours declaran `resource: 'Envios'` y
+  `TourProvider` lo pasa a `hasPermission(resource, 'Read')`. Ponerle la tilde
+  hubiera dejado el tour invisible para todo usuario no super admin. Lo mismo
+  con `'Ordenes'`, `'Facturacion'`, `'Integraciones-Tipos-de-integracion'`:
+  son filas de la base, no texto.
+
+  Efecto de borde aceptado: si un label visible coincide exactamente con un
+  identificador (`'Envios'` como `title` de un tour), tampoco se corrige.
+  Se decide a mano.
 
 Estado al crear el skill: `front/website` esta limpio; los ~1.760 hallazgos
 estan todos en `front/central/src`.

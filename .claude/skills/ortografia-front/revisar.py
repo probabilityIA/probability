@@ -7,7 +7,9 @@ import sys
 
 SKILL_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTS = {".tsx", ".ts", ".jsx", ".js", ".astro", ".mdx"}
-SKIP_DIRS = {"node_modules", ".next", "dist", "build", ".git", "coverage", ".turbo", "public"}
+SKIP_DIRS = {"node_modules", ".next", "dist", "build", ".git", "coverage", ".turbo",
+             "public", "__tests__", "__mocks__", "e2e"}
+SKIP_FILE = re.compile(r"\.(?:test|spec|d)\.[jt]sx?$|\.stories\.[jt]sx?$")
 DEFAULT_PATHS = ["front/central/src", "front/website/src"]
 ASCII_ONLY_LINES = 500
 
@@ -20,6 +22,13 @@ ESCAPES = {
     "Ñ": "\\u00d1", "Ü": "\\u00dc", "¿": "\\u00bf",
     "¡": "\\u00a1",
 }
+PROP_SKIP = re.compile(
+    r"(?:resource|resources|permission|permissions|scope|scopes|code|codes|slug|key|"
+    r"keys|event|events|queue|topic|provider|status|state|role|roles|module|action|"
+    r"field|column|table|enum|token|env|flag|feature)\s*[:=]\s*[\[\(]?\s*$|"
+    r"(?:hasPermission|canAccess|requirePermission|checkPermission|can|t|tr)\s*\(\s*$"
+)
+PROTECTED = set()
 ATTR_SKIP = re.compile(
     r"(?:className|class|href|src|srcSet|id|key|name|type|path|route|to|rel|target|"
     r"htmlFor|testID|data-[\w-]+|aria-[\w-]+|role|accept|pattern|format|locale|"
@@ -90,7 +99,10 @@ def spans(line):
             text = m.group(1)
             if not text.strip():
                 continue
-            if ATTR_SKIP.search(line[max(0, m.start() - 60):m.start()]):
+            before = line[max(0, m.start() - 60):m.start()]
+            if ATTR_SKIP.search(before) or PROP_SKIP.search(before):
+                continue
+            if text.strip() in PROTECTED:
                 continue
             if " " not in text:
                 bare = text.strip(":*!?.,;-")
@@ -180,16 +192,34 @@ def fix_file(path, findings, total_lines):
     return changed
 
 
+LITERAL_RX = re.compile(
+    r"(?:hasPermission|canAccess|requirePermission|checkPermission)\s*\(\s*['\"]([^'\"]+)"
+    r"|(?:resource|permission|code|slug|key|event|queue|status|provider)\s*:\s*['\"]([^'\"]+)"
+)
+
+
+def collect_protected(paths):
+    for path in walk(paths):
+        try:
+            src = open(path, encoding="utf-8").read()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for m in LITERAL_RX.finditer(src):
+            lit = m.group(1) or m.group(2)
+            if lit and lit.strip():
+                PROTECTED.add(lit.strip())
+
+
 def walk(paths):
     for p in paths:
         if os.path.isfile(p):
-            if os.path.splitext(p)[1] in EXTS:
+            if os.path.splitext(p)[1] in EXTS and not SKIP_FILE.search(p):
                 yield p
             continue
         for root, dirs, files in os.walk(p):
             dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
             for name in sorted(files):
-                if os.path.splitext(name)[1] in EXTS:
+                if os.path.splitext(name)[1] in EXTS and not SKIP_FILE.search(name):
                     yield os.path.join(root, name)
 
 
@@ -206,6 +236,9 @@ def main():
     if not paths:
         print("No hay rutas para revisar. Ejecutalo desde la raiz del repo.", file=sys.stderr)
         return 2
+
+    scope = paths if not args.paths else [p for p in DEFAULT_PATHS if os.path.exists(p)] or paths
+    collect_protected(scope)
 
     pairs = load_pairs(os.path.join(SKILL_DIR, "diccionario.tsv"), False)
     pairs += load_pairs(os.path.join(SKILL_DIR, "frases.tsv"), True)
