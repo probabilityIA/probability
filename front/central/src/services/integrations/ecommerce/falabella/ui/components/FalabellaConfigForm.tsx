@@ -88,7 +88,7 @@ export function FalabellaConfigForm({ onSuccess, onCancel }: FalabellaConfigForm
             if (result.success) {
                 showToast('Conexion exitosa con Falabella', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Falabella');
@@ -103,7 +103,7 @@ export function FalabellaConfigForm({ onSuccess, onCancel }: FalabellaConfigForm
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -129,10 +129,10 @@ export function FalabellaConfigForm({ onSuccess, onCancel }: FalabellaConfigForm
                 showToast('Integracion Falabella creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Falabella');
+            setErrorModal(err.message || 'Error al crear la integración de Falabella');
         } finally {
             setLoading(false);
         }
@@ -178,7 +178,7 @@ export function FalabellaConfigForm({ onSuccess, onCancel }: FalabellaConfigForm
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -213,7 +213,7 @@ export function FalabellaConfigForm({ onSuccess, onCancel }: FalabellaConfigForm
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecera esta integración</span>
                         </p>
                     </div>
                 )}
@@ -231,7 +231,7 @@ export function FalabellaConfigForm({ onSuccess, onCancel }: FalabellaConfigForm
                     <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <span>
                         Obten tus credenciales desde el
-                        <strong> Seller Center de Falabella &rarr; Configuracion &rarr; API</strong>
+                        <strong> Seller Center de Falabella &rarr; Configuración &rarr; API</strong>
                     </span>
                 </p>
 
@@ -300,7 +300,7 @@ export function FalabellaConfigForm({ onSuccess, onCancel }: FalabellaConfigForm
                     </h4>
                     <ol className="text-xs text-lime-800 space-y-2 list-decimal list-inside ml-1">
                         <li>Ingresa al <strong>Seller Center de Falabella</strong></li>
-                        <li>Ve a <strong>Configuracion &rarr; API</strong></li>
+                        <li>Ve a <strong>Configuración &rarr; API</strong></li>
                         <li>Copia tu <strong>User ID</strong> y <strong>API Key</strong></li>
                     </ol>
                 </div>
