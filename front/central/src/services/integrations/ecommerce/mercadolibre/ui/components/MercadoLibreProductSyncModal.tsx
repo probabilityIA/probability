@@ -136,7 +136,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
     useEffect(() => {
         if (phase !== 'analyzing') return;
         const timer = setTimeout(() => {
-            setErrorMessage('La comparacion esta tardando mas de lo esperado. Intenta de nuevo.');
+            setErrorMessage('La comparacion esta tardando más de lo esperado. Intenta de nuevo.');
             setPhase('error');
         }, ANALYZE_TIMEOUT_MS);
         return () => clearTimeout(timer);
@@ -152,7 +152,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
         correlationRef.current = null;
         const res: any = await applyMeliProductsAction(integrationId, dir, businessId ?? undefined);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la operacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la operación');
             setPhase('error');
             return;
         }
@@ -248,7 +248,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                             <ArrowRightLeft size={18} className="text-violet-600 dark:text-violet-400" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronizacion de Productos</h2>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronización de Productos</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Probability &harr; MercadoLibre</p>
                         </div>
                     </div>
@@ -285,7 +285,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.notAssociatedCount} producto{diff.notAssociatedCount !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
-                                            <p className="text-[11px] text-gray-400 mt-0.5">Crea la relacion (sin tocar stock) para que el canal los reconozca como propios.</p>
+                                            <p className="text-[11px] text-gray-400 mt-0.5">Crea la relación (sin tocar stock) para que el canal los reconozca como propios.</p>
                                         </div>
                                         <button onClick={() => handleAssociate()} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                             <Link2 size={14} /> Asociar todos
@@ -315,7 +315,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbabilityCount} producto{diff.onlyInProbabilityCount !== 1 ? 's' : ''} que no estan en MercadoLibre</p>
-                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se publicaran en MercadoLibre (categoria estimada por titulo).</p>
+                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se publicaran en MercadoLibre (categoría estimada por título).</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_meli')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                                     <ArrowUpFromLine size={14} /> Crear en MercadoLibre
@@ -331,7 +331,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En MercadoLibre hay {diff.onlyInMeliCount} producto{diff.onlyInMeliCount !== 1 ? 's' : ''} que no estan en Probability</p>
-                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuracion de bodegas.</p>
+                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuración de bodegas.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                                     <ArrowDownToLine size={14} /> Crear en Probability

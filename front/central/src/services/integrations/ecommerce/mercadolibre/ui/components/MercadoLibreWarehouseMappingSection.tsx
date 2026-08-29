@@ -150,7 +150,7 @@ export function MercadoLibreWarehouseMappingSection({ value, onChange, businessI
 
                     <p className="text-[11px] text-gray-500 dark:text-gray-400 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>El Store ID y Network Node ID los obtienes de tus bodegas en MercadoLibre (stock por deposito / Full).</span>
+                        <span>El Store ID y Network Node ID los obtienes de tus bodegas en MercadoLibre (stock por depósito / Full).</span>
                     </p>
                 </div>
             )}

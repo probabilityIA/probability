@@ -69,7 +69,7 @@ export function MercadoLibreInventorySection({ value, onChange, businessId, inte
                 <div className="flex items-start gap-2">
                     <CubeIcon className="w-4 h-4 mt-0.5" style={{ color: GREEN }} />
                     <div>
-                        <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100">Sincronizacion de inventario</h4>
+                        <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100">Sincronización de inventario</h4>
                         <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
                             Empuja el stock de Probability a tus publicaciones de MercadoLibre (available_quantity).
                         </p>
