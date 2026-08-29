@@ -117,7 +117,7 @@ const HERO_BLOCK_TYPES: Array<{ value: string; label: string }> = [
     { value: 'empty', label: 'Vacio' },
     { value: 'text', label: 'Texto' },
     { value: 'image', label: 'Imagen' },
-    { value: 'button', label: 'Boton' },
+    { value: 'button', label: 'Bot\u00f3n' },
 ];
 
 function resizeBlocks(blocks: ContentRecord[], rows: number, columns: number): ContentRecord[] {
@@ -158,7 +158,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
     return (
         <div className="space-y-4">
             <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Diseno</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Dise\u00f1o'}</label>
                 <div className="flex gap-2 mb-2">
                     <button
                         type="button"
@@ -224,7 +224,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
 
             {!isGrid && (
                 <>
-                    <Field label="Titulo" value={c.title || ''} onChange={(v) => set('title', v)} placeholder="Bienvenido a tu tienda" />
+                    <Field label="T\u00edtulo" value={c.title || ''} onChange={(v) => set('title', v)} placeholder="Bienvenido a tu tienda" />
                     <label className="block text-xs text-gray-500 dark:text-gray-400">
                         Tamano del titulo: {c.title_size || 40}px
                         <input
@@ -244,7 +244,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
                             className="w-full"
                         />
                     </label>
-                    <Field label="Texto del boton" value={c.cta_text || ''} onChange={(v) => set('cta_text', v)} placeholder="Ver Productos" />
+                    <Field label="Texto del bot\u00f3n" value={c.cta_text || ''} onChange={(v) => set('cta_text', v)} placeholder="Ver Productos" />
                     <button
                         type="button"
                         onClick={() => onChange({ ...c, position: { x: 50, y: 50 } })}
@@ -277,7 +277,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
 
                                 {block.type === 'text' && (
                                     <>
-                                        <Field label="Titulo" value={block.title || ''} onChange={(v) => setBlock(i, { title: v })} />
+                                        <Field label="T\u00edtulo" value={block.title || ''} onChange={(v) => setBlock(i, { title: v })} />
                                         <label className="block text-xs text-gray-500 dark:text-gray-400">
                                             Tamano del titulo: {block.title_size || 24}px
                                             <input
@@ -306,7 +306,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
 
                                 {block.type === 'button' && (
                                     <>
-                                        <Field label="Texto del boton" value={block.button_text || ''} onChange={(v) => setBlock(i, { button_text: v })} placeholder="Ver Productos" />
+                                        <Field label="Texto del bot\u00f3n" value={block.button_text || ''} onChange={(v) => setBlock(i, { button_text: v })} placeholder="Ver Productos" />
                                         <Field label="Enlace (ruta relativa o URL)" value={block.button_link || ''} onChange={(v) => setBlock(i, { button_link: v })} placeholder="/productos" />
                                     </>
                                 )}
@@ -436,7 +436,7 @@ export function LocationEditor({ content, onChange, businessId }: LocationEditor
         <div className="space-y-3">
             {warehouses.length > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-medium text-blue-800 dark:text-blue-200">Sugerencia: usa la direccion de tu bodega</p>
+                    <p className="text-xs font-medium text-blue-800 dark:text-blue-200">Sugerencia: usa la {'direcci\u00f3n'} de tu bodega</p>
                     {warehouses.map(w => (
                         <button
                             key={w.id}
@@ -454,12 +454,12 @@ export function LocationEditor({ content, onChange, businessId }: LocationEditor
             )}
 
             <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Direccion</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Direcci\u00f3n'}</label>
                 <AddressAutocomplete
                     value={c.address || ''}
                     onChange={(v) => set({ address: v })}
                     onSelect={(s: AddressSuggestion) => set({ lat: s.lat, lng: s.lon })}
-                    placeholder="Busca la direccion de tu negocio"
+                    placeholder="Busca la direcci\u00f3n de tu negocio"
                 />
                 <p className="text-xs text-gray-400 mt-1">Al elegir una sugerencia se ubica el punto en el mapa automaticamente.</p>
             </div>
@@ -487,7 +487,7 @@ export function LocationEditor({ content, onChange, businessId }: LocationEditor
                 Mostrar boton &quot;Como llegar&quot;
             </label>
             {(!c.lat || !c.lng) && (
-                <p className="text-xs text-amber-600">El mapa y el boton de como llegar requieren ubicar la direccion (usa el buscador o una bodega).</p>
+                <p className="text-xs text-amber-600">El mapa y el {'bot\u00f3n'} de como llegar requieren ubicar la {'direcci\u00f3n'} (usa el buscador o una bodega).</p>
             )}
         </div>
     );
@@ -499,8 +499,8 @@ export function ContactEditor({ content, onChange }: EditorProps) {
     return (
         <div className="space-y-3">
             <Field label="Email de contacto" value={c.email || ''} onChange={(v) => set('email', v)} placeholder="ventas@negocio.com" />
-            <Field label="Telefono" value={c.phone || ''} onChange={(v) => set('phone', v)} placeholder="+57 300 000 0000" />
-            <p className="text-xs text-gray-400">El formulario de contacto se muestra siempre que la seccion este visible.</p>
+            <Field label="Tel\u00e9fono" value={c.phone || ''} onChange={(v) => set('phone', v)} placeholder="+57 300 000 0000" />
+            <p className="text-xs text-gray-400">El formulario de contacto se muestra siempre que la {'secci\u00f3n'} este visible.</p>
         </div>
     );
 }
@@ -523,8 +523,8 @@ export function WhatsAppEditor({ content, onChange }: EditorProps) {
     const set = (k: string, v: string | boolean) => onChange({ ...c, [k]: v });
     return (
         <div className="space-y-3">
-            <Field label="Numero (con indicativo)" value={c.number || ''} onChange={(v) => set('number', v)} placeholder="573000000000" />
-            <Field label="Mensaje inicial" value={c.message || ''} onChange={(v) => set('message', v)} textarea placeholder="Hola, me gustaria mas informacion" />
+            <Field label="N\u00famero (con indicativo)" value={c.number || ''} onChange={(v) => set('number', v)} placeholder="573000000000" />
+            <Field label="Mensaje inicial" value={c.message || ''} onChange={(v) => set('message', v)} textarea placeholder="Hola, me gustaria m\u00e1s informaci\u00f3n" />
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                 <input
                     type="checkbox"
@@ -581,7 +581,7 @@ export function NavbarEditor({ content, onChange, businessId, onImageDeleted }: 
     return (
         <div className="space-y-4">
             <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Posicion</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Posici\u00f3n'}</label>
                 <select
                     value={position}
                     onChange={(e) => onChange({ ...c, position: e.target.value })}
@@ -706,7 +706,7 @@ export function NavbarEditor({ content, onChange, businessId, onImageDeleted }: 
             </div>
 
             <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                <Field label="Barra de anuncio (opcional)" value={c.announcement_text || ''} onChange={(v) => onChange({ ...c, announcement_text: v })} placeholder="Envio gratis en compras +$100.000" />
+                <Field label="Barra de anuncio (opcional)" value={c.announcement_text || ''} onChange={(v) => onChange({ ...c, announcement_text: v })} placeholder="Env\u00edo gratis en compras +$100.000" />
                 {c.announcement_text && (
                     <>
                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
