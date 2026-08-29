@@ -16,7 +16,7 @@ export const iamTour: TourDefinition = {
             id: 'businesses',
             superAdminOnly: true,
             title: 'Empresas',
-            body: 'Cada negocio es un inquilino aislado: sus ordenes, productos y clientes no se cruzan con los de otro.',
+            body: 'Cada negocio es un inquilino aislado: sus órdenes, productos y clientes no se cruzan con los de otro.',
             target: 'a[href="/businesses"]',
             placement: 'bottom',
             optional: true,
@@ -40,7 +40,7 @@ export const iamTour: TourDefinition = {
         {
             id: 'permissions',
             title: 'Permisos',
-            body: 'La pieza atomica: recurso mas accion. Por ejemplo Ordenes + Crear, o Productos + Eliminar.',
+            body: 'La pieza atomica: recurso más acción. Por ejemplo Órdenes + Crear, o Productos + Eliminar.',
             target: 'a[href="/permissions"]',
             placement: 'bottom',
             optional: true,
@@ -48,7 +48,7 @@ export const iamTour: TourDefinition = {
         {
             id: 'resources',
             title: 'Recursos',
-            body: 'Los modulos sobre los que se pueden dar permisos. Un recurso nuevo aparece aqui antes de poder incluirlo en un rol.',
+            body: 'Los módulos sobre los que se pueden dar permisos. Un recurso nuevo aparece aquí antes de poder incluirlo en un rol.',
             target: 'a[href="/resources"]',
             placement: 'bottom',
             optional: true,
@@ -71,7 +71,7 @@ export const ticketsTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Tickets de soporte',
-            body: 'Si algo falla en la operacion, se reporta aqui y queda con historial y responsable, en vez de perderse en un chat.',
+            body: 'Si algo falla en la operación, se reporta aquí y queda con historial y responsable, en vez de perderse en un chat.',
         },
         {
             id: 'estados',
@@ -134,7 +134,7 @@ export const commercialTour: TourDefinition = {
         {
             id: 'siigo',
             title: 'Referidos Siigo',
-            body: 'Los que llegaron por la alianza con Siigo, con su rango de ordenes declarado.',
+            body: 'Los que llegaron por la alianza con Siigo, con su rango de órdenes declarado.',
             target: 'a[href="/siigo-referrals"]',
             placement: 'bottom',
             optional: true,

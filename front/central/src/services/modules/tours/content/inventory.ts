@@ -9,13 +9,13 @@ export const inventoryTour: TourDefinition = {
     steps: [
         {
             id: 'welcome',
-            title: 'Bienvenido al modulo de Inventario',
-            body: 'Este es el stock real por bodega. Todo lo que ves aqui alimenta lo que se puede vender y lo que se puede despachar.',
+            title: 'Bienvenido al módulo de Inventario',
+            body: 'Este es el stock real por bodega. Todo lo que ves aquí alimenta lo que se puede vender y lo que se puede despachar.',
         },
         {
             id: 'products',
             title: 'Productos',
-            body: 'El catalogo: que vendes, a que precio y con que codigo. El inventario cuenta unidades de esos SKUs.',
+            body: 'El catalogo: que vendes, a que precio y con que código. El inventario cuenta unidades de esos SKUs.',
             target: 'a[href="/products"]',
             placement: 'bottom',
             optional: true,
@@ -23,7 +23,7 @@ export const inventoryTour: TourDefinition = {
         {
             id: 'warehouses',
             title: 'Bodegas',
-            body: 'Donde esta guardada la mercancia. Un mismo SKU puede tener stock en varias bodegas, y cada bodega tiene sus ubicaciones internas.',
+            body: 'Donde esta guardada la mercancía. Un mismo SKU puede tener stock en varias bodegas, y cada bodega tiene sus ubicaciones internas.',
             target: 'a[href="/warehouses"]',
             placement: 'bottom',
             optional: true,
@@ -31,7 +31,7 @@ export const inventoryTour: TourDefinition = {
         {
             id: 'movements',
             title: 'Movimientos',
-            body: 'Toda entrada y salida queda registrada: recibos, despachos, ajustes y traslados. Si el stock no cuadra, la respuesta esta aqui.',
+            body: 'Toda entrada y salida queda registrada: recibos, despachos, ajustes y traslados. Si el stock no cuadra, la respuesta esta aquí.',
             target: 'a[href="/inventory/movements"]',
             placement: 'bottom',
             optional: true,
@@ -47,7 +47,7 @@ export const inventoryTour: TourDefinition = {
         {
             id: 'operations',
             title: 'Operaciones',
-            body: 'Las tareas de bodega del dia: recibos por procesar, picking y packing pendientes.',
+            body: 'Las tareas de bodega del día: recibos por procesar, picking y packing pendientes.',
             target: 'a[href="/inventory/operations"]',
             placement: 'bottom',
             optional: true,
@@ -55,7 +55,7 @@ export const inventoryTour: TourDefinition = {
         {
             id: 'audit',
             title: 'Auditoria',
-            body: 'Conteos fisicos: cuentas lo que hay en el estante y el sistema te muestra la diferencia contra lo que deberia haber.',
+            body: 'Conteos fisicos: cuentas lo que hay en el estante y el sistema te muestra la diferencia contra lo que debería haber.',
             target: 'a[href="/inventory/audit"]',
             placement: 'bottom',
             optional: true,
@@ -63,7 +63,7 @@ export const inventoryTour: TourDefinition = {
         {
             id: 'lpn',
             title: 'LPN y Scan',
-            body: 'LPN identifica una estiba o caja completa con un solo codigo. Scan es la vista para el operario con lector de codigo de barras.',
+            body: 'LPN identifica una estiba o caja completa con un solo código. Scan es la vista para el operario con lector de código de barras.',
             target: 'a[href="/inventory/lpn"]',
             placement: 'bottom',
             optional: true,
@@ -81,12 +81,12 @@ export const warehousesTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Bodegas',
-            body: 'Cada bodega es un lugar fisico con su direccion y su contacto. El stock siempre vive en una bodega, nunca "en el aire".',
+            body: 'Cada bodega es un lugar fisico con su dirección y su contacto. El stock siempre vive en una bodega, nunca "en el aire".',
         },
         {
             id: 'contacto',
             title: 'Los datos de contacto importan',
-            body: 'La direccion, el telefono y el correo de la bodega se usan como origen al generar una guia.\n\nUna bodega sin contacto valido hace fallar la generacion de guia aunque la cotizacion haya funcionado.',
+            body: 'La dirección, el teléfono y el correo de la bodega se usan como origen al generar una guía.\n\nUna bodega sin contacto valido hace fallar la generación de guía aunque la cotización haya funcionado.',
         },
         {
             id: 'ubicaciones',
