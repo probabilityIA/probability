@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
     try {
       const result = await forgotPasswordAction(email.trim(), 'email');
       if (result.success) {
-        setMessage(result.message || 'Si el correo esta registrado, recibiras un enlace para restablecer tu contrasena.');
+        setMessage(result.message || 'Si el correo esta registrado, recibiras un enlace para restablecer tu contraseña.');
         setStep('sent');
       } else {
         setError(result.error || 'No se pudo procesar la solicitud');
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Recuperar contrasena</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Recuperar contraseña</h1>
 
         {step === 'email' && (
           <>
@@ -123,7 +123,7 @@ export default function ForgotPasswordPage() {
               >
                 <span className="text-xl">✉️</span>
                 <span>
-                  <span className="block text-sm font-semibold text-gray-900 dark:text-white">Correo electronico</span>
+                  <span className="block text-sm font-semibold text-gray-900 dark:text-white">Correo electrónico</span>
                   <span className="block text-xs text-gray-500 dark:text-gray-400">Recibe un enlace en tu correo</span>
                 </span>
               </button>
@@ -139,8 +139,8 @@ export default function ForgotPasswordPage() {
                   <span className="block text-sm font-semibold text-gray-900 dark:text-white">WhatsApp</span>
                   <span className="block text-xs text-gray-500 dark:text-gray-400">
                     {whatsapp.available
-                      ? `Recibe un codigo en ${whatsapp.masked_phone}`
-                      : 'No hay un telefono asociado a esta cuenta'}
+                      ? `Recibe un código en ${whatsapp.masked_phone}`
+                      : 'No hay un teléfono asociado a esta cuenta'}
                   </span>
                 </span>
               </button>

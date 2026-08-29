@@ -19,7 +19,7 @@ function VerifyDemoContent() {
     e.preventDefault();
     setError('');
     if (!/^\d{6}$/.test(code)) {
-      setError('El codigo debe tener 6 digitos');
+      setError('El código debe tener 6 digitos');
       return;
     }
     setLoading(true);
@@ -29,7 +29,7 @@ function VerifyDemoContent() {
         setDone(true);
         setTimeout(() => router.push('/login'), 2500);
       } else {
-        setError(result.error || 'Codigo invalido o expirado');
+        setError(result.error || 'Código invalido o expirado');
       }
     } catch {
       setError('Error al conectar con el servidor');

@@ -224,7 +224,7 @@ export default function WarehouseDetailPage() {
                     onClose={() => setConfirm(null)}
                     onConfirm={confirmDelete}
                     title={`Eliminar ${confirm.label}`}
-                    message={`Esta accion es irreversible. Eliminar ${confirm.label} tambien eliminara todos sus hijos.`}
+                    message={`Esta acción es irreversible. Eliminar ${confirm.label} también eliminara todos sus hijos.`}
                     confirmText="Eliminar"
                     type="danger"
                 />

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!upstream.ok) {
         const text = await upstream.text().catch(() => '');
-        return new Response(text || 'Error generando guia', { status: upstream.status });
+        return new Response(text || 'Error generando guía', { status: upstream.status });
     }
 
     const headers = new Headers();

@@ -1692,7 +1692,7 @@ function SubscriptionTypesAdminPanel() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Ordenes incluidas <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{'\u00d3rdenes'} incluidas <span className="font-normal text-gray-400">/ mes</span></label>
                                     <input
                                         type="number"
                                         value={form.included_orders}
@@ -2190,7 +2190,7 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Ordenes incluidas <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{'\u00d3rdenes'} incluidas <span className="font-normal text-gray-400">/ mes</span></label>
                                     <input
                                         type="number"
                                         value={form.included_orders}

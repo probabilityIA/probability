@@ -28,7 +28,7 @@ function ResetPasswordContent() {
       return;
     }
     if (password.length < 6) {
-      setError('La contrasena debe tener al menos 6 caracteres');
+      setError('La contraseña debe tener al menos 6 caracteres');
       return;
     }
     if (password !== confirm) {
@@ -43,7 +43,7 @@ function ResetPasswordContent() {
         setDone(true);
         setTimeout(() => router.push('/login'), 2500);
       } else {
-        setError(result.error || 'No se pudo restablecer la contrasena');
+        setError(result.error || 'No se pudo restablecer la contraseña');
       }
     } catch {
       setError('Error al conectar con el servidor');
@@ -55,7 +55,7 @@ function ResetPasswordContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Nueva contrasena</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Nueva contraseña</h1>
 
         {!token ? (
           <div className="mt-6">
@@ -90,7 +90,7 @@ function ResetPasswordContent() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 >
                   {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -113,7 +113,7 @@ function ResetPasswordContent() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
-                  aria-label={showConfirm ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                  aria-label={showConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 >
                   {showConfirm ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -132,7 +132,7 @@ function ResetPasswordContent() {
               disabled={loading}
               className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
             >
-              {loading ? 'Guardando...' : 'Restablecer contrasena'}
+              {loading ? 'Guardando...' : 'Restablecer contraseña'}
             </button>
           </form>
         )}

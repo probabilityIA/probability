@@ -18,7 +18,7 @@ async function proxy(request: NextRequest, accion: string | null, body?: string)
 
     const ruta = accion ? RUTAS[accion] : undefined;
     if (!ruta) {
-        return Response.json({ success: false, error: 'accion invalida' }, { status: 400 });
+        return Response.json({ success: false, error: 'acción invalida' }, { status: 400 });
     }
 
     const businessId = new URL(request.url).searchParams.get('business_id');
