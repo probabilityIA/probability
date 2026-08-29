@@ -141,7 +141,7 @@ const step3Schema = z.object({
     originFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
     originLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
     originEmail: z.string().email("Email inv\u00e1lido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
-    originPhone: z.string().length(10, "Debe tener 10 digitos"),
+    originPhone: z.string().length(10, "Debe tener 10 d\u00edgitos"),
     originSuburb: z.string().min(2, "Min 2 caracteres").max(30, "Max 30 caracteres"),
     originCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
     originReference: z.string().min(2, "Min 2 caracteres").max(25, "Max 25 caracteres"),
@@ -149,7 +149,7 @@ const step3Schema = z.object({
     destFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
     destLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
     destEmail: z.string().email("Email inv\u00e1lido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
-    destPhone: z.string().length(10, "Debe tener 10 digitos"),
+    destPhone: z.string().length(10, "Debe tener 10 d\u00edgitos"),
     destSuburb: z.string().max(30, "Max 30 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
     destCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
     destReference: z.string().max(25, "Max 25 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
@@ -1668,7 +1668,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-3 gap-1.5">
                                             <Input compact label="Calle *" {...step3Form.register("originCrossStreet")} error={step3Form.formState.errors.originCrossStreet?.message} placeholder="calle 75 sur n 42-97" />
                                             <Input compact label="Edificio/Apto *" {...step3Form.register("originReference")} error={step3Form.formState.errors.originReference?.message} placeholder="apt 801" />
-                                            <Input compact label="Barrio *" {...step3Form.register("originSuburb")} error={step3Form.formState.errors.originSuburb?.message} placeholder="sector Aves Maria" />
+                                            <Input compact label="Barrio *" {...step3Form.register("originSuburb")} error={step3Form.formState.errors.originSuburb?.message} placeholder="sector Aves Mar\u00eda" />
                                         </div>
 
                                         <Input compact label="Empresa" {...step3Form.register("originCompany")} error={step3Form.formState.errors.originCompany?.message} placeholder="ProbabilityIA" className="mt-1.5" />
