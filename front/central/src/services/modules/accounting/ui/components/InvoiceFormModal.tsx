@@ -308,7 +308,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, se
                         )}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{'Tel\u00e9fono'}</label>
                         <input
                             type="text"
                             value={customerPhone}
@@ -318,7 +318,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, se
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Direccion</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{'Direcci\u00f3n'}</label>
                         <input
                             type="text"
                             value={customerAddress}
@@ -441,7 +441,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, se
                             <thead>
                                 <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase">
                                     <th className="pb-2 font-medium w-44">Servicio</th>
-                                    <th className="pb-2 font-medium">Descripcion</th>
+                                    <th className="pb-2 font-medium">{'Descripci\u00f3n'}</th>
                                     <th className="pb-2 font-medium w-24">Cantidad</th>
                                     <th className="pb-2 font-medium w-40">Precio unitario</th>
                                     <th className="pb-2 font-medium w-32 text-right">Subtotal</th>
@@ -468,7 +468,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, se
                                                 type="text"
                                                 value={row.description}
                                                 onChange={(e) => updateRow(index, { description: e.target.value })}
-                                                placeholder="Descripcion del servicio"
+                                                placeholder="Descripci\u00f3n del servicio"
                                                 className={inputClass}
                                             />
                                         </td>

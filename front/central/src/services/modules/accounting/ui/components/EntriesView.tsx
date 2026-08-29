@@ -189,7 +189,7 @@ export function EntriesView({ entries, concepts, filters, error }: EntriesViewPr
                                         </td>
                                         <td className="px-4 py-2">
                                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${entry.is_automatic ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'}`}>
-                                                {entry.is_automatic ? 'Automatico' : 'Manual'}
+                                                {entry.is_automatic ? 'Automático' : 'Manual'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-2 text-right font-medium whitespace-nowrap">{formatCOP(entry.amount)}</td>
@@ -246,7 +246,7 @@ export function EntriesView({ entries, concepts, filters, error }: EntriesViewPr
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                        <span>Por pagina:</span>
+                        <span>Por página:</span>
                         <select
                             value={filters.page_size}
                             onChange={(e) => navigate({ page_size: Number(e.target.value), page: 1 })}
@@ -294,7 +294,7 @@ export function EntriesView({ entries, concepts, filters, error }: EntriesViewPr
                 onClose={() => setEntryToDelete(null)}
                 onConfirm={handleDelete}
                 title="Eliminar movimiento"
-                message={`Se eliminara el movimiento manual de ${entryToDelete ? formatCOP(entryToDelete.amount) : ''} (${entryToDelete?.concept_name || ''}). Esta accion no se puede deshacer.`}
+                message={`Se eliminara el movimiento manual de ${entryToDelete ? formatCOP(entryToDelete.amount) : ''} (${entryToDelete?.concept_name || ''}). Esta acción no se puede deshacer.`}
                 confirmText="Eliminar"
                 type="danger"
             />

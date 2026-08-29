@@ -316,7 +316,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/40">
-                                    <th className="px-4 py-2 font-medium">Descripcion</th>
+                                    <th className="px-4 py-2 font-medium">{'Descripci\u00f3n'}</th>
                                     <th className="px-4 py-2 font-medium text-right">Cantidad</th>
                                     <th className="px-4 py-2 font-medium text-right">Precio unitario</th>
                                     <th className="px-4 py-2 font-medium text-right">Subtotal</th>
@@ -371,7 +371,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                     {isDianValidated && (
                         <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Factura electronica</p>
+                                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Factura {'electr\u00f3nica'}</p>
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -382,7 +382,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                             <div className="space-y-1 text-sm">
                                 {invoice.dian_number && (
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        <span className="text-gray-500 dark:text-gray-400">Numero oficial:</span>{' '}
+                                        <span className="text-gray-500 dark:text-gray-400">{'N\u00famero'} oficial:</span>{' '}
                                         <span className="font-medium">{invoice.dian_number}</span>
                                     </p>
                                 )}
@@ -455,7 +455,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                 </div>
             </Modal>
 
-            <Modal isOpen={showEmitDian} onClose={() => setShowEmitDian(false)} title="Emitir factura electronica DIAN" size="md" zIndex={60}>
+            <Modal isOpen={showEmitDian} onClose={() => setShowEmitDian(false)} title="Emitir factura electr\u00f3nica DIAN" size="md" zIndex={60}>
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                         Se emitira la factura {invoice.number} ante la DIAN a traves de Factus. Verifica los datos del cliente antes de continuar.
@@ -471,7 +471,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{'Tel\u00e9fono'}</label>
                         <input
                             type="text"
                             value={dianPhone}
@@ -481,7 +481,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Direccion</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{'Direcci\u00f3n'}</label>
                         <input
                             type="text"
                             value={dianAddress}
@@ -516,7 +516,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                 message={
                     invoice.is_test
                         ? `Se marcara la factura ${invoice.number} como pagada por ${formatCOP(invoice.total)}. Factura de prueba: no genera movimiento contable.`
-                        : `Se marcara la factura ${invoice.number} como pagada por ${formatCOP(invoice.total)} y se creara el movimiento contable correspondiente.`
+                        : `Se marcara la factura ${invoice.number} como pagada por ${formatCOP(invoice.total)} y se crear\u00e1 el movimiento contable correspondiente.`
                 }
                 confirmText="Marcar pagada"
                 type="info"
@@ -530,8 +530,8 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                 message={
                     <span>
                         {isPaid
-                            ? `La factura ${invoice.number} esta PAGADA. Al cancelarla se revertira el movimiento contable del pago. Esta accion no se puede deshacer.`
-                            : `Se cancelara la factura ${invoice.number}. Esta accion no se puede deshacer.`}
+                            ? `La factura ${invoice.number} esta PAGADA. Al cancelarla se revertira el movimiento contable del pago. Esta acci\u00f3n no se puede deshacer.`
+                            : `Se cancelara la factura ${invoice.number}. Esta acci\u00f3n no se puede deshacer.`}
                         {isDianValidated && (
                             <span className="block mt-2 font-medium">
                                 Advertencia: la factura electronica ya emitida ante la DIAN no se anula automaticamente.
@@ -548,7 +548,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                 onClose={() => setShowDelete(false)}
                 onConfirm={() => runAction(() => deleteAccountingInvoiceAction(invoice.id), 'Factura eliminada', true)}
                 title="Eliminar factura"
-                message={`Se eliminara definitivamente la factura ${invoice.number}. Esta accion no se puede deshacer.`}
+                message={`Se eliminara definitivamente la factura ${invoice.number}. Esta acci\u00f3n no se puede deshacer.`}
                 confirmText="Eliminar"
                 type="danger"
             />
