@@ -142,7 +142,21 @@ python3 .claude/skills/ortografia-front/revisar.py front/central/src/services/mo
    texto: cualquier cambio fuera de un string o de un nodo de texto JSX es un
    bug del script y hay que revertirlo.
 
-5. **Verificar que compila y que no entro non-ASCII donde no debe:**
+5. **Correr los tests.** El skill no toca los `*.test.*`, pero algunos
+   **afirman sobre el texto de la UI**: si el codigo ahora dice
+   `'No había productos por aplicar'` y el test espera `'No habia ...'`,
+   el test falla y en este repo eso **bloquea el deploy**. Paso obligatorio,
+   no opcional; ya rompio un build de `main` una vez.
+
+   ```bash
+   cd front/central && pnpm test
+   ```
+
+   Se corrige la **asercion** para que refleje el texto nuevo. Las
+   descripciones de los `it(...)` y los datos mock (`'Juan Perez'`) se dejan
+   como estan: no comparan contra nada y solo ensucian el diff.
+
+6. **Verificar que compila y que no entro non-ASCII donde no debe:**
 
    ```bash
    cd front/central && npx tsc --noEmit
@@ -152,10 +166,10 @@ python3 .claude/skills/ortografia-front/revisar.py front/central/src/services/mo
    done
    ```
 
-6. **Los `manual` a mano.** Los que el reporte marca `rev` (tilde diacritica,
+7. **Los `manual` a mano.** Los que el reporte marca `rev` (tilde diacritica,
    signos de apertura) se deciden leyendo la frase, uno por uno. Ver `reglas.md`.
 
-7. Commit aparte, solo ortografia, sin mezclar con cambios de logica.
+8. Commit aparte, solo ortografia, sin mezclar con cambios de logica.
 
 ## Lo que el script NO decide
 
