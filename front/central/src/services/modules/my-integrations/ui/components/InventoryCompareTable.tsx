@@ -54,7 +54,7 @@ function fechaGuardada(iso: string) {
     const horas = Math.floor(minutos / 60);
     if (horas < 24) return `de hace ${horas} h`;
     const dias = Math.floor(horas / 24);
-    return `de hace ${d\u00edas} d`;
+    return `de hace ${dias} d`;
 }
 
 function LogoCanal({ integracion, size = 20 }: { integracion: Integration; size?: number }) {

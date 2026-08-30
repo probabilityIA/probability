@@ -195,6 +195,15 @@ Prefiere callarse antes que reportar codigo. Por eso NO revisa:
 - Valores de atributos tecnicos (`className`, `href`, `fill`, `style`, ...).
 - Interpolaciones de template (`${...}`): no revisa los signos de apertura ahi.
 - Comentarios: no son texto de usuario y pueden quedarse sin tilde.
+- **Interpolaciones de template.** Dentro de `` `...${...}...` `` lo que va
+  entre `${` y `}` es CODIGO, no texto: el script lo salta entero.
+
+  Esto rompio un build de `main`. El corrector tomo `` `de hace ${dias} d` ``
+  y escribio `` `de hace ${d\u00edas} d` ``: le puso la tilde a la variable.
+  Sintacticamente es un identificador valido, asi que solo lo caza `tsc`,
+  no una revision del diff (el texto normalizado es identico al original).
+  Consecuencia: la verificacion estructural del diff NO basta; hay que
+  compilar.
 - Archivos `*.test.*`, `*.spec.*`, `*.stories.*`, `__tests__/`, `__mocks__/`:
   sus cadenas son fixtures y aserciones, no UI.
 - **Literales protegidos.** Antes de revisar, el script recorre el front y

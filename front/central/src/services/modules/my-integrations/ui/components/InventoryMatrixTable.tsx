@@ -578,7 +578,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                     >
                         {running ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
                         {seleccion.size > 0
-                            ? `Igualar ${selecci\u00f3n.size} en sus canales`
+                            ? `Igualar ${seleccion.size} en sus canales`
                             : `Igualar los ${conCambios.length} que cambian`}
                     </button>
                 </div>

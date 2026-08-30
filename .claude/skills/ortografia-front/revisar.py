@@ -99,6 +99,26 @@ SPAN_RX = [
 ]
 
 
+def literal_chunks(text):
+    out, i, start, depth = [], 0, 0, 0
+    while i < len(text):
+        if depth == 0 and text.startswith("${", i):
+            out.append((start, text[start:i]))
+            depth, i = 1, i + 2
+            continue
+        if depth:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    start = i + 1
+        i += 1
+    if depth == 0:
+        out.append((start, text[start:]))
+    return out
+
+
 def spans(line):
     taken = []
     for kind, rx in SPAN_RX:
@@ -123,7 +143,12 @@ def spans(line):
             if CSSY.search(text):
                 continue
             taken.append((a, b))
-            yield kind, a, text
+            if kind == "t":
+                for sub_off, sub in literal_chunks(text):
+                    if sub.strip():
+                        yield kind, a + sub_off, sub
+            else:
+                yield kind, a, text
 
 
 APERTURA = re.compile(r"[.!?]\s+|^")

@@ -414,7 +414,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                                 <LogoCanal integracion={canales.find(c => c.id === canalID)!} />
                             )}
                             {seleccion.size > 0
-                                ? `${selección.size} seleccionada${selección.size === 1 ? '' : 's'} para crear en Probability`
+                                ? `${seleccion.size} seleccionada${seleccion.size === 1 ? '' : 's'} para crear en Probability`
                                 : 'Marca las órdenes que faltan para crearlas aquí'}
                         </span>
                         <button
