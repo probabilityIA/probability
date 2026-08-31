@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
@@ -40,6 +41,40 @@ func detectIsCOD(order *models.Order) bool {
 		}
 	}
 	return false
+}
+
+func codCarrierFeeFromOrder(order *models.Order) float64 {
+	if len(order.ShippingDetails) == 0 {
+		return 0
+	}
+	var details struct {
+		ShippingLines []struct {
+			MetaData []struct {
+				Key   string      `json:"key"`
+				Value interface{} `json:"value"`
+			} `json:"meta_data"`
+		} `json:"shipping_lines"`
+	}
+	if err := json.Unmarshal(order.ShippingDetails, &details); err != nil {
+		return 0
+	}
+	for _, line := range details.ShippingLines {
+		for _, meta := range line.MetaData {
+			if meta.Key != "cod_carrier_fee" {
+				continue
+			}
+			switch v := meta.Value.(type) {
+			case float64:
+				return v
+			case string:
+				parsed, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+				if err == nil {
+					return parsed
+				}
+			}
+		}
+	}
+	return 0
 }
 
 func (r *Repository) CountOrdersOutsideBusiness(ctx context.Context, orderIDs []string, businessID uint) (int64, error) {
@@ -131,6 +166,8 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 		Status:           order.Status,
 		CreatedAt:        order.CreatedAt,
 	}
+
+	orderData.CodCarrierFee = codCarrierFeeFromOrder(order)
 
 	if order.BusinessID != nil {
 		orderData.BusinessID = *order.BusinessID
