@@ -48,7 +48,7 @@ const STRUCTURE_OPTIONS: {
             </svg>
         ),
         title: 'Con Zonas',
-        description: 'Areas funcionales diferenciadas.',
+        description: '\u00c1reas funcionales diferenciadas.',
         levels: 'Bodega → Zonas → Ubicaciones',
     },
     {
@@ -60,7 +60,7 @@ const STRUCTURE_OPTIONS: {
             </svg>
         ),
         title: 'WMS Completo',
-        description: 'Jerarquia completa avanzada.',
+        description: 'Jerarqu\u00eda completa avanzada.',
         levels: 'Zonas → Pasillos → Racks → Niveles → Posiciones',
     },
 ];
@@ -252,7 +252,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                 <div className="space-y-5">
 
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Informacion basica</h3>
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{'Informaci\u00f3n'} {'b\u00e1sica'}</h3>
                         <div>
                             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
                                 Nombre <span className="text-red-500">*</span>
@@ -271,7 +271,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
 
                     <div>
                         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Estructura de la bodega</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Define como organizar el espacio fisico.</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Define como organizar el espacio {'f\u00edsico'}.</p>
                         <div className="flex flex-col gap-2">
                             {STRUCTURE_OPTIONS.map((opt) => {
                                 const selected = structureMode === opt.id;
@@ -284,7 +284,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                         type="button"
                                         disabled={blocked}
                                         onClick={() => !blocked && setStructureMode(opt.id)}
-                                        title={blocked ? 'No puedes reducir la estructura: ya tienes jerarquia creada' : undefined}
+                                        title={blocked ? 'No puedes reducir la estructura: ya tienes jerarqu\u00eda creada' : undefined}
                                         className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 flex items-start gap-3 ${
                                             blocked
                                                 ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 opacity-60 cursor-not-allowed'
@@ -312,7 +312,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                                 <span className="font-medium">Niveles:</span> {opt.levels}
                                             </p>
                                             {blocked && (
-                                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Tienes jerarquia ya creada en un nivel superior</p>
+                                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Tienes {'jerarqu\u00eda'} ya creada en un nivel superior</p>
                                             )}
                                         </div>
                                     </button>
@@ -325,7 +325,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Bodega principal</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Por defecto para nuevas ordenes</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Por defecto para nuevas {'\u00f3rdenes'}</p>
                             </div>
                             <button
                                 type="button"
@@ -357,10 +357,10 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                 <div className="space-y-4">
 
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Direccion</h3>
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{'Direcci\u00f3n'}</h3>
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Direccion</label>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Direcci\u00f3n'}</label>
                                 <AddressAutocomplete
                                     value={formData.address}
                                     onChange={(val) => handleChange('address', val)}
@@ -401,7 +401,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Pais</label>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Pa\u00eds'}</label>
                                     <Input
                                         type="text"
                                         value={formData.country}
@@ -458,7 +458,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Contacto</h3>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Telefono</label>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{'Tel\u00e9fono'}</label>
                                 <Input
                                     type="tel"
                                     value={formData.phone}
@@ -473,7 +473,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                     type="text"
                                     value={formData.contact_name}
                                     onChange={(e) => handleChange('contact_name', e.target.value)}
-                                    placeholder="Juan Perez"
+                                    placeholder="Juan P\u00e9rez"
                                     maxLength={255}
                                 />
                             </div>

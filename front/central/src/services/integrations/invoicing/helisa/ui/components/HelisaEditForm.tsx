@@ -93,7 +93,7 @@ export function HelisaEditForm({ integrationId, initialData, onSuccess, onCancel
             if (result.success) {
                 showToast('Conexion exitosa con Helisa', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Helisa');
@@ -129,10 +129,10 @@ export function HelisaEditForm({ integrationId, initialData, onSuccess, onCancel
                 showToast('Integracion Helisa actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al actualizar integracion de Helisa');
+            setErrorModal(err.message || 'Error al actualizar integración de Helisa');
         } finally {
             setLoading(false);
         }
@@ -172,7 +172,7 @@ export function HelisaEditForm({ integrationId, initialData, onSuccess, onCancel
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Helisa Facturacion Principal"
+                        placeholder="Ej: Helisa Facturación Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
@@ -209,7 +209,7 @@ export function HelisaEditForm({ integrationId, initialData, onSuccess, onCancel
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
+                            <span>El negocio no puede ser modificado después de la creación</span>
                         </p>
                     </div>
                 )}
@@ -254,7 +254,7 @@ export function HelisaEditForm({ integrationId, initialData, onSuccess, onCancel
                         <SecretInput
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            placeholder="Contrasena de Helisa"
+                            placeholder="Contraseña de Helisa"
                             className="bg-white dark:bg-gray-800 text-sm"
                         />
                     </div>
@@ -290,7 +290,7 @@ export function HelisaEditForm({ integrationId, initialData, onSuccess, onCancel
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de produccion de Helisa.</span>
+                        <span>Dejar vacío para usar la URL de producción de Helisa.</span>
                     </p>
                 </div>
 

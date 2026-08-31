@@ -141,7 +141,7 @@ export function buildApplyMessage(
     if (created > 0) parts.push(`${created} creados`);
     if (updated > 0) parts.push(`${updated} actualizados`);
     if (failed > 0) parts.push(`${failed} con error`);
-    if (parts.length === 0) return total === 0 ? 'No habia productos por aplicar' : 'Sin cambios';
+    if (parts.length === 0) return total === 0 ? 'No hab\u00eda productos por aplicar' : 'Sin cambios';
 
     let message = `${parts.join(', ')} de ${total}`;
     const items = Array.isArray(failedItems) ? (failedItems as FailedItem[]) : [];
@@ -149,7 +149,7 @@ export function buildApplyMessage(
     if (firstError) {
         const sample = items[0]?.sku ? `${items[0].sku}: ${firstError}` : firstError;
         message += ` — ${sample}`;
-        if (items.length > 1) message += ` (y ${items.length - 1} mas)`;
+        if (items.length > 1) message += ` (y ${items.length - 1} m\u00e1s)`;
     }
     return message;
 }
@@ -625,7 +625,7 @@ export function SyncActivityProvider({ children, integrations, businessId, view,
                         applyCompletion.current.delete(integrationId);
                         setActionResult(prev => ({
                             ...prev,
-                            [integrationId]: { ok: true, pending: true, message: 'Sigue aplicandose en segundo plano' },
+                            [integrationId]: { ok: true, pending: true, message: 'Sigue aplic\u00e1ndose en segundo plano' },
                         }));
                         resolve();
                     }, APPLY_TIMEOUT_MS);

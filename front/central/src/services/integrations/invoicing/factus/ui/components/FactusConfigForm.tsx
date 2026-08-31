@@ -100,7 +100,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
             if (result.success) {
                 showToast('Conexion exitosa con Factus', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexi\u00f3n');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Factus');
@@ -115,7 +115,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integraci\u00f3n.');
                 setLoading(false);
                 return;
             }
@@ -158,7 +158,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                 throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Factus');
+            setErrorModal(err.message || 'Error al crear la integraci\u00f3n de Factus');
         } finally {
             setLoading(false);
         }

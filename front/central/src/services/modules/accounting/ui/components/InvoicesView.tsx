@@ -82,10 +82,10 @@ export function InvoicesView({ invoices, concepts, taxes, services, filters, det
     const totalPages = invoices.total_pages || 0;
 
     const columns = [
-        { key: 'number', label: 'Numero' },
+        { key: 'number', label: 'Número' },
         { key: 'business', label: 'Negocio' },
         { key: 'concept', label: 'Concepto' },
-        { key: 'issue_date', label: 'Emision' },
+        { key: 'issue_date', label: 'Emisión' },
         { key: 'due_date', label: 'Vencimiento' },
         { key: 'status', label: 'Estado' },
         { key: 'total', label: 'Total', align: 'right' as const },
@@ -209,7 +209,7 @@ export function InvoicesView({ invoices, concepts, taxes, services, filters, det
                         <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
                             {hasActiveFilters
                                 ? 'No hay facturas con los filtros seleccionados'
-                                : 'Aun no has emitido facturas'}
+                                : 'Aún no has emitido facturas'}
                         </p>
                         <button
                             onClick={() => setShowForm(true)}

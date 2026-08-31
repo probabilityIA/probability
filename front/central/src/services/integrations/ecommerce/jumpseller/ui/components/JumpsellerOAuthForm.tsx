@@ -34,9 +34,9 @@ const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-gr
 
 const GUIDE_STEPS = [
     'Haz clic en Conectar con Jumpseller',
-    'Inicia sesion en tu tienda Jumpseller',
+    'Inicia sesión en tu tienda Jumpseller',
     'Autoriza el acceso a Probability',
-    'Regresas automaticamente y queda conectada',
+    'Regresas automáticamente y queda conectada',
 ];
 
 export function JumpsellerOAuthForm({ onCancel }: JumpsellerOAuthFormProps) {
@@ -141,10 +141,10 @@ export function JumpsellerOAuthForm({ onCancel }: JumpsellerOAuthFormProps) {
 
             const data = await response.json();
             if (!response.ok || !data.success) {
-                throw new Error(data.error || data.message || 'Error al iniciar la conexion OAuth');
+                throw new Error(data.error || data.message || 'Error al iniciar la conexión OAuth');
             }
             if (!data.authorization_url) {
-                throw new Error('No se recibio la URL de autorizacion');
+                throw new Error('No se recibió la URL de autorización');
             }
             window.location.href = data.authorization_url;
         } catch (err: any) {
@@ -196,7 +196,7 @@ export function JumpsellerOAuthForm({ onCancel }: JumpsellerOAuthFormProps) {
                     <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                         <Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Configuracion general</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Configuración general</h3>
                 </div>
 
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
@@ -215,7 +215,7 @@ export function JumpsellerOAuthForm({ onCancel }: JumpsellerOAuthFormProps) {
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta integración</span>
                         </p>
                     </div>
 
@@ -249,7 +249,7 @@ export function JumpsellerOAuthForm({ onCancel }: JumpsellerOAuthFormProps) {
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Negocio al que pertenecera esta integracion</span>
+                                <span>Negocio al que pertenecerá esta integración</span>
                             </p>
                         </div>
                     )}
@@ -292,7 +292,7 @@ export function JumpsellerOAuthForm({ onCancel }: JumpsellerOAuthFormProps) {
                     <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                         <LinkIcon style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Conexion OAuth</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Conexión OAuth</h3>
                 </div>
 
                 <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">

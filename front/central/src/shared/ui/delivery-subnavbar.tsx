@@ -30,7 +30,7 @@ export const DeliverySubNavbar = memo(function DeliverySubNavbar() {
     const menuItems = [
         { href: '/delivery/routes', label: 'Rutas', icon: '🗺️' },
         { href: '/delivery/drivers', label: 'Conductores', icon: '🧑‍✈️' },
-        { href: '/delivery/vehicles', label: 'Vehiculos', icon: '🚛' },
+        { href: '/delivery/vehicles', label: 'Vehículos', icon: '🚛' },
         { href: '/delivery/geozones', label: 'Geozonas', icon: '📍' },
     ];
 

@@ -119,7 +119,7 @@ export function ConfigView({ concepts, taxes, services, dianConfig, error }: Con
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Configuracion contable</h1>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Configuración contable</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                     Conceptos e impuestos de la contabilidad interna
                 </p>
@@ -257,7 +257,7 @@ export function ConfigView({ concepts, taxes, services, dianConfig, error }: Con
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/40">
-                                    <th className="px-4 py-2 font-medium">Codigo</th>
+                                    <th className="px-4 py-2 font-medium">Código</th>
                                     <th className="px-4 py-2 font-medium">Nombre</th>
                                     <th className="px-4 py-2 font-medium">Tipo</th>
                                     <th className="px-4 py-2 font-medium text-right">Tarifa</th>
@@ -340,9 +340,9 @@ export function ConfigView({ concepts, taxes, services, dianConfig, error }: Con
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/40">
-                                    <th className="px-4 py-2 font-medium">Codigo</th>
+                                    <th className="px-4 py-2 font-medium">Código</th>
                                     <th className="px-4 py-2 font-medium">Nombre</th>
-                                    <th className="px-4 py-2 font-medium">Codigo UNSPSC</th>
+                                    <th className="px-4 py-2 font-medium">Código UNSPSC</th>
                                     <th className="px-4 py-2 font-medium text-right">Precio base</th>
                                     <th className="px-4 py-2 font-medium text-center">Activo</th>
                                     <th className="px-4 py-2 font-medium text-right">Acciones</th>
@@ -404,7 +404,7 @@ export function ConfigView({ concepts, taxes, services, dianConfig, error }: Con
             </section>
 
             <section className="space-y-3">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Facturacion electronica (DIAN)</h2>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Facturación electrónica (DIAN)</h2>
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex-1 min-w-0">
@@ -419,10 +419,10 @@ export function ConfigView({ concepts, taxes, services, dianConfig, error }: Con
                             </div>
                             {dianConfig?.configured ? (
                                 <div className="mt-2 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                    <p>API: {dianConfig.api_url || 'Produccion'}</p>
+                                    <p>API: {dianConfig.api_url || 'Producción'}</p>
                                     <p>Usuario: {dianConfig.username || '-'}</p>
-                                    <p>Rango de numeracion: {dianConfig.numbering_range_id || 'Automatico'}</p>
-                                    <p>Medio de pago: {dianConfig.payment_method_code ? `Codigo ${dianConfig.payment_method_code}` : 'No definido'}</p>
+                                    <p>Rango de numeración: {dianConfig.numbering_range_id || 'Automático'}</p>
+                                    <p>Medio de pago: {dianConfig.payment_method_code ? `Código ${dianConfig.payment_method_code}` : 'No definido'}</p>
                                 </div>
                             ) : (
                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -477,7 +477,7 @@ export function ConfigView({ concepts, taxes, services, dianConfig, error }: Con
                     if (serviceToDelete) handleDeleteService(serviceToDelete);
                 }}
                 title="Eliminar servicio"
-                message={`Se eliminara el servicio ${serviceToDelete?.name || ''}. Esta accion no se puede deshacer.`}
+                message={`Se eliminara el servicio ${serviceToDelete?.name || ''}. Esta acción no se puede deshacer.`}
                 confirmText="Eliminar"
                 type="danger"
             />

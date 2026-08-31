@@ -35,7 +35,7 @@ const TYPE_LABEL: Record<LayoutRefType, string> = {
     aisle: 'Pasillo',
     rack: 'Rack',
     level: 'Nivel',
-    location: 'Ubicacion',
+    location: 'Ubicaci\u00f3n',
     wall: 'Muro',
     dock: 'Muelle',
     label: 'Texto',
@@ -570,7 +570,7 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-gray-500 mb-1">Rotacion {Math.round(selected.rotation)} grados</label>
+                                <label className="block text-gray-500 mb-1">{'Rotaci\u00f3n'} {Math.round(selected.rotation)} grados</label>
                                 <input type="range" min={0} max={350} step={10} className="w-full"
                                     value={selected.rotation}
                                     onChange={(e) => updateNode(selected.node_id, { rotation: Number(e.target.value) })} />
@@ -633,7 +633,7 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                                             <rect x={2} y={rackDetail.levels.length * 44 + 6} width={196} height={5} fill="#475569" />
                                         </svg>
                                     )}
-                                    <p className="text-[10px] text-gray-400 mt-1">Vista de frente (nivel mas alto arriba)</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">Vista de frente (nivel {'m\u00e1s'} alto arriba)</p>
                                 </div>
                             )}
                             <button className="w-full px-2 py-1 rounded bg-rose-600 text-white" onClick={() => removeNode(selected.node_id)}>

@@ -70,19 +70,19 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 1,
         title: 'Entra a Integraciones en tu panel de Probability',
-        description: 'En el menu lateral, abre "Integraciones" y selecciona la pestana "Plataforma".',
+        description: 'En el men\u00fa lateral, abre "Integraciones" y selecciona la pestana "Plataforma".',
         image: `${SHOPIFY_ASSETS_BASE}/01-panel-probability-integraciones-plataforma.png`,
     },
     {
         step: 2,
         title: 'Cambia a la pestana "E-commerce"',
-        description: 'Ahi veras las integraciones de tienda online que ya tengas conectadas.',
+        description: 'Ah\u00ed veras las integraciones de tienda online que ya tengas conectadas.',
         image: `${SHOPIFY_ASSETS_BASE}/02-panel-probability-integraciones-ecommerce.png`,
     },
     {
         step: 3,
-        title: 'Crea una nueva integracion',
-        description: 'Clic en "Crear Integracion" y selecciona la categoria "E-commerce".',
+        title: 'Crea una nueva integraci\u00f3n',
+        description: 'Clic en "Crear Integraci\u00f3n" y selecciona la categor\u00eda "E-commerce".',
         image: `${SHOPIFY_ASSETS_BASE}/03-modal-nueva-integracion-seleccionar-categoria.png`,
     },
     {
@@ -94,7 +94,7 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 5,
         title: 'Entra a Shopify Partners',
-        description: 'Inicia sesion en partners.shopify.com y selecciona la organizacion/tienda de desarrollo donde crearas la Custom App.',
+        description: 'Inicia sesi\u00f3n en partners.shopify.com y selecciona la organizaci\u00f3n/tienda de desarrollo donde crearas la Custom App.',
         image: `${SHOPIFY_ASSETS_BASE}/05-shopify-partners-selector-tiendas.png`,
     },
     {
@@ -121,7 +121,7 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 9,
         title: 'Configura las URLs (paso critico)',
-        description: 'Justo debajo, llena "URLs de redireccionamiento" y "URL de la app" con los valores de abajo. Si dejas estos campos vacios, Shopify rechazara la conexion con un error de "hosts must match". Clic en "Publicar".',
+        description: 'Justo debajo, llena "URLs de redireccionamiento" y "URL de la app" con los valores de abajo. Si dejas estos campos vac\u00edos, Shopify rechazara la conexi\u00f3n con un error de "hosts must match". Clic en "Publicar".',
         image: `${SHOPIFY_ASSETS_BASE}/14-shopify-app-urls-redireccionamiento-correctas-FIX.png`,
         copyItems: [
             { label: 'URL de redireccionamiento', text: SHOPIFY_REDIRECT_URL },
@@ -131,13 +131,13 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 10,
         title: 'Copia el Client ID y Client Secret',
-        description: 'Ve a "Configuracion" y copia el "ID de cliente" y el "Secreto" (clic en el icono del ojo para revelarlo). Los necesitaras en el paso 13.',
+        description: 'Ve a "Configuraci\u00f3n" y copia el "ID de cliente" y el "Secreto" (clic en el icono del ojo para revelarlo). Los necesitaras en el paso 13.',
         image: `${SHOPIFY_ASSETS_BASE}/10-shopify-app-credenciales-client-id-secret.png`,
     },
     {
         step: 11,
-        title: 'Publica la primera version',
-        description: 'Shopify crea automaticamente una version de la app. La veras activa en la seccion "Versiones".',
+        title: 'Publica la primera versi\u00f3n',
+        description: 'Shopify crea autom\u00e1ticamente una versi\u00f3n de la app. La veras activa en la secci\u00f3n "Versiones".',
         image: `${SHOPIFY_ASSETS_BASE}/09-shopify-app-versiones-publicada.png`,
     },
     {
@@ -149,13 +149,13 @@ const SHOPIFY_CONNECTION_STEPS = [
     {
         step: 13,
         title: 'Autoriza el acceso en Shopify',
-        description: 'Shopify te mostrara los permisos que la app necesita. Clic en "Instalar" para autorizar.',
+        description: 'Shopify te mostrar\u00e1 los permisos que la app necesita. Clic en "Instalar" para autorizar.',
         image: `${SHOPIFY_ASSETS_BASE}/12-shopify-instalar-app-permisos.png`,
     },
     {
         step: 14,
-        title: 'Listo, la integracion queda activa',
-        description: 'Vuelve al panel de Probability: la integracion Shopify aparecera con estado "Activo".',
+        title: 'Listo, la integraci\u00f3n queda activa',
+        description: 'Vuelve al panel de Probability: la integraci\u00f3n Shopify aparecer\u00e1 con estado "Activo".',
         image: `${SHOPIFY_ASSETS_BASE}/13-panel-probability-integracion-shopify-activa.png`,
     },
 ];
@@ -293,13 +293,13 @@ export default function ShopifyOAuthForm({
             : await disableShopifyCarrierServiceAction(integrationId);
 
         if (!result || result.success === false) {
-            showToast(result?.message || 'No se pudo actualizar la cotizacion en checkout', 'error');
+            showToast(result?.message || 'No se pudo actualizar la cotizaci\u00f3n en checkout', 'error');
         } else {
             setCarrierEnabled(next);
             showToast(
                 result.message || (next
-                    ? 'Cotizacion en checkout activada'
-                    : 'Cotizacion en checkout desactivada'),
+                    ? 'Cotizaci\u00f3n en checkout activada'
+                    : 'Cotizaci\u00f3n en checkout desactivada'),
                 'success'
             );
         }
@@ -378,7 +378,7 @@ export default function ShopifyOAuthForm({
             if (data.authorization_url) {
                 window.location.href = data.authorization_url;
             } else {
-                throw new Error('No se recibio URL de autorizacion');
+                throw new Error('No se recibi\u00f3 URL de autorizaci\u00f3n');
             }
         } catch (err: any) {
             console.error('Error al conectar con Shopify:', err);
@@ -418,7 +418,7 @@ export default function ShopifyOAuthForm({
                         )}
                     </span>
                     <div>
-                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Conexion Shopify Custom App</h2>
+                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">{'Conexi\u00f3n'} Shopify Custom App</h2>
                         <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                             {isEdit
                                 ? 'Datos de tu Custom App de Shopify. Puedes modificar las credenciales si es necesario.'
@@ -445,7 +445,7 @@ export default function ShopifyOAuthForm({
                     <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                         <KeyIcon style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Datos de conexion</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Datos de {'conexi\u00f3n'}</h3>
                 </div>
 
                 <div className="space-y-3">
@@ -498,7 +498,7 @@ export default function ShopifyOAuthForm({
                             />
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Obtenido automaticamente durante el flujo OAuth</span>
+                                <span>Obtenido {'autom\u00e1ticamente'} durante el flujo OAuth</span>
                             </p>
                         </div>
                     )}
@@ -511,7 +511,7 @@ export default function ShopifyOAuthForm({
                             <input
                                 type="text"
                                 required={!isEdit}
-                                placeholder={isEdit ? '' : 'Pegar Client ID aqui'}
+                                placeholder={isEdit ? '' : 'Pegar Client ID aqu\u00ed'}
                                 value={formData.client_id}
                                 onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
                                 autoComplete="off"
@@ -526,7 +526,7 @@ export default function ShopifyOAuthForm({
                             <SecretInput
                                 value={formData.client_secret}
                                 onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
-                                placeholder={isEdit ? '' : 'Pegar Client Secret aqui'}
+                                placeholder={isEdit ? '' : 'Pegar Client Secret aqu\u00ed'}
                                 required={!isEdit}
                                 className="w-full bg-white dark:bg-gray-800 font-mono text-sm rounded-lg"
                             />
@@ -544,7 +544,7 @@ export default function ShopifyOAuthForm({
                         <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                             <InformationCircleIcon style={{ color: GREEN, width: 16, height: 16 }} />
                         </span>
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Sigue los pasos para hacer la conexion a Shopify</h3>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Sigue los pasos para hacer la {'conexi\u00f3n'} a Shopify</h3>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 ml-9">
                         Crea la Custom App en el Shopify Partner Dashboard y copia aqui el Client ID y Client Secret que genera.
@@ -745,7 +745,7 @@ export default function ShopifyOAuthForm({
                             <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                                 <TruckIcon style={{ color: GREEN, width: 16, height: 16 }} />
                             </span>
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Configuracion de envio</h3>
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{'Configuraci\u00f3n'} de {'env\u00edo'}</h3>
                         </div>
                         <div
                             className="rounded-lg bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700"
@@ -753,7 +753,7 @@ export default function ShopifyOAuthForm({
                         >
                             <ToggleRow
                                 icon={<TruckIcon className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />}
-                                title="Cotizacion en checkout"
+                                title="Cotizaci\u00f3n en checkout"
                                 subtitle="Tarifas en tiempo real con varias transportadoras al pagar"
                                 checked={carrierEnabled}
                                 onToggle={handleToggleCarrierService}
@@ -762,8 +762,8 @@ export default function ShopifyOAuthForm({
                             />
                             <ToggleRow
                                 icon={<TruckIcon className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />}
-                                title="El total del pedido ya incluye el envio"
-                                subtitle="Desactivalo si las guias de contra entrega se generan en Probability y no llegan del canal de ventas: ahi se le suma el flete al total"
+                                title="El total del pedido ya incluye el env\u00edo"
+                                subtitle="Desactivalo si las gu\u00edas de contra entrega se generan en Probability y no llegan del canal de ventas: ah\u00ed se le suma el flete al total"
                                 checked={codIncludesShipping}
                                 onToggle={() => setCodIncludesShipping((v) => !v)}
                                 activeColor="indigo"
@@ -815,7 +815,7 @@ export default function ShopifyOAuthForm({
                         </svg>
                     )}
                     {isEdit
-                        ? (loading ? 'Guardando...' : 'Guardar integracion')
+                        ? (loading ? 'Guardando...' : 'Guardar integraci\u00f3n')
                         : (loading ? 'Conectando...' : 'Conectar con Shopify')}
                 </button>
             </div>

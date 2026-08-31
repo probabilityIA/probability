@@ -91,8 +91,8 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
 
     const columns = [
         { key: 'name', label: 'Nombre' },
-        { key: 'identification', label: 'Identificacion' },
-        { key: 'phone', label: 'Telefono' },
+        { key: 'identification', label: 'Identificación' },
+        { key: 'phone', label: 'Teléfono' },
         { key: 'status', label: 'Estado', align: 'center' as const },
         { key: 'license_type', label: 'Licencia' },
         { key: 'actions', label: 'Acciones', align: 'right' as const },
@@ -166,7 +166,7 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
                     type="text"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Buscar por nombre, identificacion o telefono..."
+                    placeholder="Buscar por nombre, identificación o teléfono..."
                     className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <button

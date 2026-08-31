@@ -59,7 +59,7 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(getActionError(err, 'Error al cargar vehiculos'));
+            setError(getActionError(err, 'Error al cargar vehículos'));
         } finally {
             setLoading(false);
         }
@@ -93,12 +93,12 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
     };
 
     const handleDelete = async (vehicle: VehicleInfo) => {
-        if (!confirm(`Eliminar el vehiculo "${vehicle.license_plate}"? Esta accion no se puede deshacer.`)) return;
+        if (!confirm(`Eliminar el vehículo "${vehicle.license_plate}"? Esta acción no se puede deshacer.`)) return;
         try {
             await deleteVehicleAction(vehicle.id, selectedBusinessId);
             fetchVehicles();
         } catch (err: any) {
-            setError(getActionError(err, 'Error al eliminar el vehiculo'));
+            setError(getActionError(err, 'Error al eliminar el vehículo'));
         }
     };
 
@@ -202,7 +202,7 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
                     columns={columns}
                     data={vehicles.map(renderRow)}
                     keyExtractor={(_, index) => String(vehicles[index]?.id || index)}
-                    emptyMessage="No hay vehiculos registrados"
+                    emptyMessage="No hay vehículos registrados"
                     loading={loading}
                     pagination={{
                         currentPage: page,

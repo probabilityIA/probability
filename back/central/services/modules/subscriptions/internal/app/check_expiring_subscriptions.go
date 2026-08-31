@@ -5,11 +5,13 @@ import (
 	"time"
 )
 
-const expiryWarnDays = 7
-
+// El aviso de vencimiento de suscripcion (ticker/modal) se elimino a pedido
+// del usuario (2026-08-28): era invasivo y ademas se mostraba sin segmentar
+// (bug de scoping en el front, ver AnnouncementTicker/AnnouncementModal) a
+// cualquier super admin. CheckExpiringSubscriptions ya no crea anuncios; solo
+// downgrade de trials, settle de ciclos free y marcar como expirado.
 func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 	now := time.Now()
-	warnUntil := now.AddDate(0, 0, expiryWarnDays)
 
 	if err := uc.DowngradeExpiredTrials(ctx); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("failed to downgrade expired trials")
@@ -18,26 +20,11 @@ func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 		uc.log.Error(ctx).Err(err).Msg("failed to settle free plan cycles")
 	}
 
-	expiringSoon, err := uc.repo.ListBusinessesExpiringBetween(ctx, now, warnUntil)
-	if err != nil {
-		return err
-	}
-	for _, business := range expiringSoon {
-		title, message := expiringSoonCopyFor(business.PlanCode)
-		if err := uc.ensureExpiryAnnouncement(ctx, business.BusinessID, title, message, true); err != nil {
-			uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("failed to ensure expiring soon announcement")
-		}
-	}
-
 	justExpired, err := uc.repo.ListBusinessesJustExpired(ctx, now)
 	if err != nil {
 		return err
 	}
 	for _, business := range justExpired {
-		title, message := expiredCopyFor(business.PlanCode)
-		if err := uc.ensureExpiryAnnouncement(ctx, business.BusinessID, title, message, true); err != nil {
-			uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("failed to ensure expired announcement")
-		}
 		if err := uc.repo.MarkExpiredIfStillActive(ctx, business.BusinessID, now); err != nil {
 			uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("failed to mark business as expired")
 		}
@@ -62,42 +49,6 @@ const (
 	freeTrialExpiredTitle        = "Tu plan actual finalizo"
 	freeTrialExpiredMessage      = "Tu plan actual ya finalizo. Tu cuenta continua activa en el plan gratuito de Probability."
 )
-
-func isFreeOrTrialPlan(planCode string) bool {
-	return planCode == freePlanCode || planCode == trialPlanCode
-}
-
-func expiringSoonCopyFor(planCode string) (title, message string) {
-	if isFreeOrTrialPlan(planCode) {
-		return freeTrialExpiringSoonTitle, freeTrialExpiringSoonMessage
-	}
-	return paidExpiringSoonTitle, paidExpiringSoonMessage
-}
-
-func expiredCopyFor(planCode string) (title, message string) {
-	if isFreeOrTrialPlan(planCode) {
-		return freeTrialExpiredTitle, freeTrialExpiredMessage
-	}
-	return paidExpiredTitle, paidExpiredMessage
-}
-
-func (uc *UseCase) ensureExpiryAnnouncement(ctx context.Context, businessID uint, title, message string, daily bool) error {
-	existing, err := uc.announcements.FindActiveBusinessAlert(ctx, businessID, title)
-	if err != nil {
-		return err
-	}
-	if existing != nil {
-		return nil
-	}
-
-	systemUserID, err := uc.resolveSystemUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = uc.announcements.CreateBusinessAlert(ctx, businessID, title, message, systemUserID, daily)
-	return err
-}
 
 func (uc *UseCase) deactivateExpiryAnnouncements(ctx context.Context, businessID uint) {
 	titles := []string{

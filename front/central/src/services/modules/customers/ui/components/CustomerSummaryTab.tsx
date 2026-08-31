@@ -51,7 +51,7 @@ export default function CustomerSummaryTab({ customerId, businessId }: Props) {
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard label="Total ordenes" value={String(summary.total_orders)} />
+                <StatCard label="Total órdenes" value={String(summary.total_orders)} />
                 <StatCard label="Entregadas" value={String(summary.delivered_orders)} sub={`${deliveryPct}%`} />
                 <StatCard label="En progreso" value={String(summary.in_progress_orders)} />
                 <StatCard label="Canceladas" value={String(summary.cancelled_orders)} />
@@ -60,7 +60,7 @@ export default function CustomerSummaryTab({ customerId, businessId }: Props) {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <StatCard label="Total gastado" value={formatCurrency(summary.total_spent)} />
                 <StatCard label="Ticket promedio" value={formatCurrency(summary.avg_ticket)} />
-                <StatCard label="Ordenes pagadas" value={String(summary.total_paid_orders)} />
+                <StatCard label="Órdenes pagadas" value={String(summary.total_paid_orders)} />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

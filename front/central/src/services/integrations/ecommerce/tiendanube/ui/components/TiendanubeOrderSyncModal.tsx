@@ -89,7 +89,7 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
                 setPhase('done');
                 onCompleted?.();
             } else if (eventType === 'tiendanube.orders.sync.failed') {
-                setErrorMessage(String(data.error || 'La sincronizacion de ordenes fallo'));
+                setErrorMessage(String(data.error || 'La sincronización de órdenes fallo'));
                 setPhase('error');
             }
         } catch {
@@ -127,7 +127,7 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
             const result: any = await syncOrdersAction(integrationId, Object.keys(params).length > 0 ? params : undefined);
             if (cancelled) return;
             if (!result?.success) {
-                setErrorMessage(result?.message || 'No se pudo iniciar la sincronizacion de ordenes');
+                setErrorMessage(result?.message || 'No se pudo iniciar la sincronización de órdenes');
                 setPhase('error');
                 return;
             }
@@ -156,7 +156,7 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
                             <ShoppingBag size={18} className={`text-blue-600 dark:text-blue-400 ${busy ? 'animate-pulse' : ''}`} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronizacion de Ordenes</h2>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronización de Órdenes</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                 <ArrowDownToLine size={12} /> Tiendanube &rarr; Probability
                                 {phase === 'starting' && ' - Iniciando...'}
@@ -201,7 +201,7 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Progreso</span>
                             <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums">
-                                {phase === 'done' ? `${processed} ordenes` : `${processed} procesadas`}
+                                {phase === 'done' ? `${processed} órdenes` : `${processed} procesadas`}
                             </span>
                         </div>
                         <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -213,8 +213,8 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
                         </div>
                         <p className="mt-1 text-[11px] text-gray-400">
                             {phase === 'done'
-                                ? `Sincronizacion finalizada${duration ? ` en ${duration}` : ''}.`
-                                : 'Tiendanube entrega las ordenes por paginas: el total se conoce al finalizar.'}
+                                ? `Sincronización finalizada${duration ? ` en ${duration}` : ''}.`
+                                : 'Tiendanube entrega las órdenes por páginas: el total se conoce al finalizar.'}
                         </p>
 
                         <div className="grid grid-cols-2 gap-2 mt-4">
@@ -233,7 +233,7 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
                                     {orders.slice(-20).reverse().map((o, i) => (
                                         <div key={`${o.externalId || o.orderNumber}-${i}`} style={{ animation: 'jsOrdRowIn 0.25s ease' }} className="px-2.5 py-2 text-[11px]">
                                             <div className="flex items-center justify-between gap-2">
-                                                <span className="font-mono font-semibold text-gray-700 dark:text-gray-200 truncate">#{o.orderNumber || '(sin numero)'}</span>
+                                                <span className="font-mono font-semibold text-gray-700 dark:text-gray-200 truncate">#{o.orderNumber || '(sin número)'}</span>
                                                 <div className="flex items-center gap-2 flex-shrink-0">
                                                     <span className="tabular-nums text-gray-700 dark:text-gray-200">{formatAmount(o.total, o.currency)}</span>
                                                     <ActionBadge action={o.action} />
@@ -253,7 +253,7 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
                                     ))}
                                 </div>
                                 {orders.length > 20 && (
-                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando las ultimas 20 de {orders.length}.</p>
+                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando las últimas 20 de {orders.length}.</p>
                                 )}
                             </div>
                         )}
@@ -261,7 +261,7 @@ export function TiendanubeOrderSyncModal({ isOpen, onClose, integrationId, busin
                         {phase === 'starting' && (
                             <div className="flex items-center justify-center py-6 gap-2 text-gray-500 dark:text-gray-400">
                                 <Loader2 size={18} className="animate-spin" />
-                                <span className="text-sm">Consultando ordenes en Tiendanube...</span>
+                                <span className="text-sm">Consultando órdenes en Tiendanube...</span>
                             </div>
                         )}
 

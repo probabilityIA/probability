@@ -159,7 +159,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
             />
             <div className="relative z-10 flex h-full flex-col rounded-[15px] bg-white transition-colors group-hover:bg-gray-50/80 dark:bg-gray-800 dark:group-hover:bg-gray-700/60">
             <div className="flex items-center gap-4 p-3">
-            <div className="flex w-48 flex-shrink-0 items-center gap-2.5" title={lastOrder ? `Ultima orden ${lastOrder}` : undefined}>
+            <div className="flex w-48 flex-shrink-0 items-center gap-2.5" title={lastOrder ? `\u00daltima orden ${lastOrder}` : undefined}>
                 <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200 dark:bg-gray-700/60 dark:ring-gray-600">
                     {integration.integration_type?.image_url ? (
                         <img
@@ -179,7 +179,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         <span className="truncate">{typeName}</span>
                         {integration.is_testing && (
                             <span
-                                title="Integracion en modo pruebas: apunta al simulador, no a la tienda real"
+                                title="Integraci\u00f3n en modo pruebas: apunta al simulador, no a la tienda real"
                                 className="flex-shrink-0 rounded-md border border-amber-300 bg-amber-100 px-1.5 py-px text-[9px] font-extrabold uppercase tracking-wider text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/20 dark:text-amber-300"
                             >
                                 Test
@@ -245,8 +245,8 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                                 onClick={() => setComparandoInventario(true)}
                                 disabled={!inventoryEnabled || running}
                                 title={inventoryEnabled
-                                    ? 'Ver que cambiaria antes de enviar el stock'
-                                    : 'Activa la sincronizacion para poder comparar'}
+                                    ? 'Ver que cambiar\u00eda antes de enviar el stock'
+                                    : 'Activa la sincronizaci\u00f3n para poder comparar'}
                                 className="flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10.5px] font-bold text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-violet-500/40 dark:bg-violet-900/30 dark:text-violet-300"
                             >
                                 <Scale size={10} />
@@ -257,7 +257,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                                 disabled={!inventoryEnabled || running}
                                 title={inventoryEnabled
                                     ? 'Enviar el stock solo de este canal'
-                                    : 'Activa la sincronizacion para poder enviar stock'}
+                                    : 'Activa la sincronizaci\u00f3n para poder enviar stock'}
                                 className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10.5px] font-bold text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-blue-500/40 dark:bg-blue-900/30 dark:text-blue-300"
                             >
                                 <RefreshCw size={10} />
@@ -337,7 +337,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         </span>
                         {matchRulesLabel && (
                             <span
-                                title={`Se comparo cruzando campo de Probability contra campo del canal, por el campo: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuracion predeterminada del canal.' : ''}`}
+                                title={`Se comparo cruzando campo de Probability contra campo del canal, por el campo: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuraci\u00f3n predeterminada del canal.' : ''}`}
                                 className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
                             >
                                 match: {matchRulesLabel}
@@ -397,7 +397,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         )}
                         {matchRulesLabel && (
                             <span
-                                title={`El comparativo cruza campo de Probability contra campo del canal, por el campo: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuracion predeterminada del canal.' : ''}`}
+                                title={`El comparativo cruza campo de Probability contra campo del canal, por el campo: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuraci\u00f3n predeterminada del canal.' : ''}`}
                                 className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
                             >
                                 match: {matchRulesLabel}
@@ -405,7 +405,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                             </span>
                         )}
                         {lastRunTime && (
-                            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. comparacion {lastRunTime}</span>
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. {'comparaci\u00f3n'} {lastRunTime}</span>
                         )}
                     </div>
                 ) : envView === 'data' ? (
@@ -442,7 +442,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         </div>
                     </>
                 ) : (
-                    <p className="text-[11px] italic text-gray-300 dark:text-gray-600">Sin ordenes registradas</p>
+                    <p className="text-[11px] italic text-gray-300 dark:text-gray-600">Sin {'\u00f3rdenes'} registradas</p>
                 )}
             </div>
 
@@ -450,7 +450,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                 <button
                     onClick={() => onEdit(integration)}
                     disabled={isEditing}
-                    title="Configurar integracion"
+                    title="Configurar integraci\u00f3n"
                     className={`flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 ${isEditing ? 'cursor-wait opacity-60' : ''}`}
                 >
                     {isEditing ? (

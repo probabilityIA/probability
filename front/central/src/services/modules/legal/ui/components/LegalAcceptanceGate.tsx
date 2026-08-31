@@ -46,7 +46,7 @@ export function LegalAcceptanceGate() {
             await acceptLegalDocumentsAction(documentos.map((d) => d.id));
             setDocumentos([]);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'No se pudo registrar la aceptacion');
+            setError(err instanceof Error ? err.message : 'No se pudo registrar la aceptación');
             setEnviando(false);
         }
     };
@@ -56,7 +56,7 @@ export function LegalAcceptanceGate() {
             <div className="w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-xl">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {'Terminos legales de Probability'}
+                        {'Términos legales de Probability'}
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                         {'Para continuar usando la plataforma debes leer y aceptar los siguientes documentos.'}
@@ -96,7 +96,7 @@ export function LegalAcceptanceGate() {
                             className="mt-0.5 h-4 w-4"
                         />
                         <span>
-                            {'Declaro que lei y acepto '}
+                            {'Declaro que leí y acepto '}
                             {documentos.map((doc, idx) => (
                                 <span key={doc.id}>
                                     {idx > 0 ? ' y ' : ''}
@@ -104,7 +104,7 @@ export function LegalAcceptanceGate() {
                                     {' (v'}{doc.version}{')'}
                                 </span>
                             ))}
-                            {'. Esta aceptacion queda registrada con mi usuario, fecha y hora.'}
+                            {'. Esta aceptación queda registrada con mi usuario, fecha y hora.'}
                         </span>
                     </label>
 

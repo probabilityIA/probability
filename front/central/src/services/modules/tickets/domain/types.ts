@@ -146,13 +146,13 @@ export interface PaginatedTickets {
 
 export const STATUS_META: Record<TicketStatus, { label: string; color: string; bg: string; ring: string }> = {
     open:           { label: 'Abierto',         color: 'text-blue-700 dark:text-blue-200',     bg: 'bg-blue-100 dark:bg-blue-900/40',     ring: 'ring-blue-300' },
-    in_review:      { label: 'En revision',     color: 'text-amber-700 dark:text-amber-200',   bg: 'bg-amber-100 dark:bg-amber-900/40',   ring: 'ring-amber-300' },
+    in_review:      { label: 'En revisión',     color: 'text-amber-700 dark:text-amber-200',   bg: 'bg-amber-100 dark:bg-amber-900/40',   ring: 'ring-amber-300' },
     in_development: { label: 'En desarrollo',   color: 'text-purple-700 dark:text-purple-200', bg: 'bg-purple-100 dark:bg-purple-900/40', ring: 'ring-purple-300' },
     testing:        { label: 'Pruebas',         color: 'text-cyan-700 dark:text-cyan-200',     bg: 'bg-cyan-100 dark:bg-cyan-900/40',     ring: 'ring-cyan-300' },
     blocked:        { label: 'Bloqueado',       color: 'text-red-700 dark:text-red-200',       bg: 'bg-red-100 dark:bg-red-900/40',       ring: 'ring-red-300' },
     resolved:       { label: 'Resuelto',        color: 'text-emerald-700 dark:text-emerald-200', bg: 'bg-emerald-100 dark:bg-emerald-900/40', ring: 'ring-emerald-300' },
     closed:         { label: 'Cerrado',         color: 'text-gray-700 dark:text-gray-200',     bg: 'bg-gray-200 dark:bg-gray-700',        ring: 'ring-gray-300' },
-    wont_fix:       { label: 'No se hara',      color: 'text-zinc-700 dark:text-zinc-200',     bg: 'bg-zinc-200 dark:bg-zinc-700',        ring: 'ring-zinc-300' },
+    wont_fix:       { label: 'No se hará',      color: 'text-zinc-700 dark:text-zinc-200',     bg: 'bg-zinc-200 dark:bg-zinc-700',        ring: 'ring-zinc-300' },
 };
 
 export const PRIORITY_META: Record<TicketPriority, { label: string; color: string; bg: string }> = {
@@ -167,7 +167,7 @@ export const TYPE_META: Record<TicketType, { label: string; icon: string }> = {
     improvement: { label: 'Mejora',             icon: 'IMP' },
     feature:     { label: 'Nueva funcionalidad', icon: 'NEW' },
     data:        { label: 'Datos',              icon: 'DAT' },
-    integration: { label: 'Integracion',        icon: 'INT' },
+    integration: { label: 'Integración',        icon: 'INT' },
     support:     { label: 'Soporte',            icon: 'SUP' },
     complaint:   { label: 'Queja',              icon: 'QJA' },
     claim:       { label: 'Reclamo',            icon: 'RCL' },

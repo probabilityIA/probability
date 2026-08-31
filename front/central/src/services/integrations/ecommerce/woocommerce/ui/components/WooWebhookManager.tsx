@@ -70,7 +70,7 @@ export function WooWebhookManager({ integrationId }: WooWebhookManagerProps) {
             setError(result.message);
             showToast(result.message, 'error');
         } else {
-            showToast(result.message || 'Webhooks de ordenes creados', 'success');
+            showToast(result.message || 'Webhooks de órdenes creados', 'success');
             await fetchWebhooks();
         }
         setCreating(false);
@@ -131,7 +131,7 @@ export function WooWebhookManager({ integrationId }: WooWebhookManagerProps) {
                     <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                         <BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Webhooks de ordenes</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Webhooks de órdenes</h3>
                     {webhooks.length > 0 && (
                         <span
                             className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"

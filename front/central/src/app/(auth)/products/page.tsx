@@ -50,15 +50,15 @@ export default function ProductsPage() {
                 { value: 'archived', label: 'Archivado' },
             ]
         },
-        { key: 'category', label: 'Categoria', type: 'text', placeholder: 'Ej: Calzado' },
+        { key: 'category', label: 'Categoría', type: 'text', placeholder: 'Ej: Calzado' },
         { key: 'brand', label: 'Marca', type: 'text', placeholder: 'Ej: Nike' },
         { key: 'has_family', label: 'Con familia de variantes', type: 'boolean' },
-        { key: 'price_min', label: 'Precio minimo', type: 'text', placeholder: 'Ej: 10000' },
-        { key: 'price_max', label: 'Precio maximo', type: 'text', placeholder: 'Ej: 200000' },
-        { key: 'stock_min', label: 'Stock minimo', type: 'text', placeholder: 'Ej: 1' },
-        { key: 'stock_max', label: 'Stock maximo', type: 'text', placeholder: 'Ej: 100' },
-        { key: 'weight_min', label: 'Peso minimo (kg)', type: 'text', placeholder: 'Ej: 0.5' },
-        { key: 'weight_max', label: 'Peso maximo (kg)', type: 'text', placeholder: 'Ej: 5' },
+        { key: 'price_min', label: 'Precio mínimo', type: 'text', placeholder: 'Ej: 10000' },
+        { key: 'price_max', label: 'Precio máximo', type: 'text', placeholder: 'Ej: 200000' },
+        { key: 'stock_min', label: 'Stock mínimo', type: 'text', placeholder: 'Ej: 1' },
+        { key: 'stock_max', label: 'Stock máximo', type: 'text', placeholder: 'Ej: 100' },
+        { key: 'weight_min', label: 'Peso mínimo (kg)', type: 'text', placeholder: 'Ej: 0.5' },
+        { key: 'weight_max', label: 'Peso máximo (kg)', type: 'text', placeholder: 'Ej: 5' },
     ];
 
     const productActiveFilters: ActiveFilter[] = Object.entries(productFilters)
@@ -94,7 +94,7 @@ export default function ProductsPage() {
                 { value: 'archived', label: 'Archivado' },
             ]
         },
-        { key: 'category', label: 'Categoria', type: 'text', placeholder: 'Ej: Buzos' },
+        { key: 'category', label: 'Categoría', type: 'text', placeholder: 'Ej: Buzos' },
         { key: 'brand', label: 'Marca', type: 'text', placeholder: 'Ej: Viga' },
         { key: 'has_variants', label: 'Con variantes asociadas', type: 'boolean' },
     ];
@@ -258,7 +258,7 @@ export default function ProductsPage() {
                 <div className="relative flex items-center" ref={integrationMenuRef} data-tour="products.integration-filter">
                     <button
                         onClick={() => setShowIntegrationMenu(v => !v)}
-                        title="Filtrar por integracion"
+                        title="Filtrar por integración"
                         className="btn-business-primary h-9 w-9 flex items-center justify-center rounded-lg text-white shadow-sm transition-all duration-200"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -211,10 +211,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             if (res.success && res.data) {
                 setEditingIntegration(res.data as Integration);
             } else {
-                console.error('Error al obtener integracion:', res.message);
+                console.error('Error al obtener integración:', res.message);
             }
         } catch (err) {
-            console.error('Error al obtener integracion:', err);
+            console.error('Error al obtener integración:', err);
         } finally {
             setEditLoadingId(null);
         }

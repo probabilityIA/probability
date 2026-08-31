@@ -476,7 +476,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             }
             if (!formData.shipping_street?.trim() || !formData.shipping_city?.trim() || !formData.shipping_state?.trim()) {
                 setCityError(!formData.shipping_city?.trim());
-                throw new Error('La direccion de envio (calle, ciudad y departamento) es obligatoria');
+                throw new Error('La direcci\u00f3n de env\u00edo (calle, ciudad y departamento) es obligatoria');
             }
 
             const parts = [formData.shipping_street || ''];
@@ -658,7 +658,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                                 setActiveSearchField('dni');
                                             }
                                         }}
-                                        placeholder="Buscar cliente por cedula..."
+                                        placeholder="Buscar cliente por c\u00e9dula..."
                                         autoComplete="off"
                                         className={`${clientLoading && activeSearchField === 'dni' ? 'pr-10' : ''}`}
                                         style={{ borderColor: '#e8e0f5', height: '38px' }}
@@ -827,7 +827,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     <circle cx="8" cy="6" r="1.5"/>
                                 </svg>
                             </div>
-                            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-300">Direccion de Envio</h3>
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-300">{'Direcci\u00f3n'} de {'Env\u00edo'}</h3>
                         </div>
 
                         {addressAutofilled && (
@@ -896,10 +896,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white ${
                                         cityError ? 'border-red-500' : citySelected ? 'border-green-400' : 'border-gray-300'
                                     }`}
-                                    placeholder="Buscar ciudad... (selecciona una opcion)"
+                                    placeholder="Buscar ciudad... (selecciona una opci\u00f3n)"
                                 />
                                 {cityError && (
-                                    <p className="mt-1 text-xs text-red-600">Selecciona una opcion del listado</p>
+                                    <p className="mt-1 text-xs text-red-600">Selecciona una {'opci\u00f3n'} del listado</p>
                                 )}
                                 {showCityResults && filteredCityOptions.length > 0 && (
                                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -924,7 +924,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     type="text"
                                     value={house}
                                     onChange={(e) => setHouse(e.target.value)}
-                                    placeholder="Numero de casa"
+                                    placeholder="N\u00famero de casa"
                                 />
                             </div>
 
@@ -959,7 +959,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     type="text"
                                     value={formData.shipping_postal_code}
                                     onChange={(e) => setFormData({ ...formData, shipping_postal_code: e.target.value })}
-                                    placeholder="Codigo postal"
+                                    placeholder="C\u00f3digo postal"
                                 />
                             </div>
 
@@ -1081,7 +1081,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
                                             Se cobrara contra entrega: <strong>{formData.currency} {montoCOD.toLocaleString()}</strong>
                                             <span className="text-gray-400">
-                                                {liquidado ? ' (valor liquidado por la transportadora)' : ' (producto + envio)'}
+                                                {liquidado ? ' (valor liquidado por la transportadora)' : ' (producto + env\u00edo)'}
                                             </span>
                                         </p>
                                     );
@@ -1089,7 +1089,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
 
                             <div className="flex items-center justify-between rounded-xl px-4 py-3" style={{ backgroundColor: primaryColor }}>
-                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-white/60">Total con envio</span>
+                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-white/60">Total con {'env\u00edo'}</span>
                                 <span className="text-lg font-bold tabular-nums text-white">
                                     {formData.currency} {displayTotal.toLocaleString('es-CO')}
                                 </span>
@@ -1311,7 +1311,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     <circle cx="12" cy="13" r="1.5"/>
                                 </svg>
                             </div>
-                            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-300">Logistica</h3>
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-300">{'Log\u00edstica'}</h3>
                         </div>
 
                         <div className="mb-4 bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">

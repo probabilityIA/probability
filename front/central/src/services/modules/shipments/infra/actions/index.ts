@@ -95,7 +95,7 @@ export const getShipmentByIdAction = async (id: number) => {
         return { success: true, data };
     } catch (error: any) {
         console.error('Get Shipment By Id Action Error:', error.message);
-        return { success: false, message: error.message || 'Error al consultar el envio' };
+        return { success: false, message: error.message || 'Error al consultar el envío' };
     }
 };
 
@@ -156,7 +156,7 @@ export const getCODShipmentsAction = async (params?: GetCODShipmentsParams) => {
         console.error('Get COD Shipments Action Error:', error.message);
         return {
             success: false,
-            message: error.message || 'Error al obtener envios contra entrega',
+            message: error.message || 'Error al obtener envíos contra entrega',
             data: [],
             total: 0,
             page: params?.page || 1,

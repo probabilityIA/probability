@@ -186,7 +186,7 @@ export function BoldConfigForm({ integrationTypeId, onSuccess, onCancel }: BoldC
                 onChange={setIsActive}
                 titleOn="Activo"
                 titleOff="Desactivado"
-                description={isActive ? 'Bold procesara pagos para este negocio.' : 'Bold no procesara pagos para este negocio.'}
+                description={isActive ? 'Bold procesará pagos para este negocio.' : 'Bold no procesará pagos para este negocio.'}
                 icon={<CheckCircleIcon className="w-5 h-5 text-green-600" />}
                 color="green"
             />
@@ -196,7 +196,7 @@ export function BoldConfigForm({ integrationTypeId, onSuccess, onCancel }: BoldC
                 onChange={setIsTesting}
                 titleOn="Modo Sandbox activo"
                 titleOff="Modo Sandbox inactivo"
-                description={isTesting ? 'Las transacciones iran al ambiente de pruebas (sin cobros reales).' : 'Las transacciones iran al ambiente real.'}
+                description={isTesting ? 'Las transacciones irán al ambiente de pruebas (sin cobros reales).' : 'Las transacciones irán al ambiente real.'}
                 icon={<BeakerIcon className="w-5 h-5 text-amber-600" />}
                 color="amber"
             />

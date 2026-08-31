@@ -103,7 +103,7 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(getActionError(err, 'Error al cargar margenes'));
+            setError(getActionError(err, 'Error al cargar márgenes'));
         } finally {
             setLoading(false);
         }
@@ -210,7 +210,7 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
                     columns={columns}
                     data={items.map(renderRow)}
                     keyExtractor={(_, index) => String(items[index]?.id || index)}
-                    emptyMessage="No hay margenes configurados. Agrega uno para empezar."
+                    emptyMessage="No hay márgenes configurados. Agrega uno para empezar."
                     loading={loading}
                     pagination={{
                         currentPage: page,

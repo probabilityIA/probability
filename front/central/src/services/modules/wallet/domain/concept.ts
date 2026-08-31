@@ -1,5 +1,5 @@
 export const CONCEPT_LABELS: Record<string, string> = {
-    GUIDE: 'Guia',
+    GUIDE: 'Guía',
     SUBSCRIPTION: 'Mensualidad',
     EXTRA_USAGE: 'Uso extra',
     RECHARGE: 'Recarga',
@@ -9,7 +9,7 @@ export const CONCEPT_LABELS: Record<string, string> = {
 };
 
 export const CONCEPT_OPTIONS: { value: string; label: string }[] = [
-    { value: 'GUIDE', label: 'Guia' },
+    { value: 'GUIDE', label: 'Guía' },
     { value: 'SUBSCRIPTION', label: 'Mensualidad' },
     { value: 'EXTRA_USAGE', label: 'Uso extra' },
     { value: 'RECHARGE', label: 'Recarga' },

@@ -51,7 +51,7 @@ export function TiendanubeOAuthCallback() {
 
             if (!state || !exchangeToken) {
                 setStatus('error');
-                setMessage('Faltan parametros del flujo OAuth. Intenta conectar nuevamente.');
+                setMessage('Faltan parámetros del flujo OAuth. Intenta conectar nuevamente.');
                 return;
             }
 
@@ -67,7 +67,7 @@ export function TiendanubeOAuthCallback() {
                 );
 
                 if (tokenResponse.status === 410) {
-                    throw new Error('El token de autorizacion expiro. Inicia la conexion con Tiendanube nuevamente.');
+                    throw new Error('El token de autorización expiro. Inicia la conexión con Tiendanube nuevamente.');
                 }
 
                 const tokenData = await tokenResponse.json();
@@ -76,7 +76,7 @@ export function TiendanubeOAuthCallback() {
                 }
 
                 if (!tokenData.store_id) {
-                    throw new Error('Tiendanube no devolvio el ID de la tienda. Intenta conectar nuevamente.');
+                    throw new Error('Tiendanube no devolvió el ID de la tienda. Intenta conectar nuevamente.');
                 }
 
                 const pending = readPendingConfig();
@@ -104,7 +104,7 @@ export function TiendanubeOAuthCallback() {
                 }, sessionToken || undefined);
 
                 if (!response || response.success === false) {
-                    throw new Error(response?.message || 'Error al crear la integracion');
+                    throw new Error(response?.message || 'Error al crear la integración');
                 }
 
                 sessionStorage.removeItem('tiendanube_pending_connection');
@@ -114,7 +114,7 @@ export function TiendanubeOAuthCallback() {
                 setTimeout(() => router.push('/integrations'), 2000);
             } catch (err: any) {
                 setStatus('error');
-                setMessage(err.message || 'Error al completar la conexion con Tiendanube');
+                setMessage(err.message || 'Error al completar la conexión con Tiendanube');
             }
         };
 

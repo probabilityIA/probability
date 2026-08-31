@@ -78,7 +78,7 @@ export function ProbabilityGuideButton({ shipmentId, carrier, className = '' }: 
                         onClick={() => setOpen((v) => !v)}
                         className="flex items-center justify-center px-1.5 rounded-r-md bg-emerald-700 hover:bg-emerald-800 text-white border-l border-emerald-800"
                         aria-label="Elegir tamano"
-                        title="Elegir tamano"
+                        title="Elegir tamaño"
                     >
                         <ChevronDown size={12} />
                     </button>

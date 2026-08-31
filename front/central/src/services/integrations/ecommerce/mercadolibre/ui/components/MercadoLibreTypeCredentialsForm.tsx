@@ -38,7 +38,7 @@ export default function MercadoLibreTypeCredentialsForm({
     isEditing = false,
 }: MercadoLibreTypeCredentialsFormProps) {
     const set = (patch: Partial<MercadoLibrePlatformCredentials>) => onChange({ ...credentials, ...patch });
-    const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'Secret Key de la aplicacion';
+    const placeholderSecret = isEditing ? 'Dejar vacío para mantener actual' : 'Secret Key de la aplicación';
 
     const [urls, setUrls] = useState({ redirect: '', notifications: '' });
     const [copiedKey, setCopiedKey] = useState<'redirect' | 'notifications' | null>(null);
@@ -87,7 +87,7 @@ export default function MercadoLibreTypeCredentialsForm({
 
                 <div>
                     <label className="text-[12px] font-semibold text-blue-900 dark:text-blue-200">Redirect URI</label>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Configuracion y scopes &rarr; Redirect URIs</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Configuración y scopes &rarr; Redirect URIs</p>
                     <div className="flex items-stretch gap-2">
                         <input
                             type="text"
@@ -119,7 +119,7 @@ export default function MercadoLibreTypeCredentialsForm({
 
                 <div>
                     <label className="text-[12px] font-semibold text-blue-900 dark:text-blue-200">Notificaciones callback URL</label>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Configuracion de notificaciones &rarr; Notificaciones callbacks URL</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Configuración de notificaciones &rarr; Notificaciones callbacks URL</p>
                     <div className="flex items-stretch gap-2">
                         <input
                             type="text"
@@ -157,7 +157,7 @@ export default function MercadoLibreTypeCredentialsForm({
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800 p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <GlobeAltIcon className="w-4 h-4 text-emerald-700" />
-                    <span className="text-xs font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-200">Produccion</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-emerald-900 dark:text-emerald-200">Producción</span>
                 </div>
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                     <div>
@@ -231,7 +231,7 @@ export default function MercadoLibreTypeCredentialsForm({
                             className={inputCls}
                             style={{ borderColor: INPUT_BORDER }}
                         />
-                        <p className={fieldHint}>Opcional. Si vacio, usa el de produccion.</p>
+                        <p className={fieldHint}>Opcional. Si vacío, usa el de producción.</p>
                     </div>
                 </div>
             </div>

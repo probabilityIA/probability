@@ -9,13 +9,13 @@ export const customersTour: TourDefinition = {
     steps: [
         {
             id: 'welcome',
-            title: 'Bienvenido al modulo de Clientes',
-            body: 'La base de clientes se arma sola con las ordenes: cada vez que llega un pedido, el cliente se crea o se actualiza.',
+            title: 'Bienvenido al módulo de Clientes',
+            body: 'La base de clientes se arma sola con las órdenes: cada vez que llega un pedido, el cliente se crea o se actualiza.',
         },
         {
             id: 'historial',
             title: 'Historial de compras',
-            body: 'Entra a un cliente para ver todo lo que ha comprado, sus direcciones y sus datos de contacto. Sirve para atencion y para ventas repetidas.',
+            body: 'Entra a un cliente para ver todo lo que ha comprado, sus direcciones y sus datos de contacto. Sirve para atención y para ventas repetidas.',
             target: 'table',
             placement: 'top',
             optional: true,
@@ -23,7 +23,7 @@ export const customersTour: TourDefinition = {
         {
             id: 'duplicados',
             title: 'Cuidado con los duplicados',
-            body: 'Un mismo cliente que compra por dos canales distintos con correos diferentes entra como dos registros. Revisa por telefono o documento antes de crear uno a mano.',
+            body: 'Un mismo cliente que compra por dos canales distintos con correos diferentes entra como dos registros. Revisa por teléfono o documento antes de crear uno a mano.',
         },
     ],
 };
@@ -39,12 +39,12 @@ export const integrationsTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Bienvenido a Integraciones',
-            body: 'Aqui conectas Probability con tus canales de venta y tus transportadoras. Es lo primero que hay que configurar en una cuenta nueva.',
+            body: 'Aquí conectas Probability con tus canales de venta y tus transportadoras. Es lo primero que hay que configurar en una cuenta nueva.',
         },
         {
             id: 'canales',
             title: 'Canales de venta',
-            body: 'Shopify, MercadoLibre, WooCommerce, Amazon, WhatsApp. Al conectar uno, sus pedidos empiezan a entrar solos al modulo de Ordenes.',
+            body: 'Shopify, MercadoLibre, WooCommerce, Amazon, WhatsApp. Al conectar uno, sus pedidos empiezan a entrar solos al módulo de Órdenes.',
         },
         {
             id: 'productos',
@@ -54,7 +54,7 @@ export const integrationsTour: TourDefinition = {
         {
             id: 'transportadoras',
             title: 'Transportadoras',
-            body: 'Las credenciales con las que se cotiza y se generan guias. Si una guia falla, el detalle del error queda en los logs de sincronizacion de la integracion, no en el mensaje de pantalla.',
+            body: 'Las credenciales con las que se cotiza y se generan guías. Si una guía falla, el detalle del error queda en los logs de sincronización de la integración, no en el mensaje de pantalla.',
         },
     ],
 };
@@ -69,12 +69,12 @@ export const deliveryTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Bienvenido a Domicilios',
-            body: 'Este modulo es para tu flota propia: lo que entregas tu mismo en vez de mandarlo por transportadora.',
+            body: 'Este módulo es para tu flota propia: lo que entregas tu mismo en vez de mandarlo por transportadora.',
         },
         {
             id: 'routes',
             title: 'Rutas',
-            body: 'Agrupa varias entregas en un recorrido y se lo asignas a un conductor. Es la vista del dia a dia.',
+            body: 'Agrupa varias entregas en un recorrido y se lo asignas a un conductor. Es la vista del día a día.',
             target: 'a[href="/delivery/routes"]',
             placement: 'bottom',
             optional: true,
@@ -82,15 +82,15 @@ export const deliveryTour: TourDefinition = {
         {
             id: 'drivers',
             title: 'Conductores',
-            body: 'Quien reparte. Cada conductor entra a la app movil con su usuario y va marcando las entregas.',
+            body: 'Quien reparte. Cada conductor entra a la app móvil con su usuario y va marcando las entregas.',
             target: 'a[href="/delivery/drivers"]',
             placement: 'bottom',
             optional: true,
         },
         {
             id: 'vehicles',
-            title: 'Vehiculos',
-            body: 'La flota y su capacidad. La capacidad limita cuantas paradas caben en una ruta.',
+            title: 'Vehículos',
+            body: 'La flota y su capacidad. La capacidad limita cuántas paradas caben en una ruta.',
             target: 'a[href="/delivery/vehicles"]',
             placement: 'bottom',
             optional: true,
@@ -121,7 +121,7 @@ export const notificationsTour: TourDefinition = {
         {
             id: 'configs',
             title: 'Configuraciones',
-            body: 'La combinacion de evento mas canal mas plantilla. Por ejemplo: "orden despachada" por WhatsApp con la plantilla de guia.',
+            body: 'La combinación de evento más canal más plantilla. Por ejemplo: "orden despachada" por WhatsApp con la plantilla de guía.',
             target: 'a[href="/notification-config"]',
             placement: 'bottom',
             optional: true,
@@ -129,7 +129,7 @@ export const notificationsTour: TourDefinition = {
         {
             id: 'channels',
             title: 'Canales',
-            body: 'Por donde sale el mensaje: WhatsApp o correo. Cada canal necesita su integracion configurada; sin ella el mensaje se descarta en silencio.',
+            body: 'Por donde sale el mensaje: WhatsApp o correo. Cada canal necesita su integración configurada; sin ella el mensaje se descarta en silencio.',
             target: 'a[href="/notification-channels"]',
             placement: 'bottom',
             optional: true,
@@ -137,7 +137,7 @@ export const notificationsTour: TourDefinition = {
         {
             id: 'events',
             title: 'Tipos de evento',
-            body: 'Los momentos que disparan un aviso: orden creada, pago confirmado, guia generada, en reparto, entregada, novedad.',
+            body: 'Los momentos que disparan un aviso: orden creada, pago confirmado, guía generada, en reparto, entregada, novedad.',
             target: 'a[href="/notification-event-types"]',
             placement: 'bottom',
             optional: true,
@@ -155,7 +155,7 @@ export const storefrontTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Tu tienda publica',
-            body: 'Desde aqui configuras el sitio que ven tus clientes: catalogo, colores, logo, dominio y contenido.',
+            body: 'Desde aquí configuras el sitio que ven tus clientes: catalogo, colores, logo, dominio y contenido.',
         },
         {
             id: 'catalogo',
@@ -164,7 +164,7 @@ export const storefrontTour: TourDefinition = {
         },
         {
             id: 'pedidos',
-            title: 'Los pedidos entran como ordenes',
+            title: 'Los pedidos entran como órdenes',
             body: 'Una compra en tu tienda crea una orden normal, igual que si viniera de Shopify. Se factura, se despacha y se notifica con el mismo flujo.',
         },
     ],

@@ -42,7 +42,7 @@ export const getIntegrationStatsAction = async (businessId?: number): Promise<In
         });
 
         if (!response.ok) {
-            throw new Error('Error al obtener estadisticas de integraciones');
+            throw new Error('Error al obtener estadísticas de integraciones');
         }
 
         return await response.json();

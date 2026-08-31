@@ -98,7 +98,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
             setBoxes(data.business.boxes || []);
             setCarriers(data.business.carriers || []);
         } else {
-            showToast((res as { message?: string }).message || 'No se pudo cargar la configuracion', 'error');
+            showToast((res as { message?: string }).message || 'No se pudo cargar la configuración', 'error');
         }
         setLoading(false);
     }, [businessId, showToast]);
@@ -165,7 +165,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
                     <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>Elige que transportadoras se ofrecen en tus cotizaciones y guias. Si tienes convenio directo con alguna, activa su integracion propia.</span>
+                    <span>Elige que transportadoras se ofrecen en tus cotizaciones y guías. Si tienes convenio directo con alguna, activa su integración propia.</span>
                 </p>
 
                 <div className="space-y-2">
@@ -199,7 +199,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                                         checked={c.direct.enabled}
                                         disabled={!c.enabled}
                                         onChange={(value) => updateDirect(c.code, value)}
-                                        label="Integracion propia"
+                                        label="Integración propia"
                                         icon={<LinkIcon className="w-3.5 h-3.5" />}
                                     />
                                 </div>
@@ -235,23 +235,23 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                         onChange={(e) => setStrategy(e.target.value as 'product_dimensions' | 'standard_box')}
                         options={[
                             { value: 'product_dimensions', label: 'Dimensiones del producto' },
-                            { value: 'standard_box', label: 'Cajas estandar' },
+                            { value: 'standard_box', label: 'Cajas estándar' },
                         ]}
                         className="bg-white dark:bg-gray-800"
                     />
                     <div className="mt-2 rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 p-3 text-xs text-gray-600 dark:text-gray-300 space-y-1.5">
                         {strategy === 'standard_box' ? (
                             <>
-                                <p><span className="font-semibold">Cajas estandar:</span> empacas siempre en las mismas cajas. Elegimos la caja mas pequena en la que quepa el pedido.</p>
+                                <p><span className="font-semibold">Cajas estándar:</span> empacas siempre en las mismas cajas. Elegimos la caja más pequena en la que quepa el pedido.</p>
                                 <p>1. Descartamos las cajas cuyo tope de items sea menor a la cantidad del pedido.</p>
-                                <p>2. Descartamos las cajas donde el producto mas grande no quepa (comparamos los tres lados, rotando la caja).</p>
-                                <p>3. De las que quedan usamos la mas ajustada.</p>
+                                <p>2. Descartamos las cajas donde el producto más grande no quepa (comparamos los tres lados, rotando la caja).</p>
+                                <p>3. De las que quedan usamos la más ajustada.</p>
                                 <p>El peso declarado es el real del pedido; si es menor al de la caja, usamos el de la caja.</p>
                             </>
                         ) : (
                             <>
                                 <p><span className="font-semibold">Dimensiones del producto:</span> tomamos el peso y las medidas del catalogo.</p>
-                                <p>El peso se suma por cantidad; de las medidas tomamos el lado mas grande entre los productos del pedido.</p>
+                                <p>El peso se suma por cantidad; de las medidas tomamos el lado más grande entre los productos del pedido.</p>
                                 <p>Si un producto no tiene medidas cargadas, ese lado se declara en 10 cm y el peso en 1 kg. Revisa tu catalogo para evitarlo.</p>
                             </>
                         )}
@@ -329,7 +329,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
                     <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>Se configuran en el modulo de bodegas. Aqui solo eliges desde cual despachas por defecto.</span>
+                    <span>Se configuran en el módulo de bodegas. Aquí solo eliges desde cual despachas por defecto.</span>
                 </p>
 
                 <div className="space-y-2">
@@ -348,7 +348,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                                     )}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {[w.address, w.city, w.state].filter(Boolean).join(', ') || 'Sin direccion registrada'}
+                                    {[w.address, w.city, w.state].filter(Boolean).join(', ') || 'Sin dirección registrada'}
                                 </p>
                             </div>
                             {!w.is_default && (
@@ -365,7 +365,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                         </div>
                     ))}
                     {(overview?.warehouses || []).length === 0 && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Este negocio aun no tiene bodegas registradas.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Este negocio aún no tiene bodegas registradas.</p>
                     )}
                 </div>
             </div>
@@ -377,7 +377,7 @@ export function ShippingConfigForm({ businessId, onClose }: ShippingConfigFormPr
                     </Button>
                 )}
                 <Button type="button" onClick={handleSave} disabled={saving}>
-                    {saving ? 'Guardando...' : 'Guardar configuracion'}
+                    {saving ? 'Guardando...' : 'Guardar configuración'}
                 </Button>
             </div>
         </div>

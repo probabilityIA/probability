@@ -883,48 +883,8 @@ func TestGetYListYDeleteSubscriptionType_DeleganAlRepositorio(t *testing.T) {
 	assert.Equal(t, uint(3), borradoID)
 }
 
-func TestCheckExpiringSubscriptions_CreaAvisoAQuienesVencenEnMenosDeSieteDias(t *testing.T) {
-	var desde, hasta time.Time
-	ann := &mocks.AnnouncementsGatewayMock{}
-	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
-			desde, hasta = from, to
-			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}}, nil
-		},
-	}
-
-	err := newSubsUseCase(repo, nil, ann).CheckExpiringSubscriptions(context.Background())
-
-	require.NoError(t, err)
-	assert.InDelta(t, 7*24.0, hasta.Sub(desde).Hours(), 1.0, "la ventana de aviso es de 7 dias")
-	require.Len(t, ann.CreatedAlerts, 2)
-	assert.Equal(t, "Tu suscripcion esta por vencer", ann.CreatedAlerts[0].Title)
-	assert.True(t, ann.CreatedAlerts[0].Daily)
-	assert.ElementsMatch(t, []uint{26, 27},
-		[]uint{ann.CreatedAlerts[0].BusinessID, ann.CreatedAlerts[1].BusinessID})
-}
-
-func TestCheckExpiringSubscriptions_NoDuplicaAvisoSiYaHayUnoActivo(t *testing.T) {
-	ann := &mocks.AnnouncementsGatewayMock{
-		FindActiveBusinessAlertFn: func(ctx context.Context, businessID uint, title string) (*uint, error) {
-			return uintPtr(55), nil
-		},
-	}
-	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
-			return []entities.ExpiringBusiness{{BusinessID: 26}}, nil
-		},
-	}
-
-	err := newSubsUseCase(repo, nil, ann).CheckExpiringSubscriptions(context.Background())
-
-	require.NoError(t, err)
-	assert.Empty(t, ann.CreatedAlerts, "el aviso es diario, no se repite mientras siga activo")
-}
-
-func TestCheckExpiringSubscriptions_VencidosRecibenAvisoYQuedanExpired(t *testing.T) {
+func TestCheckExpiringSubscriptions_VencidosQuedanExpired(t *testing.T) {
 	var marcados []uint
-	ann := &mocks.AnnouncementsGatewayMock{}
 	repo := &mocks.RepositoryMock{
 		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
 			return []entities.ExpiringBusiness{{BusinessID: 26}}, nil
@@ -935,56 +895,24 @@ func TestCheckExpiringSubscriptions_VencidosRecibenAvisoYQuedanExpired(t *testin
 		},
 	}
 
-	err := newSubsUseCase(repo, nil, ann).CheckExpiringSubscriptions(context.Background())
+	err := newSubsUseCase(repo, nil, nil).CheckExpiringSubscriptions(context.Background())
 
 	require.NoError(t, err)
-	require.Len(t, ann.CreatedAlerts, 1)
-	assert.Equal(t, "Tu suscripcion vencio", ann.CreatedAlerts[0].Title)
 	assert.Equal(t, []uint{26}, marcados)
 }
 
-func TestCheckExpiringSubscriptions_UsaElSuperAdminComoAutorDelAviso(t *testing.T) {
-	llamadas := 0
+func TestCheckExpiringSubscriptions_NoCreaAnuncios(t *testing.T) {
 	ann := &mocks.AnnouncementsGatewayMock{}
 	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
-			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}, {BusinessID: 28}}, nil
-		},
-		FindSuperAdminUserIDFn: func(ctx context.Context) (uint, error) {
-			llamadas++
-			return 7, nil
+		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
+			return []entities.ExpiringBusiness{{BusinessID: 26}}, nil
 		},
 	}
 
 	err := newSubsUseCase(repo, nil, ann).CheckExpiringSubscriptions(context.Background())
 
 	require.NoError(t, err)
-	require.Len(t, ann.CreatedAlerts, 3)
-	for _, a := range ann.CreatedAlerts {
-		assert.Equal(t, uint(7), a.CreatedByID)
-	}
-	assert.Equal(t, 1, llamadas, "el super admin se resuelve una vez y se cachea")
-}
-
-func TestCheckExpiringSubscriptions_FalloAlCrearUnAviso_NoAbortaElResto(t *testing.T) {
-	ann := &mocks.AnnouncementsGatewayMock{
-		CreateBusinessAlertFn: func(ctx context.Context, businessID uint, title, message string, createdByID uint, daily bool) (uint, error) {
-			if businessID == 26 {
-				return 0, stderrors.New("anuncios caido")
-			}
-			return 1, nil
-		},
-	}
-	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
-			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}}, nil
-		},
-	}
-
-	err := newSubsUseCase(repo, nil, ann).CheckExpiringSubscriptions(context.Background())
-
-	require.NoError(t, err, "un negocio que falla no debe dejar sin avisar a los demas")
-	assert.Len(t, ann.CreatedAlerts, 2)
+	assert.Empty(t, ann.CreatedAlerts, "el aviso de vencimiento se elimino: nunca debe crear anuncios")
 }
 
 func TestCheckExpiringSubscriptions_FalloAlMarcarExpirado_NoAbortaElResto(t *testing.T) {
@@ -1005,74 +933,19 @@ func TestCheckExpiringSubscriptions_FalloAlMarcarExpirado_NoAbortaElResto(t *tes
 	assert.Equal(t, 2, intentos)
 }
 
-func TestCheckExpiringSubscriptions_ErroresDeConsulta_AbortanElBarrido(t *testing.T) {
+func TestCheckExpiringSubscriptions_ErrorAlListarVencidos_AbortaElBarrido(t *testing.T) {
 	dbErr := stderrors.New("db caida")
-
-	t.Run("al listar los que vencen pronto", func(t *testing.T) {
-		repo := &mocks.RepositoryMock{
-			ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
-				return nil, dbErr
-			},
-		}
-		err := newSubsUseCase(repo, nil, nil).CheckExpiringSubscriptions(context.Background())
-		assert.ErrorIs(t, err, dbErr)
-	})
-
-	t.Run("al listar los vencidos", func(t *testing.T) {
-		repo := &mocks.RepositoryMock{
-			ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
-				return nil, dbErr
-			},
-		}
-		err := newSubsUseCase(repo, nil, nil).CheckExpiringSubscriptions(context.Background())
-		assert.ErrorIs(t, err, dbErr)
-	})
+	repo := &mocks.RepositoryMock{
+		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
+			return nil, dbErr
+		},
+	}
+	err := newSubsUseCase(repo, nil, nil).CheckExpiringSubscriptions(context.Background())
+	assert.ErrorIs(t, err, dbErr)
 }
 
-func TestCheckExpiringSubscriptions_SinNegociosPorVencer_NoCreaNada(t *testing.T) {
-	ann := &mocks.AnnouncementsGatewayMock{}
-
-	err := newSubsUseCase(nil, nil, ann).CheckExpiringSubscriptions(context.Background())
+func TestCheckExpiringSubscriptions_SinVencidos_NoMarcaNada(t *testing.T) {
+	err := newSubsUseCase(nil, nil, nil).CheckExpiringSubscriptions(context.Background())
 
 	require.NoError(t, err)
-	assert.Empty(t, ann.CreatedAlerts)
-}
-
-func TestCheckExpiringSubscriptions_FalloAlBuscarAvisoActivo_NoAbortaElResto(t *testing.T) {
-	ann := &mocks.AnnouncementsGatewayMock{
-		FindActiveBusinessAlertFn: func(ctx context.Context, businessID uint, title string) (*uint, error) {
-			if businessID == 26 {
-				return nil, stderrors.New("anuncios caido")
-			}
-			return nil, nil
-		},
-	}
-	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
-			return []entities.ExpiringBusiness{{BusinessID: 26}, {BusinessID: 27}}, nil
-		},
-	}
-
-	err := newSubsUseCase(repo, nil, ann).CheckExpiringSubscriptions(context.Background())
-
-	require.NoError(t, err)
-	require.Len(t, ann.CreatedAlerts, 1, "solo el negocio que si pudo consultarse recibe aviso")
-	assert.Equal(t, uint(27), ann.CreatedAlerts[0].BusinessID)
-}
-
-func TestCheckExpiringSubscriptions_SinSuperAdmin_NoCreaAvisos(t *testing.T) {
-	ann := &mocks.AnnouncementsGatewayMock{}
-	repo := &mocks.RepositoryMock{
-		ListBusinessesExpiringBetweenFn: func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error) {
-			return []entities.ExpiringBusiness{{BusinessID: 26}}, nil
-		},
-		FindSuperAdminUserIDFn: func(ctx context.Context) (uint, error) {
-			return 0, stderrors.New("no hay super admin")
-		},
-	}
-
-	err := newSubsUseCase(repo, nil, ann).CheckExpiringSubscriptions(context.Background())
-
-	require.NoError(t, err, "el barrido no se cae, pero el aviso no se crea sin autor")
-	assert.Empty(t, ann.CreatedAlerts)
 }

@@ -165,7 +165,7 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
         correlationRef.current = null;
         const res: any = await applyTiendanubeProductsAction(integrationId, dir, businessId ?? undefined, opMode);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la operacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la operaci\u00f3n');
             setPhase('error');
             return;
         }
@@ -187,7 +187,7 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
         correlationRef.current = null;
         const res: any = await associateTiendanubeProductsAction(integrationId, businessId ?? undefined, skus);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la asociacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la asociaci\u00f3n');
             setPhase('error');
             return;
         }
@@ -272,7 +272,7 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
                             <ArrowRightLeft size={18} className="text-violet-600 dark:text-violet-400" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronizacion de Productos</h2>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{'Sincronizaci\u00f3n'} de Productos</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Probability &harr; Tiendanube</p>
                         </div>
                     </div>
@@ -301,15 +301,15 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
                                 <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya estan asociados a este canal</span>
+                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya {'est\u00e1n'} asociados a este canal</span>
                             </div>
 
                             {diff.matchedNotAssociated.length > 0 && (
                                 <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
-                                            <p className="text-[11px] text-gray-400 mt-0.5">Crea la relacion (sin tocar stock) para que el canal los reconozca como propios.</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no {'est\u00e1n'} asociados a este canal</p>
+                                            <p className="text-[11px] text-gray-400 mt-0.5">Crea la {'relaci\u00f3n'} (sin tocar stock) para que el canal los reconozca como propios.</p>
                                         </div>
                                         <button onClick={() => handleAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                             <Link2 size={14} /> Asociar todos
@@ -337,7 +337,7 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no estan en Tiendanube</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no {'est\u00e1n'} en Tiendanube</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en tu tienda Tiendanube con su precio y stock actual.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_tiendanube')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -352,8 +352,8 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Tiendanube hay {diff.onlyInTiendanube.length} producto{diff.onlyInTiendanube.length !== 1 ? 's' : ''} que no estan en Probability</p>
-                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuracion de bodegas.</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Tiendanube hay {diff.onlyInTiendanube.length} producto{diff.onlyInTiendanube.length !== 1 ? 's' : ''} que no {'est\u00e1n'} en Probability</p>
+                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu {'configuraci\u00f3n'} de bodegas.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                                     <ArrowDownToLine size={14} /> Crear en Probability
@@ -367,7 +367,7 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
 
                             <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Actualizar los {matchedTotal} producto{matchedTotal !== 1 ? 's' : ''} que coinciden por SKU</p>
-                                <p className="text-[11px] text-gray-400 mt-0.5">Elige una direccion: los datos del lado origen sobrescriben los del lado destino.</p>
+                                <p className="text-[11px] text-gray-400 mt-0.5">Elige una {'direcci\u00f3n'}: los datos del lado origen sobrescriben los del lado destino.</p>
                                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                                     <button
                                         onClick={() => handleApply('to_tiendanube', 'update')}
@@ -378,7 +378,7 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
                                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
                                             <ArrowUpFromLine size={14} /> Actualizar en Tiendanube
                                         </span>
-                                        <span className="text-[11px] text-gray-500 dark:text-gray-400">Con los datos de Probability: nombre, precio, descripcion, peso y dimensiones.</span>
+                                        <span className="text-[11px] text-gray-500 dark:text-gray-400">Con los datos de Probability: nombre, precio, {'descripci\u00f3n'}, peso y dimensiones.</span>
                                     </button>
                                     <button
                                         onClick={() => handleApply('to_probability', 'update')}
@@ -440,14 +440,14 @@ export function TiendanubeProductSyncModal({ isOpen, onClose, integrationId, bus
                             {failed > 0 && failedSkus.length > 0 && (
                                 <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                                     <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">SKUs que fallaron</p>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">Puedes reintentarlos volviendo a ejecutar la operacion.</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Puedes reintentarlos volviendo a ejecutar la {'operaci\u00f3n'}.</p>
                                     <div className="mt-2 max-h-32 overflow-y-auto rounded-md bg-white dark:bg-gray-800/60 border border-amber-100 dark:border-amber-900/40 divide-y divide-gray-100 dark:divide-gray-700">
                                         {failedSkus.map((sku, i) => (
                                             <div key={i} className="px-2.5 py-1.5 font-mono text-[11px] text-gray-600 dark:text-gray-300 truncate">{sku || '(sin sku)'}</div>
                                         ))}
                                     </div>
                                     {failedHidden > 0 && (
-                                        <p className="mt-2 text-[11px] font-medium text-amber-700 dark:text-amber-400">y {failedHidden} mas...</p>
+                                        <p className="mt-2 text-[11px] font-medium text-amber-700 dark:text-amber-400">y {failedHidden} {'m\u00e1s'}...</p>
                                     )}
                                 </div>
                             )}
@@ -480,7 +480,7 @@ function ProductList({ items }: { items: Brief[] }) {
                     <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
                 </div>
             ))}
-            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} mas...</div>}
+            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} {'m\u00e1s'}...</div>}
         </div>
     );
 }

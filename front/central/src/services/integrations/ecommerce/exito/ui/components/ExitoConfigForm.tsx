@@ -88,10 +88,10 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
             if (result.success) {
                 showToast('Conexion exitosa con Exito', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al conectar con Exito');
+            setErrorModal(err.message || 'Error al conectar con Éxito');
         } finally {
             setTestingConnection(false);
         }
@@ -103,7 +103,7 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -129,10 +129,10 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
                 showToast('Integracion Exito creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Exito');
+            setErrorModal(err.message || 'Error al crear la integración de Éxito');
         } finally {
             setLoading(false);
         }
@@ -172,13 +172,13 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Exito Marketplace Principal"
+                        placeholder="Ej: Éxito Marketplace Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -213,7 +213,7 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecerá esta integración</span>
                         </p>
                     </div>
                 )}
@@ -231,7 +231,7 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
                     <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <span>
                         Obten tus credenciales desde el
-                        <strong> Portal de vendedores de Exito &rarr; Configuracion &rarr; API</strong>
+                        <strong> Portal de vendedores de Éxito &rarr; Configuración &rarr; API</strong>
                     </span>
                 </p>
 
@@ -243,7 +243,7 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
                         type="text"
                         value={formData.seller_id}
                         onChange={(e) => setFormData({ ...formData, seller_id: e.target.value })}
-                        placeholder="ID del vendedor en Exito"
+                        placeholder="ID del vendedor en Éxito"
                         required
                         autoComplete="off"
                         data-1p-ignore
@@ -261,7 +261,7 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
                     <SecretInput
                         value={formData.api_key}
                         onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
-                        placeholder="API Key de Exito"
+                        placeholder="API Key de Éxito"
                         required
                         className="bg-white dark:bg-gray-800 font-mono text-sm"
                     />
@@ -299,8 +299,8 @@ export function ExitoConfigForm({ onSuccess, onCancel }: ExitoConfigFormProps) {
                         Como obtener tus credenciales
                     </h4>
                     <ol className="text-xs text-yellow-800 space-y-2 list-decimal list-inside ml-1">
-                        <li>Ingresa al <strong>portal de vendedores de Exito</strong></li>
-                        <li>Ve a <strong>Configuracion &rarr; API</strong></li>
+                        <li>Ingresa al <strong>portal de vendedores de Éxito</strong></li>
+                        <li>Ve a <strong>Configuración &rarr; API</strong></li>
                         <li>Copia tu <strong>Seller ID</strong> y <strong>API Key</strong></li>
                     </ol>
                 </div>

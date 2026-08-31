@@ -150,7 +150,7 @@ func (h *Handlers) overrideCodValue(c *gin.Context, raw map[string]interface{}, 
 		raw["codValue"] = amount
 	}
 
-	if netTarget := basis.NetTarget(totalCost); netTarget > 0 {
+	if netTarget := basis.NetTarget(totalCost, carrierFee); netTarget > 0 {
 		raw["codNetTarget"] = netTarget
 	}
 }

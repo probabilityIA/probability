@@ -104,9 +104,9 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
     const sample = result?.stats?.total;
 
     const tooltip = result?.estimate_source === 'global_carrier'
-        ? 'Aun no tenemos envios en tu zona con este carrier; mostramos la tasa nacional del carrier.'
+        ? 'Aún no tenemos envíos en tu zona con este carrier; mostramos la tasa nacional del carrier.'
         : result?.estimate_source === 'zone_low_sample'
-            ? 'Muestra pequena en esta zona; se ajusta a medida que llegan mas envios.'
+            ? 'Muestra pequena en esta zona; se ajusta a medida que llegan más envíos.'
             : result?.estimate_source === 'carrier_baseline'
                 ? 'Transportadora sin historial en el sistema. Valor preliminar.'
                 : undefined;

@@ -89,7 +89,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
         useEffect(() => { fetchFamilies(); }, [filters, selectedBusinessId]);
 
         const handleDelete = async (family: ProductFamily) => {
-            if (!confirm(`Eliminar la familia "${family.name}"? Esta accion no se puede deshacer.`)) return;
+            if (!confirm(`Eliminar la familia "${family.name}"? Esta acci\u00f3n no se puede deshacer.`)) return;
             const res = await deleteProductFamilyAction(family.id, selectedBusinessId);
             if (res.success) {
                 fetchFamilies();
@@ -294,7 +294,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                         onClick={() => setFilters({ ...filters, page: 1 })}
                                         disabled={page === 1}
                                         className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
-                                        title="Primera pagina"
+                                        title="Primera p\u00e1gina"
                                     >
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
                                     </button>
@@ -364,7 +364,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                         onClick={() => setFilters({ ...filters, page: totalPages })}
                                         disabled={page === totalPages}
                                         className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
-                                        title="Ultima pagina"
+                                        title="\u00daltima p\u00e1gina"
                                     >
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                                     </button>
@@ -467,7 +467,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                                                             type="button"
                                                                             onClick={(e) => { e.stopPropagation(); setExpandedVariantId(isExpanded ? null : variant.id); }}
                                                                             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
-                                                                            title={isExpanded ? 'Ocultar informacion' : 'Ver informacion'}
+                                                                            title={isExpanded ? 'Ocultar informaci\u00f3n' : 'Ver informaci\u00f3n'}
                                                                         >
                                                                             {isExpanded ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronRightIcon className="w-4 h-4" />}
                                                                         </button>
@@ -496,7 +496,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                                                                 )}
                                                                                 <div className="flex-1 min-w-0">
                                                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4">
-                                                                                        <Field label="Categoria" value={variant.category} />
+                                                                                        <Field label="Categor\u00eda" value={variant.category} />
                                                                                         <Field label="Marca" value={variant.brand} />
                                                                                         <Field label="Estado">{statusBadge(variant.status)}</Field>
                                                                                         <Field label="Gestiona inventario" value={variant.manage_stock ? 'Si' : 'No'} />
@@ -509,12 +509,12 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                                                                                     : undefined
                                                                                             }
                                                                                         />
-                                                                                        <Field label="Integracion" value={variant.integration_type} />
+                                                                                        <Field label="Integraci\u00f3n" value={variant.integration_type} />
                                                                                         <Field label="Creado" value={variant.created_at ? new Date(variant.created_at).toLocaleDateString('es-CO') : undefined} />
                                                                                     </div>
                                                                                     {variant.description && (
                                                                                         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                                                                            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-400 mb-1">Descripcion</p>
+                                                                                            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-400 mb-1">{'Descripci\u00f3n'}</p>
                                                                                             <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{variant.description}</p>
                                                                                         </div>
                                                                                     )}

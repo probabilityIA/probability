@@ -25,11 +25,11 @@ func TestOrderCodBasisAmountToCollect(t *testing.T) {
 			want:       182610,
 		},
 		{
-			name:       "total ya incluye flete: solo suma comision",
+			name:       "total ya incluye flete y comision: no se vuelve a sumar",
 			basis:      OrderCodBasis{TotalAmount: 157500, CodTotal: 176493.40, CodIncludesShipping: true},
 			totalCost:  18993.40,
 			carrierFee: 6116,
-			want:       182610,
+			want:       176494,
 		},
 		{
 			name:       "sin flete calculado conserva el cod_total",

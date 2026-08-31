@@ -15,10 +15,10 @@ describe('buildApplyMessage', () => {
             { sku: 'PT01004', error: 'item.attributes: BRAND es requerido' },
             { sku: 'PT01015', error: 'otro' },
         ]);
-        expect(message).toBe('2 con error de 2 — PT01004: item.attributes: BRAND es requerido (y 1 mas)');
+        expect(message).toBe('2 con error de 2 — PT01004: item.attributes: BRAND es requerido (y 1 más)');
     });
 
     it('avisa cuando no habia nada por aplicar', () => {
-        expect(buildApplyMessage(0, 0, 0, 0)).toBe('No habia productos por aplicar');
+        expect(buildApplyMessage(0, 0, 0, 0)).toBe('No había productos por aplicar');
     });
 });

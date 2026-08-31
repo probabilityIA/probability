@@ -112,7 +112,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     .filter((o) => selectedOrderIds.has(o.id))
                     .map((o) => ({
                         order_id: o.id,
-                        address: o.address || 'Sin direccion',
+                        address: o.address || 'Sin dirección',
                         city: o.city || undefined,
                         lat: o.lat ?? undefined,
                         lng: o.lng ?? undefined,
@@ -201,7 +201,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                         disabled={loadingOptions}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                        <option value="">— Sin vehiculo —</option>
+                        <option value="">— Sin vehículo —</option>
                         {vehicles.map((v) => (
                             <option key={v.id} value={v.id}>
                                 {v.license_plate} — {v.brand} {v.vehicle_model} ({v.type})

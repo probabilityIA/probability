@@ -24,7 +24,7 @@ export function ShippingConfigModal({ isOpen, onClose, businessId }: ShippingCon
                 <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
                     <div className="flex items-center gap-2">
                         <TruckIcon className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Configuracion de envios</h2>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Configuración de envíos</h2>
                     </div>
                     <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Cerrar">
                         <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />

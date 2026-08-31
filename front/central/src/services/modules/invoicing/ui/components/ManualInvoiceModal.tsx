@@ -94,7 +94,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
       const result = await getInvoiceableOrdersAction({ page: 1, pageSize: 200, businessId: businessId ?? undefined });
       setOrders(result.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar ordenes');
+      setError(err instanceof Error ? err.message : 'Error al cargar órdenes');
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
 
   const handleSubmit = async () => {
     if (!invoiceNumber.trim()) {
-      setError('Ingresa el numero de factura');
+      setError('Ingresa el número de factura');
       return;
     }
     if (!selectedOrder) {
@@ -201,7 +201,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
               <div className="flex flex-col items-center py-6">
                 <CheckCircleIcon className="w-16 h-16 text-green-500 mb-3" />
                 <p className="text-lg font-semibold text-green-700">Factura registrada exitosamente</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">La orden ya no aparecera como facturable</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">La orden ya no aparecerá como facturable</p>
               </div>
             )}
 
@@ -286,8 +286,8 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
                             superAdminNeedsBusiness
                               ? 'Selecciona un negocio primero'
                               : loading
-                                ? 'Cargando ordenes...'
-                                : 'Buscar por numero de orden o cliente...'
+                                ? 'Cargando órdenes...'
+                                : 'Buscar por número de orden o cliente...'
                           }
                           className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed]"
                           disabled={superAdminNeedsBusiness || loading}
@@ -305,7 +305,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
                           ) : filteredOrders.length === 0 ? (
                             <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                               {orders.length === 0
-                                ? 'No hay ordenes facturables disponibles'
+                                ? 'No hay órdenes facturables disponibles'
                                 : 'No se encontraron resultados'}
                             </div>
                           ) : (

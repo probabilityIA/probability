@@ -53,7 +53,7 @@ export class CommercialApiRepository implements ICommercialRepository {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error || data.message || 'Error al obtener estadisticas de prospectos');
+      throw new Error(data.error || data.message || 'Error al obtener estadísticas de prospectos');
     }
 
     return data;

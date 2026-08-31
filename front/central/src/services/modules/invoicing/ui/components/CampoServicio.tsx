@@ -127,7 +127,7 @@ export function CampoServicio({
             setAbierto(true);
           }}
           onFocus={() => setAbierto(true)}
-          placeholder="Escribe el nombre o el codigo para buscarlo"
+          placeholder="Escribe el nombre o el código para buscarlo"
           disabled={disabled}
           className={clases}
         />
@@ -142,8 +142,8 @@ export function CampoServicio({
           ) : resultados && resultados.length === 0 ? (
             <p className="px-3 py-2 text-[11px] text-gray-400">
               {termino.trim()
-                ? 'Nada con ese nombre o codigo. Si aun no lo creaste en el facturador, crealo y vuelve a buscar.'
-                : 'El facturador no devolvio cuentas.'}
+                ? 'Nada con ese nombre o código. Si aún no lo creaste en el facturador, créalo y vuelve a buscar.'
+                : 'El facturador no devolvió cuentas.'}
             </p>
           ) : (
             <>

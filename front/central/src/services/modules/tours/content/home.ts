@@ -10,12 +10,12 @@ export const homeTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Bienvenido a Probability',
-            body: 'Este recorrido te muestra para que sirve cada modulo del menu lateral. Toma un minuto.\n\nPuedes cerrarlo con la X y retomarlo cuando quieras desde el boton de ayuda.',
+            body: 'Este recorrido te muestra para que sirve cada módulo del menú lateral. Toma un minuto.\n\nPuedes cerrarlo con la X y retomarlo cuando quieras desde el botón de ayuda.',
         },
         {
             id: 'orders',
             title: 'Ordenes',
-            body: 'El corazon de la operacion. Aqui llegan los pedidos de todos tus canales (Shopify, MercadoLibre, WooCommerce, WhatsApp) y desde aqui generas las guias de envio.',
+            body: 'El corazón de la operación. Aquí llegan los pedidos de todos tus canales (Shopify, MercadoLibre, WooCommerce, WhatsApp) y desde aquí generas las guías de envío.',
             target: 'a[href="/orders"]',
             placement: 'right',
             optional: true,
@@ -23,7 +23,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'inventory',
             title: 'Inventario',
-            body: 'Catalogo de productos, bodegas, stock, movimientos y kardex. El stock que ves en una orden sale de aqui.',
+            body: 'Catalogo de productos, bodegas, stock, movimientos y kardex. El stock que ves en una orden sale de aquí.',
             target: 'a[href^="/inventory"], a[href="/products"]',
             placement: 'right',
             optional: true,
@@ -31,7 +31,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'wallet',
             title: 'Billetera',
-            body: 'Tu saldo para pagar guias. Cada envio descuenta de aqui, asi que si el saldo llega a cero no se pueden generar mas guias.',
+            body: 'Tu saldo para pagar guías. Cada envío descuenta de aquí, así que si el saldo llega a cero no se pueden generar más guías.',
             target: 'a[href="/wallet"]',
             placement: 'right',
             optional: true,
@@ -39,7 +39,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'integrations',
             title: 'Integraciones',
-            body: 'Conecta tus canales de venta y transportadoras. Sin una integracion configurada, los pedidos de ese canal no entran solos.',
+            body: 'Conecta tus canales de venta y transportadoras. Sin una integración configurada, los pedidos de ese canal no entran solos.',
             target: 'a[href="/integrations"]',
             placement: 'right',
             optional: true,
@@ -47,7 +47,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'customers',
             title: 'Clientes',
-            body: 'La base de clientes que se arma sola con las ordenes: historial de compras, direcciones y datos de contacto.',
+            body: 'La base de clientes que se arma sola con las órdenes: historial de compras, direcciones y datos de contacto.',
             target: 'a[href="/customers"]',
             placement: 'right',
             optional: true,
@@ -55,7 +55,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'delivery',
             title: 'Domicilios',
-            body: 'Flota propia: rutas, conductores, vehiculos y geozonas. Para lo que entregas tu mismo en vez de mandarlo por transportadora.',
+            body: 'Flota propia: rutas, conductores, vehículos y geozonas. Para lo que entregas tu mismo en vez de mandarlo por transportadora.',
             target: 'a[href="/delivery/routes"]',
             placement: 'right',
             optional: true,
@@ -63,7 +63,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'invoicing',
             title: 'Facturacion',
-            body: 'Facturas electronicas hacia la DIAN a traves de tu proveedor (Siigo, Factus). Se alimenta de las ordenes.',
+            body: 'Facturas electrónicas hacia la DIAN a través de tu proveedor (Siigo, Factus). Se alimenta de las órdenes.',
             target: 'a[href="/invoicing/invoices"]',
             placement: 'right',
             optional: true,
@@ -79,7 +79,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'website',
             title: 'Mi sitio web',
-            body: 'Tu tienda publica y su configuracion: catalogo, colores, dominio y contenido.',
+            body: 'Tu tienda publica y su configuración: catalogo, colores, dominio y contenido.',
             target: 'a[href="/website-config"]',
             placement: 'right',
             optional: true,
@@ -87,7 +87,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'tickets',
             title: 'Soporte',
-            body: 'Tickets de soporte. Si algo falla en la operacion, se reporta aqui y queda con historial.',
+            body: 'Tickets de soporte. Si algo falla en la operación, se reporta aquí y queda con historial.',
             target: 'a[href="/tickets"]',
             placement: 'right',
             optional: true,
@@ -95,7 +95,7 @@ export const homeTour: TourDefinition = {
         {
             id: 'end',
             title: 'Listo',
-            body: 'Cada modulo tiene su propio tutorial. Entra a cualquiera y se abre solo la primera vez, o presiona el boton de ayuda abajo a la derecha.\n\nPuedes reiniciarlos todos desde tu perfil.',
+            body: 'Cada módulo tiene su propio tutorial. Entra a cualquiera y se abre solo la primera vez, o presiona el botón de ayuda abajo a la derecha.\n\nPuedes reiniciarlos todos desde tu perfil.',
         },
     ],
 };

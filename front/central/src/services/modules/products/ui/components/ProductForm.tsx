@@ -393,8 +393,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                         </div>
 
                         <div>
-                            <label className={lc}>Descripcion</label>
-                            <textarea rows={5} className={ic} placeholder="Descripcion del producto..." value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
+                            <label className={lc}>{'Descripci\u00f3n'}</label>
+                            <textarea rows={5} className={ic} placeholder="Descripci\u00f3n del producto..." value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
                         </div>
 
                         <details className="group">
@@ -446,7 +446,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                     )}
                                 </div>
                                 <div>
-                                    <label className={lc}>Categoria</label>
+                                    <label className={lc}>{'Categor\u00eda'}</label>
                                     <input
                                         className={ic}
                                         type="text"
@@ -487,7 +487,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                     />
                                 </div>
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className={lc}>Categoria en Mercado Libre</label>
+                                    <label className={lc}>{'Categor\u00eda'} en Mercado Libre</label>
                                     <input
                                         className={ic}
                                         type="text"

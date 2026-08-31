@@ -356,7 +356,7 @@ const ProductList = forwardRef(function ProductList(
                                     onClick={() => setFilters({ ...filters, page: 1 })}
                                     disabled={page === 1}
                                     className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
-                                    title="Primera pagina"
+                                    title="Primera página"
                                 >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
                                 </button>
@@ -426,7 +426,7 @@ const ProductList = forwardRef(function ProductList(
                                     onClick={() => setFilters({ ...filters, page: totalPages })}
                                     disabled={page === totalPages}
                                     className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
-                                    title="Ultima pagina"
+                                    title="Última página"
                                 >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                                 </button>

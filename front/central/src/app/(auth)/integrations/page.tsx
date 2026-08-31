@@ -142,11 +142,11 @@ export default function IntegrationsPage() {
                 setSelectedIntegration(response.data);
                 setShowEditIntegrationModal(true);
             } else {
-                console.error('Error al obtener integracion:', response.message);
+                console.error('Error al obtener integración:', response.message);
                 alert('Error al cargar la integracion para editar');
             }
         } catch (error) {
-            console.error('Error al obtener integracion:', error);
+            console.error('Error al obtener integración:', error);
             alert('Error al cargar la integracion para editar');
         }
     };

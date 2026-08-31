@@ -63,7 +63,7 @@ export function SectionOverlay({
                         onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
                         disabled={isFirst}
                         className="p-1.5 bg-white dark:bg-gray-700 rounded-md shadow border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-50 disabled:opacity-30"
-                        title="Subir seccion"
+                        title="Subir sección"
                     >
                         <ChevronUpIcon className="w-4 h-4" />
                     </button>
@@ -72,7 +72,7 @@ export function SectionOverlay({
                         onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
                         disabled={isLast}
                         className="p-1.5 bg-white dark:bg-gray-700 rounded-md shadow border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-50 disabled:opacity-30"
-                        title="Bajar seccion"
+                        title="Bajar sección"
                     >
                         <ChevronDownIcon className="w-4 h-4" />
                     </button>
@@ -80,7 +80,7 @@ export function SectionOverlay({
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onToggleVisible(); }}
                         className={`p-1.5 rounded-md shadow border ${visible ? 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-50' : 'bg-amber-500 border-amber-500 text-white'}`}
-                        title={visible ? 'Ocultar seccion' : 'Mostrar seccion'}
+                        title={visible ? 'Ocultar sección' : 'Mostrar sección'}
                     >
                         {visible ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
                     </button>
@@ -89,7 +89,7 @@ export function SectionOverlay({
 
             {!visible && active && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-                    <span className="bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">Seccion oculta</span>
+                    <span className="bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">Sección oculta</span>
                 </div>
             )}
         </div>

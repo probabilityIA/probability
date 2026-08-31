@@ -95,7 +95,7 @@ export default function CustomerDetailView({ customerId, businessId }: CustomerD
                             </p>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-center">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Ultima orden</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Última orden</p>
                             <p className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {customer.last_order_at
                                     ? new Date(customer.last_order_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -111,7 +111,7 @@ export default function CustomerDetailView({ customerId, businessId }: CustomerD
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Field label="Nombre" value={customer.name} />
                             <Field label="Email" value={customer.email} />
-                            <Field label="Telefono" value={customer.phone} />
+                            <Field label="Teléfono" value={customer.phone} />
                             <Field label="Documento" value={customer.dni} />
                         </div>
                     </div>

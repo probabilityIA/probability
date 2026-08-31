@@ -923,7 +923,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         <button
                             onClick={() => handleTest(integration.id)}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                            title="Probar conexion"
+                            title="Probar conexi\u00f3n"
                             aria-label="Probar conexion"
                         >
                             <PlayIcon className="w-3.5 h-3.5" />
@@ -933,7 +933,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             <button
                                 onClick={() => handleSyncClick(integration.id, integration.name)}
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                title="Sincronizar ordenes"
+                                title="Sincronizar \u00f3rdenes"
                                 aria-label="Sincronizar ordenes"
                             >
                                 <ArrowPathIcon className="w-3.5 h-3.5" />
@@ -946,7 +946,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             <button
                                 onClick={() => onEdit(integration)}
                                 className="p-1.5 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-gray-700 rounded-md transition-colors"
-                                title="Editar integracion"
+                                title="Editar integraci\u00f3n"
                                 aria-label="Editar integracion"
                             >
                                 <PencilIcon className="w-4 h-4" />
@@ -955,7 +955,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         <button
                             onClick={() => handleDeleteClick(integration.id, integration.name)}
                             className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded-md transition-colors"
-                            title="Eliminar integracion"
+                            title="Eliminar integraci\u00f3n"
                             aria-label="Eliminar integracion"
                         >
                             <TrashIcon className="w-4 h-4" />
@@ -963,8 +963,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         <button
                             onClick={() => toggleActive(integration.id, integration.is_active)}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${integration.is_active ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-                            title={integration.is_active ? 'Desactivar integracion' : 'Activar integracion'}
-                            aria-label={integration.is_active ? 'Desactivar integracion' : 'Activar integracion'}
+                            title={integration.is_active ? 'Desactivar integraci\u00f3n' : 'Activar integraci\u00f3n'}
+                            aria-label={integration.is_active ? 'Desactivar integraci\u00f3n' : 'Activar integraci\u00f3n'}
                         >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${integration.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
@@ -1023,7 +1023,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                     Cargar mas
                                 </button>
                             ) : (
-                                <span className="text-xs text-gray-400">No hay mas integraciones</span>
+                                <span className="text-xs text-gray-400">No hay {'m\u00e1s'} integraciones</span>
                             )}
                         </div>
                     )}

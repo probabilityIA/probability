@@ -210,7 +210,7 @@ export const runSlottingAction = async (data: RunSlottingInput, businessId?: num
         revalidateOperations();
         return { success: true as const, data: result };
     } catch (error: any) {
-        return { success: false as const, error: error.message || 'Error en analisis de slotting' };
+        return { success: false as const, error: error.message || 'Error en análisis de slotting' };
     }
 };
 

@@ -49,7 +49,7 @@ const getCarrierLogo = (carrierName: string): string => {
         '99MINUTOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_99minutos.webp',
         'DEPRISA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_deprisa.png',
         'MENSAJERIAUBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
-        'MENSAJERIA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJER\u00cdA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJERIAURBANOSEXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'RAPPI': 'https://static.vecteezy.com/system/resources/previews/067/941/720/non_2x/rappi-logo-rounded-hd-free-png.png',
@@ -569,7 +569,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             <p className={`text-xs mt-1.5 ${hasProducts ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                                 {hasProducts
                                                     ? 'Las medidas y el peso del paquete se calcularan con los productos agregados y la caja configurada del negocio. Los campos de abajo se ignoran.'
-                                                    : 'Si agregas productos, se tendran en cuenta sus dimensiones y la caja configurada del negocio: la cotizacion es mas realista.'}
+                                                    : 'Si agregas productos, se tendr\u00e1n en cuenta sus dimensiones y la caja configurada del negocio: la cotizaci\u00f3n es m\u00e1s realista.'}
                                             </p>
                                         </div>
 

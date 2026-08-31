@@ -37,7 +37,7 @@ export function JumpsellerOAuthCallback() {
 
             if (!state || !exchangeToken) {
                 setStatus('error');
-                setMessage('Faltan parametros del flujo OAuth. Intenta conectar nuevamente.');
+                setMessage('Faltan parámetros del flujo OAuth. Intenta conectar nuevamente.');
                 return;
             }
 
@@ -53,7 +53,7 @@ export function JumpsellerOAuthCallback() {
                 );
 
                 if (tokenResponse.status === 410) {
-                    throw new Error('El token de autorizacion expiro. Inicia la conexion con Jumpseller nuevamente.');
+                    throw new Error('El token de autorización expiro. Inicia la conexión con Jumpseller nuevamente.');
                 }
 
                 const tokenData = await tokenResponse.json();
@@ -82,7 +82,7 @@ export function JumpsellerOAuthCallback() {
                 }, sessionToken || undefined);
 
                 if (!response || response.success === false) {
-                    throw new Error(response?.message || 'Error al crear la integracion');
+                    throw new Error(response?.message || 'Error al crear la integración');
                 }
 
                 setStatus('success');
@@ -90,7 +90,7 @@ export function JumpsellerOAuthCallback() {
                 setTimeout(() => router.push('/integrations'), 2000);
             } catch (err: any) {
                 setStatus('error');
-                setMessage(err.message || 'Error al completar la conexion con Jumpseller');
+                setMessage(err.message || 'Error al completar la conexión con Jumpseller');
             }
         };
 

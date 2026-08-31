@@ -33,7 +33,7 @@ const EMPTY_FORM: FiscalFormState = {
     document_type: 'NIT',
     document_number: '',
     dv: '',
-    person_type: 'JURIDICA',
+    person_type: 'JURÍDICA',
     tax_regime: '',
     municipality_id: '',
     address: '',
@@ -108,7 +108,7 @@ export const BusinessFiscalSection: React.FC<BusinessFiscalSectionProps> = ({ bu
                     document_type: data.document_type || 'NIT',
                     document_number: data.document_number || '',
                     dv: data.dv || '',
-                    person_type: data.person_type || 'JURIDICA',
+                    person_type: data.person_type || 'JURÍDICA',
                     tax_regime: data.tax_regime || '',
                     municipality_id: data.municipality_id || '',
                     address: data.address || '',
@@ -208,11 +208,11 @@ export const BusinessFiscalSection: React.FC<BusinessFiscalSectionProps> = ({ bu
                                     onChange={(e) => handleChange('document_type', e.target.value)}
                                     options={[
                                         { value: 'NIT', label: 'NIT' },
-                                        { value: 'CC', label: 'Cedula de ciudadania' },
+                                        { value: 'CC', label: 'Cédula de ciudadanía' },
                                     ]}
                                 />
                                 <Input
-                                    label="Numero de documento"
+                                    label="Número de documento"
                                     value={form.document_number}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('document_number', e.target.value)}
                                 />
@@ -221,7 +221,7 @@ export const BusinessFiscalSection: React.FC<BusinessFiscalSectionProps> = ({ bu
                                     value={form.dv}
                                     maxLength={2}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('dv', e.target.value)}
-                                    helperText="Digito de verificacion"
+                                    helperText="Dígito de verificación"
                                 />
                             </div>
 
@@ -231,12 +231,12 @@ export const BusinessFiscalSection: React.FC<BusinessFiscalSectionProps> = ({ bu
                                     value={form.person_type}
                                     onChange={(e) => handleChange('person_type', e.target.value)}
                                     options={[
-                                        { value: 'JURIDICA', label: 'Juridica' },
+                                        { value: 'JURÍDICA', label: 'Jurídica' },
                                         { value: 'NATURAL', label: 'Natural' },
                                     ]}
                                 />
                                 <Input
-                                    label="Regimen tributario"
+                                    label="Régimen tributario"
                                     value={form.tax_regime}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('tax_regime', e.target.value)}
                                 />
@@ -247,10 +247,10 @@ export const BusinessFiscalSection: React.FC<BusinessFiscalSectionProps> = ({ bu
                                     label="Municipio"
                                     value={form.municipality_id}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('municipality_id', e.target.value)}
-                                    helperText="Codigo DIAN/Factus, ej 980 = Bogota"
+                                    helperText="Código DIAN/Factus, ej 980 = Bogotá"
                                 />
                                 <Input
-                                    label="Direccion"
+                                    label="Dirección"
                                     value={form.address}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('address', e.target.value)}
                                 />
@@ -258,12 +258,12 @@ export const BusinessFiscalSection: React.FC<BusinessFiscalSectionProps> = ({ bu
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
-                                    label="Telefono"
+                                    label="Teléfono"
                                     value={form.phone}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('phone', e.target.value)}
                                 />
                                 <Input
-                                    label="Correo de facturacion"
+                                    label="Correo de facturación"
                                     type="email"
                                     value={form.billing_email}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('billing_email', e.target.value)}
@@ -286,7 +286,7 @@ export const BusinessFiscalSection: React.FC<BusinessFiscalSectionProps> = ({ bu
                                         onRateChange={(rate) => handleChange('iva_rate', rate)}
                                     />
                                     <TaxRow
-                                        label="Practica retencion en la fuente"
+                                        label="Practica retención en la fuente"
                                         checked={form.applies_retefuente}
                                         rate={form.retefuente_rate}
                                         onCheckedChange={(checked) => handleChange('applies_retefuente', checked)}

@@ -42,7 +42,7 @@ export function CatalogPricingModal({ isOpen, onClose, businessId }: CatalogPric
         }`;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Grupos de clientes para catalogos" size="4xl">
+        <Modal isOpen={isOpen} onClose={onClose} title="Grupos de clientes para catálogos" size="4xl">
             <div className="p-4 space-y-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     Agrupa tus clientes en tipos y define un precio por producto para cada grupo o cliente.

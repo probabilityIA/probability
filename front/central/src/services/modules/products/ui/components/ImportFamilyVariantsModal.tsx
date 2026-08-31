@@ -66,7 +66,7 @@ export default function ImportFamilyVariantsModal({ businessId, family, onClose,
             setNotFound(result.data?.not_found || []);
             setVariantLabels(Object.fromEntries(rows.map((r) => [r.product_id, ''])));
             if (rows.length === 0) {
-                setError('Ningun SKU del archivo coincide con productos de este negocio');
+                setError('Ningún SKU del archivo coincide con productos de este negocio');
             }
         } catch (err: any) {
             setError(err.message || 'Error inesperado al cargar el archivo');
@@ -246,7 +246,7 @@ export default function ImportFamilyVariantsModal({ businessId, family, onClose,
                                     onClick={handleConfirm}
                                     className="flex-1 px-3 py-2 text-sm rounded-lg bg-[var(--color-primary)] text-white font-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
                                 >
-                                    {applying ? 'Asociando...' : `Confirmar asociacion de ${matched.length} producto${matched.length !== 1 ? 's' : ''}`}
+                                    {applying ? 'Asociando...' : `Confirmar asociación de ${matched.length} producto${matched.length !== 1 ? 's' : ''}`}
                                 </button>
                             </div>
                         </>

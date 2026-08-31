@@ -34,7 +34,7 @@ const statusConfig: Record<string, { label: string; colors: string }> = {
     delivery_failed: { label: 'Entrega fallida', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
     rejected: { label: 'Rechazado', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
     returned: { label: 'Devuelto', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-    return_in_transit: { label: 'Devolucion en camino', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+    return_in_transit: { label: 'Devolución en camino', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
     inventory_issue: { label: 'Novedad de inventario', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
 };
 
@@ -64,7 +64,7 @@ export default function CustomerOrderItemsTab({ customerId, businessId }: Props)
 
     if (loading) return <div className="flex justify-center p-8"><Spinner size="lg" /></div>;
     if (error) return <p className="text-sm text-red-500 p-4">{error}</p>;
-    if (!data || data.data.length === 0) return <p className="text-sm text-gray-400 p-4">Sin items de ordenes</p>;
+    if (!data || data.data.length === 0) return <p className="text-sm text-gray-400 p-4">Sin items de órdenes</p>;
 
     return (
         <div className="space-y-3">

@@ -103,7 +103,7 @@ export function FactusEditForm({ integrationId, initialData, onSuccess, onCancel
             if (result.success) {
                 showToast('Conexion exitosa con Factus', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexi\u00f3n');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Factus');
@@ -154,7 +154,7 @@ export function FactusEditForm({ integrationId, initialData, onSuccess, onCancel
                 throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al actualizar integracion de Factus');
+            setErrorModal(err.message || 'Error al actualizar integraci\u00f3n de Factus');
         } finally {
             setLoading(false);
         }

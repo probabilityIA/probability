@@ -61,7 +61,7 @@ export default function WhatsAppIntegrationView({
             const updatedConfig = { ...integration.config, test_phone_number: testPhone.trim() };
             const result = await onUpdateConfig(integration.id, updatedConfig);
             if (result.success) {
-                setMessage({ type: 'success', text: 'Numero de prueba guardado' });
+                setMessage({ type: 'success', text: 'Número de prueba guardado' });
                 onRefresh?.();
             } else {
                 setMessage({ type: 'error', text: result.message || 'Error al guardar' });
@@ -102,7 +102,7 @@ export default function WhatsAppIntegrationView({
             if (result.success) {
                 setMessage({ type: 'success', text: 'Mensaje de prueba enviado correctamente' });
             } else {
-                setMessage({ type: 'error', text: result.message || 'Error en la prueba de conexion' });
+                setMessage({ type: 'error', text: result.message || 'Error en la prueba de conexión' });
             }
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message || 'Error en la prueba' });

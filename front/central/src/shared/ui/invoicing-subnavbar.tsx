@@ -110,9 +110,9 @@ export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
                                         ? 'bg-green-500 hover:bg-green-600 text-white'
                                         : 'bg-red-500 hover:bg-red-600 text-white'
                                 } ${toggling ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:scale-105'}`}
-                                title={config.enabled ? 'Facturacion activa - clic para desactivar' : 'Facturacion inactiva - clic para activar'}
+                                title={config.enabled ? 'Facturación activa - clic para desactivar' : 'Facturación inactiva - clic para activar'}
                             >
-                                {config.enabled ? 'Facturacion Activa' : 'Facturacion Inactiva'}
+                                {config.enabled ? 'Facturación Activa' : 'Facturación Inactiva'}
                             </button>
                         )}
                     </div>

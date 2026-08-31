@@ -28,7 +28,7 @@ export const getCodOrdersAction = async (params: CodOrdersParams) => {
     } catch (error: any) {
         return {
             success: false,
-            message: error.message || 'Error al obtener las ordenes',
+            message: error.message || 'Error al obtener las órdenes',
             data: [],
             total: 0,
             page: params.page || 1,
@@ -50,7 +50,7 @@ export const getSelectableOrdersAction = async (periodStart: string, periodEnd: 
     try {
         return await (await getRepo()).getSelectableOrders(periodStart, periodEnd, businessId);
     } catch (error: any) {
-        return { success: false, message: error.message || 'Error al obtener las ordenes de la semana', data: [] as any };
+        return { success: false, message: error.message || 'Error al obtener las órdenes de la semana', data: [] as any };
     }
 };
 
@@ -58,7 +58,7 @@ export const getCutOrdersAction = async (cutId: number, businessId?: number) => 
     try {
         return await (await getRepo()).getCutOrders(cutId, businessId);
     } catch (error: any) {
-        return { success: false, message: error.message || 'Error al obtener las ordenes del corte', data: [] as any };
+        return { success: false, message: error.message || 'Error al obtener las órdenes del corte', data: [] as any };
     }
 };
 
@@ -90,7 +90,7 @@ export const getCodCutEmailHistoryAction = async (cutId: number, businessId?: nu
     try {
         return await (await getRepo()).getCutEmailHistory(cutId, businessId);
     } catch (error: any) {
-        return { success: false, message: error.message || 'Error al obtener el historico de correos', data: [] as any };
+        return { success: false, message: error.message || 'Error al obtener el histórico de correos', data: [] as any };
     }
 };
 
@@ -114,7 +114,7 @@ export const getCarrierConfigsAction = async (businessId?: number) => {
     try {
         return await (await getRepo()).getCarrierConfigs(businessId);
     } catch (error: any) {
-        return { success: false, message: error.message || 'Error al obtener la configuracion', data: [] };
+        return { success: false, message: error.message || 'Error al obtener la configuración', data: [] };
     }
 };
 
@@ -122,7 +122,7 @@ export const saveCarrierConfigAction = async (input: SaveCarrierConfigInput, bus
     try {
         return await (await getRepo()).saveCarrierConfig(input, businessId);
     } catch (error: any) {
-        return { success: false, message: error.message || 'Error al guardar la configuracion', data: null as any };
+        return { success: false, message: error.message || 'Error al guardar la configuración', data: null as any };
     }
 };
 
@@ -130,6 +130,6 @@ export const updateCarrierFeeAction = async (input: UpdateCarrierFeeInput, busin
     try {
         return await (await getRepo()).updateCarrierFee(input, businessId);
     } catch (error: any) {
-        return { success: false, message: error.message || 'Error al actualizar la comision', data: null as any };
+        return { success: false, message: error.message || 'Error al actualizar la comisión', data: null as any };
     }
 };

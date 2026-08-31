@@ -99,7 +99,7 @@ export function SiigoInventorySyncModal({ isOpen, onClose, integrationId, busine
             const result: any = await syncSiigoInventoryAction(integrationId, businessId ?? undefined);
             if (cancelled) return;
             if (!result?.success || !result?.correlation_id) {
-                setErrorMessage(result?.message || 'No se pudo iniciar la sincronizacion');
+                setErrorMessage(result?.message || 'No se pudo iniciar la sincronización');
                 setPhase('error');
                 return;
             }
@@ -134,7 +134,7 @@ export function SiigoInventorySyncModal({ isOpen, onClose, integrationId, busine
                             <RefreshCw size={18} className={`text-emerald-600 dark:text-emerald-400 ${busy ? 'animate-spin' : ''}`} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronizacion de Inventario</h2>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronización de Inventario</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                 <ArrowDownToLine size={12} /> Siigo &rarr; Probability
                                 {phase === 'starting' && ' · Iniciando...'}

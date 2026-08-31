@@ -24,7 +24,7 @@ function formatDate(days: number): string {
 const statusBadge: Record<string, { bg: string; text: string; label: string }> = {
   sent: { bg: 'bg-purple-100 dark:bg-purple-600', text: 'text-purple-700 dark:text-white', label: 'Enviado' },
   delivered: { bg: 'bg-green-100 dark:bg-green-600', text: 'text-green-700 dark:text-white', label: 'Entregado' },
-  read: { bg: 'bg-emerald-100 dark:bg-emerald-600', text: 'text-emerald-700 dark:text-white', label: 'Leido' },
+  read: { bg: 'bg-emerald-100 dark:bg-emerald-600', text: 'text-emerald-700 dark:text-white', label: 'Leído' },
   failed: { bg: 'bg-red-100 dark:bg-red-600', text: 'text-red-700 dark:text-white', label: 'Fallido' },
 };
 
@@ -144,7 +144,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
             <option value="">Todos los estados</option>
             <option value="sent">Enviado</option>
             <option value="delivered">Entregado</option>
-            <option value="read">Leido</option>
+            <option value="read">Leído</option>
             <option value="failed">Fallido</option>
           </select>
           <input
@@ -166,7 +166,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                 <th className="text-left py-2 px-2 font-medium text-white">Orden</th>
                 <th className="text-left py-2 px-2 font-medium text-white">Plantilla</th>
                 <th className="text-center py-2 px-2 font-medium text-white">Estado</th>
-                <th className="text-center py-2 px-2 font-medium text-white">Direccion</th>
+                <th className="text-center py-2 px-2 font-medium text-white">Dirección</th>
               </tr>
             </thead>
             <tbody>

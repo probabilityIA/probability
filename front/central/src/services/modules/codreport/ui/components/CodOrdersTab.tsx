@@ -84,7 +84,7 @@ function CarrierFeeCell({ order, editable, businessId, onSaved, onError }: Carri
     const save = async () => {
         const parsed = Number(value.replace(/[^0-9.,-]/g, '').replace(',', '.'));
         if (!Number.isFinite(parsed) || parsed < 0) {
-            onError('La comision debe ser un numero mayor o igual a cero');
+            onError('La comisi\u00f3n debe ser un n\u00famero mayor o igual a cero');
             return;
         }
         if (parsed === order.cod_carrier_fee) {
@@ -98,7 +98,7 @@ function CarrierFeeCell({ order, editable, businessId, onSaved, onError }: Carri
         );
         setSaving(false);
         if (!res.success) {
-            onError((res as any).message || 'No se pudo actualizar la comision');
+            onError((res as any).message || 'No se pudo actualizar la comisi\u00f3n');
             return;
         }
         onSaved(order.shipment_id, parsed);
@@ -124,7 +124,7 @@ function CarrierFeeCell({ order, editable, businessId, onSaved, onError }: Carri
                 <button
                     onClick={save}
                     disabled={saving}
-                    title="Guardar comision"
+                    title="Guardar comisi\u00f3n"
                     className="p-1 rounded-md text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 disabled:opacity-40"
                 >
                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
@@ -149,7 +149,7 @@ function CarrierFeeCell({ order, editable, businessId, onSaved, onError }: Carri
             {canEdit && (
                 <button
                     onClick={open}
-                    title="Corregir la comision cobrada por la transportadora"
+                    title="Corregir la comisi\u00f3n cobrada por la transportadora"
                     className="p-1 rounded-md text-[#9a9aa5] opacity-0 group-hover/fee:opacity-100 focus:opacity-100 hover:text-[#c2410c] hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-opacity"
                 >
                     <Pencil size={12} />
@@ -218,7 +218,7 @@ export default function CodOrdersTab({ filters }: Props) {
     }, [filters.business_id]);
 
     const availableFilters: FilterOption[] = [
-        { key: 'search', label: 'Orden / Cliente', type: 'text', placeholder: 'Numero de orden o cliente' },
+        { key: 'search', label: 'Orden / Cliente', type: 'text', placeholder: 'N\u00famero de orden o cliente' },
         {
             key: 'status', label: 'Estado', type: 'select',
             options: Object.entries(STATUS_PILL).map(([value, v]) => ({ value, label: v.label })),
@@ -228,11 +228,11 @@ export default function CodOrdersTab({ filters }: Props) {
             options: carriers.map(c => ({ value: c, label: carrierLabel(c) })),
         },
         {
-            key: 'has_guide', label: 'Guia', type: 'select',
-            options: [{ value: 'true', label: 'Con guia' }, { value: 'false', label: 'Sin guia' }],
+            key: 'has_guide', label: 'Gu\u00eda', type: 'select',
+            options: [{ value: 'true', label: 'Con gu\u00eda' }, { value: 'false', label: 'Sin gu\u00eda' }],
         },
         {
-            key: 'guides', label: 'Numero de guia', type: 'text',
+            key: 'guides', label: 'N\u00famero de gu\u00eda', type: 'text',
             placeholder: 'Una o varias separadas por coma',
         },
     ];
@@ -242,12 +242,12 @@ export default function CodOrdersTab({ filters }: Props) {
     const activeFilters: ActiveFilter[] = [];
     if (search) activeFilters.push({ key: 'search', label: 'Orden / Cliente', value: search, type: 'text' });
     if (guideList.length) activeFilters.push({
-        key: 'guides', label: 'Numero de guia', type: 'text',
-        value: guideList.length === 1 ? guideList[0] : `${guideList.length} guias`,
+        key: 'guides', label: 'N\u00famero de gu\u00eda', type: 'text',
+        value: guideList.length === 1 ? guideList[0] : `${guideList.length} gu\u00edas`,
     });
     if (status) activeFilters.push({ key: 'status', label: 'Estado', value: STATUS_PILL[status]?.label || status, type: 'select' });
     if (carrier) activeFilters.push({ key: 'carrier', label: 'Transportadora', value: carrierLabel(carrier), type: 'select' });
-    if (hasGuide) activeFilters.push({ key: 'has_guide', label: 'Guia', value: hasGuide === 'true' ? 'Con guia' : 'Sin guia', type: 'select' });
+    if (hasGuide) activeFilters.push({ key: 'has_guide', label: 'Gu\u00eda', value: hasGuide === 'true' ? 'Con gu\u00eda' : 'Sin gu\u00eda', type: 'select' });
 
     const onAddFilter = (key: string, value: any) => {
         if (key === 'search') setSearch(String(value));
@@ -302,7 +302,7 @@ export default function CodOrdersTab({ filters }: Props) {
             setTotal(res.total || 0);
             setTotalPages(res.total_pages || 0);
         } else {
-            setError((res as any).message || 'Error al cargar las ordenes');
+            setError((res as any).message || 'Error al cargar las \u00f3rdenes');
             setOrders([]);
         }
         setLoading(false);
@@ -323,7 +323,7 @@ export default function CodOrdersTab({ filters }: Props) {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
                 <KpiCard accent="#16a34a" label="Recaudado"
                     value={formatMoney(summary?.total_collected, currency)}
-                    sub={`${summary?.orders_collected ?? 0} ordenes pagadas al cliente`} />
+                    sub={`${summary?.orders_collected ?? 0} \u00f3rdenes pagadas al cliente`} />
                 <KpiCard accent="#d97706" label="Por pagar"
                     value={formatMoney(summary?.total_pending, currency)}
                     sub={`${summary?.orders_pending ?? 0} entregadas sin consignar`} />
@@ -332,7 +332,7 @@ export default function CodOrdersTab({ filters }: Props) {
                     sub="sobre lo recaudado" />
                 <KpiCard accent="#7c3aed" label="Neto recibido"
                     value={formatMoney(summary?.total_net, currency)}
-                    sub="despues de descuento" />
+                    sub="despu\u00e9s de descuento" />
             </div>
 
             <div className={`${CARD} overflow-hidden`}>
@@ -378,7 +378,7 @@ export default function CodOrdersTab({ filters }: Props) {
                     <table className="w-full border-collapse min-w-[1250px]">
                         <thead>
                             <tr className="bg-[#fafafb] dark:bg-gray-900/40">
-                                {['Orden', 'Cliente', 'Transportadora', 'Numero de guia', 'Guia PDF', 'Estado'].map(h => (
+                                {['Orden', 'Cliente', 'Transportadora', 'N\u00famero de gu\u00eda', 'Gu\u00eda PDF', 'Estado'].map(h => (
                                     <th key={h} className="text-left px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">{h}</th>
                                 ))}
                                 <th className="text-right px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">COD orden</th>
@@ -434,7 +434,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                                         setTimeout(() => setCopiedGuide(''), 1500);
                                                     }}
                                                     className="inline-flex items-center gap-1.5 text-[12.5px] font-mono font-semibold text-[#3a3a44] dark:text-gray-300 hover:text-[#6d28d9] transition-colors whitespace-nowrap"
-                                                    title="Copiar numero de guia"
+                                                    title="Copiar n\u00famero de gu\u00eda"
                                                 >
                                                     {o.guide_number}
                                                     {copiedGuide === o.guide_number
@@ -450,7 +450,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                                 <button
                                                     onClick={() => setGuidePreview(o)}
                                                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-                                                    title="Ver y descargar guia PDF"
+                                                    title="Ver y descargar gu\u00eda PDF"
                                                 >
                                                     <FileText size={13} /> Ver PDF
                                                 </button>

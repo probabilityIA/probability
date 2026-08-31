@@ -28,7 +28,7 @@ async function getUseCases() {
 }
 
 function errorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : 'Ocurrio un error';
+    return error instanceof Error ? error.message : 'Ocurrió un error';
 }
 
 async function run<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {

@@ -366,11 +366,11 @@ export const UserList: React.FC = () => {
                 setGeneratedPassword(response.password);
                 setGeneratedEmail(response.email);
             } else {
-                setError(response.message || 'Error al generar nueva contrasena');
+                setError(response.message || 'Error al generar nueva contrase\u00f1a');
                 setResetPasswordUser(null);
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al generar nueva contrasena'));
+            setError(getActionError(err, 'Error al generar nueva contrase\u00f1a'));
             setResetPasswordUser(null);
         } finally {
             setResettingPassword(false);
@@ -588,7 +588,7 @@ export const UserList: React.FC = () => {
                                                         <button
                                                             onClick={() => setResetPasswordUser(user)}
                                                             className="p-2 btn btn-quaternary rounded-md transition-colors duration-200"
-                                                            title="Restablecer contrasena"
+                                                            title="Restablecer contrase\u00f1a"
                                                             aria-label="Restablecer contrasena"
                                                         >
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -823,9 +823,9 @@ export const UserList: React.FC = () => {
             {resetPasswordUser && !generatedPassword && (
                 <ConfirmModal
                     isOpen={true}
-                    title="Restablecer Contrasena"
-                    message={`Se generara una nueva contrasena aleatoria para ${resetPasswordUser.name} (${resetPasswordUser.email}). La contrasena actual dejara de funcionar. Esta seguro?`}
-                    confirmText={resettingPassword ? 'Generando...' : 'Si, generar nueva contrasena'}
+                    title="Restablecer Contrase\u00f1a"
+                    message={`Se generar\u00e1 una nueva contrase\u00f1a aleatoria para ${resetPasswordUser.name} (${resetPasswordUser.email}). La contrase\u00f1a actual dejar\u00e1 de funcionar. \u00bfEst\u00e1 seguro?`}
+                    confirmText={resettingPassword ? 'Generando...' : 'Si, generar nueva contrase\u00f1a'}
                     cancelText="Cancelar"
                     type="warning"
                     onConfirm={handleResetPassword}
@@ -836,7 +836,7 @@ export const UserList: React.FC = () => {
             <Modal
                 isOpen={!!generatedPassword}
                 onClose={closePasswordModal}
-                title="Nueva Contrasena Generada"
+                title="Nueva Contrase\u00f1a Generada"
                 size="sm"
             >
                 <div className="space-y-4">
@@ -877,7 +877,7 @@ export const UserList: React.FC = () => {
                                 style={copied ? { backgroundColor: '#16a34a', color: 'white' } : {}}
                                 onMouseEnter={(e) => !copied && (e.target as HTMLButtonElement).style.backgroundColor === '' && ((e.target as HTMLButtonElement).style.backgroundColor = '#d1d5db')}
                                 onMouseLeave={(e) => !copied && ((e.target as HTMLButtonElement).style.backgroundColor = '#e5e7eb')}
-                                title={copied ? 'Copiado' : 'Copiar contrasena'}
+                                title={copied ? 'Copiado' : 'Copiar contrase\u00f1a'}
                             >
                                 {copied ? (
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

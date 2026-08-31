@@ -92,10 +92,10 @@ export function WebsiteConfigManager() {
 
         if (result && 'id' in result) {
             setConfig(result as WebsiteConfigData);
-            setMessage('Configuracion guardada correctamente');
+            setMessage('Configuración guardada correctamente');
             setTimeout(() => setMessage(''), 3000);
         } else {
-            setMessage('Error al guardar la configuracion');
+            setMessage('Error al guardar la configuración');
         }
     };
 
@@ -130,7 +130,7 @@ export function WebsiteConfigManager() {
                     Selecciona un negocio para configurar su sitio web
                 </div>
             ) : loading ? (
-                <div className="text-center py-16 text-gray-500 dark:text-gray-400">Cargando configuracion...</div>
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">Cargando configuración...</div>
             ) : config ? (
                 <>
                     <PreviewLink businessCode={businessCode} />
@@ -153,17 +153,17 @@ export function WebsiteConfigManager() {
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Secciones de la pagina</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Secciones de la página</h2>
 
                         <SectionToggle
                             label="Hero / Banner Principal"
-                            description="Banner grande con titulo, subtitulo y boton de accion"
+                            description="Banner grande con título, subtitulo y botón de acción"
                             checked={config.show_hero}
                             onChange={(v) => handleToggle('show_hero', v)}
                         />
                         <SectionToggle
                             label="Sobre Nosotros"
-                            description="Seccion con informacion de la empresa, mision y vision"
+                            description="Sección con información de la empresa, misión y visión"
                             checked={config.show_about}
                             onChange={(v) => handleToggle('show_about', v)}
                         />
@@ -186,14 +186,14 @@ export function WebsiteConfigManager() {
                             onChange={(v) => handleToggle('show_testimonials', v)}
                         />
                         <SectionToggle
-                            label="Ubicacion"
-                            description="Mapa con la direccion y horarios"
+                            label="Ubicación"
+                            description="Mapa con la dirección y horarios"
                             checked={config.show_location}
                             onChange={(v) => handleToggle('show_location', v)}
                         />
                         <SectionToggle
                             label="Formulario de Contacto"
-                            description="Formulario para que los visitantes envien mensajes"
+                            description="Formulario para que los visitantes envíen mensajes"
                             checked={config.show_contact}
                             onChange={(v) => handleToggle('show_contact', v)}
                         />
@@ -204,8 +204,8 @@ export function WebsiteConfigManager() {
                             onChange={(v) => handleToggle('show_social_media', v)}
                         />
                         <SectionToggle
-                            label="Boton WhatsApp"
-                            description="Boton flotante de WhatsApp para contacto rapido"
+                            label="Botón WhatsApp"
+                            description="Botón flotante de WhatsApp para contacto rápido"
                             checked={config.show_whatsapp}
                             onChange={(v) => handleToggle('show_whatsapp', v)}
                         />
@@ -218,7 +218,7 @@ export function WebsiteConfigManager() {
                             disabled={saving}
                             className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                         >
-                            {saving ? 'Guardando...' : 'Guardar Configuracion'}
+                            {saving ? 'Guardando...' : 'Guardar Configuración'}
                         </button>
                         {message && (
                             <span className={`text-sm ${message.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
@@ -228,7 +228,7 @@ export function WebsiteConfigManager() {
                     </div>
                 </>
             ) : (
-                <div className="text-center py-16 text-gray-500 dark:text-gray-400">No se pudo cargar la configuracion</div>
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">No se pudo cargar la configuración</div>
             )}
         </div>
     );

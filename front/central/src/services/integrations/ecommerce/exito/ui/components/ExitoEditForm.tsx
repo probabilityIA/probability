@@ -90,10 +90,10 @@ export function ExitoEditForm({ integrationId, initialData, onSuccess, onCancel 
             if (result.success) {
                 showToast('Conexion exitosa con Exito', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al conectar con Exito');
+            setErrorModal(err.message || 'Error al conectar con Éxito');
         } finally {
             setTestingConnection(false);
         }
@@ -124,10 +124,10 @@ export function ExitoEditForm({ integrationId, initialData, onSuccess, onCancel 
                 showToast('Integracion Exito actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al actualizar integracion de Exito');
+            setErrorModal(err.message || 'Error al actualizar integración de Éxito');
         } finally {
             setLoading(false);
         }
@@ -167,7 +167,7 @@ export function ExitoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Exito Marketplace Principal"
+                        placeholder="Ej: Éxito Marketplace Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
@@ -204,7 +204,7 @@ export function ExitoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
+                            <span>El negocio no puede ser modificado después de la creación</span>
                         </p>
                     </div>
                 )}
@@ -234,7 +234,7 @@ export function ExitoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         type="text"
                         value={formData.seller_id}
                         onChange={(e) => setFormData({ ...formData, seller_id: e.target.value })}
-                        placeholder="ID del vendedor en Exito"
+                        placeholder="ID del vendedor en Éxito"
                         autoComplete="off"
                         data-1p-ignore
                         className="bg-white dark:bg-gray-800 text-sm"
@@ -248,7 +248,7 @@ export function ExitoEditForm({ integrationId, initialData, onSuccess, onCancel 
                     <SecretInput
                         value={formData.api_key}
                         onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
-                        placeholder="API Key de Exito"
+                        placeholder="API Key de Éxito"
                         className="bg-white dark:bg-gray-800 font-mono text-sm"
                     />
                 </div>

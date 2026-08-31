@@ -51,7 +51,7 @@ export function CampoCatalogo({
           disabled={disabled}
           className={`${clases} ${borde}`}
         >
-          <option value="">Selecciona una opcion</option>
+          <option value="">Selecciona una opción</option>
           {opciones.map((o) => (
             <option key={o.id} value={o.id}>
               {o.name}
