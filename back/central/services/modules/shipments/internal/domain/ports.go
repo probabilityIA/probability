@@ -306,18 +306,24 @@ type OrderCodBasis struct {
 	CodIncludesShipping bool
 }
 
-func (b OrderCodBasis) NetTarget(guideTotalCost float64) float64 {
+func (b OrderCodBasis) NetTarget(guideTotalCost float64, embeddedCarrierFee float64) float64 {
 	if b.CodTotal <= 0 {
 		return 0
 	}
 	if !b.CodIncludesShipping && guideTotalCost > 0 {
 		return b.TotalAmount + guideTotalCost
 	}
+	if b.CodIncludesShipping {
+		// CodTotal ya trae la comision del carrier sumada (mapQuoteRatesToWoo
+		// la incluye en el precio de checkout), restarla evita que
+		// AmountToCollect la vuelva a sumar.
+		return b.CodTotal - embeddedCarrierFee
+	}
 	return b.CodTotal
 }
 
 func (b OrderCodBasis) AmountToCollect(guideTotalCost float64, codCarrierFee float64) float64 {
-	base := b.NetTarget(guideTotalCost)
+	base := b.NetTarget(guideTotalCost, codCarrierFee)
 	if base <= 0 {
 		return 0
 	}
