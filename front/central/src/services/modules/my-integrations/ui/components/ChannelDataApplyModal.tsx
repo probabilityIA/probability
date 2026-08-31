@@ -82,7 +82,7 @@ export function ChannelDataApplyModal({ objetivo, businessId, onClose, onApplied
         }
         if (payload.type === 'products.channel_data.failed') {
             setAplicando(false);
-            setFallo(String(data.error ?? 'No se pudo completar la actualizacion'));
+            setFallo(String(data.error ?? 'No se pudo completar la actualización'));
             return;
         }
         if (payload.type === 'products.channel_data.completed') {
@@ -110,7 +110,7 @@ export function ChannelDataApplyModal({ objetivo, businessId, onClose, onApplied
         const result = await applyChannelData(businessId ?? undefined, objetivo.cell.integration_id, objetivo.field, objetivo.mode);
         if (!result?.batch_id) {
             setAplicando(false);
-            setFallo('No se pudo iniciar la actualizacion');
+            setFallo('No se pudo iniciar la actualización');
             return;
         }
         setLote(result.batch_id);
@@ -134,7 +134,7 @@ export function ChannelDataApplyModal({ objetivo, businessId, onClose, onApplied
                             Se escribe en los productos de Probability con lo que dice{' '}
                             <span className="font-semibold">{objetivo.cell.integration_name}</span>. El canal no se modifica.
                             {objetivo.mode === 'fill_empty'
-                                ? ' Solo se tocan los productos que hoy tienen ese campo vacio.'
+                                ? ' Solo se tocan los productos que hoy tienen ese campo vacío.'
                                 : ' Se reemplaza el dato actual, incluso donde ya hay algo escrito.'}
                         </p>
                     </div>
@@ -181,7 +181,7 @@ export function ChannelDataApplyModal({ objetivo, businessId, onClose, onApplied
                                                 <span className="font-bold">{conflict.count.toLocaleString('es-CO')}</span>{' '}
                                                 {conflict.count === 1 ? 'producto viene' : 'productos vienen'} de{' '}
                                                 <span className="font-semibold">
-                                                    {conflict.source === 'manual' ? 'una edicion manual' : conflict.integration_name}
+                                                    {conflict.source === 'manual' ? 'una edición manual' : conflict.integration_name}
                                                 </span>
                                                 {conflict.last_change_at && <span className="text-amber-700/80"> · {fechaCorta(conflict.last_change_at)}</span>}
                                             </li>
@@ -197,7 +197,7 @@ export function ChannelDataApplyModal({ objetivo, businessId, onClose, onApplied
                                             <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">
                                                 <th className="px-3 py-2">SKU</th>
                                                 <th className="px-3 py-2">Hoy en Probability</th>
-                                                <th className="px-3 py-2">Quedaria</th>
+                                                <th className="px-3 py-2">Quedaría</th>
                                             </tr>
                                         </thead>
                                         <tbody>

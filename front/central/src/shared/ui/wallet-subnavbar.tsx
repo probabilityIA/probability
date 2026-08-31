@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useWalletBusiness } from '@/shared/contexts/wallet-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const WalletSubNavbar = memo(function WalletSubNavbar() {
     const pathname = usePathname();
@@ -51,6 +52,7 @@ export const WalletSubNavbar = memo(function WalletSubNavbar() {
                             );
                         })}
                     </div>
+                    <TourLauncher />
                     {isSuperAdmin && (
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
+import { TourProvider, TourLauncherFloating } from '@/services/modules/tours/ui';
 import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar, WalletSubNavbar, AccountingSubNavbar } from '@/shared/ui';
 import { SelectedBusinessProvider } from '@/shared/contexts/selected-business-context';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
@@ -77,6 +78,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         onMouseEnter={handleMainMouseEnter}
       >
         <SelectedBusinessProvider>
+          <TourProvider>
                       <AnnouncementTicker />
                       <OrdersSubNavbar />
                       <InventorySubNavbar />
@@ -93,6 +95,8 @@ function LayoutContent({ user, children }: LayoutContentProps) {
                           {children}
                         </SubscriptionGuard>
                       </div>
+                      <TourLauncherFloating />
+          </TourProvider>
         </SelectedBusinessProvider>
         <style jsx>{`
           .main-content {

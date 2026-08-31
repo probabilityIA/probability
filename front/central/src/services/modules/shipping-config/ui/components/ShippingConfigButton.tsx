@@ -17,7 +17,7 @@ export function ShippingConfigButton({ businessId, className }: ShippingConfigBu
             <button
                 type="button"
                 onClick={() => setOpen(true)}
-                title="Configuracion de envios"
+                title="Configuración de envíos"
                 aria-label="Configuracion de envios"
                 className={className || 'p-2 rounded-lg border transition-colors hover:bg-gray-100 dark:hover:bg-gray-700'}
                 style={className ? undefined : { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}

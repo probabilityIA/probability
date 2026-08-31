@@ -22,6 +22,12 @@ Excepciones: `//go:generate`, `//go:build`, `//nolint`, `'use server'`, `'use cl
 Archivos 500+ lineas: CERO non-ASCII (acentos, box-drawing, emojis). Archivos cortos: preferir ASCII.
 - Strings con acentos: escapes `\u00XX` o `golang.org/x/text/transform`
 - Limpieza rapida: `sed -i 's/a/a/g; s/e/e/g; s/i/i/g; s/o/o/g; s/u/u/g; s/n/n/g'`
+- **Ese sed NUNCA se aplica a texto que ve el usuario.** Quitarle la tilde a un
+  label o a un mensaje es una falta de ortografia, no una solucion al bug: ahi
+  la tilde se escribe con `\u00XX` (`{'Facturaci\u00f3n'}` en JSX). Solo se usa
+  sobre comentarios, nombres y texto interno.
+- Ortografia del espanol en el front: skill `ortografia-front`
+  (`.claude/skills/ortografia-front/`, incluye `revisar.py` para detectar y corregir).
 - NUNCA sugerir actualizar Claude Code como solucion a este bug.
 
 ## Stack

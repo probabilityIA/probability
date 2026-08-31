@@ -77,7 +77,7 @@ export default function LotFormModal({ businessId, lot, onClose, onSuccess }: Pr
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Codigo de lote *</label>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Código de lote *</label>
                         <input
                             required
                             value={form.lot_code}

@@ -45,7 +45,7 @@ export default function CustomerAddressesTab({ customerId, businessId }: Props) 
                         </p>
                         <div className="flex gap-4 mt-1 text-xs text-gray-400">
                             <span>Usada {addr.times_used} {addr.times_used === 1 ? 'vez' : 'veces'}</span>
-                            <span>Ultima: {new Date(addr.last_used_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            <span>Última: {new Date(addr.last_used_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         </div>
                     </div>
                 </div>

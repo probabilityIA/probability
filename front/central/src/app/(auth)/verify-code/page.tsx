@@ -22,7 +22,7 @@ function VerifyCodeContent() {
     setInfo('');
 
     if (!/^\d{6}$/.test(code)) {
-      setError('El codigo debe tener 6 digitos');
+      setError('El código debe tener 6 dígitos');
       return;
     }
 
@@ -32,7 +32,7 @@ function VerifyCodeContent() {
       if (result.success && result.token) {
         router.push(`/reset-password?token=${result.token}`);
       } else {
-        setError(result.error || 'Codigo invalido o expirado');
+        setError(result.error || 'Código inválido o expirado');
       }
     } catch {
       setError('Error al conectar con el servidor');
@@ -47,7 +47,7 @@ function VerifyCodeContent() {
     setResending(true);
     try {
       await forgotPasswordAction(email, 'whatsapp');
-      setInfo('Te enviamos un nuevo codigo por WhatsApp.');
+      setInfo('Te enviamos un nuevo código por WhatsApp.');
     } catch {
       setError('Error al conectar con el servidor');
     } finally {
@@ -58,7 +58,7 @@ function VerifyCodeContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ingresa el codigo</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ingresa el código</h1>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Escribe el codigo de 6 digitos que enviamos por WhatsApp.
         </p>
@@ -97,7 +97,7 @@ function VerifyCodeContent() {
             disabled={loading}
             className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
           >
-            {loading ? 'Verificando...' : 'Verificar codigo'}
+            {loading ? 'Verificando...' : 'Verificar código'}
           </button>
         </form>
 
@@ -108,7 +108,7 @@ function VerifyCodeContent() {
             disabled={resending}
             className="font-medium text-indigo-600 hover:text-indigo-500 disabled:opacity-60"
           >
-            {resending ? 'Reenviando...' : 'Reenviar codigo'}
+            {resending ? 'Reenviando...' : 'Reenviar código'}
           </button>
           <Link href="/forgot-password" className="font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">
             Cambiar metodo

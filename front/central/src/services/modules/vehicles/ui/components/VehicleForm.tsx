@@ -17,7 +17,7 @@ const VEHICLE_TYPES = [
     { value: 'motorcycle', label: 'Motocicleta' },
     { value: 'car', label: 'Carro' },
     { value: 'van', label: 'Van' },
-    { value: 'truck', label: 'Camion' },
+    { value: 'truck', label: 'Camión' },
 ];
 
 const VEHICLE_STATUSES = [
@@ -87,10 +87,10 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
                 await createVehicleAction(createData, businessId);
             }
 
-            setSuccess(vehicle ? 'Vehiculo actualizado exitosamente' : 'Vehiculo creado exitosamente');
+            setSuccess(vehicle ? 'Vehículo actualizado exitosamente' : 'Vehículo creado exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(getActionError(err, 'Error al guardar el vehiculo'));
+            setError(getActionError(err, 'Error al guardar el vehículo'));
         } finally {
             setLoading(false);
         }
@@ -277,7 +277,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
                     Cancelar
                 </Button>
                 <Button type="submit" variant="primary" disabled={loading}>
-                    {loading ? 'Guardando...' : vehicle ? 'Actualizar' : 'Crear vehiculo'}
+                    {loading ? 'Guardando...' : vehicle ? 'Actualizar' : 'Crear vehículo'}
                 </Button>
             </div>
         </form>

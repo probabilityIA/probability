@@ -26,9 +26,9 @@ interface PendingConnection {
 function friendlyError(raw: string): string {
     const text = String(raw || '');
     if (/SQLSTATE|duplicate key|violates unique constraint|ux_integrations_store_type/i.test(text)) {
-        return 'Esta cuenta de MercadoLibre ya esta conectada. Verifica que estas autorizando la cuenta correcta.';
+        return 'Esta cuenta de MercadoLibre ya está conectada. Verifica que estas autorizando la cuenta correcta.';
     }
-    return text || 'Error al completar la conexion con MercadoLibre';
+    return text || 'Error al completar la conexión con MercadoLibre';
 }
 
 export function MercadoLibreOAuthCallback() {
@@ -61,7 +61,7 @@ export function MercadoLibreOAuthCallback() {
 
             if (!state || !exchangeToken) {
                 setStatus('error');
-                setMessage('Faltan parametros del flujo OAuth. Intenta conectar nuevamente.');
+                setMessage('Faltan parámetros del flujo OAuth. Intenta conectar nuevamente.');
                 return;
             }
 
@@ -77,7 +77,7 @@ export function MercadoLibreOAuthCallback() {
                 );
 
                 if (tokenResponse.status === 410) {
-                    throw new Error('El token de autorizacion expiro. Inicia la conexion con MercadoLibre nuevamente.');
+                    throw new Error('El token de autorización expiro. Inicia la conexión con MercadoLibre nuevamente.');
                 }
 
                 const tokenData = await tokenResponse.json();
@@ -132,7 +132,7 @@ export function MercadoLibreOAuthCallback() {
     const confirmConnection = useCallback(async () => {
         if (!pending) return;
         setStatus('saving');
-        setMessage('Guardando la conexion...');
+        setMessage('Guardando la conexión...');
 
         const { tokenData, sellerId, businessId, integrationName, integrationCode, isTesting, reconnectId } = pending;
         const sessionToken = TokenStorage.getSessionToken();
@@ -158,7 +158,7 @@ export function MercadoLibreOAuthCallback() {
                     credentials,
                 });
                 if (!updateResponse || updateResponse.success === false) {
-                    throw new Error(updateResponse?.message || 'Error al reconectar la integracion');
+                    throw new Error(updateResponse?.message || 'Error al reconectar la integración');
                 }
                 setStatus('success');
                 setMessage('MercadoLibre reconectado exitosamente. Redirigiendo...');
@@ -181,7 +181,7 @@ export function MercadoLibreOAuthCallback() {
             }, sessionToken || undefined);
 
             if (!response || response.success === false) {
-                throw new Error(response?.message || 'Error al crear la integracion');
+                throw new Error(response?.message || 'Error al crear la integración');
             }
 
             setStatus('success');
@@ -217,7 +217,7 @@ export function MercadoLibreOAuthCallback() {
                     <div className="text-left">
                         <ShieldExclamationIcon className="mx-auto h-12 w-12 text-amber-500" />
                         <h2 className="mt-4 text-center text-lg font-bold text-gray-900 dark:text-white">
-                            {pending.reconnectId ? 'Confirma la reconexion' : 'Confirma la conexion'}
+                            {pending.reconnectId ? 'Confirma la reconexion' : 'Confirma la conexión'}
                         </h2>
                         <p className="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
                             Revisa que la cuenta y el negocio sean los correctos antes de guardar.

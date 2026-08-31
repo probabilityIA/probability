@@ -48,7 +48,7 @@ export function CutEmailModal({ cut, businessId, justConfirmed, onClose, onSent 
 
     const send = async () => {
         if (invalid.length > 0) {
-            setError(`Correo invalido: ${invalid[0]}`);
+            setError(`Correo inválido: ${invalid[0]}`);
             return;
         }
         setSending(true);
@@ -82,7 +82,7 @@ export function CutEmailModal({ cut, businessId, justConfirmed, onClose, onSent 
                 )}
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                     Corte del periodo <strong>{formatDateOnly(cut.period_start)} - {formatDateOnly(cut.period_end)}</strong>{' '}
-                    ({cut.orders_count} ordenes, {formatMoney(cut.total_collected)}). Abajo ves el correo tal como se enviara.
+                    ({cut.orders_count} órdenes, {formatMoney(cut.total_collected)}). Abajo ves el correo tal como se enviara.
                 </p>
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
                     <Eye size={13} /> Vista previa

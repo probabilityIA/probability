@@ -176,7 +176,7 @@ export function CartWidget({ slug }: { slug: string }) {
                             {payState === 'idle' && step === 'cart' && (
                                 <>
                                     {items.length === 0 ? (
-                                        <p className="text-sm text-gray-400 text-center py-10">Tu carrito esta vacio</p>
+                                        <p className="text-sm text-gray-400 text-center py-10">Tu carrito está vacío</p>
                                     ) : (
                                         <div className="space-y-3">
                                             {items.map((it) => (
@@ -226,8 +226,8 @@ export function CartWidget({ slug }: { slug: string }) {
                                     )}
                                     <Field label="Nombre completo *" value={customerName} onChange={setCustomerName} />
                                     <Field label="Correo" value={customerEmail} onChange={setCustomerEmail} type="email" />
-                                    <Field label="Telefono" value={customerPhone} onChange={setCustomerPhone} />
-                                    <Field label="Direccion" value={street} onChange={setStreet} />
+                                    <Field label="Teléfono" value={customerPhone} onChange={setCustomerPhone} />
+                                    <Field label="Dirección" value={street} onChange={setStreet} />
                                     <div className="grid grid-cols-2 gap-2">
                                         <Field label="Ciudad" value={city} onChange={setCity} />
                                         <Field label="Departamento" value={state} onChange={setState} />
@@ -257,16 +257,16 @@ export function CartWidget({ slug }: { slug: string }) {
 
                             {payState === 'starting' && <StatusBlock text="Enviando tu pedido..." spinner />}
                             {payState === 'waiting' && (
-                                <StatusBlock text="Esperando confirmacion del pago. No cierres esta ventana." spinner reference={reference} />
+                                <StatusBlock text="Esperando confirmación del pago. No cierres esta ventana." spinner reference={reference} />
                             )}
                             {payState === 'success' && (
-                                <StatusBlock text="Pedido enviado. El vendedor se pondra en contacto contigo para coordinar el pago y la entrega." success reference={reference} />
+                                <StatusBlock text="Pedido enviado. El vendedor se pondrá en contacto contigo para coordinar el pago y la entrega." success reference={reference} />
                             )}
                             {payState === 'failed' && (
                                 <StatusBlock text={error || 'El pago no se pudo confirmar.'} failed reference={reference} />
                             )}
                             {payState === 'timeout' && (
-                                <StatusBlock text="El pago sigue en proceso. Si ya pagaste, en unos minutos deberia confirmarse." reference={reference} />
+                                <StatusBlock text="El pago sigue en proceso. Si ya pagaste, en unos minutos debería confirmarse." reference={reference} />
                             )}
                         </div>
                     </div>

@@ -95,7 +95,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
         correlationRef.current = null;
         const res: any = await applySiigoProductsAction(integrationId, businessId ?? undefined, skus);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la operacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la operación');
             setPhase('error');
             return;
         }
@@ -175,7 +175,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
                             <ArrowRightLeft size={18} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronizacion de Productos</h2>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronización de Productos</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Siigo &rarr; Probability</p>
                         </div>
                     </div>
@@ -210,7 +210,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
                             {nothingToDo && (
                                 <div className="text-center py-6 text-gray-600 dark:text-gray-300">
                                     <CheckCircle2 size={40} className="mx-auto text-emerald-500 mb-2" />
-                                    <p className="font-semibold">Todo al dia</p>
+                                    <p className="font-semibold">Todo al día</p>
                                     <p className="text-xs text-gray-400 mt-1">No hay productos por crear ni por asociar a este canal.</p>
                                 </div>
                             )}
@@ -240,7 +240,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
                                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Siigo hay {diff.onlyInSiigo.length} producto{diff.onlyInSiigo.length !== 1 ? 's' : ''} que no estan en Probability</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Siigo hay {diff.onlyInSiigo.length} producto{diff.onlyInSiigo.length !== 1 ? 's' : ''} que no están en Probability</p>
                                             <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability y quedaran asociados a este canal.</p>
                                         </div>
                                         <button onClick={handleCreate} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -253,8 +253,8 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
 
                             {diff.onlyInProbability.length > 0 && (
                                 <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-3">
-                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no estan en Siigo</p>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">Informativo. La integracion Siigo es de solo lectura: estos no se crean en Siigo.</p>
+                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no están en Siigo</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Informativo. La integración Siigo es de solo lectura: estos no se crean en Siigo.</p>
                                     <ProductList items={diff.onlyInProbability} />
                                 </div>
                             )}
@@ -292,7 +292,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
 
                             {phase === 'done' && (
                                 <>
-                                    <p className="text-[11px] text-gray-400 mt-4">La operacion corre en segundo plano; puede tardar unos segundos en reflejarse.</p>
+                                    <p className="text-[11px] text-gray-400 mt-4">La operación corre en segundo plano; puede tardar unos segundos en reflejarse.</p>
                                     <div className="flex justify-between mt-4">
                                         <button onClick={analyze} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1.5">
                                             <RefreshCw size={14} /> Analizar de nuevo
@@ -321,7 +321,7 @@ function ProductList({ items }: { items: Brief[] }) {
                     <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
                 </div>
             ))}
-            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} mas...</div>}
+            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} más...</div>}
         </div>
     );
 }

@@ -48,7 +48,7 @@ export async function compareChannelOrdersAction(query: OrdersCompareQuery): Pro
 
     const body = await readBody(response);
     if (!response.ok || !body?.success) {
-        throw new Error(body?.error || body?.message || 'No se pudieron leer las ordenes del canal');
+        throw new Error(body?.error || body?.message || 'No se pudieron leer las órdenes del canal');
     }
     return body.data as OrdersComparePage;
 }
@@ -71,7 +71,7 @@ export async function applyChannelOrdersAction(
 
     const body = await readBody(response);
     if (!response.ok || !body?.success) {
-        throw new Error(body?.error || body?.message || 'No se pudieron crear las ordenes en Probability');
+        throw new Error(body?.error || body?.message || 'No se pudieron crear las órdenes en Probability');
     }
     return body.data as OrdersApplyResult;
 }

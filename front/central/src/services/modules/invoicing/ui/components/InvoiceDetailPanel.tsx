@@ -445,7 +445,7 @@ export function InvoiceDetailModal({
                       className="w-full h-[60vh] mt-3 rounded border border-green-200 bg-white"
                     >
                       <p className="p-3 text-xs text-gray-700 dark:text-gray-200">
-                        {'Tu navegador no puede mostrar el PDF aqui: usa el enlace para abrirlo.'}
+                        {'Tu navegador no puede mostrar el PDF aqu\u00ed: usa el enlace para abrirlo.'}
                       </p>
                     </object>
                   )}

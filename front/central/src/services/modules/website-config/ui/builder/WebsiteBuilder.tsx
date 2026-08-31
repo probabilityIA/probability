@@ -209,7 +209,7 @@ export function WebsiteBuilder() {
     }
 
     if (!config || !businessInfo) {
-        return <div className="text-center py-24 text-gray-500 dark:text-gray-400">No se pudo cargar la configuracion del sitio</div>;
+        return <div className="text-center py-24 text-gray-500 dark:text-gray-400">No se pudo cargar la {'configuraci\u00f3n'} del sitio</div>;
     }
 
     const template = getTemplate(config.template || 'default');
@@ -316,7 +316,7 @@ export function WebsiteBuilder() {
                 {isEmpty ? (
                     <div className="py-16 text-center text-gray-400 border-y border-dashed border-gray-300 dark:border-gray-700">
                         <p className="font-medium">{m.label}</p>
-                        <p className="text-sm">Sin contenido: haz clic para editar esta seccion</p>
+                        <p className="text-sm">Sin contenido: haz clic para editar esta {'secci\u00f3n'}</p>
                     </div>
                 ) : rendered}
             </SectionOverlay>
@@ -424,7 +424,7 @@ export function WebsiteBuilder() {
                             </div>
 
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Boton de WhatsApp</h3>
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{'Bot\u00f3n'} de WhatsApp</h3>
                                 <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 mb-3">
                                     <input
                                         type="checkbox"
@@ -444,8 +444,8 @@ export function WebsiteBuilder() {
 
                             {categories.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Categorias en la tienda</h3>
-                                    <p className="text-xs text-gray-400 mb-2">Desactiva las categorias que no quieres mostrar; sus productos se ocultan del catalogo.</p>
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{'Categor\u00edas'} en la tienda</h3>
+                                    <p className="text-xs text-gray-400 mb-2">Desactiva las {'categor\u00edas'} que no quieres mostrar; sus productos se ocultan del catalogo.</p>
                                     <div className="space-y-1.5">
                                         {categories.map(cat => {
                                             const hidden = (config.hidden_categories || []).includes(cat.name);
@@ -475,7 +475,7 @@ export function WebsiteBuilder() {
                             )}
 
                             <div className="text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
-                                <p>Haz clic en una seccion del lienzo para editar su contenido.</p>
+                                <p>Haz clic en una {'secci\u00f3n'} del lienzo para editar su contenido.</p>
                                 <p>Usa las flechas o arrastra para reordenar, y el ojo para mostrar u ocultar.</p>
                             </div>
                         </>

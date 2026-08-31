@@ -80,7 +80,7 @@ const getCarrierLogo = (carrierName: string): string => {
         '99MINUTOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_99minutos.webp',
         'DEPRISA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_deprisa.png',
         'MENSAJERIAUBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
-        'MENSAJERIA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJER\u00cdA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJEROSURBANOSEXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
     };
@@ -138,18 +138,18 @@ const step1Schema = z.object({
 
 const step3Schema = z.object({
     originCompany: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres"),
-    originFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (limite del transportador)"),
-    originLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (limite del transportador)"),
-    originEmail: z.string().email("Email invalido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
-    originPhone: z.string().length(10, "Debe tener 10 digitos"),
+    originFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
+    originLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
+    originEmail: z.string().email("Email inv\u00e1lido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
+    originPhone: z.string().length(10, "Debe tener 10 d\u00edgitos"),
     originSuburb: z.string().min(2, "Min 2 caracteres").max(30, "Max 30 caracteres"),
     originCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
     originReference: z.string().min(2, "Min 2 caracteres").max(25, "Max 25 caracteres"),
     destCompany: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres").optional(),
-    destFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (limite del transportador)"),
-    destLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (limite del transportador)"),
-    destEmail: z.string().email("Email invalido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
-    destPhone: z.string().length(10, "Debe tener 10 digitos"),
+    destFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
+    destLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres (l\u00edmite del transportador)"),
+    destEmail: z.string().email("Email inv\u00e1lido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
+    destPhone: z.string().length(10, "Debe tener 10 d\u00edgitos"),
     destSuburb: z.string().max(30, "Max 30 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
     destCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
     destReference: z.string().max(25, "Max 25 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
@@ -968,7 +968,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', maxHeight: '90vh' }}>
                 {loading && currentStep === 4 && (
                     <BrandLoaderOverlay
-                        title="Generando tu guia..."
+                        title="Generando tu gu\u00eda..."
                         subtitle="Estamos confirmando con la transportadora. No cierres esta ventana ni vuelvas a generar."
                     />
                 )}
@@ -1233,7 +1233,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-3 gap-2 mt-3">
                                             <Input
                                                 compact
-                                                label="Descripcion *"
+                                                label="Descripci\u00f3n *"
                                                 {...step1Form.register("description")}
                                                 error={step1Form.formState.errors.description?.message}
                                                 placeholder="descripcion"
@@ -1261,7 +1261,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     {...step1Form.register("insurance")}
                                                     className="shipment-checkbox"
                                                 />
-                                                <span className="text-sm text-gray-700 dark:text-gray-300">Asegurar envio</span>
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">Asegurar {'env\u00edo'}</span>
                                             </label>
                                             {(step1Form.watch("codValue") ?? 0) > 0 && (
                                                 <>
@@ -1271,10 +1271,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             {...step1Form.register("includeGuideCost")}
                                                             className="shipment-checkbox"
                                                         />
-                                                        <span className="text-sm text-gray-700 dark:text-gray-300">Incluir costo guia en contra entrega</span>
+                                                        <span className="text-sm text-gray-700 dark:text-gray-300">Incluir costo {'gu\u00eda'} en contra entrega</span>
                                                     </label>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-gray-700 dark:text-gray-300">Metodo pago:</span>
+                                                        <span className="text-sm text-gray-700 dark:text-gray-300">{'M\u00e9todo'} pago:</span>
                                                         <select
                                                             {...step1Form.register("codPaymentMethod")}
                                                             className="shipment-input px-2 py-1 text-sm"
@@ -1386,7 +1386,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <div className="flex flex-col items-center justify-center gap-2 py-10 text-amber-600">
                                                 <span className="text-sm font-medium">
                                                     {(step1Data?.codValue ?? 0) > 0
-                                                        ? "No hay transportadoras disponibles con opcion contra entrega para esta ruta"
+                                                        ? "No hay transportadoras disponibles con opci\u00f3n contra entrega para esta ruta"
                                                         : "No se encontraron cotizaciones para esta ruta"}
                                                 </span>
                                             </div>
@@ -1664,11 +1664,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <h3 className="shipment-section-origin-label text-sm">Remitente (Origen)</h3>
                                         </div>
 
-                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">Direccion</p>
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">{'Direcci\u00f3n'}</p>
                                         <div className="grid grid-cols-3 gap-1.5">
                                             <Input compact label="Calle *" {...step3Form.register("originCrossStreet")} error={step3Form.formState.errors.originCrossStreet?.message} placeholder="calle 75 sur n 42-97" />
                                             <Input compact label="Edificio/Apto *" {...step3Form.register("originReference")} error={step3Form.formState.errors.originReference?.message} placeholder="apt 801" />
-                                            <Input compact label="Barrio *" {...step3Form.register("originSuburb")} error={step3Form.formState.errors.originSuburb?.message} placeholder="sector Aves Maria" />
+                                            <Input compact label="Barrio *" {...step3Form.register("originSuburb")} error={step3Form.formState.errors.originSuburb?.message} placeholder="sector Aves Mar\u00eda" />
                                         </div>
 
                                         <Input compact label="Empresa" {...step3Form.register("originCompany")} error={step3Form.formState.errors.originCompany?.message} placeholder="ProbabilityIA" className="mt-1.5" />
@@ -1677,7 +1677,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-2 gap-1.5">
                                             <Input compact label="Nombre *" {...step3Form.register("originFirstName")} error={step3Form.formState.errors.originFirstName?.message} placeholder="Luisa" />
                                             <Input compact label="Apellido *" {...step3Form.register("originLastName")} error={step3Form.formState.errors.originLastName?.message} placeholder="Munoz" />
-                                            <Input compact label="Telefono *" {...step3Form.register("originPhone")} error={step3Form.formState.errors.originPhone?.message} placeholder="3224098631" />
+                                            <Input compact label="Tel\u00e9fono *" {...step3Form.register("originPhone")} error={step3Form.formState.errors.originPhone?.message} placeholder="3224098631" />
                                             <Input compact label="Correo *" type="email" {...step3Form.register("originEmail")} error={step3Form.formState.errors.originEmail?.message} placeholder="correo@ejemplo.com" />
                                         </div>
                                     </div>
@@ -1690,7 +1690,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <h3 className="shipment-section-destination-label text-sm">Destinatario (Destino)</h3>
                                         </div>
 
-                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">Direccion</p>
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">{'Direcci\u00f3n'}</p>
                                         <div className="grid grid-cols-3 gap-1.5">
                                             <Input compact label="Calle *" {...step3Form.register("destCrossStreet")} error={step3Form.formState.errors.destCrossStreet?.message} placeholder="calle 75 sur n 42-97" />
                                             <Input compact label="Edificio/Apto" {...step3Form.register("destReference")} error={step3Form.formState.errors.destReference?.message} placeholder="casa #" />
@@ -1703,7 +1703,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-2 gap-1.5">
                                             <Input compact label="Nombre *" {...step3Form.register("destFirstName")} error={step3Form.formState.errors.destFirstName?.message} placeholder="Luisa" />
                                             <Input compact label="Apellido *" {...step3Form.register("destLastName")} error={step3Form.formState.errors.destLastName?.message} placeholder="Munoz" />
-                                            <Input compact label="Telefono *" {...step3Form.register("destPhone")} error={step3Form.formState.errors.destPhone?.message} placeholder="3224098631" />
+                                            <Input compact label="Tel\u00e9fono *" {...step3Form.register("destPhone")} error={step3Form.formState.errors.destPhone?.message} placeholder="3224098631" />
                                             <Input compact label="Correo *" type="email" {...step3Form.register("destEmail")} error={step3Form.formState.errors.destEmail?.message} placeholder="correo@ejemplo.com" />
                                         </div>
                                     </div>
@@ -1712,12 +1712,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 <div className="border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50/60 dark:bg-gray-700/30 p-4">
                                     <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-2">Opciones adicionales</p>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <Input compact label="Mi referencia de envio" {...step3Form.register("myShipmentReference")} error={step3Form.formState.errors.myShipmentReference?.message} placeholder="Orden 5649" />
-                                        <Input compact label="Numero de orden externo" {...step3Form.register("external_order_id")} error={step3Form.formState.errors.external_order_id?.message} placeholder="ORD345678" />
+                                        <Input compact label="Mi referencia de env\u00edo" {...step3Form.register("myShipmentReference")} error={step3Form.formState.errors.myShipmentReference?.message} placeholder="Orden 5649" />
+                                        <Input compact label="N\u00famero de orden externo" {...step3Form.register("external_order_id")} error={step3Form.formState.errors.external_order_id?.message} placeholder="ORD345678" />
                                     </div>
                                     <label className="flex items-center space-x-2 mt-2">
                                         <input type="checkbox" {...step3Form.register("requestPickup")} className="rounded w-5 h-5" />
-                                        <span className="text-sm font-medium">Solicitar recoleccion</span>
+                                        <span className="text-sm font-medium">Solicitar {'recolecci\u00f3n'}</span>
                                     </label>
                                 </div>
                             </div>

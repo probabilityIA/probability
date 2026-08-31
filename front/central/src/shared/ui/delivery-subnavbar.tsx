@@ -8,6 +8,7 @@ import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useDeliveryBusiness } from '@/shared/contexts/delivery-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const DeliverySubNavbar = memo(function DeliverySubNavbar() {
     const pathname = usePathname();
@@ -29,7 +30,7 @@ export const DeliverySubNavbar = memo(function DeliverySubNavbar() {
     const menuItems = [
         { href: '/delivery/routes', label: 'Rutas', icon: '🗺️' },
         { href: '/delivery/drivers', label: 'Conductores', icon: '🧑‍✈️' },
-        { href: '/delivery/vehicles', label: 'Vehiculos', icon: '🚛' },
+        { href: '/delivery/vehicles', label: 'Vehículos', icon: '🚛' },
         { href: '/delivery/geozones', label: 'Geozonas', icon: '📍' },
     ];
 
@@ -55,6 +56,7 @@ export const DeliverySubNavbar = memo(function DeliverySubNavbar() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                         <MyIntegrationsButton businessId={selectedBusinessId} />
+                        <TourLauncher />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}

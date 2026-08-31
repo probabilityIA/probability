@@ -8,6 +8,7 @@ import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useNotificationBusiness } from '@/shared/contexts/notification-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
     const pathname = usePathname();
@@ -67,6 +68,7 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                         <MyIntegrationsButton businessId={selectedBusinessId} />
+                        <TourLauncher />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}

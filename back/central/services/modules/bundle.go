@@ -41,6 +41,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/storefront"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions"
 	"github.com/secamc93/probability/back/central/services/modules/tickets"
+	"github.com/secamc93/probability/back/central/services/modules/tours"
 	"github.com/secamc93/probability/back/central/services/modules/vehicles"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/services/modules/websiteconfig"
@@ -102,6 +103,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "invoicing"))
 	warehouses.New(router, database)
 	legal.New(router, database, logger)
+	tours.New(router, database, logger)
 	shippingconfig.New(router, database)
 	commercial.New(router, database, logger)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "inventory"))

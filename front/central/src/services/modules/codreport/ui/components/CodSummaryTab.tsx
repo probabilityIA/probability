@@ -15,7 +15,7 @@ const CARD = 'bg-white dark:bg-gray-800 border border-[#ececf0] dark:border-gray
 const DONUT_COLORS = ['#7c3aed', '#0891b2', '#e11d48', '#ea580c', '#16a34a', '#0ea5e9', '#db2777', '#f59e0b', '#4f46e5', '#14b8a6'];
 
 const BUCKETS: { key: string; label: string; word: string }[] = [
-    { key: 'day', label: 'Dias', word: 'dia' },
+    { key: 'day', label: 'Días', word: 'dia' },
     { key: 'week', label: 'Semanas', word: 'semana' },
     { key: 'month', label: 'Meses', word: 'mes' },
     { key: 'quarter', label: 'Trimestres', word: 'trimestre' },
@@ -145,7 +145,7 @@ export default function CodSummaryTab({ filters }: Props) {
                 <div className={`${CARD} p-5 min-w-0`}>
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div>
-                            <div className="text-[14px] font-bold text-gray-900 dark:text-white">Historico de recaudo</div>
+                            <div className="text-[14px] font-bold text-gray-900 dark:text-white">Histórico de recaudo</div>
                             <div className="text-[12px] text-gray-400 font-medium">Total COD por {bucketWord}</div>
                         </div>
                         <div className="flex items-center gap-3 flex-wrap">
@@ -189,7 +189,7 @@ export default function CodSummaryTab({ filters }: Props) {
 
                 <div className={`${CARD} p-5`}>
                     <div className="text-[14px] font-bold text-gray-900 dark:text-white">Recaudo por transportadora</div>
-                    <div className="text-[12px] text-gray-400 font-medium mb-4">Participacion sobre total COD</div>
+                    <div className="text-[12px] text-gray-400 font-medium mb-4">Participación sobre total COD</div>
                     {donutTotal === 0 ? (
                         <div className="py-10 text-center text-gray-400 text-sm">Sin movimientos en el periodo.</div>
                     ) : (

@@ -37,14 +37,14 @@ export default function OrdersPage() {
                     icon={<PlusIcon className="w-4 h-4" />}
                 />
                 <IconActionButton
-                    label="Carga masiva de ordenes"
+                    label="Carga masiva de órdenes"
                     variant="tertiary"
                     tooltipAlign="right"
                     onClick={() => setShowMassUploadModal(true)}
                     icon={<ArrowUpTrayIcon className="w-4 h-4" />}
                 />
                 <IconActionButton
-                    label="Generacion masiva de guias"
+                    label="Generación masiva de guías"
                     variant="tertiary"
                     tooltipAlign="right"
                     onClick={() => setShowMassGuideModal(true)}

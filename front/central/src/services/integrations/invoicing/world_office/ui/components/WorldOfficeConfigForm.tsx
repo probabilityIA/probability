@@ -90,7 +90,7 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
             if (result.success) {
                 showToast('Conexion exitosa con World Office', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con World Office');
@@ -105,7 +105,7 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -133,10 +133,10 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
                 showToast('Integracion World Office creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de World Office');
+            setErrorModal(err.message || 'Error al crear la integración de World Office');
         } finally {
             setLoading(false);
         }
@@ -176,13 +176,13 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: World Office Facturacion Principal"
+                        placeholder="Ej: World Office Facturación Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -217,7 +217,7 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecerá esta integración</span>
                         </p>
                     </div>
                 )}
@@ -262,7 +262,7 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
                         <SecretInput
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            placeholder="Contrasena de World Office"
+                            placeholder="Contraseña de World Office"
                             required
                             className="bg-white dark:bg-gray-800 text-sm"
                         />
@@ -277,7 +277,7 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
                         type="text"
                         value={formData.company_code}
                         onChange={(e) => setFormData({ ...formData, company_code: e.target.value })}
-                        placeholder="Codigo de empresa en World Office"
+                        placeholder="Código de empresa en World Office"
                         required
                         autoComplete="off"
                         data-1p-ignore
@@ -303,7 +303,7 @@ export function WorldOfficeConfigForm({ onSuccess, onCancel }: WorldOfficeConfig
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de produccion de World Office.</span>
+                        <span>Dejar vacío para usar la URL de producción de World Office.</span>
                     </p>
                 </div>
 

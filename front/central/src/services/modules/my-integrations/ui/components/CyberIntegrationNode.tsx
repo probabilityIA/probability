@@ -63,7 +63,7 @@ export function CyberIntegrationNode({ integration, color, onToggle, onEdit, tog
                 <button
                     onClick={() => onEdit(integration)}
                     disabled={isEditing}
-                    title="Configurar integracion"
+                    title="Configurar integración"
                     className={`flex-shrink-0 rounded-lg border border-indigo-200 bg-indigo-50 p-1.5 text-indigo-600 shadow-sm transition-all hover:scale-105 hover:bg-indigo-100 hover:shadow dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 ${isEditing ? 'cursor-wait opacity-60' : ''}`}
                 >
                     {isEditing ? (

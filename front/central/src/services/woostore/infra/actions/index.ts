@@ -7,7 +7,7 @@ import { WooStoreState } from '@/services/woostore/domain/types';
 async function call(path: string, method: 'GET' | 'POST'): Promise<WooStoreState> {
     const token = (await cookies()).get('session_token')?.value;
     if (!token) {
-        return { error: 'No hay sesion activa' };
+        return { error: 'No hay sesión activa' };
     }
     try {
         const res = await fetch(`${env.API_BASE_URL}/woo-store${path}`, {

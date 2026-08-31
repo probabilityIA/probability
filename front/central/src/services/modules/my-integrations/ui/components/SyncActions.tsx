@@ -22,25 +22,25 @@ const ACTIONS: EnvironmentAction[] = [
         key: 'data',
         label: 'Actualizar productos',
         icon: ArrowDownToLine,
-        hint: 'Que dato del canal (nombre, imagen, categoria) puede entrar a Probability',
+        hint: 'Que dato del canal (nombre, imagen, categoría) puede entrar a Probability',
     },
     {
         key: 'inventory',
         label: 'Sincronizar inventario',
         icon: RefreshCw,
-        hint: 'Cuanto stock tiene cada canal y cual quedaria distinto al de Probability',
+        hint: 'Cuanto stock tiene cada canal y cual quedaría distinto al de Probability',
     },
     {
         key: 'orders_compare',
-        label: 'Comparar ordenes',
+        label: 'Comparar órdenes',
         icon: ClipboardList,
-        hint: 'Que orden existe en el canal y no en Probability, y crearla aca',
+        hint: 'Que orden existe en el canal y no en Probability, y crearla acá',
     },
     {
         key: 'invoicing',
         label: 'Facturar',
         icon: ReceiptText,
-        hint: 'Facturacion desde el hub: proximamente',
+        hint: 'Facturación desde el hub: próximamente',
         disabled: true,
     },
 ];
@@ -50,7 +50,7 @@ const VIEWS: { key: HubView; label: string; icon: LucideIcon; hint: string }[] =
         key: 'diagrama',
         label: 'Diagrama',
         icon: Share2,
-        hint: 'Ver tus canales conectados al nucleo, con el resumen de cada uno',
+        hint: 'Ver tus canales conectados al núcleo, con el resumen de cada uno',
     },
     {
         key: 'informe',
@@ -91,7 +91,7 @@ export function SyncActions() {
             <button
                 onClick={() => { reset(); setEnvironment(null); }}
                 disabled={running}
-                title="Resumen de ordenes: cuantas entraron por cada canal y como van"
+                title="Resumen de órdenes: cuántas entraron por cada canal y como van"
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                     environment === null
                         ? 'border-white bg-white text-[#0d5c80] shadow-sm'

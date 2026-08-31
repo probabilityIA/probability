@@ -11,7 +11,7 @@ export function useProspectsStats() {
   const refetch = useCallback(() => {
     getProspectsStatsAction()
       .then((res) => setStats(res.data))
-      .catch((error) => console.error('Error al cargar estadisticas de prospectos:', error));
+      .catch((error) => console.error('Error al cargar estadísticas de prospectos:', error));
   }, []);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export function useProspectsStats() {
         if (!cancelled) setStats(res.data);
       })
       .catch((error) => {
-        console.error('Error al cargar estadisticas de prospectos:', error);
+        console.error('Error al cargar estadísticas de prospectos:', error);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

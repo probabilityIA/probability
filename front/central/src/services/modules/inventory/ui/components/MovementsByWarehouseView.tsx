@@ -55,7 +55,7 @@ export default function MovementsByWarehouseView({ businessId }: Props) {
                     <thead>
                         <tr>
                             <th className="text-left">Bodega</th>
-                            <th className="text-left">Codigo</th>
+                            <th className="text-left">Código</th>
                             <th className="text-left">Ciudad</th>
                             <th className="text-center">Movimientos</th>
                             <th className="text-center w-12"></th>

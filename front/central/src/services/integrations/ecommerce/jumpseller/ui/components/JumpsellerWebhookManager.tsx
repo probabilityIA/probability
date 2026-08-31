@@ -66,7 +66,7 @@ export function JumpsellerWebhookManager({ integrationId }: JumpsellerWebhookMan
             setError(result.message);
             showToast(result.message, 'error');
         } else {
-            showToast(result.message || 'Webhooks de ordenes creados', 'success');
+            showToast(result.message || 'Webhooks de órdenes creados', 'success');
             await fetchWebhooks();
         }
         setCreating(false);

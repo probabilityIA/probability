@@ -30,7 +30,7 @@ const COLOR_ROLES: Array<{ key: string; label: string }> = [
     { key: 'secondary', label: 'Botones y enlaces' },
     { key: 'tertiary', label: 'Acento' },
     { key: 'quaternary', label: 'Detalle' },
-    { key: 'background', label: 'Fondo de la pagina' },
+    { key: 'background', label: 'Fondo de la página' },
 ];
 
 interface ThemeEditorProps {
@@ -143,7 +143,7 @@ export function ThemeEditor({ theme, fallback, onChange, businessId, onImageDele
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-3">
                 <ImageField
-                    label="Imagen de fondo de la pagina"
+                    label="Imagen de fondo de la página"
                     value={theme?.background_image || ''}
                     onChange={(v) => patch({ background_image: v })}
                     businessId={businessId}
@@ -163,7 +163,7 @@ export function ThemeEditor({ theme, fallback, onChange, businessId, onImageDele
                             onChange={(e) => patch({ background_overlay: Number(e.target.value) })}
                             className="w-full"
                         />
-                        <p className="text-xs text-gray-400">0% muestra la imagen pura; mas alto la funde con el color de fondo.</p>
+                        <p className="text-xs text-gray-400">0% muestra la imagen pura; más alto la funde con el color de fondo.</p>
                     </div>
                 )}
             </div>

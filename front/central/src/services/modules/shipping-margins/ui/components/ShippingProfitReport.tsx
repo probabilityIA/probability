@@ -135,7 +135,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                         ['today', 'Hoy'],
                         ['week', 'Semana'],
                         ['month', 'Mes'],
-                        ['3months', 'Ultimos 3 meses'],
+                        ['3months', 'Últimos 3 meses'],
                         ['custom', 'Personalizado'],
                     ] as [PresetKey, string][]).map(([k, label]) => (
                         <button
@@ -183,7 +183,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
 
             {totalRow && (
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <SummaryCard label="Guias generadas" value={String(totalRow.shipments)} accent="text-gray-900 dark:text-white" />
+                    <SummaryCard label="Guías generadas" value={String(totalRow.shipments)} accent="text-gray-900 dark:text-white" />
                     <SummaryCard label="Cobrado al cliente" value={fmt(totalRow.customer_charge_total)} accent="text-blue-700 dark:text-blue-300" />
                     <SummaryCard label="Costo real carrier" value={fmt(totalRow.carrier_cost_total)} accent="text-orange-700 dark:text-orange-300" />
                     <SummaryCard label="Ganancia" value={fmt(totalRow.profit_total)} accent="text-emerald-700 dark:text-emerald-300" />
@@ -211,7 +211,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                     <thead className="bg-gray-100 dark:bg-gray-700">
                         <tr>
                             <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Transportadora</th>
-                            <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guias</th>
+                            <th className="text-center px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guías</th>
                             <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Cobrado al cliente</th>
                             <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Costo real carrier</th>
                             <th className="text-right px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-300">Ganancia</th>
@@ -238,7 +238,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={5} className="text-center py-10 text-gray-400">Sin guias generadas en el rango seleccionado</td>
+                                <td colSpan={5} className="text-center py-10 text-gray-400">Sin guías generadas en el rango seleccionado</td>
                             </tr>
                         )}
                     </tbody>
@@ -265,7 +265,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                                 <tr>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Fecha</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Orden</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guia</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guía</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Transportadora</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Tipo</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Estado</th>
@@ -290,7 +290,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                                                         ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                                                         : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                                                 }`}>
-                                                    {r.service_type === 'cod' ? 'COD' : 'Guia'}
+                                                    {r.service_type === 'cod' ? 'COD' : 'Guía'}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.status}</td>
@@ -300,7 +300,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr><td colSpan={9} className="text-center py-10 text-gray-400">Sin guias en el rango</td></tr>
+                                    <tr><td colSpan={9} className="text-center py-10 text-gray-400">Sin guías en el rango</td></tr>
                                 )}
                             </tbody>
                         </table>

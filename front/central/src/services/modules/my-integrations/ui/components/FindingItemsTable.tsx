@@ -38,7 +38,7 @@ const CRUZADOS: Record<string, { esta: string; estaNota?: string; falta: string;
 const PATRON: Record<string, string> = {
     spacing: 'Sobra un espacio',
     transposed: 'Letras trocadas',
-    one_char: 'Un caracter distinto',
+    one_char: 'Un carácter distinto',
 };
 
 function unidades(value?: number) {
@@ -296,7 +296,7 @@ export function FindingItemsTable({ code, detail, businessId, total, channels, c
 
                 {!loading && items.length === 0 && (
                     <p className="px-2 py-6 text-center text-[11.5px] italic text-gray-400">
-                        {term ? `Sin resultados para "${term}"` : 'Sin productos en esta categoria'}
+                        {term ? `Sin resultados para "${term}"` : 'Sin productos en esta categoría'}
                     </p>
                 )}
 

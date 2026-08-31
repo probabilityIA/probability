@@ -112,7 +112,7 @@ export default function WarehouseDetailPage() {
     if (requiresBusinessSelection) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-6 py-8">
-                <Alert type="info">Selecciona un negocio para ver la jerarquia.</Alert>
+                <Alert type="info">Selecciona un negocio para ver la jerarquía.</Alert>
             </div>
         );
     }
@@ -177,7 +177,7 @@ export default function WarehouseDetailPage() {
 
                 <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
                     {([
-                        { key: 'tree', label: 'Jerarquia fisica' },
+                        { key: 'tree', label: 'Jerarquía física' },
                         { key: 'layout', label: 'Plano 2D' },
                     ] as const).map((t) => (
                         <button
@@ -192,7 +192,7 @@ export default function WarehouseDetailPage() {
 
                 {view === 'tree' ? (
                     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Jerarquia fisica</h2>
+                        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Jerarquía física</h2>
                         <WarehouseHierarchyTree
                             zones={tree?.zones || []}
                             onCreateChild={handleCreateChild}
@@ -224,7 +224,7 @@ export default function WarehouseDetailPage() {
                     onClose={() => setConfirm(null)}
                     onConfirm={confirmDelete}
                     title={`Eliminar ${confirm.label}`}
-                    message={`Esta accion es irreversible. Eliminar ${confirm.label} tambien eliminara todos sus hijos.`}
+                    message={`Esta acción es irreversible. Eliminar ${confirm.label} también eliminara todos sus hijos.`}
                     confirmText="Eliminar"
                     type="danger"
                 />

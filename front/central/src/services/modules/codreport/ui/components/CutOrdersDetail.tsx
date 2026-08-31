@@ -48,7 +48,7 @@ export function CutOrdersDetail({ cutId, periodStart, periodEnd, businessId }: P
         req.then(res => {
             if (cancelled) return;
             if (res.success) setOrders((res.data || []) as CodOrder[]);
-            else setError((res as any).message || 'Error al cargar las ordenes del corte');
+            else setError((res as any).message || 'Error al cargar las órdenes del corte');
             setLoading(false);
         });
         return () => { cancelled = true; };

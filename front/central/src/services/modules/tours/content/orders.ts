@@ -1,0 +1,65 @@
+import type { TourDefinition } from '../domain/types';
+
+export const ordersTour: TourDefinition = {
+    key: 'orders',
+    version: 1,
+    title: 'Ordenes',
+    routes: ['/orders'],
+    resource: 'Ordenes',
+    autoStart: true,
+    steps: [
+        {
+            id: 'welcome',
+            title: 'Bienvenido al módulo de Órdenes',
+            body: 'Este tutorial te guía por las funciones principales. Puedes navegar con las flechas o cerrar con la X en cualquier momento.',
+        },
+        {
+            id: 'menu',
+            title: 'Menú del módulo',
+            body: 'Estas cuatro pestanas son el flujo completo de una venta: la orden, su envío, el recaudo si es contra entrega, y las cotizaciones de tarifa.',
+            target: 'a[href="/shipments"]',
+            placement: 'bottom',
+            optional: true,
+        },
+        {
+            id: 'filters',
+            title: 'Filtros de búsqueda',
+            body: 'Filtra por estado, número de orden, canal, transportadora o fecha. Los filtros se acumulan y quedan en la URL, así que puedes compartir la vista.',
+            target: '#orders-filters-slot',
+            placement: 'bottom',
+            optional: true,
+        },
+        {
+            id: 'create',
+            title: 'Nueva orden',
+            body: 'Crea una orden manual: cliente, dirección, productos y forma de pago. Sirve para ventas por teléfono o WhatsApp que no entran por un canal.',
+            target: '[aria-label="Nueva orden"]',
+            placement: 'left',
+            optional: true,
+        },
+        {
+            id: 'mass-upload',
+            title: 'Carga masiva',
+            body: 'Sube muchas órdenes de una con un Excel. Útil para migrar o para días de alto volumen.',
+            target: '[aria-label="Carga masiva de órdenes"]',
+            placement: 'left',
+            optional: true,
+        },
+        {
+            id: 'mass-guides',
+            title: 'Generación masiva de guías',
+            body: 'Selecciona varias órdenes y genera todas sus guías en un solo paso, en vez de una por una.\n\nOjo: cada guía descuenta de tu billetera y le programa recolección real a la transportadora.',
+            target: '[aria-label="Generación masiva de guías"]',
+            placement: 'left',
+            optional: true,
+        },
+        {
+            id: 'table',
+            title: 'Tabla de órdenes',
+            body: 'Aquí se listan las órdenes que coinciden con tus filtros. En cada fila tienes las acciones: ver, editar, cambiar estado, ver guía y la recomendación de transportadora.',
+            target: 'table',
+            placement: 'top',
+            optional: true,
+        },
+    ],
+};

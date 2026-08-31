@@ -33,7 +33,7 @@ export default function TicketForm({ isSuperAdmin, selectedBusinessId, onSubmit,
         e.preventDefault();
         setError(null);
         if (!title.trim() || !description.trim()) {
-            setError('Titulo y descripcion son obligatorios');
+            setError('Título y descripción son obligatorios');
             return;
         }
         try {
@@ -55,12 +55,12 @@ export default function TicketForm({ isSuperAdmin, selectedBusinessId, onSubmit,
     return (
         <form onSubmit={submit} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Titulo *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Título *</label>
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Resumen breve" />
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Descripcion *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Descripción *</label>
                 <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -98,8 +98,8 @@ export default function TicketForm({ isSuperAdmin, selectedBusinessId, onSubmit,
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Categoria</label>
-                    <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ej: envios, facturacion, frontend" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Categoría</label>
+                    <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ej: envíos, facturación, frontend" />
                 </div>
 
                 <div>

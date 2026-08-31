@@ -6,6 +6,10 @@
 #   ./scripts/local-db-clone.sh 26         # explicito
 #   ./scripts/local-db-clone.sh --check    # solo verifica requisitos
 #
+# Ademas del personal del business, SIEMPRE trae los usuarios de scope platform
+# (super admins) con sus user_roles: sin ellos no se puede entrar a local como
+# super admin y no se pueden probar los flujos que piden business_id por query.
+#
 # Requiere el tunel SSM arriba: ./scripts/aws-tunnel.sh ensure
 
 set -e
@@ -84,7 +88,8 @@ declare -A CHILD_FILTER=(
   [ticket_status_history]="ticket_id IN (SELECT id FROM tickets WHERE business_id=$BUSINESS_ID)"
   [payment_sync_log]="payment_transaction_id IN (SELECT id FROM payment_transaction WHERE business_id=$BUSINESS_ID)"
   [business]="id=$BUSINESS_ID"
-  ["user"]="id IN (SELECT user_id FROM business_staff WHERE business_id=$BUSINESS_ID)"
+  ["user"]="id IN (SELECT user_id FROM business_staff WHERE business_id=$BUSINESS_ID) OR scope_id IN (SELECT id FROM scope WHERE code='platform')"
+  [user_roles]="user_id IN (SELECT user_id FROM business_staff WHERE business_id=$BUSINESS_ID) OR user_id IN (SELECT id FROM \"user\" WHERE scope_id IN (SELECT id FROM scope WHERE code='platform'))"
 )
 
 # Datos de otros negocios o ruido que no aporta en local

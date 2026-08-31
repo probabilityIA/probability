@@ -8,10 +8,10 @@ import type { ProductChannel, ProductDetail, ProductFieldOrigin } from '../../do
 
 const ETIQUETA_CAMPO: Record<string, string> = {
     name: 'Nombre',
-    description: 'Descripcion',
+    description: 'Descripción',
     barcode: 'Codigo de barras',
     brand: 'Marca',
-    category: 'Categoria',
+    category: 'Categoría',
     price: 'Precio',
     cost_price: 'Costo',
     image_url: 'Imagen',
@@ -185,7 +185,7 @@ function CanalCard({ channel, ownSKU }: { channel: ProductChannel; ownSKU: strin
 
 function OrigenFila({ origin }: { origin: ProductFieldOrigin }) {
     const quien = origin.source === 'manual'
-        ? origin.user_name || 'edicion manual'
+        ? origin.user_name || 'edición manual'
         : origin.integration_name || 'un canal';
     const tono = origin.source === 'manual'
         ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
@@ -363,7 +363,7 @@ export function ProductDetailModal({ productId, businessId, onClose }: ProductDe
                                 )}
                             </Seccion>
 
-                            <Seccion title="Ultimos movimientos" count={detail.movements.length}>
+                            <Seccion title="Últimos movimientos" count={detail.movements.length}>
                                 {detail.movements.length === 0 ? (
                                     <p className="rounded-xl border px-3 py-6 text-center text-[12px] italic text-gray-400" style={{ borderColor: CARD_BORDER }}>
                                         Sin movimientos de inventario
@@ -378,7 +378,7 @@ export function ProductDetailModal({ productId, businessId, onClose }: ProductDe
                                                     <th className="px-3 py-2">Origen</th>
                                                     <th className="px-3 py-2 text-right">Cantidad</th>
                                                     <th className="px-3 py-2 text-right">Antes</th>
-                                                    <th className="px-3 py-2 text-right">Despues</th>
+                                                    <th className="px-3 py-2 text-right">Después</th>
                                                 </tr>
                                             </thead>
                                             <tbody>

@@ -158,14 +158,14 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
                 {!enProductos && (
                     <p className="min-w-0 flex-1 text-[12px] text-gray-500 dark:text-gray-400">
                         {enOrdenes
-                            ? 'Cuantas ordenes entraron por cada origen y en que estado van.'
+                            ? 'Cuántas órdenes entraron por cada origen y en que estado van.'
                             : environment === 'data'
                                 ? 'Compara el dato de cada canal contra Probability y decide que traer.'
                                 : environment === 'inventory'
                                     ? 'Compara el stock de cada canal contra Probability antes de enviarlo.'
                                     : environment === 'orders_compare'
-                                        ? 'Cruza las ordenes del canal contra las de Probability y crea aca las que faltan.'
-                                        : 'Facturacion desde el hub: proximamente.'}
+                                        ? 'Cruza las órdenes del canal contra las de Probability y crea acá las que faltan.'
+                                        : 'Facturación desde el hub: próximamente.'}
                     </p>
                 )}
 

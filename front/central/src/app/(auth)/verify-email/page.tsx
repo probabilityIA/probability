@@ -18,17 +18,17 @@ function VerifyEmailContent() {
 
     if (!token) {
       setStatus('error');
-      setMessage('El enlace es invalido o esta incompleto.');
+      setMessage('El enlace es inválido o esta incompleto.');
       return;
     }
     (async () => {
       const result = await verifyEmailAction(token);
       if (result.success) {
         setStatus('success');
-        setMessage(result.message || 'Cuenta verificada. Ya puedes iniciar sesion.');
+        setMessage(result.message || 'Cuenta verificada. Ya puedes iniciar sesión.');
       } else {
         setStatus('error');
-        setMessage(result.error || 'El enlace es invalido o ha expirado.');
+        setMessage(result.error || 'El enlace es inválido o ha expirado.');
       }
     })();
   }, [token]);
@@ -36,7 +36,7 @@ function VerifyEmailContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Verificacion de cuenta</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Verificación de cuenta</h1>
 
         {status === 'loading' && (
           <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">Verificando tu cuenta...</p>

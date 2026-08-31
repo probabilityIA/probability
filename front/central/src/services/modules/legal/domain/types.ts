@@ -5,6 +5,7 @@ export interface LegalDocument {
     title: string;
     file_url: string;
     sha256: string;
+    content_html: string;
     effective_from: string;
 }
 

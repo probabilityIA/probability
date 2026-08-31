@@ -35,7 +35,7 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
 
     return (
         <div className="w-[34rem] max-w-[88vw] p-2">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">Seleccionar Categoria</h2>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">Seleccionar Categoría</h2>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
                 Elige el tipo de integracion que deseas configurar
             </p>

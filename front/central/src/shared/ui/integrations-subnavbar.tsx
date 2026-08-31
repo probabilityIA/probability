@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useIntegrationsBusiness } from '@/shared/contexts/integrations-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const IntegrationsSubNavbar = memo(function IntegrationsSubNavbar() {
     const pathname = usePathname();
@@ -19,6 +20,7 @@ export const IntegrationsSubNavbar = memo(function IntegrationsSubNavbar() {
         <div className="subnav-surface border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
             <div className="px-4 sm:px-6 lg:px-8 py-2">
                 <div className="flex items-center justify-end gap-2">
+                    <TourLauncher />
                     <SuperAdminBusinessSelector
                         value={selectedBusinessId}
                         onChange={setSelectedBusinessId}

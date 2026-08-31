@@ -27,11 +27,11 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
     e.preventDefault();
     setError('');
     if (password.length < 6) {
-      setError('La contrasena debe tener al menos 6 caracteres');
+      setError('La contraseña debe tener al menos 6 caracteres');
       return;
     }
     if (channel === 'whatsapp' && phone.trim().length < 7) {
-      setError('Ingresa un telefono valido para verificar por WhatsApp');
+      setError('Ingresa un teléfono valido para verificar por WhatsApp');
       return;
     }
     setLoading(true);
@@ -121,7 +121,7 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Juan Perez"
+                placeholder="Juan Pérez"
                 className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
@@ -137,7 +137,7 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo electronico</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo electrónico</label>
               <input
                 type="email"
                 required
@@ -148,20 +148,20 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contrasena</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
               <div className="relative mt-1">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimo 6 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 pr-10 text-gray-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 >
                   {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -173,13 +173,13 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Como quieres verificar tu cuenta</label>
               <div className="flex gap-2">
                 {channelBtn('email', 'Correo', 'Enlace por email')}
-                {channelBtn('whatsapp', 'WhatsApp', 'Codigo al celular')}
+                {channelBtn('whatsapp', 'WhatsApp', 'Código al celular')}
               </div>
             </div>
 
             {channel === 'whatsapp' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefono (WhatsApp)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono (WhatsApp)</label>
                 <input
                   type="tel"
                   inputMode="tel"

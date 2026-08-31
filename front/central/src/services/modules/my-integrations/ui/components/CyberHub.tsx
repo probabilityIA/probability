@@ -81,9 +81,9 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
     const statusText = mode === 'inventory'
         ? 'Enviando stock a los canales...'
         : mode === 'products'
-            ? 'Recibiendo catalogos de los canales...'
+            ? 'Recibiendo catálogos de los canales...'
             : finished
-                ? 'Sincronizacion completada'
+                ? 'Sincronización completada'
                 : '';
     const vaAlInforme = environment === 'inventory' || environment === 'data' || environment === 'orders_compare';
     const etiquetaBoton = environment === 'orders_compare'
@@ -241,13 +241,13 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                             disabled={running || (!vaAlInforme && !onSyncClick && !canRun)}
                             title={
                                 environment === 'products'
-                                    ? 'Iniciar comparacion de productos'
+                                    ? 'Iniciar comparación de productos'
                                     : environment === 'inventory'
                                         ? 'Comparar el stock de cada canal contra Probability'
                                         : environment === 'data'
                                             ? 'Ver que dato puede entrar a Probability desde cada canal'
                                             : environment === 'orders_compare'
-                                                ? 'Cruzar las ordenes del canal contra las de Probability'
+                                                ? 'Cruzar las órdenes del canal contra las de Probability'
                                                 : 'Elige arriba que quieres sincronizar'
                             }
                             className="mt-1 flex h-9 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50/70 px-6 text-[12.5px] font-bold uppercase tracking-[0.12em] text-cyan-600 transition-all hover:scale-105 hover:bg-cyan-100 hover:shadow-[0_0_16px_rgba(34,211,238,0.55)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none dark:border-cyan-500/40 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"

@@ -83,7 +83,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
 
     const columns = [
         { key: 'product', label: 'Producto' },
-        { key: 'nivel', label: 'Nivel / Ubicacion' },
+        { key: 'nivel', label: 'Nivel / Ubicación' },
         { key: 'quantity', label: 'Cantidad', align: 'center' as const },
         { key: 'reserved', label: 'Reservado', align: 'center' as const },
         { key: 'available', label: 'Disponible', align: 'center' as const },

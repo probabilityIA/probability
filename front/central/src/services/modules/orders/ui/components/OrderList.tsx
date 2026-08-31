@@ -176,7 +176,7 @@ const OrderRow = memo(({
                     {order.channel_pack_id && (
                         <span
                             className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-yellow-100 text-yellow-800 border border-yellow-300 uppercase tracking-widest"
-                            title={`Carrito de MercadoLibre: agrupa varias ordenes del canal en un solo envio (pack ${order.channel_pack_id})`}
+                            title={`Carrito de MercadoLibre: agrupa varias \u00f3rdenes del canal en un solo env\u00edo (pack ${order.channel_pack_id})`}
                         >
                             PACK
                         </span>
@@ -204,7 +204,7 @@ const OrderRow = memo(({
                 {order.free_shipping && (
                     <span
                         className="mb-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-px text-[9px] font-bold uppercase leading-tight tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                        title="El canal no le cobro el envio al cliente"
+                        title="El canal no le cobro el env\u00edo al cliente"
                     >
                         Envio gratis
                     </span>
@@ -305,7 +305,7 @@ const OrderRow = memo(({
                                             ? { backgroundColor: '#fef9c3', color: '#854d0e' }
                                             : { backgroundColor: '#fee2e2', color: '#991b1b' }
                                 }
-                                title="Confianza del geocode de la direccion (afecta la probabilidad)"
+                                title="Confianza del geocode de la direcci\u00f3n (afecta la probabilidad)"
                             >
                                 {order.shipping_geo_confidence === 'high'
                                     ? 'Dir. confiable'
@@ -435,8 +435,8 @@ const OrderRow = memo(({
                     const title = hasGuide
                         ? order.shipment.carrier
                         : isQuoted
-                            ? `Cotizado en el checkout: ${order.quoted_shipping!.title} ($${order.quoted_shipping!.price.toLocaleString('es-CO')}). Falta generar la guia.`
-                            : `${order.shipment.carrier} (preseleccionada, sin guia generada)`;
+                            ? `Cotizado en el checkout: ${order.quoted_shipping!.title} ($${order.quoted_shipping!.price.toLocaleString('es-CO')}). Falta generar la gu\u00eda.`
+                            : `${order.shipment.carrier} (preseleccionada, sin gu\u00eda generada)`;
                     const shipmentStatus = order.shipment.status || '';
                     const statusConfig = SHIPMENT_STATUS_CONFIG[shipmentStatus];
                     const carrierDetail = order.shipment.carrier_status_detail || order.shipment.carrier_status;
@@ -472,7 +472,7 @@ const OrderRow = memo(({
                             {hasGuide && shipmentStatus && (
                                 <span
                                     className={`mt-0.5 inline-flex max-w-[150px] items-center rounded-full border px-1.5 py-px text-[9px] font-semibold leading-tight ${statusConfig?.className || SHIPMENT_STATUS_FALLBACK.className}`}
-                                    title={`Estado del envio en Probability: ${statusConfig?.label || shipmentStatus}`}
+                                    title={`Estado del env\u00edo en Probability: ${statusConfig?.label || shipmentStatus}`}
                                 >
                                     {statusConfig?.label || shipmentStatus}
                                 </span>
@@ -1482,7 +1482,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             onSortChange={handleSortChange}
             sortOptions={[
                 { value: 'created_at', label: 'Por fecha' },
-                { value: 'updated_at', label: 'Por actualizacion' },
+                { value: 'updated_at', label: 'Por actualizaci\u00f3n' },
                 { value: 'total_amount', label: 'Por monto' },
                 { value: 'order_number', label: 'Por ID' },
             ]}
@@ -1504,7 +1504,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}
             />
             <IconActionButton
-                label="Descargar ordenes en Excel"
+                label="Descargar \u00f3rdenes en Excel"
                 variant="tertiary"
                 onClick={() => setIsDownloadModalOpen(true)}
                 icon={<ArrowDownTrayIcon className="w-4 h-4" />}

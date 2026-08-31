@@ -192,7 +192,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
             if (result.success) {
                 showToast('Conexion exitosa con Tiendanube', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexi\u00f3n');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Tiendanube');
@@ -233,10 +233,10 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 showToast('Integracion Tiendanube actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integraci\u00f3n');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al actualizar integracion de Tiendanube');
+            setErrorModal(err.message || 'Error al actualizar integraci\u00f3n de Tiendanube');
         } finally {
             setLoading(false);
         }
@@ -273,7 +273,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 </div>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuraci\u00f3n General">
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -290,7 +290,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta {'integraci\u00f3n'}</span>
                         </p>
                     </div>
 
@@ -318,7 +318,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>El negocio no puede ser modificado despues de la creacion</span>
+                                <span>El negocio no puede ser modificado {'despu\u00e9s'} de la {'creaci\u00f3n'}</span>
                             </p>
                         </div>
                     )}
@@ -357,7 +357,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                             />
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Dejalo como esta si no necesitas cambiarlo</span>
+                                <span>{'D\u00e9jalo'} como esta si no necesitas cambiarlo</span>
                             </p>
                         </div>
                     </div>
@@ -396,7 +396,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 </div>
             </SectionCard>
 
-            <SectionCard icon={<ArrowPathIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizacion">
+            <SectionCard icon={<ArrowPathIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizaci\u00f3n">
                 <div>
                     <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Productos</h4>
                     <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
@@ -416,7 +416,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Estados de las ordenes</h4>
+                    <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Estados de las {'\u00f3rdenes'}</h4>
                     <p className="mt-1 mb-3 text-[11px] text-gray-500 dark:text-gray-400">
                         Define en que direccion viajan los cambios de estado entre Probability y tu tienda.
                     </p>
@@ -495,7 +495,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 />
 
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Sincronizacion masiva</h4>
+                    <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">{'Sincronizaci\u00f3n'} masiva</h4>
                     <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                         Envia el stock de Probability a todas las variantes que compartan SKU con tu tienda. Compara
                         primero si quieres revisar que cambiaria antes de enviarlo.
@@ -507,8 +507,8 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                             onClick={() => setInventoryCompareOpen(true)}
                             disabled={!inventory.enabled}
                             title={inventory.enabled
-                                ? 'Ver que cambiaria antes de enviar el stock'
-                                : 'Activa la sincronizacion de inventario para poder comparar'}
+                                ? 'Ver que cambiar\u00eda antes de enviar el stock'
+                                : 'Activa la sincronizaci\u00f3n de inventario para poder comparar'}
                             className="inline-flex items-center justify-center gap-1.5 rounded-lg border py-2 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                             style={{ borderColor: GREEN_BORDER, backgroundColor: GREEN_SOFT, color: GREEN_DARK }}
                         >
@@ -521,7 +521,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                             disabled={!inventory.enabled}
                             title={inventory.enabled
                                 ? 'Enviar el stock de todos los productos asociados'
-                                : 'Activa la sincronizacion de inventario para poder enviarlo'}
+                                : 'Activa la sincronizaci\u00f3n de inventario para poder enviarlo'}
                             className="inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                             style={{ backgroundColor: GREEN }}
                             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
@@ -535,7 +535,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                     {!inventory.enabled && (
                         <p className="mt-2 flex items-start gap-1 text-[11px] text-amber-600 dark:text-amber-400">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Activa el interruptor de arriba y guarda para habilitar el envio masivo de stock.</span>
+                            <span>Activa el interruptor de arriba y guarda para habilitar el {'env\u00edo'} masivo de stock.</span>
                         </p>
                     )}
                 </div>

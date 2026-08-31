@@ -10,6 +10,7 @@ import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 import { ShippingConfigButton } from '@/services/modules/shipping-config/ui';
 import { OrdersEffectivenessKpis } from '@/services/modules/orders/ui';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const ORDERS_FILTERS_SLOT_ID = 'orders-filters-slot';
 export const ORDERS_ACTIONS_SLOT_ID = 'orders-actions-slot';
@@ -53,8 +54,8 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
             canViewShipments && { href: '/shipments/cod', label: 'Recaudo contra entrega', icon: '\u{1F4B5}' },
             canViewShipments && { href: '/shipments/quotes', label: 'Cotizaciones', icon: '\u{1F9FE}' },
         ].filter(Boolean) },
-        { section: 'CONFIGURACION', items: [
-            isSuperAdmin && { href: '/shipping-margins', label: 'Margenes de envio', icon: '\u{1F4B0}' },
+        { section: 'CONFIGURACIÓN', items: [
+            isSuperAdmin && { href: '/shipping-margins', label: 'Márgenes de envío', icon: '\u{1F4B0}' },
         ].filter(Boolean) },
     ];
 
@@ -93,6 +94,7 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
                             <ShippingConfigButton businessId={selectedBusinessId ?? undefined} />
                         )}
                         <MyIntegrationsButton businessId={selectedBusinessId} />
+                        <TourLauncher />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}

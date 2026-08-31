@@ -1,0 +1,28 @@
+# Patrones de varias palabras. Se buscan sin distinguir mayusculas.
+# incorrecto	correcto	modo
+Estas seguro	¿Estás seguro	auto
+Esta seguro	¿Está seguro	auto
+Deseas eliminar	¿Deseas eliminar	auto
+Deseas continuar	¿Deseas continuar	auto
+no esta	no está	auto
+ya esta	ya está	auto
+esta cargando	está cargando	auto
+esta activo	está activo	auto
+esta activa	está activa	auto
+esta disponible	está disponible	auto
+esta vacio	está vacío	auto
+esta vacia	está vacía	auto
+esta pendiente	está pendiente	auto
+esta conectado	está conectado	auto
+esta conectada	está conectada	auto
+esta en uso	está en uso	auto
+aun no	aún no	auto
+mas de	más de	auto
+mas informacion	más información	auto
+Ver mas	Ver más	auto
+Cargar mas	Cargar más	auto
+sera necesario	será necesario	auto
+correo electronico	correo electrónico	auto
+numero de guia	número de guía	auto
+fecha de creacion	fecha de creación	auto
+codigo postal	código postal	auto

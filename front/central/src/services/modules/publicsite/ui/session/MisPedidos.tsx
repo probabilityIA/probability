@@ -39,7 +39,7 @@ export function MisPedidos({ slug }: { slug: string }) {
     if (state === 'anonymous') {
         return (
             <div className="text-center py-16 space-y-4">
-                <p className="text-gray-500">Inicia sesion para ver tus pedidos.</p>
+                <p className="text-gray-500">Inicia sesión para ver tus pedidos.</p>
                 <Link
                     href={`/tienda/${slug}/cuenta`}
                     className="inline-block px-6 py-3 rounded-lg text-white font-medium"
@@ -54,7 +54,7 @@ export function MisPedidos({ slug }: { slug: string }) {
     if (orders.length === 0) {
         return (
             <div className="text-center py-16 space-y-4">
-                <p className="text-gray-500">Aun no tienes pedidos en esta tienda.</p>
+                <p className="text-gray-500">Aún no tienes pedidos en esta tienda.</p>
                 <Link
                     href={`/tienda/${slug}/productos`}
                     className="inline-block px-6 py-3 rounded-lg text-white font-medium"

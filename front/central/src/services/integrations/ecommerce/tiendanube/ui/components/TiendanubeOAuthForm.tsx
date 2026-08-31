@@ -33,9 +33,9 @@ const TIENDANUBE_TYPE_ID = 17;
 
 const GUIDE_STEPS = [
     'Haz clic en Conectar con Tiendanube',
-    'Inicia sesion en tu tienda Tiendanube',
+    'Inicia sesión en tu tienda Tiendanube',
     'Autoriza el acceso a Probability',
-    'Regresas automaticamente y queda conectada',
+    'Regresas automáticamente y queda conectada',
 ];
 
 interface TiendanubeOAuthFormProps {
@@ -150,10 +150,10 @@ export function TiendanubeOAuthForm({ onCancel }: TiendanubeOAuthFormProps) {
 
             const data = await response.json();
             if (!response.ok || !data.success) {
-                throw new Error(data.error || data.message || 'Error al iniciar la conexion OAuth');
+                throw new Error(data.error || data.message || 'Error al iniciar la conexión OAuth');
             }
             if (!data.authorization_url) {
-                throw new Error('No se recibio la URL de autorizacion');
+                throw new Error('No se recibió la URL de autorización');
             }
             window.location.href = data.authorization_url;
         } catch (err: any) {
@@ -200,7 +200,7 @@ export function TiendanubeOAuthForm({ onCancel }: TiendanubeOAuthFormProps) {
                 </span>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuración General">
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -217,7 +217,7 @@ export function TiendanubeOAuthForm({ onCancel }: TiendanubeOAuthFormProps) {
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta integración</span>
                         </p>
                     </div>
 
@@ -247,14 +247,14 @@ export function TiendanubeOAuthForm({ onCancel }: TiendanubeOAuthFormProps) {
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                                <span>Selecciona el negocio al que pertenecerá esta integración</span>
                             </p>
                         </div>
                     )}
                 </div>
             </SectionCard>
 
-            <SectionCard icon={<LinkIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Conexion OAuth">
+            <SectionCard icon={<LinkIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Conexión OAuth">
                 <div className="space-y-3">
                     <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed">
                         Te redirigimos a Tiendanube para que autorices el acceso. No necesitas pegar tokens ni
@@ -347,7 +347,7 @@ export function TiendanubeOAuthForm({ onCancel }: TiendanubeOAuthFormProps) {
                         <ToggleRow
                             icon={<BeakerIcon className="w-4 h-4" style={{ color: GREEN }} />}
                             title="Activar modo pruebas"
-                            subtitle="Conecta usando la app de pruebas del tipo de integracion en vez de la de produccion"
+                            subtitle="Conecta usando la app de pruebas del tipo de integración en vez de la de producción"
                             checked={isTesting}
                             onToggle={() => setIsTesting(!isTesting)}
                         />

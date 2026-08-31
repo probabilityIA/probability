@@ -90,7 +90,7 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
             if (result.success) {
                 showToast('Conexion exitosa con Helisa', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Helisa');
@@ -105,7 +105,7 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
 
         try {
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integración.');
                 setLoading(false);
                 return;
             }
@@ -133,10 +133,10 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
                 showToast('Integracion Helisa creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de Helisa');
+            setErrorModal(err.message || 'Error al crear la integración de Helisa');
         } finally {
             setLoading(false);
         }
@@ -176,13 +176,13 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Helisa Facturacion Principal"
+                        placeholder="Ej: Helisa Facturación Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
+                        <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
                 </div>
 
@@ -217,7 +217,7 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Selecciona el negocio al que pertenecera esta integracion</span>
+                            <span>Selecciona el negocio al que pertenecerá esta integración</span>
                         </p>
                     </div>
                 )}
@@ -262,7 +262,7 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
                         <SecretInput
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            placeholder="Contrasena de Helisa"
+                            placeholder="Contraseña de Helisa"
                             required
                             className="bg-white dark:bg-gray-800 text-sm"
                         />
@@ -303,7 +303,7 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de produccion de Helisa.</span>
+                        <span>Dejar vacío para usar la URL de producción de Helisa.</span>
                     </p>
                 </div>
 

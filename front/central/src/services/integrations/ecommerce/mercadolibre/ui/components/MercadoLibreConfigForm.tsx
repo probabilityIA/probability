@@ -55,7 +55,7 @@ const fieldHint = 'text-[11px] text-gray-400 dark:text-gray-500 mt-1 flex items-
 const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]';
 
 const GUIDE_STEPS = [
-    'Crea una aplicacion en developers.mercadolibre.com',
+    'Crea una aplicaci\u00f3n en developers.mercadolibre.com',
     'Copia el App ID y la Secret Key',
     'Autoriza la app con tu cuenta vendedor',
     'Genera el Access Token y Refresh Token',
@@ -173,7 +173,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
             if (result.success) {
                 showToast('Conexion exitosa con MercadoLibre', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexi\u00f3n');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con MercadoLibre');
@@ -255,7 +255,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 });
 
                 if (!response || response.success === false) {
-                    throw new Error(response?.message || 'Error al actualizar integracion');
+                    throw new Error(response?.message || 'Error al actualizar integraci\u00f3n');
                 }
                 showToast('Integracion MercadoLibre actualizada', 'success');
                 onSuccess?.();
@@ -263,7 +263,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
             }
 
             if (isSuperAdmin && !selectedBusinessId) {
-                setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
+                setErrorModal('Debes seleccionar un negocio antes de crear la integraci\u00f3n.');
                 setLoading(false);
                 return;
             }
@@ -293,10 +293,10 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 showToast('Integracion MercadoLibre creada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al crear integracion');
+                throw new Error(response.message || 'Error al crear integraci\u00f3n');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al guardar la integracion de MercadoLibre');
+            setErrorModal(err.message || 'Error al guardar la integraci\u00f3n de MercadoLibre');
         } finally {
             setLoading(false);
         }
@@ -347,7 +347,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                     <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
                         <Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Configuracion general</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">{'Configuraci\u00f3n'} general</h3>
                 </div>
 
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
@@ -366,7 +366,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                         />
                         <p className={fieldHint}>
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Nombre descriptivo para identificar esta integracion</span>
+                            <span>Nombre descriptivo para identificar esta {'integraci\u00f3n'}</span>
                         </p>
                     </div>
 
@@ -417,7 +417,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Negocio al que pertenecera esta integracion</span>
+                                <span>Negocio al que {'pertenecer\u00e1'} esta {'integraci\u00f3n'}</span>
                             </p>
                         </div>
                     )}
@@ -459,7 +459,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                         <SecretInput
                             value={formData.client_secret}
                             onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
-                            placeholder="Secret Key de la aplicacion"
+                            placeholder="Secret Key de la aplicaci\u00f3n"
                             required={!isEdit}
                             className="bg-white dark:bg-gray-800 font-mono text-sm rounded-xl"
                         />
@@ -684,7 +684,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                             {isEdit ? 'Guardando...' : 'Conectando...'}
                         </>
                     ) : (
-                        isEdit ? 'Guardar integracion' : 'Crear integracion'
+                        isEdit ? 'Guardar integraci\u00f3n' : 'Crear integraci\u00f3n'
                     )}
                 </button>
             </div>

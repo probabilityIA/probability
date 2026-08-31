@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { Spinner } from '@/shared/ui/spinner';
 import { acceptLegalDocumentsAction, getPendingLegalDocumentsAction } from '../../infra/actions';
 import type { LegalDocument } from '../../domain/types';
+import { LegalDocumentText } from './LegalDocumentText';
 
 export function LegalAcceptanceGate() {
     const [documentos, setDocumentos] = useState<LegalDocument[]>([]);
@@ -45,7 +46,7 @@ export function LegalAcceptanceGate() {
             await acceptLegalDocumentsAction(documentos.map((d) => d.id));
             setDocumentos([]);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'No se pudo registrar la aceptacion');
+            setError(err instanceof Error ? err.message : 'No se pudo registrar la aceptación');
             setEnviando(false);
         }
     };
@@ -55,7 +56,7 @@ export function LegalAcceptanceGate() {
             <div className="w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-xl">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {'Terminos legales de Probability'}
+                        {'Términos legales de Probability'}
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                         {'Para continuar usando la plataforma debes leer y aceptar los siguientes documentos.'}
@@ -79,32 +80,10 @@ export function LegalAcceptanceGate() {
                     ))}
                 </div>
 
-                <div className="flex-1 min-h-[320px] px-6 py-4">
-                    <object
-                        data={`${documentoActivo.file_url}#view=FitH`}
-                        type="application/pdf"
-                        className="w-full h-[46vh] rounded border border-gray-200 dark:border-gray-700"
-                    >
-                        <div className="p-4 text-sm text-gray-700 dark:text-gray-200">
-                            {'Tu navegador no puede mostrar el PDF integrado. '}
-                            <a
-                                href={documentoActivo.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 underline"
-                            >
-                                {'Abrir el documento en otra pestana'}
-                            </a>
-                        </div>
-                    </object>
-                    <a
-                        href={documentoActivo.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-2 text-xs text-blue-600 hover:text-blue-700 underline"
-                    >
-                        {'Abrir o descargar este documento'}
-                    </a>
+                <div className="flex-1 min-h-0 px-6 py-4">
+                    <div className="h-[52vh] overflow-y-auto rounded border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-900/40">
+                        <LegalDocumentText contentHtml={documentoActivo.content_html} />
+                    </div>
                 </div>
 
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
@@ -117,7 +96,7 @@ export function LegalAcceptanceGate() {
                             className="mt-0.5 h-4 w-4"
                         />
                         <span>
-                            {'Declaro que lei y acepto '}
+                            {'Declaro que leí y acepto '}
                             {documentos.map((doc, idx) => (
                                 <span key={doc.id}>
                                     {idx > 0 ? ' y ' : ''}
@@ -125,7 +104,7 @@ export function LegalAcceptanceGate() {
                                     {' (v'}{doc.version}{')'}
                                 </span>
                             ))}
-                            {'. Esta aceptacion queda registrada con mi usuario, fecha y hora.'}
+                            {'. Esta aceptación queda registrada con mi usuario, fecha y hora.'}
                         </span>
                     </label>
 

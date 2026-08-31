@@ -43,7 +43,7 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
   if (!isOpen) return null;
 
   const configUnica = configs.length === 1 ? configs[0] : null;
-  const titulo = configUnica ? 'Configuracion de Facturacion' : 'Configuraciones de Facturacion';
+  const titulo = configUnica ? 'Configuración de Facturación' : 'Configuraciones de Facturación';
   const facturadorNombre = configUnica?.provider_name ?? '';
   const facturadorLogo = configUnica?.provider_image_url ?? '';
 
@@ -67,7 +67,7 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
             <div className="min-w-0">
               <h2 className="truncate text-xl font-bold" style={{ color: 'var(--color-primary)' }}>{titulo}</h2>
               {facturadorNombre && (
-                <p className="truncate text-xs text-gray-500">Facturador electronico: {facturadorNombre}</p>
+                <p className="truncate text-xs text-gray-500">Facturador electrónico: {facturadorNombre}</p>
               )}
             </div>
           </div>

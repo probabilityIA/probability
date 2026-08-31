@@ -624,7 +624,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                     script.src = 'https://checkout.bold.co/library/boldPaymentButton.js';
                     script.async = true;
                     script.onload = () => resolve();
-                    script.onerror = () => reject(new Error('No se pudo cargar el script de Bold (revisa conexion)'));
+                    script.onerror = () => reject(new Error('No se pudo cargar el script de Bold (revisa conexi\u00f3n)'));
                     document.body.appendChild(script);
                     setTimeout(() => reject(new Error('Timeout cargando script de Bold')), 10000);
                 });
@@ -1293,13 +1293,13 @@ function ManualDebitAccordion({ businessId, businessName, onSuccess, isSuperAdmi
                         placeholder="Ej: 5000"
                     />
                     <div>
-                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Categoria</label>
+                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">{'Categor\u00eda'}</label>
                         <select
                             value={concept}
                             onChange={e => setConcept(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                         >
-                            <option value="">Selecciona una categoria</option>
+                            <option value="">Selecciona una {'categor\u00eda'}</option>
                             {CONCEPT_OPTIONS.map(opt => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
@@ -1468,13 +1468,13 @@ function RechargeWalletButton({ businessId, businessName, onSuccess }: { busines
                         placeholder="Ej: 10000"
                     />
                     <div>
-                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Categoria</label>
+                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">{'Categor\u00eda'}</label>
                         <select
                             value={concept}
                             onChange={e => setConcept(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                         >
-                            <option value="">Selecciona una categoria</option>
+                            <option value="">Selecciona una {'categor\u00eda'}</option>
                             {CONCEPT_OPTIONS.map(opt => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
@@ -1680,7 +1680,7 @@ function RequestsTableView({
         },
         {
             key: 'Concept',
-            label: 'Categoria',
+            label: 'Categor\u00eda',
             render: (val) => {
                 const concept = val as string;
                 const label = concept ? (CONCEPT_LABELS[concept] || concept) : '';
@@ -1884,7 +1884,7 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
         },
         {
             key: 'Concept',
-            label: 'Categoria',
+            label: 'Categor\u00eda',
             render: (val) => {
                 const concept = val as string;
                 const label = concept ? (CONCEPT_LABELS[concept] || concept) : '';
@@ -1893,7 +1893,7 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
         },
         {
             key: 'integration_name',
-            label: 'Metodo',
+            label: 'M\u00e9todo',
             render: (val, row) => {
                 const r = row as any;
                 const name = (val as string) || r.integration_name || '---';
@@ -1902,7 +1902,7 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
                 const colorMap: Record<string, { bg: string; text: string; border: string }> = {
                     'Bold': { bg: 'var(--color-tertiary-50)', text: 'var(--color-tertiary-900)', border: 'var(--color-tertiary-200)' },
                     'Nequi': { bg: 'var(--color-quaternary-50)', text: 'var(--color-quaternary-900)', border: 'var(--color-quaternary-200)' },
-                    'Debito manual': { bg: '#f3f4f6', text: '#1f2937', border: '#e5e7eb' },
+                    'D\u00e9bito manual': { bg: '#f3f4f6', text: '#1f2937', border: '#e5e7eb' },
                 };
                 const colors = colorMap[name] || { bg: '#f3f4f6', text: '#1f2937', border: '#e5e7eb' };
                 return (

@@ -90,7 +90,7 @@ export default function AnnouncementList({ onEdit, onRefreshRef, selectedBusines
     };
 
     const handleDelete = async (announcement: AnnouncementInfo) => {
-        if (!confirm(`Eliminar el anuncio "${announcement.title}"? Esta accion no se puede deshacer.`)) return;
+        if (!confirm(`Eliminar el anuncio "${announcement.title}"? Esta acción no se puede deshacer.`)) return;
         try {
             await deleteAnnouncementAction(announcement.id);
             fetchAnnouncements();
@@ -115,11 +115,11 @@ export default function AnnouncementList({ onEdit, onRefreshRef, selectedBusines
         if (!confirm(`Forzar que se muestre de nuevo "${announcement.title}" a todos los usuarios?`)) return;
         try {
             await forceRedisplayAction(announcement.id);
-            setSuccess('Se forzara la re-visualizacion del anuncio');
+            setSuccess('Se forzara la re-visualización del anuncio');
             setTimeout(() => setSuccess(null), 3000);
             fetchAnnouncements();
         } catch (err: any) {
-            setError(getActionError(err, 'Error al forzar re-visualizacion'));
+            setError(getActionError(err, 'Error al forzar re-visualización'));
         }
     };
 
@@ -129,8 +129,8 @@ export default function AnnouncementList({ onEdit, onRefreshRef, selectedBusines
     };
 
     const columns = [
-        { key: 'title', label: 'Titulo' },
-        { key: 'category', label: 'Categoria' },
+        { key: 'title', label: 'Título' },
+        { key: 'category', label: 'Categoría' },
         { key: 'display_type', label: 'Tipo' },
         { key: 'status', label: 'Estado', align: 'center' as const },
         { key: 'dates', label: 'Vigencia' },
@@ -187,14 +187,14 @@ export default function AnnouncementList({ onEdit, onRefreshRef, selectedBusines
                     <Link
                         href={`/announcements/${announcement.id}/stats`}
                         className="p-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
-                        title="Estadisticas"
+                        title="Estadísticas"
                     >
                         <ChartBarIcon className="w-4 h-4" />
                     </Link>
                     <button
                         onClick={() => handleForceRedisplay(announcement)}
                         className="p-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition-colors"
-                        title="Forzar re-visualizacion"
+                        title="Forzar re-visualización"
                     >
                         <ArrowPathIcon className="w-4 h-4" />
                     </button>
@@ -235,7 +235,7 @@ export default function AnnouncementList({ onEdit, onRefreshRef, selectedBusines
                         type="text"
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
-                        placeholder="Buscar por titulo..."
+                        placeholder="Buscar por título..."
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <button

@@ -3,15 +3,14 @@
 import React, { memo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AcademicCapIcon } from '@heroicons/react/24/outline';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
-import InventoryTour from '@/services/modules/inventory/ui/components/InventoryTour';
 import { useResourceConfig } from '@/services/auth/business/ui/hooks/useResourceConfig';
 import { InventoryDisabledNotice, useInventoryModuleActive } from '@/services/modules/inventory/ui';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 const DEMO_ALLOWED_RESOURCES = new Set([
     'Productos',
@@ -23,15 +22,6 @@ const DEMO_ALLOWED_RESOURCES = new Set([
 export const INVENTORY_FILTERS_SLOT_ID = 'inventory-filters-slot';
 
 export const InventorySubNavbar = memo(function InventorySubNavbar() {
-    const [tourOpen, setTourOpen] = useState(false);
-    const [pulseTour, setPulseTour] = useState(false);
-
-    useEffect(() => {
-        try {
-            const seen = localStorage.getItem('inventory_tour_seen_v1');
-            if (!seen) setPulseTour(true);
-        } catch {}
-    }, []);
     const pathname = usePathname();
     const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
     const { actionButtons } = useNavbarActions();
@@ -156,14 +146,8 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
                         ))}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                            onClick={() => { setTourOpen(true); setPulseTour(false); }}
-                            className={`p-2 rounded-md transition-all text-white btn-business-primary ${pulseTour ? 'tour-pulse' : ''}`}
-                            title={pulseTour ? '¡Nuevo! Tutorial guiado' : 'Tutorial guiado'}
-                        >
-                            <AcademicCapIcon className="w-5 h-5" />
-                        </button>
                         <MyIntegrationsButton businessId={selectedBusinessId} />
+                        <TourLauncher />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}
@@ -178,7 +162,6 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
                 id={INVENTORY_FILTERS_SLOT_ID}
                 className="empty:hidden px-4 sm:px-6 lg:px-8 py-2 border-t border-gray-100 dark:border-gray-700/60"
             />
-            <InventoryTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
             {!inventoryModuleLoading && !inventoryModuleActive && inventoryBusinessId !== null && (
                 <div className="px-4 sm:px-6 lg:px-8 py-2 bg-amber-50/50 dark:bg-amber-900/10 border-t border-amber-200 dark:border-amber-800">
                     <InventoryDisabledNotice />

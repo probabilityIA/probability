@@ -12,7 +12,7 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
     about: { key: 'about', label: 'Sobre Nosotros', toggleField: 'show_about', contentField: 'about_content' },
     featured_products: { key: 'featured_products', label: 'Productos Destacados', toggleField: 'show_featured_products', contentField: null },
     testimonials: { key: 'testimonials', label: 'Testimonios', toggleField: 'show_testimonials', contentField: 'testimonials_content' },
-    location: { key: 'location', label: 'Ubicacion', toggleField: 'show_location', contentField: 'location_content' },
+    location: { key: 'location', label: 'Ubicación', toggleField: 'show_location', contentField: 'location_content' },
     social_media: { key: 'social_media', label: 'Redes Sociales', toggleField: 'show_social_media', contentField: 'social_media_content' },
     contact: { key: 'contact', label: 'Contacto', toggleField: 'show_contact', contentField: 'contact_content' },
     full_catalog: { key: 'full_catalog', label: 'CTA Catalogo', toggleField: 'show_full_catalog', contentField: null },

@@ -8,7 +8,6 @@ import ProductList from '@/services/modules/products/ui/components/ProductList';
 import ProductForm from '@/services/modules/products/ui/components/ProductForm';
 import ProductFamilyList, { ProductFamilyListHandle } from '@/services/modules/products/ui/components/ProductFamilyList';
 import ProductFamilyForm from '@/services/modules/products/ui/components/ProductFamilyForm';
-import ProductTour from '@/services/modules/products/ui/components/ProductTour';
 import { ProductDetailModal } from '@/services/modules/products/ui/components/ProductDetailModal';
 import { CatalogPricingModal } from '@/services/modules/pricing/ui/components/CatalogPricingModal';
 import ProductDimensionsUploadModal from '@/services/modules/products/ui/components/ProductDimensionsUploadModal';
@@ -51,15 +50,15 @@ export default function ProductsPage() {
                 { value: 'archived', label: 'Archivado' },
             ]
         },
-        { key: 'category', label: 'Categoria', type: 'text', placeholder: 'Ej: Calzado' },
+        { key: 'category', label: 'Categoría', type: 'text', placeholder: 'Ej: Calzado' },
         { key: 'brand', label: 'Marca', type: 'text', placeholder: 'Ej: Nike' },
         { key: 'has_family', label: 'Con familia de variantes', type: 'boolean' },
-        { key: 'price_min', label: 'Precio minimo', type: 'text', placeholder: 'Ej: 10000' },
-        { key: 'price_max', label: 'Precio maximo', type: 'text', placeholder: 'Ej: 200000' },
-        { key: 'stock_min', label: 'Stock minimo', type: 'text', placeholder: 'Ej: 1' },
-        { key: 'stock_max', label: 'Stock maximo', type: 'text', placeholder: 'Ej: 100' },
-        { key: 'weight_min', label: 'Peso minimo (kg)', type: 'text', placeholder: 'Ej: 0.5' },
-        { key: 'weight_max', label: 'Peso maximo (kg)', type: 'text', placeholder: 'Ej: 5' },
+        { key: 'price_min', label: 'Precio mínimo', type: 'text', placeholder: 'Ej: 10000' },
+        { key: 'price_max', label: 'Precio máximo', type: 'text', placeholder: 'Ej: 200000' },
+        { key: 'stock_min', label: 'Stock mínimo', type: 'text', placeholder: 'Ej: 1' },
+        { key: 'stock_max', label: 'Stock máximo', type: 'text', placeholder: 'Ej: 100' },
+        { key: 'weight_min', label: 'Peso mínimo (kg)', type: 'text', placeholder: 'Ej: 0.5' },
+        { key: 'weight_max', label: 'Peso máximo (kg)', type: 'text', placeholder: 'Ej: 5' },
     ];
 
     const productActiveFilters: ActiveFilter[] = Object.entries(productFilters)
@@ -95,7 +94,7 @@ export default function ProductsPage() {
                 { value: 'archived', label: 'Archivado' },
             ]
         },
-        { key: 'category', label: 'Categoria', type: 'text', placeholder: 'Ej: Buzos' },
+        { key: 'category', label: 'Categoría', type: 'text', placeholder: 'Ej: Buzos' },
         { key: 'brand', label: 'Marca', type: 'text', placeholder: 'Ej: Viga' },
         { key: 'has_variants', label: 'Con variantes asociadas', type: 'boolean' },
     ];
@@ -119,21 +118,12 @@ export default function ProductsPage() {
         });
     };
 
-    const [isTourOpen, setIsTourOpen] = useState(false);
-    const [pulseTour, setPulseTour] = useState(false);
     const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
     const [isDimensionsModalOpen, setIsDimensionsModalOpen] = useState(false);
     const [filtersSlot, setFiltersSlot] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
         setFiltersSlot(document.getElementById(INVENTORY_FILTERS_SLOT_ID));
-    }, []);
-
-    useEffect(() => {
-        try {
-            const seen = localStorage.getItem('products_tour_seen_v1');
-            if (!seen) setPulseTour(true);
-        } catch {}
     }, []);
 
     useEffect(() => {
@@ -207,7 +197,7 @@ export default function ProductsPage() {
 
     const toolbar = (
         <div className="flex items-center gap-2">
-            <div className="flex gap-1.5 flex-shrink-0">
+            <div className="flex gap-1.5 flex-shrink-0" data-tour="products.tabs">
                 <button onClick={() => setActiveTab('products')} className={tabClass('products')}>
                     SKUs / Productos
                 </button>
@@ -217,7 +207,7 @@ export default function ProductsPage() {
             </div>
 
             {activeTab === 'products' ? (
-                <div className="flex flex-shrink-0 items-center gap-2">
+                <div className="flex flex-shrink-0 items-center gap-2" data-tour="products.search">
                     <input
                         type="text"
                         placeholder="Buscar por nombre"
@@ -265,10 +255,10 @@ export default function ProductsPage() {
             )}
 
             <div className="ml-auto flex flex-shrink-0 items-center gap-2">
-                <div className="relative flex items-center" ref={integrationMenuRef}>
+                <div className="relative flex items-center" ref={integrationMenuRef} data-tour="products.integration-filter">
                     <button
                         onClick={() => setShowIntegrationMenu(v => !v)}
-                        title="Filtrar por integracion"
+                        title="Filtrar por integración"
                         className="btn-business-primary h-9 w-9 flex items-center justify-center rounded-lg text-white shadow-sm transition-all duration-200"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,18 +301,9 @@ export default function ProductsPage() {
                     </svg>
                 </button>
                 <button
-                    onClick={() => { setIsTourOpen(true); setPulseTour(false); }}
-                    title={pulseTour ? 'Nuevo! Tutorial guiado de productos' : 'Tutorial guiado'}
-                    className={`${iconBtnClass} ${pulseTour ? 'animate-pulse' : ''}`}
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                    </svg>
-                </button>
-                <button
                     onClick={handleCreate}
                     title="Crear"
+                    data-tour="products.create"
                     className="h-9 w-9 flex-shrink-0 flex items-center justify-center btn-business-primary text-white font-bold rounded-lg shadow-md transition-all duration-200 text-xl leading-none"
                 >
                     +
@@ -405,8 +386,6 @@ export default function ProductsPage() {
                 businessId={effectiveBusinessId}
                 onClose={() => setDetalleID(null)}
             />
-
-            <ProductTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
 
             <CatalogPricingModal
                 isOpen={isPricingModalOpen}

@@ -91,7 +91,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
             if (selectedBusinessId) params.business_id = selectedBusinessId;
             const resp = await getCODShipmentsAction(params);
             if ((resp as any).success === false) {
-                setError((resp as any).message || 'Error al cargar envios');
+                setError((resp as any).message || 'Error al cargar env\u00edos');
                 setShipments([]);
                 setTotal(0);
                 setTotalPages(0);

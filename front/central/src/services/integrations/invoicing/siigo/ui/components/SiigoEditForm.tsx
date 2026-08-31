@@ -163,7 +163,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
             if (result.success) {
                 showToast('Conexion exitosa con Siigo', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con Siigo');
@@ -202,10 +202,10 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                 showToast('Integracion Siigo actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al actualizar integracion de Siigo');
+            setErrorModal(err.message || 'Error al actualizar integración de Siigo');
         } finally {
             setLoading(false);
         }
@@ -235,7 +235,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         )}
                     </span>
                     <div>
-                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Siigo Facturacion Electronica</h2>
+                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Siigo Facturación Electrónica</h2>
                         <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                             Datos de tu cuenta Siigo. Puedes modificar las credenciales si es necesario.
                         </p>
@@ -252,7 +252,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                 </span>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuración General">
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -261,7 +261,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         <input
                             type="text"
                             required
-                            placeholder="Ej: Siigo Facturacion Principal"
+                            placeholder="Ej: Siigo Facturación Principal"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className={inputCls}
@@ -292,7 +292,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                             )}
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>El negocio no puede ser modificado despues de la creacion</span>
+                                <span>El negocio no puede ser modificado después de la creación</span>
                             </p>
                         </div>
                     )}
@@ -335,7 +335,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                             <label className={fieldLabel}>Account ID</label>
                             <input
                                 type="text"
-                                placeholder="ID de cuenta/suscripcion"
+                                placeholder="ID de cuenta/suscripción"
                                 value={formData.account_id}
                                 onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
                                 autoComplete="off"

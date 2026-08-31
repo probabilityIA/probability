@@ -4,6 +4,7 @@ import { memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const AccountingSubNavbar = memo(function AccountingSubNavbar() {
     const pathname = usePathname();
@@ -50,6 +51,7 @@ export const AccountingSubNavbar = memo(function AccountingSubNavbar() {
                             );
                         })}
                     </div>
+                    <TourLauncher />
                     <span className="px-2 py-0.5 text-xs font-bold text-white bg-purple-700 rounded select-none whitespace-nowrap">
                         SUPER ADMIN
                     </span>

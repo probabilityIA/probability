@@ -15,6 +15,7 @@ import {
     disableConfigAction,
 } from '@/services/modules/invoicing/infra/actions';
 import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
+import { TourLauncher } from '@/services/modules/tours/ui';
 
 export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
     const pathname = usePathname();
@@ -109,14 +110,15 @@ export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
                                         ? 'bg-green-500 hover:bg-green-600 text-white'
                                         : 'bg-red-500 hover:bg-red-600 text-white'
                                 } ${toggling ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:scale-105'}`}
-                                title={config.enabled ? 'Facturacion activa - clic para desactivar' : 'Facturacion inactiva - clic para activar'}
+                                title={config.enabled ? 'Facturación activa - clic para desactivar' : 'Facturación inactiva - clic para activar'}
                             >
-                                {config.enabled ? 'Facturacion Activa' : 'Facturacion Inactiva'}
+                                {config.enabled ? 'Facturación Activa' : 'Facturación Inactiva'}
                             </button>
                         )}
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                         <MyIntegrationsButton businessId={selectedBusinessId} />
+                        <TourLauncher />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}

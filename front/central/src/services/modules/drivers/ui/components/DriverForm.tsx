@@ -134,7 +134,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
                         type="text"
                         value={formData.identification}
                         onChange={(e) => handleChange('identification', e.target.value)}
-                        placeholder="Numero de documento"
+                        placeholder="Número de documento"
                         required
                         maxLength={30}
                     />

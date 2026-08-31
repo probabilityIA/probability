@@ -55,10 +55,10 @@ export function ShipitEditForm({ integrationId, initialData, onSuccess, onCancel
                 showToast('Integracion Shipit actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al actualizar integracion'));
+            setError(getActionError(err, 'Error al actualizar integración'));
             showToast('Error al actualizar integracion Shipit', 'error');
         } finally {
             setLoading(false);

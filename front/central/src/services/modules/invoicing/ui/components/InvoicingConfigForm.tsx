@@ -93,7 +93,7 @@ export function InvoicingConfigForm({
   useEffect(() => {
     if (!isSiigo) return;
     if (!invoicingIntegrationId) {
-      setCatalogsError('No se pudo identificar la integracion de Siigo de esta configuracion');
+      setCatalogsError('No se pudo identificar la integraci\u00f3n de Siigo de esta configuraci\u00f3n');
       return;
     }
     let cancelado = false;
@@ -106,10 +106,10 @@ export function InvoicingConfigForm({
           setCatalogs(res.data);
           if (res.data.errors?.length) setCatalogsError(res.data.errors.join(' | '));
         } else {
-          setCatalogsError(res.message ?? 'No se pudieron cargar los catalogos de Siigo');
+          setCatalogsError(res.message ?? 'No se pudieron cargar los cat\u00e1logos de Siigo');
         }
       })
-      .catch(() => { if (!cancelado) setCatalogsError('No se pudieron cargar los catalogos de Siigo'); })
+      .catch(() => { if (!cancelado) setCatalogsError('No se pudieron cargar los cat\u00e1logos de Siigo'); })
       .finally(() => { if (!cancelado) setLoadingCatalogs(false); });
     return () => { cancelado = true; };
   }, [isSiigo, invoicingIntegrationId]);
@@ -185,7 +185,7 @@ export function InvoicingConfigForm({
     setError(null);
 
     if (selectedIntegrationIds.length === 0) {
-      setError('Debes seleccionar al menos una integracion de origen de ordenes');
+      setError('Debes seleccionar al menos una integraci\u00f3n de origen de \u00f3rdenes');
       return;
     }
 
@@ -261,7 +261,7 @@ export function InvoicingConfigForm({
         if (result.success) {
           onSuccess?.();
         } else {
-          setError(result.error || 'Error al actualizar configuracion');
+          setError(result.error || 'Error al actualizar configuraci\u00f3n');
         }
       } else {
         const createData: CreateConfigDTO = {
@@ -279,7 +279,7 @@ export function InvoicingConfigForm({
         if (result.success) {
           onSuccess?.();
         } else {
-          setError(result.error || 'Error al crear la configuracion');
+          setError(result.error || 'Error al crear la configuraci\u00f3n');
         }
       }
     } catch (err) {
@@ -324,7 +324,7 @@ export function InvoicingConfigForm({
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Facturador electronico</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Facturador {'electr\u00f3nico'}</p>
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{providerName}</p>
           </div>
         </div>
@@ -353,7 +353,7 @@ export function InvoicingConfigForm({
             <CampoCatalogo
               etiqueta="Tipo de documento (FV)"
               requerido
-              ayuda="La resolucion de facturacion de venta con la que la DIAN te autorizo numerar. En Siigo esta en Configuracion > Tipos de comprobante > Factura de venta."
+              ayuda="La resoluci\u00f3n de facturaci\u00f3n de venta con la que la DIAN te autorizo numerar. En Siigo esta en Configuraci\u00f3n > Tipos de comprobante > Factura de venta."
               opciones={catalogs?.document_types_fv}
               valor={formData.siigo_document_id}
               onChange={(v) => setFormData({ ...formData, siigo_document_id: v })}
@@ -362,7 +362,7 @@ export function InvoicingConfigForm({
             <CampoCatalogo
               etiqueta="Medio de pago (factura)"
               requerido
-              ayuda="Con que forma de pago queda registrada la factura en Siigo. Es el valor por defecto: se aplica a todas las facturas de esta configuracion."
+              ayuda="Con que forma de pago queda registrada la factura en Siigo. Es el valor por defecto: se aplica a todas las facturas de esta configuraci\u00f3n."
               opciones={catalogs?.payment_types_fv}
               valor={formData.siigo_payment_method_id}
               onChange={(v) => setFormData({ ...formData, siigo_payment_method_id: v })}
@@ -379,14 +379,14 @@ export function InvoicingConfigForm({
             />
             <CampoCatalogo
               etiqueta="Impuesto (IVA)"
-              ayuda="Se aplica solo a los productos que en la orden ya traen impuesto. Si lo dejas vacio, las facturas salen sin IVA."
+              ayuda="Se aplica solo a los productos que en la orden ya traen impuesto. Si lo dejas vac\u00edo, las facturas salen sin IVA."
               opciones={catalogs?.taxes}
               valor={formData.siigo_tax_id}
               onChange={(v) => setFormData({ ...formData, siigo_tax_id: v })}
               disabled={loading}
             />
             <CampoCatalogo
-              etiqueta="Tipo doc. Nota Credito"
+              etiqueta="Tipo doc. Nota Cr\u00e9dito"
               ayuda="Necesario para anular. Sin el, una factura ya emitida no se puede reversar desde Probability."
               opciones={catalogs?.document_types_nc}
               valor={formData.siigo_credit_note_document_id}
@@ -398,15 +398,15 @@ export function InvoicingConfigForm({
         </div>
       )}
       <div className="bg-[#fafafd] dark:bg-gray-800/60 p-4 rounded-xl border border-[#eceaf3] dark:border-gray-700 lg:col-span-2">
-        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Opciones de facturacion</h4>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Que se factura, a nombre de quien y que se registra ademas de la factura.</p>
+        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Opciones de {'facturaci\u00f3n'}</h4>
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Que se factura, a nombre de quien y que se registra {'adem\u00e1s'} de la factura.</p>
 
         <div className="mt-2 divide-y divide-gray-100 dark:divide-gray-700">
           <FilaSwitch
-            titulo="Facturacion automatica"
+            titulo="Facturaci\u00f3n autom\u00e1tica"
             descripcion={formData.inventory_exit_only
-              ? 'Desactivada porque la salida de inventario sin facturar esta activa'
-              : 'Las ordenes que cumplan los filtros se facturaran automaticamente'}
+              ? 'Desactivada porque la salida de inventario sin facturar est\u00e1 activa'
+              : 'Las \u00f3rdenes que cumplan los filtros se facturaran autom\u00e1ticamente'}
             checked={formData.auto_invoice}
             onToggle={(v) => setFormData({ ...formData, auto_invoice: v, inventory_exit_only: v ? false : formData.inventory_exit_only })}
             disabled={loading || formData.inventory_exit_only}
@@ -415,14 +415,14 @@ export function InvoicingConfigForm({
               <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700 sm:max-w-md">
             <div>
               <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Estado de pago</label>
-              <p className="mb-1 text-[11px] leading-snug text-gray-400">Que ordenes entran a la facturacion automatica segun como esten pagadas. Las contra entrega se controlan aparte, con el interruptor de mas abajo.</p>
+              <p className="mb-1 text-[11px] leading-snug text-gray-400">Que {'\u00f3rdenes'} entran a la {'facturaci\u00f3n'} {'autom\u00e1tica'} {'seg\u00fan'} como {'est\u00e9n'} pagadas. Las contra entrega se controlan aparte, con el interruptor de {'m\u00e1s'} abajo.</p>
               <select
                 value={formData.payment_status}
                 onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })}
                 disabled={loading}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
               >
-                <option value="">Sin filtro (todas las ordenes)</option>
+                <option value="">Sin filtro (todas las {'\u00f3rdenes'})</option>
                 <option value="paid">Solo pagadas</option>
                 <option value="unpaid">Solo sin pagar</option>
                 <option value="partial">Pago parcial</option>
@@ -436,8 +436,8 @@ export function InvoicingConfigForm({
             <FilaSwitch
               titulo="Salida de inventario sin facturar"
               descripcion={formData.auto_invoice
-                ? 'Desactivada porque la facturacion automatica esta activa'
-                : 'Descarga el inventario en Siigo con un comprobante contable, sin emitir factura. Excluyente con la facturacion automatica para evitar el doble descargue.'}
+                ? 'Desactivada porque la facturaci\u00f3n autom\u00e1tica est\u00e1 activa'
+                : 'Descarga el inventario en Siigo con un comprobante contable, sin emitir factura. Excluyente con la facturaci\u00f3n autom\u00e1tica para evitar el doble descargue.'}
               checked={formData.inventory_exit_only}
               onToggle={(v) => setFormData({ ...formData, inventory_exit_only: v, auto_invoice: v ? false : formData.auto_invoice })}
               disabled={loading || formData.auto_invoice}
@@ -447,24 +447,24 @@ export function InvoicingConfigForm({
                 <div>
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo doc. Comprobante (CC)</label>
                   <input type="number" value={formData.inventory_exit_document_id} onChange={(e) => setFormData({ ...formData, inventory_exit_document_id: e.target.value })} placeholder="document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
-                  <p className="mt-1 text-[11px] leading-snug text-gray-400">El comprobante contable donde queda la salida. En Siigo: Configuracion &gt; Tipos de comprobante &gt; Comprobante contable.</p>
+                  <p className="mt-1 text-[11px] leading-snug text-gray-400">El comprobante contable donde queda la salida. En Siigo: {'Configuraci\u00f3n'} &gt; Tipos de comprobante &gt; Comprobante contable.</p>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Bodega - opcional</label>
                   <input type="number" value={formData.inventory_exit_warehouse_id} onChange={(e) => setFormData({ ...formData, inventory_exit_warehouse_id: e.target.value })} placeholder="warehouse_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
-                  <p className="mt-1 text-[11px] leading-snug text-gray-400">De cual bodega de Siigo se descuenta. Vacio = la bodega por defecto de la cuenta.</p>
+                  <p className="mt-1 text-[11px] leading-snug text-gray-400">De cual bodega de Siigo se descuenta. {'Vac\u00edo'} = la bodega por defecto de la cuenta.</p>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cuenta de inventario (credito)</label>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cuenta de inventario ({'cr\u00e9dito'})</label>
                   <input type="text" value={formData.inventory_exit_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_account_code: e.target.value })} placeholder="14350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
-                  <p className="mt-1 text-[11px] leading-snug text-gray-400">La cuenta del PUC de donde sale la mercancia. Suele empezar en 1435.</p>
+                  <p className="mt-1 text-[11px] leading-snug text-gray-400">La cuenta del PUC de donde sale la {'mercanc\u00eda'}. Suele empezar en 1435.</p>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contrapartida (debito)</label>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contrapartida ({'d\u00e9bito'})</label>
                   <input type="text" value={formData.inventory_exit_offset_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_offset_account_code: e.target.value })} placeholder="61350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
                   <p className="mt-1 text-[11px] leading-snug text-gray-400">Contra que cuenta se registra la salida, normalmente el costo de venta (61xx). Confirmalo con tu contador.</p>
                 </div>
-                <p className="col-span-2 text-xs text-gray-400">Los codigos de cuenta los define el contador y deben existir y estar activos en Siigo.</p>
+                <p className="col-span-2 text-xs text-gray-400">Los {'c\u00f3digos'} de cuenta los define el contador y deben existir y estar activos en Siigo.</p>
               </div>
             )}
             </FilaSwitch>
@@ -472,7 +472,7 @@ export function InvoicingConfigForm({
 
           <FilaSwitch
             titulo="Facturar contra entrega"
-            descripcion="Permite facturar ordenes de pago contra entrega aunque no esten pagadas. Si esta desactivado, las contra entrega se bloquean."
+            descripcion="Permite facturar \u00f3rdenes de pago contra entrega aunque no est\u00e9n pagadas. Si esta desactivado, las contra entrega se bloquean."
             checked={formData.invoice_cod}
             onToggle={(v) => setFormData({ ...formData, invoice_cod: v })}
             disabled={loading}
@@ -480,8 +480,8 @@ export function InvoicingConfigForm({
 
           {isSiigo && (
             <FilaSwitch
-              titulo="Facturar a consumidor final sin cedula"
-              descripcion="Si la orden no trae cedula, NIT ni documento del cliente, la factura se emite al tercero generico CONSUMIDOR FINAL. Siigo exige identificacion siempre."
+              titulo="Facturar a consumidor final sin c\u00e9dula"
+              descripcion="Si la orden no trae c\u00e9dula, NIT ni documento del cliente, la factura se emite al tercero gen\u00e9rico CONSUMIDOR FINAL. Siigo exige identificaci\u00f3n siempre."
               checked={formData.final_customer_when_no_id}
               onToggle={(v) => setFormData({ ...formData, final_customer_when_no_id: v })}
               disabled={loading}
@@ -520,7 +520,7 @@ export function InvoicingConfigForm({
                   <CampoCatalogo
                     etiqueta="Tipo doc. Recibo (RC)"
                     requerido
-                    ayuda="El comprobante de recibo de caja en Siigo. Es distinto del de la factura: Configuracion > Tipos de comprobante > Recibo de caja."
+                    ayuda="El comprobante de recibo de caja en Siigo. Es distinto del de la factura: Configuraci\u00f3n > Tipos de comprobante > Recibo de caja."
                     opciones={catalogs?.document_types_rc}
                     valor={formData.siigo_cash_receipt_document_id}
                     onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_document_id: v })}
@@ -529,7 +529,7 @@ export function InvoicingConfigForm({
                   <CampoCatalogo
                     etiqueta="Medio de pago (Siigo)"
                     requerido
-                    ayuda="La cuenta o caja donde entra la plata. Usa el boton de abajo para traer las cuentas reales de Siigo y elegir una."
+                    ayuda="La cuenta o caja donde entra la plata. Usa el bot\u00f3n de abajo para traer las cuentas reales de Siigo y elegir una."
                     opciones={catalogs?.payment_types_rc}
                     valor={formData.siigo_cash_receipt_payment_id}
                     onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_payment_id: v })}
@@ -565,15 +565,15 @@ export function InvoicingConfigForm({
                   >
                     <option value="EF">EF - Efectivo</option>
                     <option value="TR">TR - Transferencia bancaria</option>
-                    <option value="TC">TC - Tarjeta de credito</option>
-                    <option value="TD">TD - Tarjeta de debito</option>
+                    <option value="TC">TC - Tarjeta de {'cr\u00e9dito'}</option>
+                    <option value="TD">TD - Tarjeta de {'d\u00e9bito'}</option>
                     <option value="CH">CH - Cheque</option>
                     <option value="BN">BN - Bonos</option>
                   </select>
                 </div>
                 {formData.payment_type === 'TR' && (
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">{'N\u00famero'} de cuenta bancaria</label>
                     <input
                       type="text"
                       value={formData.payment_bank_account_id}
@@ -620,12 +620,12 @@ export function InvoicingConfigForm({
                 {formData.payment_type === 'CH' && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta</label>
+                      <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">{'N\u00famero'} de cuenta</label>
                       <input
                         type="text"
                         value={formData.payment_account_number}
                         onChange={(e) => setFormData({ ...formData, payment_account_number: e.target.value })}
-                        placeholder="Numero de cuenta"
+                        placeholder="N\u00famero de cuenta"
                         disabled={loading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                       />
@@ -650,7 +650,7 @@ export function InvoicingConfigForm({
                       type="number"
                       value={formData.payment_financial_entity_id}
                       onChange={(e) => setFormData({ ...formData, payment_financial_entity_id: e.target.value })}
-                      placeholder="ID numerico de la entidad"
+                      placeholder="ID num\u00e9rico de la entidad"
                       disabled={loading}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                     />
@@ -660,7 +660,7 @@ export function InvoicingConfigForm({
                 <div className="border-t pt-1 mt-2">
                   <FilaSwitch
                     titulo="Usar cuenta alterna para contra entrega"
-                    descripcion="Si esta activo, el recibo de caja de las ordenes contra entrega se registra en otra cuenta bancaria."
+                    descripcion="Si est\u00e1 activo, el recibo de caja de las \u00f3rdenes contra entrega se registra en otra cuenta bancaria."
                     checked={formData.cod_use_alternate_bank}
                     onToggle={(v) => setFormData({ ...formData, cod_use_alternate_bank: v })}
                     disabled={loading}
@@ -668,7 +668,7 @@ export function InvoicingConfigForm({
 
                   {formData.cod_use_alternate_bank && (
                     <div className="mt-3">
-                      <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria contra entrega</label>
+                      <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">{'N\u00famero'} de cuenta bancaria contra entrega</label>
                       <input
                         type="text"
                         value={formData.cod_payment_bank_account_id}
@@ -685,12 +685,12 @@ export function InvoicingConfigForm({
                 </div>
                 {formData.payment_type === 'BN' && (
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Codigo del bono</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">{'C\u00f3digo'} del bono</label>
                     <input
                       type="text"
                       value={formData.payment_bonus_code}
                       onChange={(e) => setFormData({ ...formData, payment_bonus_code: e.target.value })}
-                      placeholder="Codigo identificador"
+                      placeholder="C\u00f3digo identificador"
                       disabled={loading}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                     />
@@ -725,28 +725,28 @@ export function InvoicingConfigForm({
             <div className="mt-4 space-y-3">
               <p className="rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
                 {isSiigo
-                  ? 'Busca por nombre o codigo la cuenta que ya tienes creada en tu facturador. Lo recomendado es que sea un servicio dedicado al flete. Si el codigo no existe alla, el facturador rechaza la factura completa, no solo esa linea.'
-                  : 'Estos codigos tienen que existir antes en tu facturador, creados como producto de tipo servicio. No los creamos nosotros. Si el codigo no existe, el facturador rechaza la factura completa, no solo esa linea.'}
+                  ? 'Busca por nombre o c\u00f3digo la cuenta que ya tienes creada en tu facturador. Lo recomendado es que sea un servicio dedicado al flete. Si el c\u00f3digo no existe all\u00e1, el facturador rechaza la factura completa, no solo esa l\u00ednea.'
+                  : 'Estos c\u00f3digos tienen que existir antes en tu facturador, creados como producto de tipo servicio. No los creamos nosotros. Si el c\u00f3digo no existe, el facturador rechaza la factura completa, no solo esa l\u00ednea.'}
               </p>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <CampoServicio
-                etiqueta="Servicio de Envio"
+                etiqueta="Servicio de Env\u00edo"
                 valor={formData.item_mappings_shipping}
                 onChange={(v) => setFormData({ ...formData, item_mappings_shipping: v })}
                 disabled={loading}
                 placeholder="Ej: SE02001"
-                ayuda="El costo del envio se factura como una linea aparte, con este codigo y cantidad 1. Se agrega sola cuando la orden trae flete."
-                advertencia="Sin elegir: mandaremos el codigo literal SHIPPING. Si no existe un servicio con ese codigo exacto, toda orden con envio va a fallar al facturar."
+                ayuda="El costo del env\u00edo se factura como una l\u00ednea aparte, con este c\u00f3digo y cantidad 1. Se agrega sola cuando la orden trae flete."
+                advertencia="Sin elegir: mandaremos el c\u00f3digo literal SHIPPING. Si no existe un servicio con ese c\u00f3digo exacto, toda orden con env\u00edo va a fallar al facturar."
                 integrationId={invoicingIntegrationId}
                 buscable={isSiigo}
               />
               <CampoServicio
-                etiqueta="Servicio de Membresia"
+                etiqueta="Servicio de Membres\u00eda"
                 valor={formData.item_mappings_membership}
                 onChange={(v) => setFormData({ ...formData, item_mappings_membership: v })}
                 disabled={loading}
                 placeholder="Ej: SE01001"
-                ayuda="Solo aplica si vendes membresias o suscripciones. Si no las manejas, dejalo vacio."
+                ayuda="Solo aplica si vendes membres\u00edas o suscripciones. Si no las manejas, d\u00e9jalo vac\u00edo."
                 integrationId={invoicingIntegrationId}
                 buscable={isSiigo}
               />
@@ -756,7 +756,7 @@ export function InvoicingConfigForm({
                 onChange={(v) => setFormData({ ...formData, item_mappings_tip: v })}
                 disabled={loading}
                 placeholder="Ej: SE03001"
-                ayuda="Solo aplica si tus ordenes traen propina. Si no las manejas, dejalo vacio."
+                ayuda="Solo aplica si tus \u00f3rdenes traen propina. Si no las manejas, d\u00e9jalo vac\u00edo."
                 integrationId={invoicingIntegrationId}
                 buscable={isSiigo}
               />
@@ -829,7 +829,7 @@ export function InvoicingConfigForm({
           className="px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, #fff)' }}
         >
-          {loading ? 'Guardando...' : initialData?.id ? 'Actualizar' : 'Crear Configuracion'}
+          {loading ? 'Guardando...' : initialData?.id ? 'Actualizar' : 'Crear Configuraci\u00f3n'}
         </button>
       </div>
     </form>

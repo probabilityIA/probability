@@ -55,7 +55,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         { key: 'id', label: 'ID' },
         { key: 'logo', label: 'Logo' },
         { key: 'name', label: 'Nombre' },
-        { key: 'category', label: 'Categoria' },
+        { key: 'category', label: 'Categoría' },
         { key: 'status', label: 'Estado' },
         { key: 'development', label: 'Desarrollo' },
         { key: 'actions', label: 'Acciones' }
@@ -101,7 +101,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                 {type.category.name}
             </span>
         ) : (
-            <span className="text-gray-400 text-sm">Sin categoria</span>
+            <span className="text-gray-400 text-sm">Sin categoría</span>
         ),
         status: (
             <Badge type={type.is_active ? 'success' : 'error'}>
@@ -135,7 +135,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                     <button
                         onClick={() => onEdit(type)}
                         className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                        title="Editar tipo de integracion"
+                        title="Editar tipo de integración"
                         aria-label="Editar tipo de integracion"
                     >
                         <PencilIcon className="w-4 h-4" />
@@ -144,7 +144,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                 <button
                     onClick={() => handleDeleteClick(type.id)}
                     className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                    title="Eliminar tipo de integracion"
+                    title="Eliminar tipo de integración"
                     aria-label="Eliminar tipo de integracion"
                 >
                     <TrashIcon className="w-4 h-4" />
@@ -204,7 +204,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                 <Table
                     columns={columns}
                     data={integrationTypes.map(renderRow)}
-                    emptyMessage="No hay tipos de integracion para esta categoria"
+                    emptyMessage="No hay tipos de integración para esta categoría"
                 />
             )}
 
@@ -212,8 +212,8 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                 isOpen={deleteModal.show}
                 onClose={() => setDeleteModal({ show: false, id: null })}
                 onConfirm={handleDeleteConfirm}
-                title="Eliminar Tipo de Integracion"
-                message="Estas seguro de que deseas eliminar este tipo de integracion? Esta accion no se puede deshacer y podria afectar a las integraciones existentes."
+                title="Eliminar Tipo de Integración"
+                message="¿Estás seguro de que deseas eliminar este tipo de integración? Esta acción no se puede deshacer y podría afectar a las integraciones existentes."
             />
         </div>
     );

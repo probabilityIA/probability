@@ -103,13 +103,13 @@ export default function GeozoneDrawMap({
             <div className="absolute top-3 right-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 text-xs z-[1000] max-w-xs">
                 <div className="font-semibold text-gray-900 dark:text-white mb-1.5">Como dibujar</div>
                 <ul className="space-y-1 text-gray-600 dark:text-gray-300">
-                    <li>&bull; Click en el mapa para agregar vertices</li>
-                    <li>&bull; Click sobre un vertice para borrarlo</li>
+                    <li>&bull; Click en el mapa para agregar vértices</li>
+                    <li>&bull; Click sobre un vértice para borrarlo</li>
                     <li>&bull; <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Backspace</kbd> deshacer</li>
                     <li>&bull; <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> limpiar</li>
                 </ul>
                 <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <span className="text-gray-500 dark:text-gray-400">Vertices: </span>
+                    <span className="text-gray-500 dark:text-gray-400">Vértices: </span>
                     <span className={`font-bold ${points.length >= 3 ? 'text-green-600' : 'text-orange-500'}`}>{points.length}</span>
                     <span className="text-gray-500 dark:text-gray-400"> (min 3)</span>
                 </div>

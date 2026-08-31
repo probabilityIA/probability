@@ -758,7 +758,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
             }
         },
         onCancelFailed: (data) => {
-            const errorMsg = data.error_message || 'Error al cancelar el envio';
+            const errorMsg = data.error_message || 'Error al cancelar el env\u00edo';
             alert(`Cancelacion fallida: ${errorMsg}`);
         },
     });

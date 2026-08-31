@@ -104,7 +104,7 @@ export function ChannelDataStrip({ businessId, integrationId, emptyLabel }: Chan
                         {cell.can_fill > 0 && (
                             <button
                                 onClick={() => setObjetivo({ field: row.field, label: row.label, cell, mode: 'fill_empty' as DataMode })}
-                                title={`Llenar ${row.label.toLowerCase()} en Probability donde esta vacio${row.note ? `. ${row.note}` : ''}`}
+                                title={`Llenar ${row.label.toLowerCase()} en Probability donde está vacío${row.note ? `. ${row.note}` : ''}`}
                                 className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10.5px] font-bold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-300"
                             >
                                 {row.label} {cell.can_fill.toLocaleString('es-CO')}

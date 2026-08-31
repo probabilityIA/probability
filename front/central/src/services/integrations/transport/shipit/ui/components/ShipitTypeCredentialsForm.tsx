@@ -59,7 +59,7 @@ export default function ShipitTypeCredentialsForm({
                     <SecretInput
                         value={credentials.access_token}
                         onChange={(e) => set({ access_token: e.target.value })}
-                        placeholder={isEditing ? 'Dejar vacio para mantener actual' : 'Access Token de la API'}
+                        placeholder={isEditing ? 'Dejar vacío para mantener actual' : 'Access Token de la API'}
                         className="bg-white dark:bg-gray-800 font-mono text-sm rounded-xl"
                     />
                     <p className={fieldHint}>Header X-Shipit-Access-Token</p>

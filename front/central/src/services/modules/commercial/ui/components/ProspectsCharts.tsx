@@ -114,7 +114,7 @@ export function ProspectsCharts({ stats }: { stats: ProspectStats }) {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Distribucion de score">
+        <ChartCard title="Distribución de score">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={scoreData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />

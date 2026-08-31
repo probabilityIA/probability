@@ -135,7 +135,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
     };
 
     const handleDelete = async () => {
-        if (!confirm('Eliminar este ticket de forma definitiva?')) return;
+        if (!confirm('¿Eliminar este ticket de forma definitiva?')) return;
         await deleteTicketAction(ticket.id);
         onClose();
         onChanged();
@@ -161,7 +161,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
                         <span>Creado por: {ticket.created_by_name || `#${ticket.created_by_id}`}</span>
                         {ticket.business_name && <span>Negocio: {ticket.business_name}</span>}
                         {ticket.assigned_to_name && <span>Asignado a: {ticket.assigned_to_name}</span>}
-                        {ticket.category && <span>Categoria: {ticket.category}</span>}
+                        {ticket.category && <span>Categoría: {ticket.category}</span>}
                     </div>
                 </div>
                 {isSuperAdmin && (
@@ -253,7 +253,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
                                     {(isSuperAdmin) && (
                                         <button
                                             onClick={async () => {
-                                                if (confirm('Eliminar este adjunto?')) {
+                                                if (confirm('¿Eliminar este adjunto?')) {
                                                     await deleteAttachmentAction(a.id);
                                                     refreshAll();
                                                 }
@@ -285,7 +285,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
                         </div>
                     ))}
                     {!loading && comments.length === 0 && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Sin comentarios todavia</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Sin comentarios todavía</div>
                     )}
                 </div>
                 <div className="space-y-2">

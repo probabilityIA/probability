@@ -27,7 +27,7 @@ export default function AnnouncementStats({ announcementId }: AnnouncementStatsP
                 setStats(s);
                 setAnnouncement(a);
             } catch (err: any) {
-                setError(err.message || 'Error al cargar estadisticas');
+                setError(err.message || 'Error al cargar estadísticas');
             } finally {
                 setLoading(false);
             }
@@ -51,7 +51,7 @@ export default function AnnouncementStats({ announcementId }: AnnouncementStatsP
 
     const cards = [
         { label: 'Vistas totales', value: stats.total_views, icon: EyeIcon, color: 'bg-blue-500' },
-        { label: 'Usuarios unicos', value: stats.unique_users, icon: UserGroupIcon, color: 'bg-purple-500' },
+        { label: 'Usuarios únicos', value: stats.unique_users, icon: UserGroupIcon, color: 'bg-purple-500' },
         { label: 'Clicks en links', value: stats.total_clicks, icon: CursorArrowRaysIcon, color: 'bg-green-500' },
         { label: 'Aceptaciones', value: stats.total_acceptances, icon: CheckCircleIcon, color: 'bg-emerald-500' },
         { label: 'Cerrados', value: stats.total_closed, icon: XCircleIcon, color: 'bg-red-500' },

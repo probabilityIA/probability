@@ -118,7 +118,7 @@ export function EntryFormModal({ isOpen, onClose, onCreated, concepts }: EntryFo
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripcion</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}

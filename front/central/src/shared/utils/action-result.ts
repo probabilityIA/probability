@@ -28,7 +28,7 @@ export function getActionError(error: unknown, fallback?: string): string {
 
     const isSanitized = SANITIZED_PATTERNS.some((p) => message.includes(p));
     if (isSanitized || !message) {
-        return fallback || 'Ocurrio un error. Por favor intenta de nuevo.';
+        return fallback || 'Ocurrió un error. Por favor intenta de nuevo.';
     }
 
     return message;

@@ -185,7 +185,7 @@ export default function InventoryManager() {
                                         <span className="text-sm text-gray-500 dark:text-gray-400">Cargando bodegas...</span>
                                     </div>
                                 ) : warehouses.length === 0 ? (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay bodegas activas. Crea una en el modulo de Bodegas.</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay bodegas activas. Crea una en el módulo de Bodegas.</p>
                                 ) : (
                                     <select
                                         value={selectedWarehouseId?.toString() ?? ''}

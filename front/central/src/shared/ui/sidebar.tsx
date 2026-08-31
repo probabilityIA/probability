@@ -256,7 +256,7 @@ export function Sidebar({ user }: SidebarProps) {
               <button
                 type="button"
                 onClick={() => setShowBusinessModal(true)}
-                title="Informacion del negocio"
+                title="Informaci\u00f3n del negocio"
                 className={`transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-32 h-8' : 'w-7 h-7'}`}
               >
                 <img
@@ -270,7 +270,7 @@ export function Sidebar({ user }: SidebarProps) {
               <button
                 type="button"
                 onClick={() => setShowBusinessModal(true)}
-                title="Informacion del negocio"
+                title="Informaci\u00f3n del negocio"
                 className={`transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-32 h-8' : 'w-7 h-7'}`}
               >
                 <img

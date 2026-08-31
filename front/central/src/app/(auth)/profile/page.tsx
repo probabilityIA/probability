@@ -10,6 +10,7 @@ import { getProductsAction } from '@/services/modules/products/infra/actions';
 import { ChangePasswordForm } from '@/services/auth/login/ui';
 import { Modal } from '@/shared/ui/modal';
 import { getActionError } from '@/shared/utils/action-result';
+import { TourSettings } from '@/services/modules/tours/ui';
 
 // Tipos para el estado local
 interface UserProfile {
@@ -267,6 +268,8 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     </div>
+
+                    <TourSettings />
 
                     {/* Tarjeta de Seguridad */}
                     <div className="bg-gradient-to-br from-indigo-900 to-purple-900 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">

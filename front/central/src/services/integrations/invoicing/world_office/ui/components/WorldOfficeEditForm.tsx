@@ -93,7 +93,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
             if (result.success) {
                 showToast('Conexion exitosa con World Office', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con World Office');
@@ -129,10 +129,10 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                 showToast('Integracion World Office actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al actualizar integracion de World Office');
+            setErrorModal(err.message || 'Error al actualizar integración de World Office');
         } finally {
             setLoading(false);
         }
@@ -172,7 +172,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: World Office Facturacion Principal"
+                        placeholder="Ej: World Office Facturación Principal"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
@@ -209,7 +209,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
+                            <span>El negocio no puede ser modificado después de la creación</span>
                         </p>
                     </div>
                 )}
@@ -254,7 +254,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                         <SecretInput
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            placeholder="Contrasena de World Office"
+                            placeholder="Contraseña de World Office"
                             className="bg-white dark:bg-gray-800 text-sm"
                         />
                     </div>
@@ -268,7 +268,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                         type="text"
                         value={formData.company_code}
                         onChange={(e) => setFormData({ ...formData, company_code: e.target.value })}
-                        placeholder="Codigo de empresa en World Office"
+                        placeholder="Código de empresa en World Office"
                         autoComplete="off"
                         data-1p-ignore
                         className="bg-white dark:bg-gray-800 font-mono text-sm"
@@ -290,7 +290,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de produccion de World Office.</span>
+                        <span>Dejar vacío para usar la URL de producción de World Office.</span>
                     </p>
                 </div>
 

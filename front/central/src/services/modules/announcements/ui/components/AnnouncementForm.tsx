@@ -33,7 +33,7 @@ const frequencyOptions: { value: FrequencyType; label: string }[] = [
     { value: 'once', label: 'Una sola vez' },
     { value: 'daily', label: 'Diario' },
     { value: 'always', label: 'Siempre' },
-    { value: 'requires_acceptance', label: 'Requiere aceptacion' },
+    { value: 'requires_acceptance', label: 'Requiere aceptación' },
 ];
 
 export default function AnnouncementForm({ announcement, onSuccess, onCancel }: AnnouncementFormProps) {
@@ -168,7 +168,7 @@ export default function AnnouncementForm({ announcement, onSuccess, onCancel }: 
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Titulo del anuncio"
+                        placeholder="Título del anuncio"
                         required
                         maxLength={255}
                     />

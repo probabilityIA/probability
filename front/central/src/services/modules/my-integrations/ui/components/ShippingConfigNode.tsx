@@ -28,13 +28,13 @@ export function ShippingConfigNode({ onOpen }: ShippingConfigNodeProps) {
                 </span>
 
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">Configuracion de envios</p>
+                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">Configuración de envíos</p>
                     <p className="truncate text-[11px] leading-tight text-gray-500 dark:text-gray-400">Transportadoras, cajas y origen</p>
                 </div>
 
                 <button
                     onClick={onOpen}
-                    title="Configurar envios"
+                    title="Configurar envíos"
                     aria-label="Configurar envios"
                     className="flex-shrink-0 rounded-lg border border-indigo-200 bg-indigo-50 p-1.5 text-indigo-600 shadow-sm transition-all hover:scale-105 hover:bg-indigo-100 hover:shadow dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
                 >

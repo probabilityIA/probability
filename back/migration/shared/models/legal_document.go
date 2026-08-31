@@ -13,6 +13,7 @@ type LegalDocument struct {
 	Title         string    `gorm:"size:255;not null"`
 	FileURL       string    `gorm:"size:500;not null"`
 	SHA256        string    `gorm:"size:64;not null"`
+	ContentHTML   string    `gorm:"type:text"`
 	EffectiveFrom time.Time `gorm:"not null"`
 	IsActive      bool      `gorm:"not null;default:false;index"`
 	RequiresStaff bool      `gorm:"not null;default:true"`

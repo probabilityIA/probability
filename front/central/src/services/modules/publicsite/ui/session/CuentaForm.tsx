@@ -40,7 +40,7 @@ export function CuentaForm({ slug }: CuentaFormProps) {
             router.push(`/tienda/${slug}`);
             router.refresh();
         } else {
-            setError(result.error || 'Ocurrio un error, intenta de nuevo');
+            setError(result.error || 'Ocurrió un error, intenta de nuevo');
         }
     };
 
@@ -77,7 +77,7 @@ export function CuentaForm({ slug }: CuentaFormProps) {
                 <input
                     type="email"
                     required
-                    placeholder="Correo electronico"
+                    placeholder="Correo electrónico"
                     value={form.email}
                     onChange={(e) => set('email', e.target.value)}
                     className={inputCls}
@@ -86,7 +86,7 @@ export function CuentaForm({ slug }: CuentaFormProps) {
                     type="password"
                     required
                     minLength={6}
-                    placeholder="Contrasena"
+                    placeholder="Contraseña"
                     value={form.password}
                     onChange={(e) => set('password', e.target.value)}
                     className={inputCls}
@@ -95,7 +95,7 @@ export function CuentaForm({ slug }: CuentaFormProps) {
                     <div className="grid grid-cols-2 gap-3">
                         <input
                             type="tel"
-                            placeholder="Telefono"
+                            placeholder="Teléfono"
                             value={form.phone}
                             onChange={(e) => set('phone', e.target.value)}
                             className={inputCls}

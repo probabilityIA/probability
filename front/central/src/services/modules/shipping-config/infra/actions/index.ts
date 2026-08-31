@@ -17,7 +17,7 @@ export const getShippingConfigAction = async (businessId?: number) => {
         return { success: true, data };
     } catch (error: any) {
         console.error('Get Shipping Config Action Error:', error.message);
-        return { success: false, message: error.message || 'Error al cargar la configuracion de envios' };
+        return { success: false, message: error.message || 'Error al cargar la configuración de envíos' };
     }
 };
 
@@ -27,7 +27,7 @@ export const saveShippingConfigAction = async (req: SaveShippingConfigRequest, b
         return { success: true, data };
     } catch (error: any) {
         console.error('Save Shipping Config Action Error:', error.message);
-        return { success: false, message: error.message || 'Error al guardar la configuracion de envios' };
+        return { success: false, message: error.message || 'Error al guardar la configuración de envíos' };
     }
 };
 
@@ -37,7 +37,7 @@ export const saveWarehouseShippingConfigAction = async (warehouseId: number, req
         return { success: true, data };
     } catch (error: any) {
         console.error('Save Warehouse Shipping Config Action Error:', error.message);
-        return { success: false, message: error.message || 'Error al guardar la configuracion de la bodega' };
+        return { success: false, message: error.message || 'Error al guardar la configuración de la bodega' };
     }
 };
 
@@ -47,7 +47,7 @@ export const deleteWarehouseShippingConfigAction = async (warehouseId: number, b
         return { success: true };
     } catch (error: any) {
         console.error('Delete Warehouse Shipping Config Action Error:', error.message);
-        return { success: false, message: error.message || 'Error al eliminar la configuracion de la bodega' };
+        return { success: false, message: error.message || 'Error al eliminar la configuración de la bodega' };
     }
 };
 

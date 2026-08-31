@@ -60,7 +60,7 @@ export function TikTokEditForm({ integrationId, initialData, onSuccess, onCancel
             if (result.success) {
                 showToast('Conexion exitosa con TikTok', 'success');
             } else {
-                throw new Error(result.message || 'Error al probar conexion');
+                throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
             setErrorModal(err.message || 'Error al conectar con TikTok');
@@ -93,10 +93,10 @@ export function TikTokEditForm({ integrationId, initialData, onSuccess, onCancel
                 showToast('Integracion TikTok actualizada exitosamente', 'success');
                 onSuccess?.();
             } else {
-                throw new Error(response.message || 'Error al actualizar integracion');
+                throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al actualizar la integracion de TikTok');
+            setErrorModal(err.message || 'Error al actualizar la integración de TikTok');
         } finally {
             setLoading(false);
         }
@@ -168,7 +168,7 @@ export function TikTokEditForm({ integrationId, initialData, onSuccess, onCancel
                 </div>
                 <p className="text-sm text-cyan-900 dark:text-cyan-200 -mt-2 mb-4 flex items-start gap-2">
                     <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <span>Deja los campos vacios para conservar las credenciales actuales</span>
+                    <span>Deja los campos vacíos para conservar las credenciales actuales</span>
                 </p>
 
                 <div>

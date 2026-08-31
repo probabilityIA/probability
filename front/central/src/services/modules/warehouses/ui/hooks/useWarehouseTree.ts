@@ -24,7 +24,7 @@ export function useWarehouseTree({ warehouseId, businessId, autoFetch = true }: 
             const result = await getWarehouseTreeAction(warehouseId, businessId);
             setTree(result);
         } catch (err: any) {
-            setError(getActionError(err, 'Error al cargar arbol de bodega'));
+            setError(getActionError(err, 'Error al cargar árbol de bodega'));
         } finally {
             setLoading(false);
         }

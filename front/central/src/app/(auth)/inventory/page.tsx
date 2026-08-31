@@ -61,7 +61,7 @@ export default function InventoryStockPage() {
             <button
                 onClick={handleOpenAdjustModal}
                 className="px-4 py-2 btn-business-primary text-white rounded-lg text-sm hover:shadow-md transition-all flex items-center gap-2 whitespace-nowrap"
-                title="Anadir stock"
+                title="Añadir stock"
             >
                 <PlusIcon className="w-4 h-4" />
                 Anadir stock

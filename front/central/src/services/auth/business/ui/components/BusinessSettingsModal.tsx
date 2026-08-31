@@ -142,7 +142,7 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
             const res = await getBusinessByIdAction(businessId);
             const data = (res as { success?: boolean; data?: Business })?.data;
             if (!data) {
-                setError('No se pudo cargar la informacion del negocio');
+                setError('No se pudo cargar la información del negocio');
                 return;
             }
 
@@ -256,7 +256,7 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Informacion del Negocio" size="5xl">
+        <Modal isOpen={isOpen} onClose={onClose} title="Información del Negocio" size="5xl">
             {loading ? (
                 <div className="flex items-center justify-center py-16">
                     <div className="h-8 w-8 animate-spin rounded-full border-b-2" style={{ borderColor: 'var(--color-primary)' }} />
@@ -288,12 +288,12 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
                             </div>
 
                             <Input label="Nombre" value={name} onChange={e => setName(e.target.value)} />
-                            <Input label="Descripcion" value={description} onChange={e => setDescription(e.target.value)} />
-                            <Input label="Direccion" value={address} onChange={e => setAddress(e.target.value)} />
+                            <Input label="Descripción" value={description} onChange={e => setDescription(e.target.value)} />
+                            <Input label="Dirección" value={address} onChange={e => setAddress(e.target.value)} />
 
                             <dl className="grid grid-cols-3 gap-2 rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3 text-center">
                                 <div>
-                                    <dt className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Codigo</dt>
+                                    <dt className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Código</dt>
                                     <dd className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">{business?.code || '-'}</dd>
                                 </div>
                                 <div>

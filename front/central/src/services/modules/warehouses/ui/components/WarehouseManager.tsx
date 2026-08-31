@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { Warehouse } from '../../domain/types';
 import WarehouseForm from './WarehouseForm';
 import WarehouseTreeTable from './WarehouseTreeTable';
-import WarehouseTour from './WarehouseTour';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 
@@ -17,16 +16,6 @@ export default function WarehouseManager() {
     const [modalMode, setModalMode] = useState<ModalMode>(null);
     const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [tourOpen, setTourOpen] = useState(false);
-    const [pulseTour, setPulseTour] = useState(false);
-
-    useEffect(() => {
-        try {
-            const seen = localStorage.getItem('warehouse_tour_seen_v1');
-            if (!seen) setPulseTour(true);
-        } catch {}
-    }, []);
-
     const businessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
@@ -58,13 +47,6 @@ export default function WarehouseManager() {
                 {!requiresBusinessSelection && (
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => { setTourOpen(true); setPulseTour(false); }}
-                            className={`p-2 rounded-md transition-all text-white btn-business-primary ${pulseTour ? 'tour-pulse' : ''}`}
-                            title={pulseTour ? '¡Nuevo! Tutorial de jerarquía' : 'Tutorial de jerarquía'}
-                        >
-                            <AcademicCapIcon className="w-5 h-5" />
-                        </button>
-                        <button
                             onClick={openCreate}
                             className="px-5 py-3 btn-business-primary text-white font-bold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 flex items-center gap-2"
                         >
@@ -91,7 +73,6 @@ export default function WarehouseManager() {
                 />
             )}
 
-            <WarehouseTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
 
             {isFormModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

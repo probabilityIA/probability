@@ -32,7 +32,7 @@ export function kindLabel(kind: string): string {
 
 export function taxKindLabel(kind: string): string {
     if (kind === 'CHARGE') return 'Cargo';
-    if (kind === 'WITHHOLDING') return 'Retencion';
+    if (kind === 'WITHHOLDING') return 'Retención';
     if (kind === 'OTHER') return 'Otro';
     return kind;
 }

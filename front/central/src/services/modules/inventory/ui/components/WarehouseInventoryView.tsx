@@ -56,7 +56,7 @@ export default function WarehouseInventoryView({ businessId }: WarehouseInventor
                     <thead>
                         <tr>
                             <th className="text-left">Bodega</th>
-                            <th className="text-left">Codigo</th>
+                            <th className="text-left">Código</th>
                             <th className="text-left">Ciudad</th>
                             <th className="text-center">Productos</th>
                             <th className="text-center">Inventario total</th>

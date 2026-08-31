@@ -14,12 +14,12 @@ interface Props {
 }
 
 const EVENT_LABELS: Record<string, string> = {
-    'order.created': 'Confirmacion de pedido',
+    'order.created': 'Confirmación de pedido',
     'order.shipped': 'Pedido enviado',
     'order.delivered': 'Pedido entregado',
     'order.canceled': 'Pedido cancelado',
     'invoice.created': 'Factura generada',
-    'shipment.guide_generated': 'Guia de envio generada',
+    'shipment.guide_generated': 'Guía de envío generada',
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -80,7 +80,7 @@ export function OrderNotificationsModal({ orderId, orderNumber, businessId, onCl
             await load();
             onChanged?.();
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Error reenviando la notificacion');
+            setError(e instanceof Error ? e.message : 'Error reenviando la notificación');
         } finally {
             setResending(null);
         }

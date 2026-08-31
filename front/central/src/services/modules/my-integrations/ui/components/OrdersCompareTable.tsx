@@ -181,7 +181,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
             await new Promise(resolver => setTimeout(resolver, 2500));
             await comparar(pagina);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'No se pudieron crear las ordenes');
+            setError(err instanceof Error ? err.message : 'No se pudieron crear las órdenes');
         } finally {
             setCreando(false);
         }
@@ -242,7 +242,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                             value={busqueda}
                             onChange={event => setBusqueda(event.target.value)}
                             onKeyDown={event => { if (event.key === 'Enter') comparar(1); }}
-                            placeholder="numero de orden o cliente"
+                            placeholder="número de orden o cliente"
                             className={`${inputCls} pl-8`}
                             style={{ borderColor: CARD_BORDER }}
                         />
@@ -257,7 +257,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                         backgroundColor: soloDiferencias ? ACCENT_SOFT : '#ffffff',
                         color: soloDiferencias ? ACCENT : '#4b5563',
                     }}
-                    title="Ocultar las ordenes que ya estan iguales en los dos lados"
+                    title="Ocultar las órdenes que ya están iguales en los dos lados"
                 >
                     <Filter size={13} />
                     Solo diferencias
@@ -284,7 +284,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11.5px] text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-900/25 dark:text-emerald-100">
                     <p className="font-semibold">
                         {resultado.queued.length} orden{resultado.queued.length === 1 ? '' : 'es'} enviada{resultado.queued.length === 1 ? '' : 's'} a crear.
-                        {resultado.skipped.length > 0 && ` ${resultado.skipped.length} ya existian.`}
+                        {resultado.skipped.length > 0 && ` ${resultado.skipped.length} ya existían.`}
                     </p>
                     {resultado.note && <p className="mt-0.5">{resultado.note}</p>}
                     {resultado.failed && Object.keys(resultado.failed).length > 0 && (
@@ -301,7 +301,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
             {datos && (
                 <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
                     <Kpi label="En el canal" value={datos.totals.in_sync + datos.totals.to_create} />
-                    <Kpi label="Faltan aqui" value={datos.totals.to_create} tone="text-sky-600 dark:text-sky-300" />
+                    <Kpi label="Faltan aquí" value={datos.totals.to_create} tone="text-sky-600 dark:text-sky-300" />
                     <Kpi label="En las dos" value={datos.totals.in_sync} tone="text-emerald-600 dark:text-emerald-300" />
                     <Kpi label="Estado distinto" value={datos.totals.with_status_mismatch} tone="text-amber-600 dark:text-amber-300" />
                     <Kpi label="Sin mover stock" value={datos.totals.without_inventory} tone="text-gray-500 dark:text-gray-400" />
@@ -351,9 +351,9 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                                     <th className="px-2 py-2">Cliente</th>
                                     <th className="px-2 py-2">Fecha</th>
                                     <th className="px-2 py-2">Estado canal</th>
-                                    <th className="px-2 py-2">Estado aqui</th>
+                                    <th className="px-2 py-2">Estado aquí</th>
                                     <th className="px-2 py-2 text-right">Total</th>
-                                    <th className="px-2 py-2">Situacion</th>
+                                    <th className="px-2 py-2">Situación</th>
                                     <th className="px-2 py-2">Inventario</th>
                                 </tr>
                             </thead>
@@ -415,7 +415,7 @@ export function OrdersCompareTable({ businessId, integrations }: OrdersCompareTa
                             )}
                             {seleccion.size > 0
                                 ? `${seleccion.size} seleccionada${seleccion.size === 1 ? '' : 's'} para crear en Probability`
-                                : 'Marca las ordenes que faltan para crearlas aqui'}
+                                : 'Marca las órdenes que faltan para crearlas aquí'}
                         </span>
                         <button
                             onClick={crear}

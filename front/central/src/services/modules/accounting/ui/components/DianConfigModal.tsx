@@ -60,13 +60,13 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
             showToast('client_id, client_secret, usuario y contrasena son requeridos', 'error');
             return;
         }
-        const numberingRange = optionalNumber(numberingRangeId, 'El rango de numeracion');
+        const numberingRange = optionalNumber(numberingRangeId, 'El rango de numeración');
         if (!numberingRange.ok) return;
         const municipality = optionalNumber(municipalityId, 'El municipio');
         if (!municipality.ok) return;
         const identificationDocument = optionalNumber(identificationDocumentId, 'El tipo de documento');
         if (!identificationDocument.ok) return;
-        const legalOrganization = optionalNumber(legalOrganizationId, 'El tipo de organizacion');
+        const legalOrganization = optionalNumber(legalOrganizationId, 'El tipo de organización');
         if (!legalOrganization.ok) return;
 
         const payload: UpdateDianConfigDTO = {
@@ -98,7 +98,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={config?.configured ? 'Editar configuracion DIAN' : 'Configurar facturacion electronica'}
+            title={config?.configured ? 'Editar configuración DIAN' : 'Configurar facturación electrónica'}
             size="lg"
         >
             <div className="space-y-4">
@@ -122,7 +122,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                         placeholder="https://api-sandbox.factus.com.co"
                         className={inputClass}
                     />
-                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Vacio = produccion</p>
+                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Vacío = producción</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -164,7 +164,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contrasena *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña *</label>
                         <input
                             type="password"
                             autoComplete="new-password"
@@ -178,7 +178,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rango de numeracion (opcional)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rango de numeración (opcional)</label>
                         <input
                             type="number"
                             min="1"
@@ -213,10 +213,10 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                             placeholder="3"
                             className={inputClass}
                         />
-                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Default 3 = NIT segun Factus</p>
+                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Default 3 = NIT según Factus</p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de organizacion (opcional)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de organización (opcional)</label>
                         <input
                             type="number"
                             min="1"
@@ -226,13 +226,13 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                             placeholder="2"
                             className={inputClass}
                         />
-                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Default 2 = persona natural, 1 = juridica</p>
+                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Default 2 = persona natural, 1 = jurídica</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medio de pago (codigo, opcional)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medio de pago (código, opcional)</label>
                         <input
                             type="text"
                             value={paymentMethodCode}
