@@ -62,7 +62,10 @@ Caller actualizado: `generate-guide.go` `overrideCodValue` pasa `carrierFee` a
 ## Verificacion
 
 `go build ./...` limpio. `go test ./services/modules/shipments/internal/domain/...`
-en verde, incluido el caso corregido.
+en verde, incluido el caso corregido. Desplegado (push a `main`, commit
+`ea633276`). El usuario probo en el Woo de pruebas (orden nueva + orden ya
+sincronizada) y confirmo que el valor a recaudar de la guia ya no duplica la
+comision.
 
 ## Auditoria de impacto
 
