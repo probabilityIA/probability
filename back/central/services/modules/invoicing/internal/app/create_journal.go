@@ -12,17 +12,13 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 )
 
-// CreateJournal crea un comprobante contable (journal) para una orden.
-// Solo aplica para negocios con provider Siigo y enable_journal: true en la config.
 func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO) (*entities.Invoice, error) {
-	// 1. Obtener datos de la orden
 	order, err := uc.repo.GetOrderByID(ctx, dto.OrderID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Error al obtener orden para journal")
 		return nil, fmt.Errorf("failed to get order: %w", err)
 	}
 
-	// 2. Obtener configuración de facturación
 	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Error al obtener configuración de facturación para journal")
@@ -40,7 +36,6 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		return nil, errors.ErrProviderNotConfigured
 	}
 
-	// 3. Determinar integración de facturación
 	var integrationID uint
 	if config.InvoicingIntegrationID != nil {
 		integrationID = *config.InvoicingIntegrationID
@@ -50,7 +45,6 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		return nil, errors.ErrProviderNotConfigured
 	}
 
-	// 4. Resolver proveedor — journal solo aplica para Siigo
 	provider, err := uc.resolveProvider(ctx, integrationID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Error al resolver proveedor para journal")
@@ -61,7 +55,6 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		return nil, fmt.Errorf("journals are only supported for Siigo provider, got: %s", provider)
 	}
 
-	// 5. Validar enable_journal en config
 	invoiceConfigData := make(map[string]interface{})
 	if config.InvoiceConfig != nil {
 		invoiceConfigData = config.InvoiceConfig
@@ -81,13 +74,11 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		}
 	}
 
-	// 6. Validar que la orden tenga items
 	if len(order.Items) == 0 {
 		uc.log.Warn(ctx).Str("order_id", order.ID).Msg("Orden sin items — no se puede crear journal")
 		return nil, fmt.Errorf("la orden %s no tiene items (order_items vacío)", order.OrderNumber)
 	}
 
-	// 7. Crear invoice record con metadata type=journal
 	invoice := &entities.Invoice{
 		OrderID:                order.ID,
 		BusinessID:             order.BusinessID,
@@ -95,8 +86,8 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		Subtotal:               order.Subtotal,
 		Tax:                    order.Tax,
 		Discount:               order.Discount,
-		ShippingCost:           order.ShippingCost,
-		TotalAmount:            order.TotalAmount,
+		ShippingCost:           dtos.InvoiceShippingCost(order),
+		TotalAmount:            dtos.InvoiceTotalAmount(order),
 		Currency:               order.Currency,
 		CustomerName:           order.CustomerName,
 		CustomerEmail:          order.CustomerEmail,
@@ -114,7 +105,6 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		return nil, fmt.Errorf("failed to create journal invoice: %w", err)
 	}
 
-	// 8. Crear invoice items
 	invoiceItems := make([]*entities.InvoiceItem, 0, len(order.Items))
 	for _, orderItem := range order.Items {
 		unitPrice := orderItem.UnitPrice
@@ -156,7 +146,6 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		}
 	}
 
-	// 9. Crear sync log
 	syncLog := &entities.InvoiceSyncLog{
 		InvoiceID:     invoice.ID,
 		OperationType: constants.OperationTypeCreateJournal,
@@ -175,7 +164,6 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		uc.log.Error(ctx).Err(err).Msg("Failed to create journal sync log")
 	}
 
-	// 10. Preparar datos para el proveedor
 	invoiceItemDTOs := make([]dtos.InvoiceItemData, 0, len(invoiceItems))
 	for i, item := range invoiceItems {
 		itemDTO := dtos.InvoiceItemData{
@@ -221,7 +209,6 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		Config:       invoiceConfigData,
 	}
 
-	// 11. Publicar request a RabbitMQ
 	correlationID := uuid.New().String()
 	requestMessage := &dtos.InvoiceRequestMessage{
 		InvoiceID:     invoice.ID,

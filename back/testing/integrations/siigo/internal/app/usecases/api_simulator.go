@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -138,7 +139,11 @@ func (s *APISimulator) HandleCreateInvoice(body map[string]interface{}) (*domain
 			if v, ok := itMap["price"].(float64); ok {
 				price = v
 			}
-			lineTotal := qty * price
+			discount := 0.0
+			if v, ok := itMap["discount"].(float64); ok {
+				discount = v
+			}
+			lineTotal := qty*price - discount
 			total += lineTotal
 			items = append(items, domain.InvoiceItem{
 				Code:        code,
@@ -147,6 +152,22 @@ func (s *APISimulator) HandleCreateInvoice(body map[string]interface{}) (*domain
 				Price:       price,
 				Total:       lineTotal,
 			})
+		}
+	}
+
+	if rawPayments, ok := body["payments"].([]interface{}); ok && len(rawPayments) > 0 {
+		paid := 0.0
+		for _, p := range rawPayments {
+			pMap, ok := p.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if v, ok := pMap["value"].(float64); ok {
+				paid += v
+			}
+		}
+		if math.Abs(paid-total) > 0.01 {
+			return nil, fmt.Errorf("total payments %.2f is different from invoice total %.2f", paid, total)
 		}
 	}
 
