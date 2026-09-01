@@ -353,7 +353,7 @@ export function InvoicingConfigForm({
             <CampoCatalogo
               etiqueta="Tipo de documento (FV)"
               requerido
-              ayuda="La resoluci\u00f3n de facturaci\u00f3n de venta con la que la DIAN te autorizo numerar. En Siigo esta en Configuraci\u00f3n > Tipos de comprobante > Factura de venta."
+              ayuda={'La resoluci\u00f3n de facturaci\u00f3n de venta con la que la DIAN te autorizo numerar. En Siigo esta en Configuraci\u00f3n > Tipos de comprobante > Factura de venta.'}
               opciones={catalogs?.document_types_fv}
               valor={formData.siigo_document_id}
               onChange={(v) => setFormData({ ...formData, siigo_document_id: v })}
@@ -362,7 +362,7 @@ export function InvoicingConfigForm({
             <CampoCatalogo
               etiqueta="Medio de pago (factura)"
               requerido
-              ayuda="Con que forma de pago queda registrada la factura en Siigo. Es el valor por defecto: se aplica a todas las facturas de esta configuraci\u00f3n."
+              ayuda={'Con que forma de pago queda registrada la factura en Siigo. Es el valor por defecto: se aplica a todas las facturas de esta configuraci\u00f3n.'}
               opciones={catalogs?.payment_types_fv}
               valor={formData.siigo_payment_method_id}
               onChange={(v) => setFormData({ ...formData, siigo_payment_method_id: v })}
@@ -379,14 +379,14 @@ export function InvoicingConfigForm({
             />
             <CampoCatalogo
               etiqueta="Impuesto (IVA)"
-              ayuda="Se aplica solo a los productos que en la orden ya traen impuesto. Si lo dejas vac\u00edo, las facturas salen sin IVA."
+              ayuda={'Se aplica solo a los productos que en la orden ya traen impuesto. Si lo dejas vac\u00edo, las facturas salen sin IVA.'}
               opciones={catalogs?.taxes}
               valor={formData.siigo_tax_id}
               onChange={(v) => setFormData({ ...formData, siigo_tax_id: v })}
               disabled={loading}
             />
             <CampoCatalogo
-              etiqueta="Tipo doc. Nota Cr\u00e9dito"
+              etiqueta={'Tipo doc. Nota Cr\u00e9dito'}
               ayuda="Necesario para anular. Sin el, una factura ya emitida no se puede reversar desde Probability."
               opciones={catalogs?.document_types_nc}
               valor={formData.siigo_credit_note_document_id}
@@ -403,7 +403,7 @@ export function InvoicingConfigForm({
 
         <div className="mt-2 divide-y divide-gray-100 dark:divide-gray-700">
           <FilaSwitch
-            titulo="Facturaci\u00f3n autom\u00e1tica"
+            titulo={'Facturaci\u00f3n autom\u00e1tica'}
             descripcion={formData.inventory_exit_only
               ? 'Desactivada porque la salida de inventario sin facturar est\u00e1 activa'
               : 'Las \u00f3rdenes que cumplan los filtros se facturaran autom\u00e1ticamente'}
@@ -472,7 +472,7 @@ export function InvoicingConfigForm({
 
           <FilaSwitch
             titulo="Facturar contra entrega"
-            descripcion="Permite facturar \u00f3rdenes de pago contra entrega aunque no est\u00e9n pagadas. Si esta desactivado, las contra entrega se bloquean."
+            descripcion={'Permite facturar \u00f3rdenes de pago contra entrega aunque no est\u00e9n pagadas. Si esta desactivado, las contra entrega se bloquean.'}
             checked={formData.invoice_cod}
             onToggle={(v) => setFormData({ ...formData, invoice_cod: v })}
             disabled={loading}
@@ -480,8 +480,8 @@ export function InvoicingConfigForm({
 
           {isSiigo && (
             <FilaSwitch
-              titulo="Facturar a consumidor final sin c\u00e9dula"
-              descripcion="Si la orden no trae c\u00e9dula, NIT ni documento del cliente, la factura se emite al tercero gen\u00e9rico CONSUMIDOR FINAL. Siigo exige identificaci\u00f3n siempre."
+              titulo={'Facturar a consumidor final sin c\u00e9dula'}
+              descripcion={'Si la orden no trae c\u00e9dula, NIT ni documento del cliente, la factura se emite al tercero gen\u00e9rico CONSUMIDOR FINAL. Siigo exige identificaci\u00f3n siempre.'}
               checked={formData.final_customer_when_no_id}
               onToggle={(v) => setFormData({ ...formData, final_customer_when_no_id: v })}
               disabled={loading}
@@ -520,7 +520,7 @@ export function InvoicingConfigForm({
                   <CampoCatalogo
                     etiqueta="Tipo doc. Recibo (RC)"
                     requerido
-                    ayuda="El comprobante de recibo de caja en Siigo. Es distinto del de la factura: Configuraci\u00f3n > Tipos de comprobante > Recibo de caja."
+                    ayuda={'El comprobante de recibo de caja en Siigo. Es distinto del de la factura: Configuraci\u00f3n > Tipos de comprobante > Recibo de caja.'}
                     opciones={catalogs?.document_types_rc}
                     valor={formData.siigo_cash_receipt_document_id}
                     onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_document_id: v })}
@@ -529,7 +529,7 @@ export function InvoicingConfigForm({
                   <CampoCatalogo
                     etiqueta="Medio de pago (Siigo)"
                     requerido
-                    ayuda="La cuenta o caja donde entra la plata. Usa el bot\u00f3n de abajo para traer las cuentas reales de Siigo y elegir una."
+                    ayuda={'La cuenta o caja donde entra la plata. Usa el bot\u00f3n de abajo para traer las cuentas reales de Siigo y elegir una.'}
                     opciones={catalogs?.payment_types_rc}
                     valor={formData.siigo_cash_receipt_payment_id}
                     onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_payment_id: v })}
@@ -625,7 +625,7 @@ export function InvoicingConfigForm({
                         type="text"
                         value={formData.payment_account_number}
                         onChange={(e) => setFormData({ ...formData, payment_account_number: e.target.value })}
-                        placeholder="N\u00famero de cuenta"
+                        placeholder={'N\u00famero de cuenta'}
                         disabled={loading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                       />
@@ -650,7 +650,7 @@ export function InvoicingConfigForm({
                       type="number"
                       value={formData.payment_financial_entity_id}
                       onChange={(e) => setFormData({ ...formData, payment_financial_entity_id: e.target.value })}
-                      placeholder="ID num\u00e9rico de la entidad"
+                      placeholder={'ID num\u00e9rico de la entidad'}
                       disabled={loading}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                     />
@@ -660,7 +660,7 @@ export function InvoicingConfigForm({
                 <div className="border-t pt-1 mt-2">
                   <FilaSwitch
                     titulo="Usar cuenta alterna para contra entrega"
-                    descripcion="Si est\u00e1 activo, el recibo de caja de las \u00f3rdenes contra entrega se registra en otra cuenta bancaria."
+                    descripcion={'Si est\u00e1 activo, el recibo de caja de las \u00f3rdenes contra entrega se registra en otra cuenta bancaria.'}
                     checked={formData.cod_use_alternate_bank}
                     onToggle={(v) => setFormData({ ...formData, cod_use_alternate_bank: v })}
                     disabled={loading}
@@ -698,7 +698,7 @@ export function InvoicingConfigForm({
                       type="text"
                       value={formData.payment_bonus_code}
                       onChange={(e) => setFormData({ ...formData, payment_bonus_code: e.target.value })}
-                      placeholder="C\u00f3digo identificador"
+                      placeholder={'C\u00f3digo identificador'}
                       disabled={loading}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                     />
@@ -738,23 +738,23 @@ export function InvoicingConfigForm({
               </p>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <CampoServicio
-                etiqueta="Servicio de Env\u00edo"
+                etiqueta={'Servicio de Env\u00edo'}
                 valor={formData.item_mappings_shipping}
                 onChange={(v) => setFormData({ ...formData, item_mappings_shipping: v })}
                 disabled={loading}
                 placeholder="Ej: SE02001"
-                ayuda="El costo del env\u00edo se factura como una l\u00ednea aparte, con este c\u00f3digo y cantidad 1. Se agrega sola cuando la orden trae flete."
-                advertencia="Sin elegir: mandaremos el c\u00f3digo literal SHIPPING. Si no existe un servicio con ese c\u00f3digo exacto, toda orden con env\u00edo va a fallar al facturar."
+                ayuda={'El costo del env\u00edo se factura como una l\u00ednea aparte, con este c\u00f3digo y cantidad 1. Se agrega sola cuando la orden trae flete.'}
+                advertencia={'Sin elegir: mandaremos el c\u00f3digo literal SHIPPING. Si no existe un servicio con ese c\u00f3digo exacto, toda orden con env\u00edo va a fallar al facturar.'}
                 integrationId={invoicingIntegrationId}
                 buscable={isSiigo}
               />
               <CampoServicio
-                etiqueta="Servicio de Membres\u00eda"
+                etiqueta={'Servicio de Membres\u00eda'}
                 valor={formData.item_mappings_membership}
                 onChange={(v) => setFormData({ ...formData, item_mappings_membership: v })}
                 disabled={loading}
                 placeholder="Ej: SE01001"
-                ayuda="Solo aplica si vendes membres\u00edas o suscripciones. Si no las manejas, d\u00e9jalo vac\u00edo."
+                ayuda={'Solo aplica si vendes membres\u00edas o suscripciones. Si no las manejas, d\u00e9jalo vac\u00edo.'}
                 integrationId={invoicingIntegrationId}
                 buscable={isSiigo}
               />
@@ -764,7 +764,7 @@ export function InvoicingConfigForm({
                 onChange={(v) => setFormData({ ...formData, item_mappings_tip: v })}
                 disabled={loading}
                 placeholder="Ej: SE03001"
-                ayuda="Solo aplica si tus \u00f3rdenes traen propina. Si no las manejas, d\u00e9jalo vac\u00edo."
+                ayuda={'Solo aplica si tus \u00f3rdenes traen propina. Si no las manejas, d\u00e9jalo vac\u00edo.'}
                 integrationId={invoicingIntegrationId}
                 buscable={isSiigo}
               />
