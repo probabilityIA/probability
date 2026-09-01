@@ -3,6 +3,8 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strconv"
 	"time"
 
 	spDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
@@ -188,8 +190,14 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 
 	var issuedAt *time.Time
 	if result.IssuedAt != "" {
-		if parsed, parseErr := time.Parse(time.RFC3339, result.IssuedAt); parseErr == nil {
+		if parsed, parseErr := parseSoftpymesTimestamp(result.IssuedAt); parseErr == nil {
 			issuedAt = &parsed
+		} else {
+			c.log.Warn(ctx).
+				Err(parseErr).
+				Uint("invoice_id", request.InvoiceID).
+				Str("raw_issued_at", result.IssuedAt).
+				Msg("Failed to parse issued_at from Softpymes response")
 		}
 	}
 
@@ -223,4 +231,21 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 	}
 
 	return resp
+}
+
+var softpymesTimestampPattern = regexp.MustCompile(`^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{1,2}):(\d{1,2})(?:\.\d+)?Z$`)
+
+func parseSoftpymesTimestamp(raw string) (time.Time, error) {
+	m := softpymesTimestampPattern.FindStringSubmatch(raw)
+	if m == nil {
+		return time.Parse(time.RFC3339, raw)
+	}
+	year, _ := strconv.Atoi(m[1])
+	month, _ := strconv.Atoi(m[2])
+	day, _ := strconv.Atoi(m[3])
+	hour, _ := strconv.Atoi(m[4])
+	minute, _ := strconv.Atoi(m[5])
+	second, _ := strconv.Atoi(m[6])
+	normalized := fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", year, month, day, hour, minute, second)
+	return time.Parse(time.RFC3339, normalized)
 }

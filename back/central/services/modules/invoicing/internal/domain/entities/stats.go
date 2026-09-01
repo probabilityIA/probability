@@ -129,3 +129,21 @@ type TrendInfo struct {
 	PercentageChange float64
 	ComparisonPeriod string
 }
+
+type CODAccountReport struct {
+	Period        PeriodInfo
+	TotalInvoices int
+	TotalAmount   float64
+	CODCount      int
+	CODAmount     float64
+	NonCODCount   int
+	NonCODAmount  float64
+	ByAccount     []AccountBreakdown
+}
+
+type AccountBreakdown struct {
+	AccountNumber string
+	IsCOD         bool
+	Count         int
+	Amount        float64
+}

@@ -20,6 +20,8 @@ type IRepository interface {
 	GetInvoiceSummary(ctx context.Context, businessID uint, start, end time.Time) (*entities.InvoiceSummary, error)
 	GetInvoiceDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error)
 	GetInvoiceTrends(ctx context.Context, businessID uint, start, end time.Time, granularity, metric string) (*entities.TrendData, error)
+	GetCODAccountReport(ctx context.Context, businessID uint, startDate, endDate string) (*entities.CODAccountReport, error)
+	GetCODAccountReportInvoices(ctx context.Context, businessID uint, startDate, endDate, accountNumber string, isCOD bool, page, pageSize int) ([]*entities.Invoice, int64, error)
 
 	CreateInvoiceItem(ctx context.Context, item *entities.InvoiceItem) error
 	GetInvoiceItemsByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.InvoiceItem, error)
@@ -199,6 +201,8 @@ type IUseCase interface {
 	GetSummary(ctx context.Context, businessID uint, period string) (*entities.InvoiceSummary, error)
 	GetDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error)
 	GetTrends(ctx context.Context, businessID uint, startDate, endDate, granularity, metric string) (*entities.TrendData, error)
+	GetCODAccountReport(ctx context.Context, businessID uint, startDate, endDate string) (*entities.CODAccountReport, error)
+	GetCODAccountReportInvoices(ctx context.Context, businessID uint, startDate, endDate, accountNumber string, isCOD bool, page, pageSize int) ([]*entities.Invoice, int64, error)
 
 	BulkCreateInvoices(ctx context.Context, dto *dtos.BulkCreateInvoicesDTO) (*dtos.BulkCreateResult, error)
 

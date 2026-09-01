@@ -40,6 +40,8 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)
 			invoices.POST("/bank-accounts", middleware.JWT(), h.ListBankAccounts)
 			invoices.GET("/bank-accounts/:correlationId", middleware.JWT(), h.GetListBankAccountsResult)
+			invoices.GET("/cod-report", middleware.JWT(), h.GetCODReport)
+			invoices.GET("/cod-report/invoices", middleware.JWT(), h.GetCODReportInvoices)
 		}
 
 		invoicing.POST("/journals", middleware.JWT(), h.CreateJournal)

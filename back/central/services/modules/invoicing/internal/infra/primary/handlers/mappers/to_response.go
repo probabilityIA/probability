@@ -316,3 +316,26 @@ func ToInvoiceableOrderResponse(order *dtos.OrderData) response.InvoiceableOrder
 		IsPaid:       order.IsPaid,
 	}
 }
+
+func CODReportToResponse(report *entities.CODAccountReport) *response.CODReport {
+	byAccount := make([]response.AccountBreakdown, 0, len(report.ByAccount))
+	for _, acc := range report.ByAccount {
+		byAccount = append(byAccount, response.AccountBreakdown{
+			AccountNumber: acc.AccountNumber,
+			IsCOD:         acc.IsCOD,
+			Count:         acc.Count,
+			Amount:        acc.Amount,
+		})
+	}
+
+	return &response.CODReport{
+		PeriodLabel:   report.Period.Label,
+		TotalInvoices: report.TotalInvoices,
+		TotalAmount:   report.TotalAmount,
+		CODCount:      report.CODCount,
+		CODAmount:     report.CODAmount,
+		NonCODCount:   report.NonCODCount,
+		NonCODAmount:  report.NonCODAmount,
+		ByAccount:     byAccount,
+	}
+}

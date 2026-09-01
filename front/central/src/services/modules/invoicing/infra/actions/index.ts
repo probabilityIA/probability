@@ -28,6 +28,7 @@ import type {
   CompareResponseData,
   ItemCompareResponseData,
   BankAccountsResponseData,
+  CODReport,
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -117,6 +118,46 @@ export async function getInvoicesAction(filters?: InvoiceFilters): Promise<Pagin
 
 export async function getInvoiceByIdAction(id: number): Promise<Invoice> {
   return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}`);
+}
+
+export async function getCODReportAction(
+  businessId: number,
+  startDate?: string,
+  endDate?: string
+): Promise<CODReport> {
+  const params = new URLSearchParams();
+  params.append('business_id', businessId.toString());
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/cod-report?${params.toString()}`);
+}
+
+export async function getCODReportInvoicesAction(
+  businessId: number,
+  accountNumber: string,
+  isCOD: boolean,
+  startDate: string | undefined,
+  endDate: string | undefined,
+  page: number,
+  pageSize: number
+): Promise<PaginatedInvoices> {
+  const params = new URLSearchParams();
+  params.append('business_id', businessId.toString());
+  params.append('account_number', accountNumber);
+  params.append('is_cod', isCOD.toString());
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+  params.append('page', page.toString());
+  params.append('page_size', pageSize.toString());
+
+  const response = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/cod-report/invoices?${params.toString()}`);
+  return {
+    data: response.items || [],
+    total: response.total_count || 0,
+    page: response.page || 1,
+    page_size: response.page_size || pageSize,
+  };
 }
 
 export async function cancelInvoiceAction(id: number): Promise<Invoice> {

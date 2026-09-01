@@ -344,6 +344,78 @@ func (r *Repository) GetInvoiceTrends(ctx context.Context, businessID uint, star
 	return &trendData, nil
 }
 
+func (r *Repository) GetCODAccountReport(ctx context.Context, businessID uint, startDate, endDate string) (*entities.CODAccountReport, error) {
+	report := &entities.CODAccountReport{}
+
+	whereClause := "invoices.business_id = ? AND invoices.deleted_at IS NULL AND invoices.status != 'cancelled'"
+	args := []interface{}{businessID}
+
+	if startDate != "" {
+		whereClause += " AND COALESCE(invoices.issued_at, invoices.created_at) >= ?"
+		args = append(args, startDate)
+	}
+	if endDate != "" {
+		whereClause += " AND COALESCE(invoices.issued_at, invoices.created_at) < ?::date + interval '1 day'"
+		args = append(args, endDate)
+	}
+
+	var totals struct {
+		TotalInvoices int
+		TotalAmount   float64
+		CODCount      int
+		CODAmount     float64
+		NonCODCount   int
+		NonCODAmount  float64
+	}
+	err := r.db.Conn(ctx).
+		Model(&models.Invoice{}).
+		Joins("JOIN orders ON orders.id = invoices.order_id AND orders.deleted_at IS NULL").
+		Where(whereClause, args...).
+		Select(`
+			COUNT(*) as total_invoices,
+			COALESCE(SUM(invoices.total_amount), 0) as total_amount,
+			COUNT(CASE WHEN orders.is_cod THEN 1 END) as cod_count,
+			COALESCE(SUM(CASE WHEN orders.is_cod THEN invoices.total_amount ELSE 0 END), 0) as cod_amount,
+			COUNT(CASE WHEN NOT orders.is_cod THEN 1 END) as non_cod_count,
+			COALESCE(SUM(CASE WHEN NOT orders.is_cod THEN invoices.total_amount ELSE 0 END), 0) as non_cod_amount
+		`).
+		Scan(&totals).Error
+	if err != nil {
+		r.log.Error(ctx).Err(err).Msg("Failed to get COD account report totals")
+		return nil, err
+	}
+
+	report.TotalInvoices = totals.TotalInvoices
+	report.TotalAmount = totals.TotalAmount
+	report.CODCount = totals.CODCount
+	report.CODAmount = totals.CODAmount
+	report.NonCODCount = totals.NonCODCount
+	report.NonCODAmount = totals.NonCODAmount
+
+	var byAccount []entities.AccountBreakdown
+	err = r.db.Conn(ctx).
+		Model(&models.Invoice{}).
+		Joins("JOIN orders ON orders.id = invoices.order_id AND orders.deleted_at IS NULL").
+		Where(whereClause, args...).
+		Where("invoices.provider_response->'cash_receipt'->'request_body'->'payment'->0->>'accountNumber' IS NOT NULL").
+		Select(`
+			invoices.provider_response->'cash_receipt'->'request_body'->'payment'->0->>'accountNumber' as account_number,
+			orders.is_cod as is_cod,
+			COUNT(*) as count,
+			COALESCE(SUM(invoices.total_amount), 0) as amount
+		`).
+		Group("account_number, orders.is_cod").
+		Order("account_number").
+		Scan(&byAccount).Error
+	if err != nil {
+		r.log.Error(ctx).Err(err).Msg("Failed to get COD account report breakdown")
+		return nil, err
+	}
+	report.ByAccount = byAccount
+
+	return report, nil
+}
+
 // FUNCIONES AUXILIARES
 
 // formatPeriodLabel genera una etiqueta legible para el período

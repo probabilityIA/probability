@@ -14,6 +14,7 @@ import { InvoiceComparisonModal } from './InvoiceComparisonModal';
 import { SyncCancellationsModal } from './SyncCancellationsModal';
 import { ItemsComparisonModal } from './ItemsComparisonModal';
 import { ConfigsModal } from './ConfigsModal';
+import { CODReportModal } from './CODReportModal';
 import {
   getInvoicesAction,
   getInvoiceByIdAction,
@@ -66,6 +67,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [syncData, setSyncData] = useState<CompareResponseData | null>(null);
   const [showConfigsModal, setShowConfigsModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
+  const [showCODReportModal, setShowCODReportModal] = useState(false);
   const [showItemsModal, setShowItemsModal] = useState(false);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsCorrelationId, setItemsCorrelationId] = useState<string | null>(null);
@@ -783,6 +785,15 @@ export const InvoiceList = forwardRef(function InvoiceList(
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
+        <button
+          onClick={() => setShowCODReportModal(true)}
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Reporte de contra entrega"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </button>
       </div>
 
       <div className="invoiceTable">
@@ -998,6 +1009,12 @@ export const InvoiceList = forwardRef(function InvoiceList(
         isOpen={showManualModal}
         onClose={() => setShowManualModal(false)}
         onSuccess={() => loadInvoices(currentPage, pageSize)}
+        businessId={effectiveBusinessId}
+      />
+
+      <CODReportModal
+        isOpen={showCODReportModal}
+        onClose={() => setShowCODReportModal(false)}
         businessId={effectiveBusinessId}
       />
 

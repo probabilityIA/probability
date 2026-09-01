@@ -309,6 +309,24 @@ export interface PaginatedConfigs {
   page_size: number;
 }
 
+export interface AccountBreakdown {
+  account_number: string;
+  is_cod: boolean;
+  count: number;
+  amount: number;
+}
+
+export interface CODReport {
+  period_label: string;
+  total_invoices: number;
+  total_amount: number;
+  cod_count: number;
+  cod_amount: number;
+  non_cod_count: number;
+  non_cod_amount: number;
+  by_account: AccountBreakdown[];
+}
+
 // ===================================
 // FILTROS
 // ===================================
