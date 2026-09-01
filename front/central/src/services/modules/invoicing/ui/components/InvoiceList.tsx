@@ -71,7 +71,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [itemsCorrelationId, setItemsCorrelationId] = useState<string | null>(null);
   const [itemsData, setItemsData] = useState<ItemCompareResponseData | null>(null);
   const [newInvoiceIds, setNewInvoiceIds] = useState<Set<number>>(new Set());
-  const [codIssuedCount, setCodIssuedCount] = useState<number | null>(null);
 
   const effectiveBusinessId = isSuperAdmin ? (selectedBusinessId ?? businessId) : businessId;
 
@@ -196,28 +195,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
     loadInvoices(1, pageSize);
   }, [businessId, JSON.stringify(filters), selectedBusinessId]);
 
-  useEffect(() => {
-    const loadCodIssuedCount = async () => {
-      const targetBusinessId = isSuperAdmin ? selectedBusinessId : businessId;
-      if (!targetBusinessId) {
-        setCodIssuedCount(null);
-        return;
-      }
-      try {
-        const response = await getInvoicesAction({
-          business_id: targetBusinessId,
-          is_cod: true,
-          status: 'issued',
-          page: 1,
-          page_size: 1,
-        });
-        setCodIssuedCount(response.total);
-      } catch {
-        setCodIssuedCount(null);
-      }
-    };
-    loadCodIssuedCount();
-  }, [businessId, isSuperAdmin, selectedBusinessId]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -718,7 +695,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
   return (
     <>
       <div className="invoiceFilters flex items-center mb-4">
-        <div className="flex-1 min-w-0 flex items-center gap-3">
+        <div className="flex-1 min-w-0">
           <DynamicFilters
             availableFilters={availableFilters}
             activeFilters={activeFilters}
@@ -726,14 +703,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
             onRemoveFilter={handleRemoveFilter}
             className="!p-0 !border-0 !shadow-none !rounded-none"
           />
-          {codIssuedCount !== null && (
-            <span
-              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
-              title="Facturas contra entrega ya emitidas para este negocio"
-            >
-              {codIssuedCount} contra entrega emitidas
-            </span>
-          )}
         </div>
         <button
           onClick={() => setShowConfigsModal(true)}
