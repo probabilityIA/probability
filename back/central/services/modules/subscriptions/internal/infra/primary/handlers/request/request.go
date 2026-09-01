@@ -71,6 +71,7 @@ type EditSubscriptionDatesRequest struct {
 	BusinessID uint   `json:"business_id" binding:"required"`
 	StartDate  string `json:"start_date" binding:"required"`
 	EndDate    string `json:"end_date" binding:"required"`
+	CutoffDay  *int   `json:"cutoff_day" binding:"omitempty,min=1,max=31"`
 }
 
 type GrantOverrideRequest struct {

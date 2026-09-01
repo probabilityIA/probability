@@ -452,6 +452,8 @@ function AdminSubscriptionsView() {
                     </div>
                 )}
 
+                <div className="overflow-x-auto">
+                <div className="min-w-[1150px]">
                 <div style={{ display: 'grid', gridTemplateColumns: ADMIN_ROW_GRID }} className="items-center px-4 h-9 bg-gray-50 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     <div><input type="checkbox" checked={allChecked} onChange={toggleAll} className="w-3.5 h-3.5 accent-violet-600 cursor-pointer" /></div>
                     <div>Negocio</div>
@@ -554,6 +556,8 @@ function AdminSubscriptionsView() {
                         );
                     })
                 )}
+                </div>
+                </div>
 
                 {rows.length > 0 && (
                     <div className="px-4 py-3 flex items-center justify-between">
@@ -674,10 +678,11 @@ const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.g
 
 const fmtDateInput = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: {
+function SubscriptionCalendar({ cycleStartDate, cycleEndDate, cutoffDay, onSave, saving }: {
     cycleStartDate?: string;
     cycleEndDate?: string;
-    onSave: (startDate: string, endDate: string) => Promise<void>;
+    cutoffDay?: number;
+    onSave: (startDate: string, endDate: string, cutoffDay?: number) => Promise<void>;
     saving?: boolean;
 }) {
     const start = cycleStartDate ? new Date(cycleStartDate) : null;
@@ -686,6 +691,7 @@ function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: 
     const [editing, setEditing] = useState(false);
     const [pendingStart, setPendingStart] = useState<Date | null>(null);
     const [pendingEnd, setPendingEnd] = useState<Date | null>(null);
+    const [pendingCutoffDay, setPendingCutoffDay] = useState<string>(cutoffDay ? String(cutoffDay) : '');
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -707,6 +713,7 @@ function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: 
     const startEditing = () => {
         setPendingStart(start);
         setPendingEnd(end);
+        setPendingCutoffDay(cutoffDay ? String(cutoffDay) : '');
         setEditing(true);
     };
 
@@ -714,6 +721,7 @@ function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: 
         setEditing(false);
         setPendingStart(null);
         setPendingEnd(null);
+        setPendingCutoffDay(cutoffDay ? String(cutoffDay) : '');
     };
 
     const handleDayClick = (day: number) => {
@@ -732,7 +740,8 @@ function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: 
 
     const handleSave = async () => {
         if (!pendingStart || !pendingEnd) return;
-        await onSave(fmtDateInput(pendingStart), fmtDateInput(pendingEnd));
+        const parsedCutoffDay = pendingCutoffDay ? Number(pendingCutoffDay) : undefined;
+        await onSave(fmtDateInput(pendingStart), fmtDateInput(pendingEnd), parsedCutoffDay);
         cancelEditing();
     };
 
@@ -786,6 +795,20 @@ function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: 
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
                         {!pendingStart ? 'Selecciona la fecha de inicio.' : !pendingEnd ? 'Ahora selecciona la fecha de vencimiento.' : `${fmtDateInput(pendingStart)} → ${fmtDateInput(pendingEnd)}`}
                     </p>
+                    <div>
+                        <label className="block text-[10px] text-gray-400 mb-1">
+                            {'D\u00eda de corte (1-31, opcional) \u2014 suspende la cuenta ese d\u00eda del mes si no ha pagado, en vez de al vencer el ciclo'}
+                        </label>
+                        <input
+                            type="number"
+                            min={1}
+                            max={31}
+                            value={pendingCutoffDay}
+                            onChange={(e) => setPendingCutoffDay(e.target.value)}
+                            placeholder={'Sin d\u00eda de corte'}
+                            className="w-full text-[11px] px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                        />
+                    </div>
                     <div className="flex gap-2">
                         <Button size="sm" variant="secondary" className="flex-1 !text-xs" onClick={cancelEditing}>Cancelar</Button>
                         <Button size="sm" variant="purple" className="flex-1 !text-xs" onClick={handleSave} loading={saving} disabled={!pendingStart || !pendingEnd}>Guardar</Button>
@@ -793,7 +816,11 @@ function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: 
                 </div>
             ) : (
                 <div className="mt-2.5 flex items-center justify-between">
-                    {(!start || !end) ? <p className="text-[11px] text-gray-400">Sin ciclo asignado</p> : <span />}
+                    {(!start || !end) ? <p className="text-[11px] text-gray-400">Sin ciclo asignado</p> : (
+                        <p className="text-[11px] text-gray-400">
+                            {cutoffDay ? `Corte: d\u00eda ${cutoffDay}` : 'Sin d\u00eda de corte'}
+                        </p>
+                    )}
                     <button onClick={startEditing} className="text-[11px] font-semibold text-violet-600 hover:underline">Editar fechas</button>
                 </div>
             )}
@@ -957,9 +984,9 @@ function BusinessDetailDrawer({ business, onClose, onChanged }: {
     const cycleStart = subscription?.start_date ?? business.cycle_start_date;
     const cycleEnd = subscription?.end_date ?? business.cycle_end_date;
 
-    const handleSaveDates = async (startDate: string, endDate: string) => {
+    const handleSaveDates = async (startDate: string, endDate: string, cutoffDay?: number) => {
         setBusy(true);
-        const res = await editSubscriptionDatesAction({ businessId: business.id, startDate, endDate });
+        const res = await editSubscriptionDatesAction({ businessId: business.id, startDate, endDate, cutoffDay });
         setBusy(false);
         if (res.success) {
             await afterChange('Fechas del ciclo actualizadas.');
@@ -1172,7 +1199,7 @@ function BusinessDetailDrawer({ business, onClose, onChanged }: {
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 lg:sticky lg:top-0 lg:self-start lg:max-h-[85vh] lg:overflow-y-auto lg:pr-1">
                         <div className={`rounded-xl p-4 text-white bg-gradient-to-br ${heroTone}`}>
                             <p className="text-[11px] font-semibold uppercase tracking-wider opacity-80">Estado de suscripción</p>
                             <p className="text-lg font-semibold mt-1.5">{heroTitle}</p>
@@ -1208,6 +1235,7 @@ function BusinessDetailDrawer({ business, onClose, onChanged }: {
                         <SubscriptionCalendar
                             cycleStartDate={cycleStart}
                             cycleEndDate={cycleEnd}
+                            cutoffDay={business.cutoff_day}
                             onSave={handleSaveDates}
                             saving={busy}
                         />

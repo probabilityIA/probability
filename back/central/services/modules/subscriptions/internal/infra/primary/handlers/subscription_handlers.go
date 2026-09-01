@@ -115,6 +115,7 @@ func (h *Handlers) EditSubscriptionDates(c *gin.Context) {
 		BusinessID: req.BusinessID,
 		StartDate:  startDate,
 		EndDate:    endDate,
+		CutoffDay:  req.CutoffDay,
 	}, c.GetUint("user_id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

@@ -77,10 +77,11 @@ func (r *Repository) ListBusinessesForAdmin(ctx context.Context, page, pageSize 
 	rows := make([]entities.AdminBusinessRow, len(businesses))
 	for i, b := range businesses {
 		row := entities.AdminBusinessRow{
-			ID:     b.ID,
-			Name:   b.Name,
-			Code:   b.Code,
-			Status: b.SubscriptionStatus,
+			ID:        b.ID,
+			Name:      b.Name,
+			Code:      b.Code,
+			Status:    b.SubscriptionStatus,
+			CutoffDay: b.SubscriptionCutoffDay,
 		}
 		if b.SubscriptionType != nil {
 			row.PlanName = b.SubscriptionType.Name

@@ -175,6 +175,7 @@ type AdminBusinessRowResponse struct {
 	LastPaymentAmount *float64   `json:"last_payment_amount,omitempty"`
 	LastPaymentDate   *time.Time `json:"last_payment_date,omitempty"`
 	ForecastedPayment *float64   `json:"forecasted_payment,omitempty"`
+	CutoffDay         *int       `json:"cutoff_day,omitempty"`
 }
 
 func FromAdminBusinessRow(r *entities.AdminBusinessRow) AdminBusinessRowResponse {
@@ -189,6 +190,7 @@ func FromAdminBusinessRow(r *entities.AdminBusinessRow) AdminBusinessRowResponse
 		LastPaymentAmount: r.LastPaymentAmount,
 		LastPaymentDate:   r.LastPaymentDate,
 		ForecastedPayment: r.ForecastedPayment,
+		CutoffDay:         r.CutoffDay,
 	}
 }
 

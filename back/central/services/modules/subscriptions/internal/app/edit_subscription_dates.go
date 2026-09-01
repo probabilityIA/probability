@@ -29,9 +29,16 @@ func (uc *UseCase) EditSubscriptionDates(ctx context.Context, dto dtos.EditSubsc
 		return nil, err
 	}
 
+	auditMsg := fmt.Sprintf("edito las fechas del ciclo: %s -> %s", dto.StartDate.Format("2006-01-02"), dto.EndDate.Format("2006-01-02"))
+	if dto.CutoffDay != nil {
+		if err := uc.repo.UpdateBusinessSubscriptionCutoffDay(ctx, dto.BusinessID, *dto.CutoffDay); err != nil {
+			return nil, err
+		}
+		auditMsg = fmt.Sprintf("%s, dia de corte: %d", auditMsg, *dto.CutoffDay)
+	}
+
 	latest.StartDate = dto.StartDate
 	latest.EndDate = dto.EndDate
-	uc.recordAudit(ctx, dto.BusinessID, actorUserID, entities.AuditActionDatesEdited,
-		fmt.Sprintf("edito las fechas del ciclo: %s -> %s", dto.StartDate.Format("2006-01-02"), dto.EndDate.Format("2006-01-02")))
+	uc.recordAudit(ctx, dto.BusinessID, actorUserID, entities.AuditActionDatesEdited, auditMsg)
 	return latest, nil
 }

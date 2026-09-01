@@ -23,6 +23,7 @@ type EditSubscriptionDatesDTO struct {
 	BusinessID uint
 	StartDate  time.Time
 	EndDate    time.Time
+	CutoffDay  *int
 }
 
 type ExtendCourtesyDTO struct {

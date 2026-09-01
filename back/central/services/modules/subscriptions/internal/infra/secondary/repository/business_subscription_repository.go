@@ -254,6 +254,11 @@ func (r *Repository) UpdateSubscriptionDates(ctx context.Context, id uint, start
 		Updates(map[string]interface{}{"start_date": startDate, "end_date": endDate}).Error
 }
 
+func (r *Repository) UpdateBusinessSubscriptionCutoffDay(ctx context.Context, businessID uint, cutoffDay int) error {
+	return r.db.Conn(ctx).Model(&models.Business{}).Where("id = ? AND deleted_at IS NULL", businessID).
+		Update("subscription_cutoff_day", cutoffDay).Error
+}
+
 func (r *Repository) UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error {
 	return r.db.Conn(ctx).Model(&models.Business{}).Where("id = ? AND deleted_at IS NULL", businessID).
 		Update("subscription_end_date", endDate).Error
@@ -351,11 +356,13 @@ func (r *Repository) ListBusinessesWithExpiredTrial(ctx context.Context, before 
 
 func (r *Repository) ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
 	var rows []struct {
-		ID   uint
-		Code string
+		ID        uint
+		Code      string
+		EndDate   time.Time
+		CutoffDay *int
 	}
 	err := r.db.Conn(ctx).Table("business").
-		Select("business.id, subscription_types.code").
+		Select("business.id, subscription_types.code, business.subscription_end_date as end_date, business.subscription_cutoff_day as cutoff_day").
 		Joins("LEFT JOIN subscription_types ON subscription_types.id = business.subscription_type_id").
 		Where("business.deleted_at IS NULL AND business.subscription_status = ? AND business.subscription_end_date < ?",
 			entities.BusinessStatusActive, before).
@@ -366,7 +373,7 @@ func (r *Repository) ListBusinessesJustExpired(ctx context.Context, before time.
 
 	result := make([]entities.ExpiringBusiness, len(rows))
 	for i, row := range rows {
-		result[i] = entities.ExpiringBusiness{BusinessID: row.ID, PlanCode: row.Code}
+		result[i] = entities.ExpiringBusiness{BusinessID: row.ID, PlanCode: row.Code, EndDate: row.EndDate, CutoffDay: row.CutoffDay}
 	}
 	return result, nil
 }

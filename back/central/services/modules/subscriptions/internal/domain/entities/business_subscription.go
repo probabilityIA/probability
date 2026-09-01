@@ -48,4 +48,6 @@ const (
 type ExpiringBusiness struct {
 	BusinessID uint
 	PlanCode   string
+	EndDate    time.Time
+	CutoffDay  *int
 }

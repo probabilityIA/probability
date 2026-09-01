@@ -29,6 +29,7 @@ type IRepository interface {
 	ListBusinessesWithEndedFreeCycle(ctx context.Context, before time.Time) ([]uint, error)
 	UpdateSubscriptionDates(ctx context.Context, id uint, startDate, endDate time.Time) error
 	UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error
+	UpdateBusinessSubscriptionCutoffDay(ctx context.Context, businessID uint, cutoffDay int) error
 	GetBusinessCurrentSubscriptionTypeID(ctx context.Context, businessID uint) (*uint, error)
 	ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error)
 	ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error)

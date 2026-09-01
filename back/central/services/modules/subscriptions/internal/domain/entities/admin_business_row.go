@@ -13,6 +13,7 @@ type AdminBusinessRow struct {
 	LastPaymentAmount *float64
 	LastPaymentDate   *time.Time
 	ForecastedPayment *float64
+	CutoffDay         *int
 }
 
 type AdminKPIs struct {

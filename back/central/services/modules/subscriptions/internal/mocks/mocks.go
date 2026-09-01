@@ -30,6 +30,7 @@ type RepositoryMock struct {
 	MarkExpiredIfStillActiveFn             func(ctx context.Context, businessID uint, before time.Time) error
 	UpdateSubscriptionDatesFn              func(ctx context.Context, id uint, startDate, endDate time.Time) error
 	UpdateBusinessSubscriptionEndDateFn    func(ctx context.Context, businessID uint, endDate time.Time) error
+	UpdateBusinessSubscriptionCutoffDayFn  func(ctx context.Context, businessID uint, cutoffDay int) error
 	GetBusinessCurrentSubscriptionTypeIDFn func(ctx context.Context, businessID uint) (*uint, error)
 	ListBusinessesExpiringBetweenFn        func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error)
 	ListBusinessesJustExpiredFn            func(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error)
@@ -197,6 +198,13 @@ func (m *RepositoryMock) UpdateSubscriptionDates(ctx context.Context, id uint, s
 func (m *RepositoryMock) UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error {
 	if m.UpdateBusinessSubscriptionEndDateFn != nil {
 		return m.UpdateBusinessSubscriptionEndDateFn(ctx, businessID, endDate)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) UpdateBusinessSubscriptionCutoffDay(ctx context.Context, businessID uint, cutoffDay int) error {
+	if m.UpdateBusinessSubscriptionCutoffDayFn != nil {
+		return m.UpdateBusinessSubscriptionCutoffDayFn(ctx, businessID, cutoffDay)
 	}
 	return nil
 }

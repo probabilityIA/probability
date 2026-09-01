@@ -79,6 +79,7 @@ export interface AdminBusinessRow {
     last_payment_amount?: number;
     last_payment_date?: string;
     forecasted_payment?: number;
+    cutoff_day?: number;
 }
 
 export interface AdminKPIs {
@@ -439,6 +440,7 @@ export async function editSubscriptionDatesAction(payload: {
     businessId: number;
     startDate: string;
     endDate: string;
+    cutoffDay?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -449,6 +451,7 @@ export async function editSubscriptionDatesAction(payload: {
                 business_id: payload.businessId,
                 start_date: payload.startDate,
                 end_date: payload.endDate,
+                cutoff_day: payload.cutoffDay,
             }),
         });
         if (!res.ok) {

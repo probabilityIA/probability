@@ -25,6 +25,9 @@ func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 		return err
 	}
 	for _, business := range justExpired {
+		if !cutoffReached(business, now) {
+			continue
+		}
 		if err := uc.repo.MarkExpiredIfStillActive(ctx, business.BusinessID, now); err != nil {
 			uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("failed to mark business as expired")
 		}
