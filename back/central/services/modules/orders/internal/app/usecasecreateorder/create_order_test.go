@@ -217,6 +217,9 @@ func (m *mockRepository) CreateChannelMetadata(ctx context.Context, metadata *en
 	}
 	return nil
 }
+func (m *mockRepository) GetProductByID(ctx context.Context, businessID uint, id string) (*entities.Product, error) {
+	return nil, nil
+}
 func (m *mockRepository) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error) {
 	if m.GetProductBySKUFn != nil {
 		return m.GetProductBySKUFn(ctx, businessID, sku)
