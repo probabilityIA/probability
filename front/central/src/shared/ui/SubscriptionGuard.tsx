@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
-const SUBSCRIPTION_GUARD_ENABLED = false;
+const SUBSCRIPTION_GUARD_ENABLED = true;
 
 export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
     const { permissions, isSuperAdmin } = usePermissions();
