@@ -5,7 +5,7 @@ import (
 )
 
 // CreateValidators crea todos los validadores según la configuración
-func CreateValidators(config *entities.FilterConfig) []FilterValidator {
+func CreateValidators(config *entities.FilterConfig, provider string) []FilterValidator {
 	var validators []FilterValidator
 
 	// Moneda — siempre activo: solo COP es facturable (DIAN Colombia)
@@ -25,7 +25,11 @@ func CreateValidators(config *entities.FilterConfig) []FilterValidator {
 		if config.InvoiceCOD != nil {
 			allowCOD = *config.InvoiceCOD
 		}
-		validators = append(validators, &PaymentStatusValidator{RequiredStatus: *config.PaymentStatus, AllowCOD: allowCOD})
+		validators = append(validators, &PaymentStatusValidator{
+			RequiredStatus: *config.PaymentStatus,
+			AllowCOD:       allowCOD,
+			Provider:       provider,
+		})
 	}
 	if len(config.PaymentMethods) > 0 {
 		validators = append(validators, &PaymentMethodsValidator{AllowedMethods: config.PaymentMethods})

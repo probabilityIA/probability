@@ -100,19 +100,19 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		return nil, errors.ErrOrderAlreadyInvoiced
 	}
 
-	if err := uc.validateInvoicingFilters(order, config); err != nil {
+	provider, err := uc.resolveProvider(ctx, integrationID)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Uint("integration_id", integrationID).Msg("Error al resolver proveedor de facturación")
+		provider = dtos.ProviderSoftpymes
+	}
+
+	if err := uc.validateInvoicingFilters(order, config, provider); err != nil {
 		uc.log.Warn(ctx).
 			Str("order_id", order.ID).
 			Str("order_number", order.OrderNumber).
 			Err(err).
 			Msg("Orden no cumple criterios de facturación")
 		return nil, err
-	}
-
-	provider, err := uc.resolveProvider(ctx, integrationID)
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Uint("integration_id", integrationID).Msg("Error al resolver proveedor de facturación")
-		provider = dtos.ProviderSoftpymes
 	}
 
 	invoice := &entities.Invoice{
@@ -342,7 +342,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	return invoice, nil
 }
 
-func (uc *useCase) validateInvoicingFilters(order *dtos.OrderData, config *entities.InvoicingConfig) error {
+func (uc *useCase) validateInvoicingFilters(order *dtos.OrderData, config *entities.InvoicingConfig, provider string) error {
 	ctx := context.Background()
 
 	filterConfig, err := uc.parseFilterConfig(config.Filters)
@@ -351,7 +351,7 @@ func (uc *useCase) validateInvoicingFilters(order *dtos.OrderData, config *entit
 		return errors.ErrInvalidFilterConfig
 	}
 
-	validators := CreateValidators(filterConfig)
+	validators := CreateValidators(filterConfig, provider)
 
 	for _, validator := range validators {
 		if err := validator.Validate(order); err != nil {

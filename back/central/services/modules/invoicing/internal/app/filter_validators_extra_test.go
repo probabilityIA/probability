@@ -64,6 +64,30 @@ func TestPaymentStatusValidator_NoPagadaNiCOD_SeRechaza(t *testing.T) {
 	assert.ErrorIs(t, err, invoicingerrors.ErrOrderNotPaid)
 }
 
+func TestPaymentStatusValidator_SoftpymesCODPagadaSinPermiso_SeRechaza(t *testing.T) {
+	v := &PaymentStatusValidator{RequiredStatus: "paid", AllowCOD: false, Provider: dtos.ProviderSoftpymes}
+
+	err := v.Validate(&dtos.OrderData{IsPaid: true, IsCOD: true})
+
+	assert.ErrorIs(t, err, invoicingerrors.ErrOrderNotPaid)
+}
+
+func TestPaymentStatusValidator_SoftpymesCODPagadaConPermiso_SeFactura(t *testing.T) {
+	v := &PaymentStatusValidator{RequiredStatus: "paid", AllowCOD: true, Provider: dtos.ProviderSoftpymes}
+
+	err := v.Validate(&dtos.OrderData{IsPaid: true, IsCOD: true})
+
+	assert.NoError(t, err)
+}
+
+func TestPaymentStatusValidator_OtroProveedorCODPagadaSinPermiso_SeFactura(t *testing.T) {
+	v := &PaymentStatusValidator{RequiredStatus: "paid", AllowCOD: false, Provider: dtos.ProviderSiigo}
+
+	err := v.Validate(&dtos.OrderData{IsPaid: true, IsCOD: true})
+
+	assert.NoError(t, err, "fuera de Softpymes una COD ya pagada sigue facturandose aunque el permiso este apagado")
+}
+
 func TestPaymentStatusValidator_Pagada_SiemprePasa(t *testing.T) {
 	for _, allowCOD := range []bool{true, false} {
 		v := &PaymentStatusValidator{RequiredStatus: "paid", AllowCOD: allowCOD}

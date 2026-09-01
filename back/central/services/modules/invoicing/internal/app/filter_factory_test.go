@@ -35,7 +35,7 @@ func tipos(validators []FilterValidator) []string {
 }
 
 func TestCreateValidators_ConfigVacia_SoloValidaMoneda(t *testing.T) {
-	got := CreateValidators(&entities.FilterConfig{})
+	got := CreateValidators(&entities.FilterConfig{}, "")
 
 	require.Len(t, got, 1)
 	assert.IsType(t, &CurrencyCOPValidator{}, got[0])
@@ -46,7 +46,7 @@ func TestCreateValidators_MonedaSiempreEsElPrimero(t *testing.T) {
 		MinAmount:     f64p(1000),
 		MaxAmount:     f64p(9000),
 		PaymentStatus: strp("paid"),
-	})
+	}, "")
 
 	require.NotEmpty(t, got)
 	assert.IsType(t, &CurrencyCOPValidator{}, got[0])
@@ -56,7 +56,7 @@ func TestCreateValidators_MontoMinimoYMaximo(t *testing.T) {
 	got := CreateValidators(&entities.FilterConfig{
 		MinAmount: f64p(10000),
 		MaxAmount: f64p(500000),
-	})
+	}, "")
 
 	require.Len(t, got, 3)
 
@@ -70,7 +70,7 @@ func TestCreateValidators_MontoMinimoYMaximo(t *testing.T) {
 }
 
 func TestCreateValidators_SoloMontoMinimo(t *testing.T) {
-	got := CreateValidators(&entities.FilterConfig{MinAmount: f64p(10000)})
+	got := CreateValidators(&entities.FilterConfig{MinAmount: f64p(10000)}, "")
 
 	require.Len(t, got, 2)
 	assert.IsType(t, &MinAmountValidator{}, got[1])
@@ -80,7 +80,7 @@ func TestCreateValidators_EstadoDePagoConCOD(t *testing.T) {
 	got := CreateValidators(&entities.FilterConfig{
 		PaymentStatus: strp("paid"),
 		InvoiceCOD:    boolp(true),
-	})
+	}, "")
 
 	require.Len(t, got, 2)
 	v, ok := got[1].(*PaymentStatusValidator)
@@ -90,7 +90,7 @@ func TestCreateValidators_EstadoDePagoConCOD(t *testing.T) {
 }
 
 func TestCreateValidators_EstadoDePagoSinInvoiceCOD_NoPermiteCOD(t *testing.T) {
-	got := CreateValidators(&entities.FilterConfig{PaymentStatus: strp("paid")})
+	got := CreateValidators(&entities.FilterConfig{PaymentStatus: strp("paid")}, "")
 
 	v, ok := got[1].(*PaymentStatusValidator)
 	require.True(t, ok)
@@ -101,7 +101,7 @@ func TestCreateValidators_InvoiceCODFalseExplicito(t *testing.T) {
 	got := CreateValidators(&entities.FilterConfig{
 		PaymentStatus: strp("paid"),
 		InvoiceCOD:    boolp(false),
-	})
+	}, "")
 
 	v, ok := got[1].(*PaymentStatusValidator)
 	require.True(t, ok)
@@ -109,14 +109,14 @@ func TestCreateValidators_InvoiceCODFalseExplicito(t *testing.T) {
 }
 
 func TestCreateValidators_InvoiceCODSinPaymentStatus_NoCreaValidador(t *testing.T) {
-	got := CreateValidators(&entities.FilterConfig{InvoiceCOD: boolp(true)})
+	got := CreateValidators(&entities.FilterConfig{InvoiceCOD: boolp(true)}, "")
 
 	require.Len(t, got, 1)
 	assert.NotContains(t, tipos(got), "*app.PaymentStatusValidator")
 }
 
 func TestCreateValidators_MetodosDePago(t *testing.T) {
-	got := CreateValidators(&entities.FilterConfig{PaymentMethods: []uint{1, 3, 7}})
+	got := CreateValidators(&entities.FilterConfig{PaymentMethods: []uint{1, 3, 7}}, "")
 
 	require.Len(t, got, 2)
 	v, ok := got[1].(*PaymentMethodsValidator)
@@ -134,7 +134,7 @@ func TestCreateValidators_ListasVacias_NoCreanValidadores(t *testing.T) {
 		CustomerTypes:       []string{},
 		ExcludeCustomerIDs:  []string{},
 		ShippingRegions:     []string{},
-	})
+	}, "")
 
 	assert.Len(t, got, 1)
 }
@@ -143,7 +143,7 @@ func TestCreateValidators_FiltrosDeOrden(t *testing.T) {
 	got := CreateValidators(&entities.FilterConfig{
 		OrderTypes:      []string{"delivery", "pickup"},
 		ExcludeStatuses: []string{"cancelled", "refunded"},
-	})
+	}, "")
 
 	require.Len(t, got, 3)
 
@@ -160,7 +160,7 @@ func TestCreateValidators_FiltrosDeProducto(t *testing.T) {
 	got := CreateValidators(&entities.FilterConfig{
 		ExcludeProducts:     []string{"SKU-1"},
 		IncludeProductsOnly: []string{"SKU-2", "SKU-3"},
-	})
+	}, "")
 
 	require.Len(t, got, 3)
 
@@ -187,7 +187,7 @@ func TestCreateValidators_ConteoDeItems(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := CreateValidators(tc.config)
+			got := CreateValidators(tc.config, "")
 			assert.Equal(t, tc.want, len(got) == 2)
 		})
 	}
@@ -197,7 +197,7 @@ func TestCreateValidators_ConteoDeItems_CopiaLosLimites(t *testing.T) {
 	got := CreateValidators(&entities.FilterConfig{
 		MinItemsCount: intp(2),
 		MaxItemsCount: intp(20),
-	})
+	}, "")
 
 	require.Len(t, got, 2)
 	v, ok := got[1].(*ItemsCountValidator)
@@ -212,7 +212,7 @@ func TestCreateValidators_FiltrosDeCliente(t *testing.T) {
 	got := CreateValidators(&entities.FilterConfig{
 		CustomerTypes:      []string{"natural"},
 		ExcludeCustomerIDs: []string{"cust-1", "cust-2"},
-	})
+	}, "")
 
 	require.Len(t, got, 3)
 
@@ -226,7 +226,7 @@ func TestCreateValidators_FiltrosDeCliente(t *testing.T) {
 }
 
 func TestCreateValidators_RegionesDeEnvio(t *testing.T) {
-	got := CreateValidators(&entities.FilterConfig{ShippingRegions: []string{"Bogota", "Medellin"}})
+	got := CreateValidators(&entities.FilterConfig{ShippingRegions: []string{"Bogota", "Medellin"}}, "")
 
 	require.Len(t, got, 2)
 	v, ok := got[1].(*ShippingRegionsValidator)
@@ -240,7 +240,7 @@ func TestCreateValidators_RangoDeFechas_FormateaAISO(t *testing.T) {
 
 	got := CreateValidators(&entities.FilterConfig{
 		DateRange: &entities.DateRangeFilter{StartDate: &inicio, EndDate: &fin},
-	})
+	}, "")
 
 	require.Len(t, got, 2)
 	v, ok := got[1].(*DateRangeValidator)
@@ -256,7 +256,7 @@ func TestCreateValidators_RangoDeFechas_SoloInicio(t *testing.T) {
 
 	got := CreateValidators(&entities.FilterConfig{
 		DateRange: &entities.DateRangeFilter{StartDate: &inicio},
-	})
+	}, "")
 
 	require.Len(t, got, 2)
 	v, ok := got[1].(*DateRangeValidator)
@@ -266,7 +266,7 @@ func TestCreateValidators_RangoDeFechas_SoloInicio(t *testing.T) {
 }
 
 func TestCreateValidators_RangoDeFechasVacio_CreaValidadorSinLimites(t *testing.T) {
-	got := CreateValidators(&entities.FilterConfig{DateRange: &entities.DateRangeFilter{}})
+	got := CreateValidators(&entities.FilterConfig{DateRange: &entities.DateRangeFilter{}}, "")
 
 	require.Len(t, got, 2)
 	v, ok := got[1].(*DateRangeValidator)
@@ -295,7 +295,7 @@ func TestCreateValidators_ConfiguracionCompleta_CreaTodos(t *testing.T) {
 		ExcludeCustomerIDs:  []string{"c-1"},
 		ShippingRegions:     []string{"Bogota"},
 		DateRange:           &entities.DateRangeFilter{StartDate: &inicio, EndDate: &fin},
-	})
+	}, "")
 
 	assert.Len(t, got, 14)
 

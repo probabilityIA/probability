@@ -666,6 +666,14 @@ export function InvoicingConfigForm({
                     disabled={loading}
                   />
 
+                  {formData.invoice_cod && !formData.cod_use_alternate_bank && (
+                    <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                      {'Desactivado: el recibo de caja de las \u00f3rdenes contra entrega caer\u00e1 en la misma cuenta que las de contado ("'}
+                      {formData.payment_account_number || formData.payment_bank_account_id || 'cuenta normal'}
+                      {'"). Confirma con el contador si eso es lo que quieren.'}
+                    </p>
+                  )}
+
                   {formData.cod_use_alternate_bank && (
                     <div className="mt-3">
                       <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">{'N\u00famero'} de cuenta bancaria contra entrega</label>

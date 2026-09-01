@@ -55,13 +55,23 @@ func (v *MaxAmountValidator) Validate(order *dtos.OrderData) error {
 type PaymentStatusValidator struct {
 	RequiredStatus string
 	AllowCOD       bool
+	Provider       string
 }
 
 func (v *PaymentStatusValidator) Validate(order *dtos.OrderData) error {
-	if v.RequiredStatus == "paid" && !order.IsPaid {
-		if v.AllowCOD && order.IsCOD {
-			return nil
+	if v.RequiredStatus != "paid" {
+		return nil
+	}
+	if order.IsCOD {
+		if v.Provider == dtos.ProviderSoftpymes && !v.AllowCOD {
+			return errors.ErrOrderNotPaid
 		}
+		if !order.IsPaid && !v.AllowCOD {
+			return errors.ErrOrderNotPaid
+		}
+		return nil
+	}
+	if !order.IsPaid {
 		return errors.ErrOrderNotPaid
 	}
 	return nil
