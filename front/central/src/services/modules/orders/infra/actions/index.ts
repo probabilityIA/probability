@@ -296,13 +296,8 @@ export const downloadOrderTemplateAction = async () => {
         ]
     ];
 
-    const csvContent = [
-        headers.join(','),
-        ...exampleRows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
     return {
         success: true,
-        data: csvContent,
+        data: { headers, exampleRows },
     };
 };

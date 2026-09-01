@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import * as XLSX from 'xlsx';
 import { Button, Input } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { getActionError } from '@/shared/utils/action-result';
@@ -83,15 +84,11 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
         try {
             const result = await downloadOrderTemplateAction();
             if (result.success && result.data) {
-                const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'plantilla_ordenes.csv');
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const { headers, exampleRows } = result.data;
+                const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleRows]);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Ordenes');
+                XLSX.writeFile(wb, 'plantilla_ordenes.xlsx');
             }
         } catch (err) {
             console.error('Error downloading template:', err);
@@ -130,7 +127,7 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                                 onClick={handleDownloadTemplate}
                                 className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded flex items-center gap-1 transition-colors"
                             >
-                                Descargar Plantilla CSV
+                                Descargar Plantilla Excel
                             </button>
                         </div>
                         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
