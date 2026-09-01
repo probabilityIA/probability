@@ -16,10 +16,10 @@ func TestShippingMarginCODMargin(t *testing.T) {
 			want:   2800,
 		},
 		{
-			name:   "monto fijo aplica aunque no haya comision del carrier",
+			name:   "sin comision del carrier el monto fijo no aplica (no es COD)",
 			margin: ShippingMargin{CODMarginAmount: 2800},
 			fee:    0,
-			want:   2800,
+			want:   0,
 		},
 		{
 			name:   "sin monto fijo se conserva el porcentaje",

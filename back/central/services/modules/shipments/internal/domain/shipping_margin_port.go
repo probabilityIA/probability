@@ -10,10 +10,13 @@ type ShippingMargin struct {
 }
 
 func (m ShippingMargin) CODMargin(codCarrierFee float64) float64 {
+	if codCarrierFee <= 0 {
+		return 0
+	}
 	if m.CODMarginAmount > 0 {
 		return m.CODMarginAmount
 	}
-	if codCarrierFee > 0 && m.CODMarginPercent > 0 {
+	if m.CODMarginPercent > 0 {
 		return codCarrierFee * m.CODMarginPercent / 100.0
 	}
 	return 0
