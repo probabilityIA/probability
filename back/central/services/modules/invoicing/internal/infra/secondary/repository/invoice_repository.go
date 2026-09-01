@@ -120,6 +120,10 @@ func (r *Repository) ListInvoices(ctx context.Context, filters map[string]interf
 			"%"+orderNumber+"%", "%"+orderNumber+"%")
 	}
 
+	if isCOD, ok := filters["is_cod"].(bool); ok {
+		query = query.Where("order_id IN (SELECT id FROM orders WHERE is_cod = ? AND deleted_at IS NULL)", isCOD)
+	}
+
 	if startDate, ok := filters["start_date"].(string); ok && startDate != "" {
 		query = query.Where("invoices.created_at >= ?", startDate)
 	}

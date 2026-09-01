@@ -58,6 +58,13 @@ func (h *handler) ListInvoices(c *gin.Context) {
 		filters["currency"] = currency
 	}
 
+	// Is COD (contra entrega)
+	if isCOD := c.Query("is_cod"); isCOD != "" {
+		if parsed, err := strconv.ParseBool(isCOD); err == nil {
+			filters["is_cod"] = parsed
+		}
+	}
+
 	// Date range
 	if startDate := c.Query("start_date"); startDate != "" {
 		filters["start_date"] = startDate

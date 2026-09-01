@@ -323,6 +323,7 @@ export interface InvoiceFilters {
   invoice_number?: string;
   order_number?: string;
   customer_name?: string;
+  is_cod?: boolean;
   start_date?: string;
   end_date?: string;
   page?: number;

@@ -71,6 +71,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [itemsCorrelationId, setItemsCorrelationId] = useState<string | null>(null);
   const [itemsData, setItemsData] = useState<ItemCompareResponseData | null>(null);
   const [newInvoiceIds, setNewInvoiceIds] = useState<Set<number>>(new Set());
+  const [codIssuedCount, setCodIssuedCount] = useState<number | null>(null);
 
   const effectiveBusinessId = isSuperAdmin ? (selectedBusinessId ?? businessId) : businessId;
 
@@ -194,6 +195,29 @@ export const InvoiceList = forwardRef(function InvoiceList(
     setCurrentPage(1);
     loadInvoices(1, pageSize);
   }, [businessId, JSON.stringify(filters), selectedBusinessId]);
+
+  useEffect(() => {
+    const loadCodIssuedCount = async () => {
+      const targetBusinessId = isSuperAdmin ? selectedBusinessId : businessId;
+      if (!targetBusinessId) {
+        setCodIssuedCount(null);
+        return;
+      }
+      try {
+        const response = await getInvoicesAction({
+          business_id: targetBusinessId,
+          is_cod: true,
+          status: 'issued',
+          page: 1,
+          page_size: 1,
+        });
+        setCodIssuedCount(response.total);
+      } catch {
+        setCodIssuedCount(null);
+      }
+    };
+    loadCodIssuedCount();
+  }, [businessId, isSuperAdmin, selectedBusinessId]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -476,6 +500,15 @@ export const InvoiceList = forwardRef(function InvoiceList(
       ],
     },
     {
+      key: 'is_cod',
+      label: 'Contra entrega',
+      type: 'select',
+      options: [
+        { value: 'true', label: 'Solo contra entrega' },
+        { value: 'false', label: 'Solo pagadas por adelantado' },
+      ],
+    },
+    {
       key: 'created_at',
       label: 'Rango de fechas',
       type: 'date-range',
@@ -501,6 +534,14 @@ export const InvoiceList = forwardRef(function InvoiceList(
     if (filters.currency) {
       active.push({ key: 'currency', label: 'Moneda', value: filters.currency, type: 'select' });
     }
+    if (filters.is_cod !== undefined) {
+      active.push({
+        key: 'is_cod',
+        label: 'Contra entrega',
+        value: filters.is_cod ? 'Solo contra entrega' : 'Solo pagadas por adelantado',
+        type: 'select',
+      });
+    }
     if (filters.start_date || filters.end_date) {
       active.push({
         key: 'created_at',
@@ -519,6 +560,8 @@ export const InvoiceList = forwardRef(function InvoiceList(
       if (filterKey === 'created_at' && typeof value === 'object') {
         newFilters.start_date = value.start;
         newFilters.end_date = value.end;
+      } else if (filterKey === 'is_cod') {
+        newFilters.is_cod = value === 'true' || value === true;
       } else {
         (newFilters as any)[filterKey] = value;
       }
@@ -675,7 +718,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
   return (
     <>
       <div className="invoiceFilters flex items-center mb-4">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex items-center gap-3">
           <DynamicFilters
             availableFilters={availableFilters}
             activeFilters={activeFilters}
@@ -683,6 +726,14 @@ export const InvoiceList = forwardRef(function InvoiceList(
             onRemoveFilter={handleRemoveFilter}
             className="!p-0 !border-0 !shadow-none !rounded-none"
           />
+          {codIssuedCount !== null && (
+            <span
+              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
+              title="Facturas contra entrega ya emitidas para este negocio"
+            >
+              {codIssuedCount} contra entrega emitidas
+            </span>
+          )}
         </div>
         <button
           onClick={() => setShowConfigsModal(true)}
