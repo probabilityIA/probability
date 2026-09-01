@@ -34,7 +34,17 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		return nil, errs.ErrSubscriptionTypeNotFound
 	}
 
-	amount := subType.Price * float64(dto.Months)
+	current, err := uc.repo.GetLatestByBusinessID(ctx, dto.BusinessID)
+	if err != nil {
+		return nil, err
+	}
+
+	overage, err := uc.computeCurrentCycleOverage(ctx, dto.BusinessID, current)
+	if err != nil {
+		return nil, err
+	}
+
+	amount := subType.Price*float64(dto.Months) + overage
 
 	balance, err := uc.wallet.GetBalance(ctx, dto.BusinessID)
 	if err != nil {
@@ -44,7 +54,7 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		return nil, errs.ErrInsufficientBalance
 	}
 
-	start, endDate, err := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months, nil, subType)
+	start, endDate, err := uc.computeSubscriptionWindowFrom(current, dto.Months, nil, subType)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +94,17 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 // en dias, no en meses: asignarlos manualmente con "Months" produce fechas
 // incorrectas (1 mes calendario no son los dias de duracion del trial).
 func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int, startOverride *time.Time, subType *entities.SubscriptionType) (time.Time, time.Time, error) {
+	if startOverride != nil {
+		return uc.computeSubscriptionWindowFrom(nil, months, startOverride, subType)
+	}
+	current, err := uc.repo.GetLatestByBusinessID(ctx, businessID)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	return uc.computeSubscriptionWindowFrom(current, months, startOverride, subType)
+}
+
+func (uc *UseCase) computeSubscriptionWindowFrom(current *entities.BusinessSubscription, months int, startOverride *time.Time, subType *entities.SubscriptionType) (time.Time, time.Time, error) {
 	addPeriod := func(start time.Time) time.Time {
 		if subType != nil && subType.TrialDurationDays != nil && *subType.TrialDurationDays > 0 {
 			return start.AddDate(0, 0, *subType.TrialDurationDays)
@@ -98,14 +119,27 @@ func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uin
 
 	now := time.Now()
 	start := now
-
-	current, err := uc.repo.GetLatestByBusinessID(ctx, businessID)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
 	if current != nil && current.EndDate.After(now) {
 		start = current.EndDate
 	}
 
 	return start, addPeriod(start), nil
+}
+
+// computeCurrentCycleOverage calcula cuanto excedente (envios/facturas/ordenes
+// por encima de lo incluido en el plan) se genero en el ciclo que esta por
+// terminar, para sumarlo al cobro de la renovacion. Sin esto, el excedente
+// mostrado como "pago pronosticado" nunca se cobraba de verdad.
+func (uc *UseCase) computeCurrentCycleOverage(ctx context.Context, businessID uint, current *entities.BusinessSubscription) (float64, error) {
+	if current == nil {
+		return 0, nil
+	}
+	currentPlan, err := uc.repo.GetSubscriptionType(ctx, current.SubscriptionTypeID)
+	if err != nil {
+		return 0, err
+	}
+	if currentPlan == nil {
+		return 0, nil
+	}
+	return uc.repo.ComputeOverageAmount(ctx, businessID, currentPlan, current.StartDate, current.EndDate)
 }

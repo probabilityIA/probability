@@ -111,39 +111,18 @@ func (r *Repository) ListBusinessesForAdmin(ctx context.Context, page, pageSize 
 }
 
 func (r *Repository) forecastNextPayment(ctx context.Context, businessID uint, plan models.SubscriptionType, cycleStart, cycleEnd time.Time) (float64, error) {
-	forecast := plan.Price
-
-	if plan.IncludedShipments != nil && plan.ShipmentOveragePrice != nil {
-		count, err := r.countShipmentsInRange(ctx, businessID, cycleStart, cycleEnd)
-		if err != nil {
-			return 0, err
-		}
-		if extra := count - int64(*plan.IncludedShipments); extra > 0 {
-			forecast += float64(extra) * *plan.ShipmentOveragePrice
-		}
+	overage, err := r.ComputeOverageAmount(ctx, businessID, &entities.SubscriptionType{
+		IncludedShipments:    plan.IncludedShipments,
+		ShipmentOveragePrice: plan.ShipmentOveragePrice,
+		IncludedInvoices:     plan.IncludedInvoices,
+		InvoiceOveragePrice:  plan.InvoiceOveragePrice,
+		IncludedOrders:       plan.IncludedOrders,
+		OrderOveragePrice:    plan.OrderOveragePrice,
+	}, cycleStart, cycleEnd)
+	if err != nil {
+		return 0, err
 	}
-
-	if plan.IncludedInvoices != nil && plan.InvoiceOveragePrice != nil {
-		count, err := r.countInvoicesInRange(ctx, businessID, cycleStart, cycleEnd)
-		if err != nil {
-			return 0, err
-		}
-		if extra := count - int64(*plan.IncludedInvoices); extra > 0 {
-			forecast += float64(extra) * *plan.InvoiceOveragePrice
-		}
-	}
-
-	if plan.IncludedOrders != nil && plan.OrderOveragePrice != nil {
-		count, err := r.countOrdersInRange(ctx, businessID, cycleStart, cycleEnd)
-		if err != nil {
-			return 0, err
-		}
-		if extra := count - int64(*plan.IncludedOrders); extra > 0 {
-			forecast += float64(extra) * *plan.OrderOveragePrice
-		}
-	}
-
-	return forecast, nil
+	return plan.Price + overage, nil
 }
 
 func (r *Repository) countShipmentsInRange(ctx context.Context, businessID uint, start, end time.Time) (int64, error) {

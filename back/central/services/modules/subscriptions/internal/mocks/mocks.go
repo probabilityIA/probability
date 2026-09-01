@@ -22,6 +22,7 @@ type RepositoryMock struct {
 	CreateSubscriptionAndActivateFn        func(ctx context.Context, subscription *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error
 	GetLatestByBusinessIDFn                func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
 	GetSubscriptionUsageFn                 func(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error)
+	ComputeOverageAmountFn                 func(ctx context.Context, businessID uint, plan *entities.SubscriptionType, cycleStart, cycleEnd time.Time) (float64, error)
 	ListByBusinessIDFn                     func(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error)
 	GetSubscriptionByIDFn                  func(ctx context.Context, id uint) (*entities.BusinessSubscription, error)
 	RevertSubscriptionAndRecalculateFn     func(ctx context.Context, subscriptionID uint) (*entities.BusinessSubscription, error)
@@ -123,6 +124,13 @@ func (m *RepositoryMock) GetSubscriptionUsage(ctx context.Context, businessID ui
 		return m.GetSubscriptionUsageFn(ctx, businessID)
 	}
 	return nil, nil
+}
+
+func (m *RepositoryMock) ComputeOverageAmount(ctx context.Context, businessID uint, plan *entities.SubscriptionType, cycleStart, cycleEnd time.Time) (float64, error) {
+	if m.ComputeOverageAmountFn != nil {
+		return m.ComputeOverageAmountFn(ctx, businessID, plan, cycleStart, cycleEnd)
+	}
+	return 0, nil
 }
 
 func (m *RepositoryMock) ListByBusinessID(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error) {

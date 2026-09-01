@@ -167,6 +167,59 @@ func TestPurchaseSubscription_MontoEsPrecioPorMeses(t *testing.T) {
 	}
 }
 
+func TestPurchaseSubscription_SumaElExcedenteDelCicloQueTermina(t *testing.T) {
+	current := &entities.BusinessSubscription{
+		ID: 11, BusinessID: 26, SubscriptionTypeID: 3,
+		StartDate: time.Now().AddDate(0, -1, 0), EndDate: time.Now(),
+	}
+	currentPlan := planActivo(50000)
+	shipmentOveragePrice := 600.0
+	includedShipments := 100
+	currentPlan.IncludedShipments = &includedShipments
+	currentPlan.ShipmentOveragePrice = &shipmentOveragePrice
+
+	wallet := &mocks.WalletDebiterMock{
+		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
+	}
+	repo := &mocks.RepositoryMock{
+		GetSubscriptionTypeFn: func(ctx context.Context, id uint) (*entities.SubscriptionType, error) {
+			return currentPlan, nil
+		},
+		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
+			return current, nil
+		},
+		ComputeOverageAmountFn: func(ctx context.Context, businessID uint, plan *entities.SubscriptionType, cycleStart, cycleEnd time.Time) (float64, error) {
+			return 43800, nil
+		},
+	}
+
+	got, err := newSubsUseCase(repo, wallet, nil).PurchaseSubscription(context.Background(),
+		dtos.PurchaseSubscriptionDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
+
+	require.NoError(t, err)
+	assert.InDelta(t, 93800, got.Amount, 0.01, "debe cobrar precio del plan + excedente del ciclo anterior")
+}
+
+func TestPurchaseSubscription_SinSuscripcionPrevia_NoSumaExcedente(t *testing.T) {
+	wallet := &mocks.WalletDebiterMock{
+		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
+	}
+	repo := &mocks.RepositoryMock{
+		GetSubscriptionTypeFn: func(ctx context.Context, id uint) (*entities.SubscriptionType, error) {
+			return planActivo(50000), nil
+		},
+		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
+			return nil, nil
+		},
+	}
+
+	got, err := newSubsUseCase(repo, wallet, nil).PurchaseSubscription(context.Background(),
+		dtos.PurchaseSubscriptionDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
+
+	require.NoError(t, err)
+	assert.InDelta(t, 50000, got.Amount, 0.01, "sin ciclo previo no hay excedente que cobrar")
+}
+
 func TestPurchaseSubscription_ReferenciaIncluyeNegocioCodigoYMeses(t *testing.T) {
 	wallet := &mocks.WalletDebiterMock{
 		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },

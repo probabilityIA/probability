@@ -2595,7 +2595,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                 </div>
             )}
 
-            <PlanCatalog ref={planCatalogRef} businessId={businessId} onPurchased={fetchSub} currentSubscription={subscription} isCurrentActive={!isExpired} />
+            <PlanCatalog ref={planCatalogRef} businessId={businessId} onPurchased={fetchSub} currentSubscription={subscription} isCurrentActive={!isExpired} usage={usage} />
         </div>
     );
 }
@@ -2625,13 +2625,14 @@ interface PlanCatalogProps {
     onPurchased: () => void;
     currentSubscription: BusinessSubscription | null;
     isCurrentActive: boolean;
+    usage: SubscriptionUsage | null;
 }
 
 export interface PlanCatalogHandle {
     openCurrentPlanPurchase: () => void | Promise<void>;
 }
 
-const PlanCatalog = forwardRef<PlanCatalogHandle, PlanCatalogProps>(function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentActive }, ref) {
+const PlanCatalog = forwardRef<PlanCatalogHandle, PlanCatalogProps>(function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentActive, usage }, ref) {
     const [types, setTypes] = useState<SubscriptionType[]>([]);
     const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
@@ -2871,7 +2872,10 @@ const PlanCatalog = forwardRef<PlanCatalogHandle, PlanCatalogProps>(function Pla
 
             <Modal isOpen={purchaseModal.open} onClose={() => setPurchaseModal({ open: false })} size="sm">
                 {purchaseModal.type && (() => {
-                    const total = purchaseModal.type!.price * Number(months);
+                    const pendingOverage = usage?.forecasted_payment != null
+                        ? Math.max(0, usage.forecasted_payment - usage.plan_price)
+                        : 0;
+                    const total = purchaseModal.type!.price * Number(months) + pendingOverage;
                     const hasBalance = walletBalance !== null;
                     const sufficient = hasBalance && walletBalance! >= total;
                     const missing = hasBalance ? Math.max(0, total - walletBalance!) : 0;
@@ -2908,8 +2912,14 @@ const PlanCatalog = forwardRef<PlanCatalogHandle, PlanCatalogProps>(function Pla
                                 <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                                     <div className="flex items-center justify-between px-4 py-2.5 text-sm">
                                         <span className="text-gray-500 dark:text-gray-400">{formatCurrency(purchaseModal.type!.price)} × {months} {Number(months) === 1 ? 'mes' : 'meses'}</span>
-                                        <span className="font-medium text-gray-700 dark:text-gray-200">{formatCurrency(total)}</span>
+                                        <span className="font-medium text-gray-700 dark:text-gray-200">{formatCurrency(purchaseModal.type!.price * Number(months))}</span>
                                     </div>
+                                    {pendingOverage > 0 && (
+                                        <div className="flex items-center justify-between px-4 py-2.5 text-sm border-t border-gray-100 dark:border-gray-700">
+                                            <span className="text-amber-600 dark:text-amber-400">{'Excedente del ciclo actual'}</span>
+                                            <span className="font-medium text-amber-600 dark:text-amber-400">{formatCurrency(pendingOverage)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center justify-between px-4 py-3 bg-violet-50 dark:bg-violet-900/20 border-t border-gray-100 dark:border-gray-700">
                                         <span className="text-sm font-bold text-gray-900 dark:text-white">Total a pagar</span>
                                         <span className="text-lg font-extrabold text-violet-700 dark:text-violet-300">{formatCurrency(total)}</span>
