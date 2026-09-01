@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"net/http"
 
@@ -27,12 +26,9 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /orders/{id} [put]
 func (h *Handlers) UpdateOrder(c *gin.Context) {
-	fmt.Printf("\n\n🚀🚀🚀 [HANDLER] UpdateOrder INICIADO 🚀🚀🚀\n\n")
 	id := c.Param("id")
-	fmt.Printf("📌 Order ID: %s\n", id)
 
 	if id == "" {
-		fmt.Printf("❌ Order ID vacío\n")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "ID de orden inválido",
@@ -51,21 +47,6 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 		})
 		return
 	}
-
-	h.logger.Info(c.Request.Context()).
-		Str("order_id", id).
-		Int("items_received_in_handler", len(req.Items)).
-		Msg("🔍 UpdateOrder handler: items received")
-
-	fmt.Printf("🔍 [HANDLER] UpdateOrder iniciado - order_id=%s, items_received=%d\n", id, len(req.Items))
-	if len(req.Items) > 0 {
-		fmt.Printf("   Items recibidos:\n")
-		for i, item := range req.Items {
-			fmt.Printf("   [%d] %v\n", i+1, item)
-		}
-	}
-
-	c.Request.Header.Set("X-Debug-Items-Count", fmt.Sprintf("%d", len(req.Items)))
 
 	domainReq := mappers.MapUpdateOrderRequestToDomain(&req)
 	if uid, ok := middleware.GetUserID(c); ok && uid > 0 {

@@ -43,6 +43,7 @@ type IRepository interface {
 	CreateChannelMetadata(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error
 	MarkChannelMetadataNotLatest(ctx context.Context, orderID string) error
 
+	GetProductByID(ctx context.Context, businessID uint, id string) (*entities.Product, error)
 	GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error)
 	ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error)
 	CreateProduct(ctx context.Context, product *entities.Product) error

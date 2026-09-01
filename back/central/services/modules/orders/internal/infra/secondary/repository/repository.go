@@ -761,6 +761,21 @@ func (r *Repository) MarkChannelMetadataNotLatest(ctx context.Context, orderID s
 //
 
 // GetProductBySKU busca un producto por SKU y BusinessID
+func (r *Repository) GetProductByID(ctx context.Context, businessID uint, id string) (*entities.Product, error) {
+	var product models.Product
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND id = ?", businessID, id).
+		First(&product).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mappers.ToDomainProduct(&product), nil
+}
+
 func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error) {
 	var product models.Product
 	err := r.db.Conn(ctx).
