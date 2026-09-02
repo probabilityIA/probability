@@ -259,6 +259,30 @@ func (r *Repository) UpdateBusinessSubscriptionCutoffDay(ctx context.Context, bu
 		Update("subscription_cutoff_day", cutoffDay).Error
 }
 
+func (r *Repository) UpdateBusinessSubscriptionCourtesyUntil(ctx context.Context, businessID uint, until time.Time) error {
+	return r.db.Conn(ctx).Model(&models.Business{}).Where("id = ? AND deleted_at IS NULL", businessID).
+		Update("subscription_courtesy_until", until).Error
+}
+
+func (r *Repository) GetBusinessSubscriptionMeta(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+	var business models.Business
+	err := r.db.Conn(ctx).
+		Select("subscription_status", "subscription_end_date", "subscription_cutoff_day", "subscription_courtesy_until").
+		Where("id = ? AND deleted_at IS NULL", businessID).First(&business).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &entities.BusinessSubscriptionMeta{
+		Status:        business.SubscriptionStatus,
+		EndDate:       business.SubscriptionEndDate,
+		CutoffDay:     business.SubscriptionCutoffDay,
+		CourtesyUntil: business.SubscriptionCourtesyUntil,
+	}, nil
+}
+
 func (r *Repository) UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error {
 	return r.db.Conn(ctx).Model(&models.Business{}).Where("id = ? AND deleted_at IS NULL", businessID).
 		Update("subscription_end_date", endDate).Error
@@ -356,13 +380,14 @@ func (r *Repository) ListBusinessesWithExpiredTrial(ctx context.Context, before 
 
 func (r *Repository) ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]entities.ExpiringBusiness, error) {
 	var rows []struct {
-		ID        uint
-		Code      string
-		EndDate   time.Time
-		CutoffDay *int
+		ID            uint
+		Code          string
+		EndDate       time.Time
+		CutoffDay     *int
+		CourtesyUntil *time.Time
 	}
 	err := r.db.Conn(ctx).Table("business").
-		Select("business.id, subscription_types.code, business.subscription_end_date as end_date, business.subscription_cutoff_day as cutoff_day").
+		Select("business.id, subscription_types.code, business.subscription_end_date as end_date, business.subscription_cutoff_day as cutoff_day, business.subscription_courtesy_until as courtesy_until").
 		Joins("LEFT JOIN subscription_types ON subscription_types.id = business.subscription_type_id").
 		Where("business.deleted_at IS NULL AND business.subscription_status = ? AND business.subscription_end_date < ?",
 			entities.BusinessStatusActive, before).
@@ -373,7 +398,7 @@ func (r *Repository) ListBusinessesJustExpired(ctx context.Context, before time.
 
 	result := make([]entities.ExpiringBusiness, len(rows))
 	for i, row := range rows {
-		result[i] = entities.ExpiringBusiness{BusinessID: row.ID, PlanCode: row.Code, EndDate: row.EndDate, CutoffDay: row.CutoffDay}
+		result[i] = entities.ExpiringBusiness{BusinessID: row.ID, PlanCode: row.Code, EndDate: row.EndDate, CutoffDay: row.CutoffDay, CourtesyUntil: row.CourtesyUntil}
 	}
 	return result, nil
 }

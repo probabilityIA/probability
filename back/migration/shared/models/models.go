@@ -69,11 +69,12 @@ type Business struct {
 	OrderPrefix string `gorm:"size:8;index"`
 
 	// Configuración de suscripción
-	SubscriptionStatus    string            `gorm:"size:20;default:'active'"` // 'active', 'expired', 'cancelled'
-	SubscriptionEndDate   *time.Time        // Fecha en la que vence la suscripción
-	SubscriptionCutoffDay *int              `gorm:"column:subscription_cutoff_day"`
-	SubscriptionTypeID    *uint             `gorm:"index"`
-	SubscriptionType      *SubscriptionType `gorm:"foreignKey:SubscriptionTypeID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	SubscriptionStatus        string            `gorm:"size:20;default:'active'"` // 'active', 'expired', 'cancelled'
+	SubscriptionEndDate       *time.Time        // Fecha en la que vence la suscripción
+	SubscriptionCutoffDay     *int              `gorm:"column:subscription_cutoff_day"`
+	SubscriptionCourtesyUntil *time.Time        `gorm:"column:subscription_courtesy_until"`
+	SubscriptionTypeID        *uint             `gorm:"index"`
+	SubscriptionType          *SubscriptionType `gorm:"foreignKey:SubscriptionTypeID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
 	// Configuración de funcionalidades
 	EnableDelivery     bool `gorm:"default:false"`

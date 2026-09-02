@@ -46,8 +46,16 @@ const (
 // junto con el codigo del plan que tiene vigente en ese momento. El codigo
 // determina que mensaje de aviso le corresponde (planes pagos vs free/trial).
 type ExpiringBusiness struct {
-	BusinessID uint
-	PlanCode   string
-	EndDate    time.Time
-	CutoffDay  *int
+	BusinessID    uint
+	PlanCode      string
+	EndDate       time.Time
+	CutoffDay     *int
+	CourtesyUntil *time.Time
+}
+
+type BusinessSubscriptionMeta struct {
+	Status        string
+	EndDate       *time.Time
+	CutoffDay     *int
+	CourtesyUntil *time.Time
 }

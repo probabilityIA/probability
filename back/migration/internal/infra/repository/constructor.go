@@ -264,5 +264,8 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateSubscriptionCutoffDay(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateSubscriptionCourtesyUntil(ctx); err != nil {
+		return err
+	}
 	return r.seedCommercialProspects(ctx)
 }

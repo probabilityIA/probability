@@ -7,10 +7,13 @@ import (
 )
 
 func cutoffReached(business entities.ExpiringBusiness, now time.Time) bool {
-	if business.CutoffDay == nil {
-		return true
+	cutoffDate := business.EndDate
+	if business.CutoffDay != nil {
+		cutoffDate = nextCutoffOnOrAfter(business.EndDate, *business.CutoffDay)
 	}
-	cutoffDate := nextCutoffOnOrAfter(business.EndDate, *business.CutoffDay)
+	if business.CourtesyUntil != nil && business.CourtesyUntil.After(cutoffDate) {
+		cutoffDate = *business.CourtesyUntil
+	}
 	return !now.Before(cutoffDate)
 }
 

@@ -653,6 +653,9 @@ func TestEditSubscriptionDates_ActualizaAmbasTablasYDevuelveLasNuevas(t *testing
 		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
 			return &entities.BusinessSubscription{ID: 9, BusinessID: businessID}, nil
 		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive}, nil
+		},
 		UpdateSubscriptionDatesFn: func(ctx context.Context, id uint, s, e time.Time) error {
 			vistoID, vistoInicio, vistoFin = id, s, e
 			return nil
@@ -681,6 +684,9 @@ func TestEditSubscriptionDates_NoCreaRegistroDePago(t *testing.T) {
 	repo := &mocks.RepositoryMock{
 		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
 			return &entities.BusinessSubscription{ID: 9}, nil
+		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive}, nil
 		},
 		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			creada = true
@@ -715,6 +721,9 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 			GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
 				return &entities.BusinessSubscription{ID: 9}, nil
 			},
+			GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+				return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive}, nil
+			},
 			UpdateSubscriptionDatesFn: func(ctx context.Context, id uint, s, e time.Time) error { return dbErr },
 		}
 		_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
@@ -726,6 +735,9 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 		repo := &mocks.RepositoryMock{
 			GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
 				return &entities.BusinessSubscription{ID: 9}, nil
+			},
+			GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+				return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive}, nil
 			},
 			UpdateBusinessSubscriptionEndDateFn: func(ctx context.Context, businessID uint, endDate time.Time) error {
 				return dbErr

@@ -95,16 +95,28 @@ func TestExtendCourtesy_DiasInvalidos_Rechaza(t *testing.T) {
 	}
 }
 
-func TestExtendCourtesy_ExtiendeDesdeElVencimientoVigente(t *testing.T) {
+func TestExtendCourtesy_ExtiendeLaFechaDeCorteSinTocarElRangoDeFacturacion(t *testing.T) {
 	finActual := time.Now().AddDate(0, 0, 10)
 	inicio := time.Now().AddDate(0, -1, 0)
-	var vistoFin time.Time
+	var vistoCourtesyUntil time.Time
+	var seToco bool
 	repo := &mocks.RepositoryMock{
 		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
 			return &entities.BusinessSubscription{ID: 9, StartDate: inicio, EndDate: finActual}, nil
 		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive, EndDate: &finActual}, nil
+		},
+		UpdateBusinessSubscriptionCourtesyUntilFn: func(ctx context.Context, businessID uint, until time.Time) error {
+			vistoCourtesyUntil = until
+			return nil
+		},
 		UpdateSubscriptionDatesFn: func(ctx context.Context, id uint, s, e time.Time) error {
-			vistoFin = e
+			seToco = true
+			return nil
+		},
+		UpdateBusinessSubscriptionEndDateFn: func(ctx context.Context, businessID uint, endDate time.Time) error {
+			seToco = true
 			return nil
 		},
 	}
@@ -113,8 +125,32 @@ func TestExtendCourtesy_ExtiendeDesdeElVencimientoVigente(t *testing.T) {
 		dtos.ExtendCourtesyDTO{BusinessID: 26, Days: 7, Reason: "cliente pidio prorroga"}, 1)
 
 	require.NoError(t, err)
-	assert.Equal(t, finActual.AddDate(0, 0, 7).Day(), vistoFin.Day())
-	assert.Equal(t, finActual.AddDate(0, 0, 7).Day(), got.EndDate.Day())
+	assert.Equal(t, finActual.AddDate(0, 0, 7).Day(), vistoCourtesyUntil.Day())
+	assert.False(t, seToco, "la cortesia no debe mover el rango de facturacion (start/end de la suscripcion)")
+	assert.Equal(t, finActual.Day(), got.EndDate.Day(), "el EndDate de la suscripcion devuelta no cambia")
+}
+
+func TestExtendCourtesy_CuentaExpirada_ReactivaAlDesbloquear(t *testing.T) {
+	finActual := time.Now().AddDate(0, 0, -3)
+	var vistoStatus string
+	repo := &mocks.RepositoryMock{
+		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
+			return &entities.BusinessSubscription{ID: 9, EndDate: finActual}, nil
+		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusExpired, EndDate: &finActual}, nil
+		},
+		UpdateBusinessSubscriptionStatusFn: func(ctx context.Context, businessID uint, status string, endDate *time.Time) error {
+			vistoStatus = status
+			return nil
+		},
+	}
+
+	_, err := newSubsUseCase(repo, nil, nil).ExtendCourtesy(context.Background(),
+		dtos.ExtendCourtesyDTO{BusinessID: 26, Days: 3, Reason: "reactivar por cortesia"}, 1)
+
+	require.NoError(t, err)
+	assert.Equal(t, entities.BusinessStatusActive, vistoStatus)
 }
 
 func TestExtendCourtesy_SinSuscripcion_Rechaza(t *testing.T) {
