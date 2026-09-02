@@ -192,6 +192,7 @@ jobs:
         run: |
           mkdir -p artifacts
           cp infra/compose-prod/docker-compose.yaml artifacts/
+          cp .github/scripts/bluegreen-lib.sh artifacts/
           if [ -f infra/compose-prod/prometheus.yml ]; then
             cp infra/compose-prod/prometheus.yml artifacts/
             cp -r infra/compose-prod/grafana artifacts/ 2>/dev/null || true

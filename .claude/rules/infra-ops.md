@@ -38,7 +38,7 @@ sobre RDS ni EC2).
 
 El resolver de Docker reenvia a 8.8.8.8, que devolvia la IP **publica** del RDS y
 mandaba el trafico por el internet gateway. Los servicios que tocan la base
-(`back-central`, `back-testing`) llevan el DNS de la VPC en el compose para
+(`back-central-blue`/`back-central-green`, `back-testing`) llevan el DNS de la VPC en el compose para
 resolver `172.31.96.15` e ir por red privada. **Cualquier servicio nuevo que
 consulte la base necesita ese `dns:`**, o no conectara.
 
@@ -53,7 +53,7 @@ Instancia: `i-0f3284d2a87127e57` (EC2 prod, us-east-1).
 # Ejecutar comandos (equivalente a "ssh ... 'comando'")
 aws ssm send-command --profile probability --region us-east-1 \
   --instance-ids i-0f3284d2a87127e57 --document-name AWS-RunShellScript \
-  --parameters 'commands=["docker ps","docker logs --tail 50 central_reserve_prod"]' \
+  --parameters 'commands=["docker ps","docker logs --tail 50 central_reserve_prod_blue"]' \
   --query 'Command.CommandId' --output text
 # ...luego leer el resultado:
 aws ssm get-command-invocation --profile probability --region us-east-1 \
@@ -84,7 +84,11 @@ apuntan ahi.
 
 Dir servidor: `/home/ubuntu/probability/infra/compose-prod/`
 Solo docker/docker compose (podman desinstalado).
-Si `docker compose up -d` falla por monitoring: `docker compose up -d rabbitmq redis back-central back-testing front-central front-website nginx front-testing`
+Si `docker compose up -d` falla por monitoring: `docker compose up -d rabbitmq redis back-central-blue back-testing front-central-blue front-website nginx front-testing`
+
+**Blue-green:** `back-central` y `front-central` ya no existen como servicio; hay
+un `-blue` y un `-green` y el activo lo dice
+`infra/compose-prod/nginx-upstreams/active.conf`. Ver `.claude/rules/deploy.md`.
 
 ## Servicios de Desarrollo
 
@@ -201,14 +205,15 @@ nadie las vigila, y es lo que mas probablemente tumbe el `t4g.small`).
 
 ### Logs de contenedores en CloudWatch
 
-Activo desde 2026-08-21 para `back-central` y `front-central`, **solo lineas de
+Activo desde 2026-08-21 para el backend y el frontend, **solo lineas de
 error**. Los 5 GB gratis de CloudWatch Logs son de INGESTA, no de almacenamiento:
 borrar despues no devuelve nada, y no existe un tope duro que corte el envio. El
 control es cuanto se manda.
 
 Cadena: `docker logs -f` -> filtro grep -> archivo local -> CloudWatch agent.
 
-- `/usr/local/bin/probability-logtail.sh <contenedor>` - hace `docker logs -f` y
+- `/usr/local/bin/probability-logtail.sh <contenedor>` - resuelve el contenedor
+  por prefijo de nombre (blue-green cambia el sufijo), hace `docker logs -f` y
   deja pasar solo `ERROR|WARN|FATAL|PANIC|panic:|Exception|error|warn|fatal`.
 - `probability-logtail@<contenedor>.service` - unidad systemd template, con
   `Restart=always`. Reengancha sola cuando el deploy recrea el contenedor.

@@ -4,6 +4,7 @@ import { Inter, Roboto_Mono } from "next/font/google";
 import Script from "next/script";
 import { FooterWrapper } from "./footer-wrapper";
 import { ClientProviders } from "@/providers/ClientProviders";
+import { VersionWatcher } from "@/shared/ui/version-watcher";
 import "./globals.css";
 
 const inter = Inter({
@@ -74,6 +75,7 @@ export default async function RootLayout({
           </ClientProviders>
         </div>
         <FooterWrapper />
+        <VersionWatcher />
       </body>
     </html>
   );

@@ -36,6 +36,7 @@ export * from './table-pagination';
 export * from './user-profile-modal';
 export * from './footer';
 export * from './shopify-iframe-detector';
+export * from './version-watcher';
 export * from './super-admin-business-selector';
 export { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 export * from './theme-toggle';
