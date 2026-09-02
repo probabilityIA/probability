@@ -78,11 +78,30 @@ aws logs describe-log-streams --profile probability --region us-east-1 \
   --log-group-name /probability/back-central --order-by LastEventTime --descending --max-items 1
 ```
 
-## Importante: probar una reversion de verdad
+## Resuelto 2026-09-02 23:15: el switch quedo validado
 
-Todavia no se comprobo en produccion que un deploy con la imagen rota deje el
-color viejo sirviendo. Vale la pena forzarlo una vez (por ejemplo desplegando una
-imagen que no arranque) y confirmar que el sitio nunca respondio 502.
+Dos deploys de prueba del backend (commits `575dddab` y `2732077d`), con un
+sondeo de 1 req/s a `/health` y `/` desde afuera durante toda la ventana:
+
+| Deploy | Switch | Muestras | Fallos |
+|---|---|---|---|
+| 1 | -> green | 143 | 1 (`web=000`, con `/health` en 200 el mismo segundo) |
+| 2 | green -> blue | 148 | **0** |
+
+El segundo leyo bien el color activo (`green -> blue`), levanto el nuevo,
+confirmo `/health` en 3 s, movio el upstream con `nginx -s reload`, drenó 15 s y
+apago el viejo. **Cero caida medida.** Antes cada deploy eran 20-35 s duros.
+
+Queda sin explicar del todo por que el primer deploy leyo `blue` estando green
+activo: existia un contenedor `central_reserve_prod_blue` (lo retiro el propio
+script) que no aparecia en `docker ps` cuando revise antes. No se reprodujo en el
+segundo. Si vuelve a pasar, mirar `docker ps -a` completo antes de concluir.
+
+## Pendiente: probar una reversion de verdad
+
+Todavia no se comprobo que un deploy con la imagen rota deje el color viejo
+sirviendo. Vale la pena forzarlo una vez (desplegando una imagen que no arranque)
+y confirmar que el sitio nunca respondio 502.
 
 ## Deseable
 
