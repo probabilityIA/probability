@@ -18,7 +18,9 @@ type WooOrderResponse struct {
 	Status             string                    `json:"status"`
 	Currency           string                    `json:"currency"`
 	DateCreated        string                    `json:"date_created"`
+	DateCreatedGmt     string                    `json:"date_created_gmt"`
 	DateModified       string                    `json:"date_modified"`
+	DateModifiedGmt    string                    `json:"date_modified_gmt"`
 	DiscountTotal      string                    `json:"discount_total"`
 	DiscountTax        string                    `json:"discount_tax"`
 	ShippingTotal      string                    `json:"shipping_total"`
@@ -35,7 +37,9 @@ type WooOrderResponse struct {
 	PaymentMethodTitle string                    `json:"payment_method_title"`
 	TransactionID      string                    `json:"transaction_id"`
 	DatePaid           *string                   `json:"date_paid"`
+	DatePaidGmt        *string                   `json:"date_paid_gmt"`
 	DateCompleted      *string                   `json:"date_completed"`
+	DateCompletedGmt   *string                   `json:"date_completed_gmt"`
 	LineItems          []WooLineItemResponse     `json:"line_items"`
 	ShippingLines      []WooShippingLineResponse `json:"shipping_lines"`
 	FeeLines           []WooFeeLineResponse      `json:"fee_lines"`
@@ -156,8 +160,8 @@ func (r *WooOrderResponse) ToDomain() domain.WooCommerceOrder {
 		Version:            r.Version,
 		Status:             r.Status,
 		Currency:           r.Currency,
-		DateCreated:        parseWooDate(r.DateCreated),
-		DateModified:       parseWooDate(r.DateModified),
+		DateCreated:        parseWooDateWithGmt(r.DateCreated, r.DateCreatedGmt),
+		DateModified:       parseWooDateWithGmt(r.DateModified, r.DateModifiedGmt),
 		DiscountTotal:      r.DiscountTotal,
 		DiscountTax:        r.DiscountTax,
 		ShippingTotal:      r.ShippingTotal,
@@ -171,8 +175,8 @@ func (r *WooOrderResponse) ToDomain() domain.WooCommerceOrder {
 		PaymentMethod:      r.PaymentMethod,
 		PaymentMethodTitle: r.PaymentMethodTitle,
 		TransactionID:      r.TransactionID,
-		DatePaid:           parseWooDatePtr(r.DatePaid),
-		DateCompleted:      parseWooDatePtr(r.DateCompleted),
+		DatePaid:           parseWooDatePtrWithGmt(r.DatePaid, r.DatePaidGmt),
+		DateCompleted:      parseWooDatePtrWithGmt(r.DateCompleted, r.DateCompletedGmt),
 		Billing: domain.WooCommerceBilling{
 			FirstName: r.Billing.FirstName,
 			LastName:  r.Billing.LastName,
@@ -280,30 +284,67 @@ func mapMetaData(mds []WooMetaDataResponse) []domain.WooCommerceMetaData {
 	return result
 }
 
-// parseWooDate parsea un string de fecha WooCommerce.
-// WooCommerce usa formato "2024-01-15T10:30:00" (sin timezone).
+// storeLocation es la zona horaria de la tienda WooCommerce (America/Bogota).
+// Se usa SOLO como fallback cuando el campo *_gmt no viene en la respuesta:
+// WooCommerce manda date_created/date_paid en hora local de la tienda, sin
+// offset, y date_created_gmt/date_paid_gmt en UTC. Tratar el campo sin _gmt
+// como si ya fuera UTC desfasa el instante guardado por el offset de la
+// tienda (ver .claude/bitacora, desfase de horas WooCommerce).
+var storeLocation = func() *time.Location {
+	loc, err := time.LoadLocation("America/Bogota")
+	if err != nil {
+		return time.UTC
+	}
+	return loc
+}()
+
+// parseWooDate parsea un string de fecha WooCommerce en hora LOCAL de la
+// tienda (sin timezone), interpretandolo en storeLocation.
 func parseWooDate(s string) time.Time {
 	if s == "" {
 		return time.Time{}
 	}
-	// Intentar con RFC3339 primero
-	t, err := time.Parse(time.RFC3339, s)
-	if err == nil {
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
 		return t
 	}
-	// WooCommerce a veces omite timezone
-	t, err = time.Parse("2006-01-02T15:04:05", s)
-	if err == nil {
+	if t, err := time.ParseInLocation("2006-01-02T15:04:05", s, storeLocation); err == nil {
 		return t
 	}
 	return time.Time{}
 }
 
-func parseWooDatePtr(s *string) *time.Time {
-	if s == nil || *s == "" {
-		return nil
+// parseWooDateGmt parsea el campo *_gmt de WooCommerce, que siempre viene en UTC.
+func parseWooDateGmt(s string) time.Time {
+	if s == "" {
+		return time.Time{}
 	}
-	t := parseWooDate(*s)
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t
+	}
+	if t, err := time.ParseInLocation("2006-01-02T15:04:05", s, time.UTC); err == nil {
+		return t
+	}
+	return time.Time{}
+}
+
+// parseWooDateWithGmt prefiere el campo *_gmt (UTC real); si no viene, cae a
+// interpretar el campo local como hora de storeLocation.
+func parseWooDateWithGmt(local, gmt string) time.Time {
+	if t := parseWooDateGmt(gmt); !t.IsZero() {
+		return t
+	}
+	return parseWooDate(local)
+}
+
+func parseWooDatePtrWithGmt(local, gmt *string) *time.Time {
+	var localStr, gmtStr string
+	if local != nil {
+		localStr = *local
+	}
+	if gmt != nil {
+		gmtStr = *gmt
+	}
+	t := parseWooDateWithGmt(localStr, gmtStr)
 	if t.IsZero() {
 		return nil
 	}
