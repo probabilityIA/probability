@@ -19,6 +19,7 @@ interface ModalProps {
   transparent?: boolean; // NEW: Fondo transparente sin sombra
   zIndex?: number; // Z-index personalizado para el modal y backdrop
   noPadding?: boolean; // Sin padding interno ni titulo por defecto, para layouts full-bleed que manejan su propio header/scroll
+  noBodyScroll?: boolean; // El contenido maneja su propio scroll interno (cabecera y pie fijos)
 }
 
 const sizeClasses = {
@@ -35,7 +36,7 @@ const sizeClasses = {
   'full': 'max-w-[95vw] w-[95vw]',
 };
 
-export function Modal({ isOpen, onClose, showCloseButton = true, title, children, size = 'md', glass = false, transparent = false, zIndex = 50, noPadding = false }: ModalProps) {
+export function Modal({ isOpen, onClose, showCloseButton = true, title, children, size = 'md', glass = false, transparent = false, zIndex = 50, noPadding = false, noBodyScroll = false }: ModalProps) {
   console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
 
   const [mounted, setMounted] = useState(false);
@@ -150,7 +151,13 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             )}
 
             {/* Content - Scrollable */}
-            <div className={`flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full ${noPadding ? '' : 'pr-1 sm:pr-2 -mr-1 sm:-mr-2'}`}>{children}</div>
+            <div
+              className={`flex-1 min-h-0 w-full max-w-full ${
+                noBodyScroll ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overflow-x-hidden'
+              } ${noPadding ? '' : 'pr-1 sm:pr-2 -mr-1 sm:-mr-2'}`}
+            >
+              {children}
+            </div>
           </div>
         )}
       </div>

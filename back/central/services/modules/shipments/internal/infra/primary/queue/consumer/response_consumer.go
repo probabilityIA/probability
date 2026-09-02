@@ -455,7 +455,15 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 
 			if (ok && status != "") || hasHistory {
 				if ok && status != "" {
-					shipment.Status = status
+					if revivesCancelledShipment(shipment.Status, status) {
+						c.log.Warn(ctx).
+							Uint("shipment_id", shipment.ID).
+							Str("incoming_status", status).
+							Str("correlation_id", response.CorrelationID).
+							Msg("Tracking reports a non-cancelled status for a cancelled shipment - keeping cancelled")
+					} else {
+						shipment.Status = status
+					}
 				}
 
 				if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
@@ -551,15 +559,26 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 	}
 
 	previousStatus := shipment.Status
-	shipment.Status = probabilityStatus
+	keepCancelled := revivesCancelledShipment(previousStatus, probabilityStatus)
 
-	if rawStatus, ok := response.Data["raw_status"].(string); ok && rawStatus != "" {
-		s := rawStatus
-		shipment.CarrierStatus = &s
-	}
-	if rawStatusDetail, ok := response.Data["raw_status_detail"].(string); ok && rawStatusDetail != "" {
-		s := rawStatusDetail
-		shipment.CarrierStatusDetail = &s
+	if keepCancelled {
+		c.log.Warn(ctx).
+			Uint("shipment_id", shipment.ID).
+			Str("tracking_number", trackingNumber).
+			Str("incoming_status", probabilityStatus).
+			Str("correlation_id", response.CorrelationID).
+			Msg("Webhook reports a non-cancelled status for a cancelled shipment - keeping cancelled")
+	} else {
+		shipment.Status = probabilityStatus
+
+		if rawStatus, ok := response.Data["raw_status"].(string); ok && rawStatus != "" {
+			s := rawStatus
+			shipment.CarrierStatus = &s
+		}
+		if rawStatusDetail, ok := response.Data["raw_status_detail"].(string); ok && rawStatusDetail != "" {
+			s := rawStatusDetail
+			shipment.CarrierStatusDetail = &s
+		}
 	}
 
 	if shippedAtStr, ok := response.Data["shipped_at"].(string); ok && shippedAtStr != "" {
@@ -575,6 +594,10 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 	}
 
 	appendTrackingEvent(shipment, response, probabilityStatus)
+
+	if keepCancelled {
+		probabilityStatus = previousStatus
+	}
 
 	if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 		c.log.Error(ctx).
@@ -620,6 +643,10 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 	}
 
 	c.ssePublisher.PublishTrackingUpdated(ctx, businessID, response.CorrelationID, response.Data)
+}
+
+func revivesCancelledShipment(current, incoming string) bool {
+	return current == domain.ShipmentStatusCancelled && incoming != domain.ShipmentStatusCancelled
 }
 
 func appendCancelEvent(shipment *domain.Shipment, provider string) {

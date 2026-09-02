@@ -462,3 +462,106 @@ func TestHandleGenerateResponse_Error_SinCotizacionNoRompe(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 }
+
+func buildWebhookMessage(trackingNumber, probabilityStatus, rawStatus string) []byte {
+	msg := TransportResponseMessage{
+		Provider:      "envioclick",
+		Operation:     "webhook_update",
+		Status:        "success",
+		CorrelationID: "corr-webhook",
+		Timestamp:     time.Now(),
+		Data: map[string]interface{}{
+			"tracking_number":    trackingNumber,
+			"probability_status": probabilityStatus,
+			"raw_status":         rawStatus,
+			"raw_status_detail":  rawStatus,
+		},
+	}
+	b, _ := json.Marshal(msg)
+	return b
+}
+
+func TestHandleWebhookUpdate_CancelledShipment_KeepsCancelled(t *testing.T) {
+	orderID := "order-cancel-guard"
+	saved := (*domain.Shipment)(nil)
+	orderStatusSynced := ""
+
+	repoMock := &mocks.RepositoryMock{
+		GetShipmentByTrackingNumberFn: func(ctx context.Context, trackingNumber string) (*domain.Shipment, error) {
+			carrierStatus := "Cancelado"
+			return &domain.Shipment{
+				ID:            48290,
+				OrderID:       orderIDPtr(orderID),
+				Status:        domain.ShipmentStatusCancelled,
+				CarrierStatus: &carrierStatus,
+			}, nil
+		},
+		UpdateShipmentFn: func(ctx context.Context, shipment *domain.Shipment) error {
+			saved = shipment
+			return nil
+		},
+		UpdateOrderStatusByOrderIDFn: func(ctx context.Context, id string, status string) error {
+			orderStatusSynced = status
+			return nil
+		},
+	}
+
+	consumer := newTestConsumer(repoMock, &mocks.SSEPublisherMock{})
+
+	if err := consumer.handleResponse(buildWebhookMessage("034058470201", "pending", "Pendiente de recoleccion")); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if saved == nil {
+		t.Fatal("expected shipment to be saved")
+	}
+	if saved.Status != domain.ShipmentStatusCancelled {
+		t.Errorf("expected status to stay 'cancelled', got '%s'", saved.Status)
+	}
+	if saved.CarrierStatus == nil || *saved.CarrierStatus != "Cancelado" {
+		t.Errorf("expected carrier status to stay 'Cancelado', got %v", saved.CarrierStatus)
+	}
+	if orderStatusSynced != "" {
+		t.Errorf("expected order status not to be synced, got '%s'", orderStatusSynced)
+	}
+}
+
+func TestHandleWebhookUpdate_NonCancelledShipment_AppliesStatus(t *testing.T) {
+	saved := (*domain.Shipment)(nil)
+
+	repoMock := &mocks.RepositoryMock{
+		GetShipmentByTrackingNumberFn: func(ctx context.Context, trackingNumber string) (*domain.Shipment, error) {
+			return &domain.Shipment{ID: 1, Status: domain.ShipmentStatusPending}, nil
+		},
+		UpdateShipmentFn: func(ctx context.Context, shipment *domain.Shipment) error {
+			saved = shipment
+			return nil
+		},
+	}
+
+	consumer := newTestConsumer(repoMock, &mocks.SSEPublisherMock{})
+
+	if err := consumer.handleResponse(buildWebhookMessage("111", "in_transit", "En transito")); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if saved == nil || saved.Status != "in_transit" {
+		t.Fatalf("expected status 'in_transit', got %v", saved)
+	}
+}
+
+func TestRevivesCancelledShipment(t *testing.T) {
+	cases := []struct {
+		current  string
+		incoming string
+		want     bool
+	}{
+		{domain.ShipmentStatusCancelled, "pending", true},
+		{domain.ShipmentStatusCancelled, "delivered", true},
+		{domain.ShipmentStatusCancelled, domain.ShipmentStatusCancelled, false},
+		{domain.ShipmentStatusPending, "in_transit", false},
+	}
+	for _, tc := range cases {
+		if got := revivesCancelledShipment(tc.current, tc.incoming); got != tc.want {
+			t.Errorf("revivesCancelledShipment(%q, %q) = %v, want %v", tc.current, tc.incoming, got, tc.want)
+		}
+	}
+}

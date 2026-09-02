@@ -1,43 +1,153 @@
+# Blue-green: cada servicio de app tiene dos colores. El activo lo decide el
+# archivo de upstreams que lee nginx (nginx-upstreams/active.conf), no el compose.
+# Los servicios -green estan en el perfil "green" para que un `up -d` pelado
+# levante solo el azul. Ver .claude/rules/deploy.md.
+
+x-front-central: &front-central
+  platform: linux/arm64
+  image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+  environment:
+    # API Backend URL (dentro de la red Docker)
+    API_BASE_URL: "http://nginx:8088/api/v1"
+    # NEXT_PUBLIC para cliente (browser) - debe apuntar al dominio público
+    NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-https://www.probabilityia.com.co/api/v1}"
+    # SSE Backend URL (conexión directa desde el navegador)
+    NEXT_PUBLIC_SSE_BASE_URL: "${NEXT_PUBLIC_SSE_BASE_URL:-https://www.probabilityia.com.co/api/v1}"
+  env_file:
+  - .env
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+  networks:
+    - app-network
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+  deploy:
+    resources:
+      limits:
+        cpus: "0.50"
+        memory: 256M
+      reservations:
+        cpus: "0.25"
+        memory: 128M
+
+x-back-central: &back-central
+  platform: linux/arm64
+  image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
+  dns:
+    - 169.254.169.253
+  environment:
+    DB_HOST:             "${DB_HOST:-postgres}"
+    DB_PORT:             "5432"
+    DB_NAME:             "${DB_NAME}"
+    DB_USER:             "${DB_USER}"
+    DB_PASS:             "${DB_PASSWORD}"
+    DB_LOG_LEVEL:        "${DB_LOG_LEVEL}"
+    PGSSLMODE:           "${DB_SSLMODE}"
+    APP_ENV:             "${APP_ENV}"
+    HTTP_PORT:           "3050"
+    LOG_LEVEL:           "${LOG_LEVEL}"
+    ENABLE_FILE_LOGGING:   "${ENABLE_FILE_LOGGING:-true}"
+    LOG_DIRECTORY:         "/app/log"
+    LOG_FILE_MAX_SIZE_MB:  "${LOG_FILE_MAX_SIZE_MB:-100}"
+    LOG_FILE_MAX_BACKUPS:  "${LOG_FILE_MAX_BACKUPS:-4}"
+    JWT_SECRET:          "${JWT_SECRET}"
+    URL_BASE_SWAGGER:    "${URL_BASE_SWAGGER}"
+    SMTP_HOST:           "${SMTP_HOST}"
+    SMTP_PORT:           "${SMTP_PORT}"
+    SMTP_USER:           "${SMTP_USER}"
+    SMTP_PASS:           "${SMTP_PASS}"
+    FROM_EMAIL:          "${FROM_EMAIL:-}"
+    RESEND_API_KEY:      "${RESEND_API_KEY}"
+    FRONTEND_BASE_URL:   "${FRONTEND_BASE_URL:-}"
+    SMTP_USE_STARTTLS:   "${SMTP_USE_STARTTLS}"
+    SMTP_USE_TLS:        "${SMTP_USE_TLS}"
+    # S3 y media
+    S3_BUCKET:           "${S3_BUCKET}"
+    S3_REGION:           "${S3_REGION}"
+    S3_KEY:              "${S3_KEY}"
+    S3_SECRET:           "${S3_SECRET}"
+    URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
+    WHATSAPP_URL:        "${WHATSAPP_URL}"
+    WHATSAPP_TOKEN:      "${WHATSAPP_TOKEN}"
+    WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
+    # Encryption
+    ENCRYPTION_KEY:      "${ENCRYPTION_KEY}"
+    # Redis (usar nombre del servicio en la red Docker)
+    REDIS_HOST:         "redis"
+    REDIS_PORT:         "6379"
+    REDIS_PASSWORD:     "${REDIS_PASSWORD:-}"
+    REDIS_ORDER_EVENTS_CHANNEL: "${REDIS_ORDER_EVENTS_CHANNEL:-probability:orders:events}"
+    RABBITMQ_HOST:      "rabbitmq"
+    RABBITMQ_PORT:      "5672"
+    RABBITMQ_USER:      "${RABBITMQ_USER:-admin}"
+    RABBITMQ_PASS:      "${RABBITMQ_PASS:-admin}"
+    RABBITMQ_VHOST:     "${RABBITMQ_VHOST:-/}"
+    RABBITMQ_ORDERS_CREATE: "${RABBITMQ_ORDERS_CREATE:-orders.create}"
+    # Softpymes (Facturación Electrónica)
+    SOFTPYMES_API_URL:  "${SOFTPYMES_API_URL:-https://api-integracion.softpymes.com.co}"
+    # Monitoreo - Alertas Grafana
+    GRAFANA_WEBHOOK_SECRET: "${GRAFANA_WEBHOOK_SECRET}"
+    # Google Geocoding API
+    GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
+    # Amazon Bedrock (AI)
+    BEDROCK_ACCESS_KEY: "${BEDROCK_ACCESS_KEY}"
+    BEDROCK_SECRET_KEY: "${BEDROCK_SECRET_KEY}"
+    BEDROCK_REGION:     "${BEDROCK_REGION}"
+    # Webhooks (URL publica del backend)
+    WEBHOOK_BASE_URL:   "${WEBHOOK_BASE_URL:-}"
+    # Woo store (EC2 temporal on/off por super admin)
+    WOO_STORE_AWS_REGION:  "${WOO_STORE_AWS_REGION:-us-east-1}"
+    WOO_STORE_AWS_KEY:     "${WOO_STORE_AWS_KEY:-}"
+    WOO_STORE_AWS_SECRET:  "${WOO_STORE_AWS_SECRET:-}"
+    WOO_STORE_INSTANCE_ID: "${WOO_STORE_INSTANCE_ID:-}"
+    WOO_STORE_URL:         "${WOO_STORE_URL:-}"
+  restart: unless-stopped
+  volumes:
+    - /home/ubuntu/probability/logs/back-central:/app/log
+  healthcheck:
+    test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 40s
+  networks:
+    - app-network
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "50m"
+      max-file: "10"
+  deploy:
+    resources:
+      limits:
+        cpus: "1.00"
+        memory: 512M
+      reservations:
+        cpus: "0.50"
+        memory: 256M
+
 services:
 
-  front-central:
-    platform: linux/arm64
-    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
-    container_name: frontend_prod
+  front-central-blue:
+    <<: *front-central
+    container_name: frontend_prod_blue
     ports:
       - "8080:3000"
-    environment:
-      # API Backend URL (dentro de la red Docker)
-      API_BASE_URL: "http://back-central:3050/api/v1"
-      # NEXT_PUBLIC para cliente (browser) - debe apuntar al dominio público
-      NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-https://www.probabilityia.com.co/api/v1}"
-      # SSE Backend URL (conexión directa desde el navegador)
-      NEXT_PUBLIC_SSE_BASE_URL: "${NEXT_PUBLIC_SSE_BASE_URL:-https://www.probabilityia.com.co/api/v1}"
-    env_file:
-    - .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - app-network
-    depends_on:
-      - back-central
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 256M
-        reservations:
-          cpus: "0.25"
-          memory: 128M
+
+  front-central-green:
+    <<: *front-central
+    container_name: frontend_prod_green
+    ports:
+      - "8090:3000"
+    profiles:
+      - green
 
   front-website:
     platform: linux/arm64
@@ -68,110 +178,19 @@ services:
           cpus: "0.10"
           memory: 64M
 
-  back-central:
-    platform: linux/arm64
-    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
-    container_name: central_reserve_prod
+  back-central-blue:
+    <<: *back-central
+    container_name: central_reserve_prod_blue
     ports:
       - "127.0.0.1:3050:3050"
-    dns:
-      - 169.254.169.253
-    environment:
-      DB_HOST:             "${DB_HOST:-postgres}"
-      DB_PORT:             "5432"
-      DB_NAME:             "${DB_NAME}"
-      DB_USER:             "${DB_USER}"
-      DB_PASS:             "${DB_PASSWORD}"
-      DB_LOG_LEVEL:        "${DB_LOG_LEVEL}"
-      PGSSLMODE:           "${DB_SSLMODE}"
-      APP_ENV:             "${APP_ENV}"
-      HTTP_PORT:           "3050"
-      LOG_LEVEL:           "${LOG_LEVEL}"
-      ENABLE_FILE_LOGGING:   "${ENABLE_FILE_LOGGING:-true}"
-      LOG_DIRECTORY:         "/app/log"
-      LOG_FILE_MAX_SIZE_MB:  "${LOG_FILE_MAX_SIZE_MB:-100}"
-      LOG_FILE_MAX_BACKUPS:  "${LOG_FILE_MAX_BACKUPS:-4}"
-      JWT_SECRET:          "${JWT_SECRET}"
-      URL_BASE_SWAGGER:    "${URL_BASE_SWAGGER}"
-      SMTP_HOST:           "${SMTP_HOST}"
-      SMTP_PORT:           "${SMTP_PORT}"
-      SMTP_USER:           "${SMTP_USER}"
-      SMTP_PASS:           "${SMTP_PASS}"
-      FROM_EMAIL:          "${FROM_EMAIL:-}"
-      RESEND_API_KEY:      "${RESEND_API_KEY}"
-      FRONTEND_BASE_URL:   "${FRONTEND_BASE_URL:-}"
-      SMTP_USE_STARTTLS:   "${SMTP_USE_STARTTLS}"
-      SMTP_USE_TLS:        "${SMTP_USE_TLS}"
-      # S3 y media
-      S3_BUCKET:           "${S3_BUCKET}"
-      S3_REGION:           "${S3_REGION}"
-      S3_KEY:              "${S3_KEY}"
-      S3_SECRET:           "${S3_SECRET}"
-      URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
-      WHATSAPP_URL:        "${WHATSAPP_URL}"
-      WHATSAPP_TOKEN:      "${WHATSAPP_TOKEN}"
-      WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
-      # Encryption
-      ENCRYPTION_KEY:      "${ENCRYPTION_KEY}"
-      # Redis (usar nombre del servicio en la red Docker)
-      REDIS_HOST:         "redis"
-      REDIS_PORT:         "6379"
-      REDIS_PASSWORD:     "${REDIS_PASSWORD:-}"
-      REDIS_ORDER_EVENTS_CHANNEL: "${REDIS_ORDER_EVENTS_CHANNEL:-probability:orders:events}"
-      RABBITMQ_HOST:      "rabbitmq"
-      RABBITMQ_PORT:      "5672"
-      RABBITMQ_USER:      "${RABBITMQ_USER:-admin}"
-      RABBITMQ_PASS:      "${RABBITMQ_PASS:-admin}"
-      RABBITMQ_VHOST:     "${RABBITMQ_VHOST:-/}"
-      RABBITMQ_ORDERS_CREATE: "${RABBITMQ_ORDERS_CREATE:-orders.create}"
-      # Softpymes (Facturación Electrónica)
-      SOFTPYMES_API_URL:  "${SOFTPYMES_API_URL:-https://api-integracion.softpymes.com.co}"
-      # Monitoreo - Alertas Grafana
-      GRAFANA_WEBHOOK_SECRET: "${GRAFANA_WEBHOOK_SECRET}"
-      # Google Geocoding API
-      GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
-      # Amazon Bedrock (AI)
-      BEDROCK_ACCESS_KEY: "${BEDROCK_ACCESS_KEY}"
-      BEDROCK_SECRET_KEY: "${BEDROCK_SECRET_KEY}"
-      BEDROCK_REGION:     "${BEDROCK_REGION}"
-      # Webhooks (URL publica del backend)
-      WEBHOOK_BASE_URL:   "${WEBHOOK_BASE_URL:-}"
-      # Woo store (EC2 temporal on/off por super admin)
-      WOO_STORE_AWS_REGION:  "${WOO_STORE_AWS_REGION:-us-east-1}"
-      WOO_STORE_AWS_KEY:     "${WOO_STORE_AWS_KEY:-}"
-      WOO_STORE_AWS_SECRET:  "${WOO_STORE_AWS_SECRET:-}"
-      WOO_STORE_INSTANCE_ID: "${WOO_STORE_INSTANCE_ID:-}"
-      WOO_STORE_URL:         "${WOO_STORE_URL:-}"
-    restart: unless-stopped
-    volumes:
-      - /home/ubuntu/probability/logs/back-central:/app/log
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-    networks:
-      - app-network
-    depends_on:
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "10"
-    deploy:
-      resources:
-        limits:
-          cpus: "1.00"
-          memory: 512M
-        reservations:
-          cpus: "0.50"
-          memory: 256M
 
+  back-central-green:
+    <<: *back-central
+    container_name: central_reserve_prod_green
+    ports:
+      - "127.0.0.1:3060:3050"
+    profiles:
+      - green
 
   back-testing:
     platform: linux/arm64
@@ -209,9 +228,6 @@ services:
       start_period: 10s
     networks:
       - app-network
-    depends_on:
-      back-central:
-        condition: service_healthy
     logging:
       driver: "json-file"
       options:
@@ -404,11 +420,8 @@ services:
       SSL_KEY_PATH: "${SSL_KEY_PATH}"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /home/ubuntu/probability/infra/compose-prod/nginx-upstreams:/etc/nginx/upstreams
     depends_on:
-      back-central:
-        condition: service_healthy
-      front-central:
-        condition: service_started
       front-website:
         condition: service_started
     networks:

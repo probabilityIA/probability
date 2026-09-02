@@ -47,6 +47,11 @@ const VIEW_STORAGE_KEY = 'tickets_view_mode';
 const BOARD_PAGE_SIZE = 100;
 const S3_BASE_URL = process.env.NEXT_PUBLIC_S3_BASE_URL || 'https://probability-media-assets.s3.us-east-1.amazonaws.com';
 
+const resolveAvatarUrl = (avatarUrl?: string) => {
+    if (!avatarUrl) return '';
+    return avatarUrl.startsWith('http') ? avatarUrl : `${S3_BASE_URL}/${avatarUrl.replace(/^\//, '')}`;
+};
+
 const TABLE_COLUMNS = [
     'C\u00f3digo',
     'T\u00edtulo',
@@ -182,7 +187,12 @@ export default function TicketsManager() {
                 key: 'assigned_to_id',
                 label: 'Asignado a',
                 type: 'select' as const,
-                options: users.map((u) => ({ value: String(u.id), label: u.name })),
+                avatarOptions: true,
+                options: users.map((u) => ({
+                    value: String(u.id),
+                    label: u.name,
+                    avatarUrl: resolveAvatarUrl(u.avatar_url),
+                })),
             }]
             : []),
     ], [users]);
@@ -251,9 +261,7 @@ export default function TicketsManager() {
 
     const avatarUrlFor = useCallback((t: Ticket) => {
         const assignedUser = users.find(u => u.id === t.assigned_to_id);
-        const avatarUrl = t.assigned_to_avatar_url || assignedUser?.avatar_url || '';
-        if (!avatarUrl) return '';
-        return avatarUrl.startsWith('http') ? avatarUrl : `${S3_BASE_URL}/${avatarUrl.replace(/^\//, '')}`;
+        return resolveAvatarUrl(t.assigned_to_avatar_url || assignedUser?.avatar_url);
     }, [users]);
 
     const handleBoardMove = async (id: number, status: TicketStatus) => {
@@ -474,18 +482,6 @@ export default function TicketsManager() {
     const headerActions = (
         <>
             {view === 'board' && sprintSelector}
-            <button
-                type="button"
-                onClick={() => setShowCreate(true)}
-                style={{ background: 'var(--color-tertiary-500)' }}
-                className="inline-flex items-center justify-center w-8 h-8 text-white rounded-lg hover:shadow-md transition-all"
-                title="Nuevo ticket"
-                aria-label="Nuevo ticket"
-            >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-            </button>
         </>
     );
 
@@ -496,6 +492,10 @@ export default function TicketsManager() {
             activeFilters={activeFilters}
             onAddFilter={handleAddFilter}
             onRemoveFilter={handleRemoveFilter}
+            onCreate={() => setShowCreate(true)}
+            createButtonIconOnly
+            createButtonAriaLabel="Nuevo ticket"
+            createButtonPosition="right"
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSortChange={(by, order) => { setSortBy(by); setSortOrder(order); setPage(1); }}
@@ -699,7 +699,7 @@ export default function TicketsManager() {
                 />
             </Modal>
 
-            <Modal isOpen={!!openTicket} onClose={() => openTicketDetail(null)} title="" size="wide">
+            <Modal isOpen={!!openTicket} onClose={() => openTicketDetail(null)} title="" size="wide" noPadding noBodyScroll>
                 {openTicket && (
                     <TicketDetail
                         ticket={openTicket}

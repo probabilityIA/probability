@@ -11,9 +11,16 @@ export interface FilterOption {
     label: string;
     type: 'text' | 'select' | 'date-range' | 'boolean';
     placeholder?: string;
-    options?: Array<{ value: string; label: string }>;
+    options?: FilterSelectOption[];
     dot?: string;
     imageUrl?: string;
+    avatarOptions?: boolean;
+}
+
+export interface FilterSelectOption {
+    value: string;
+    label: string;
+    avatarUrl?: string;
 }
 
 export interface ActiveFilter {
@@ -21,6 +28,26 @@ export interface ActiveFilter {
     label: string;
     value: string | { start?: string; end?: string } | boolean;
     type: 'text' | 'select' | 'date-range' | 'boolean';
+}
+
+function OptionAvatar({ option, small = false }: { option: FilterSelectOption; small?: boolean }) {
+    const size = small ? 'h-4 w-4 text-[9px]' : 'h-6 w-6 text-[10px]';
+    if (option.avatarUrl) {
+        return (
+            <img
+                src={option.avatarUrl}
+                alt=""
+                className={`${size} flex-shrink-0 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-600`}
+            />
+        );
+    }
+    return (
+        <span
+            className={`${size} flex flex-shrink-0 items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-600 dark:bg-gray-600 dark:text-gray-200`}
+        >
+            {option.label.trim().charAt(0).toUpperCase() || '?'}
+        </span>
+    );
 }
 
 interface DynamicFiltersProps {
@@ -31,6 +58,8 @@ interface DynamicFiltersProps {
     onCreate?: () => void;
     createButtonText?: string;
     createButtonIconOnly?: boolean;
+    createButtonPosition?: 'left' | 'right';
+    createButtonAriaLabel?: string;
     onTestGuide?: () => void;
     onDownload?: () => void;
     downloadButtonText?: string;
@@ -53,6 +82,8 @@ export function DynamicFilters({
     onCreate,
     createButtonText = '+ Crear Orden',
     createButtonIconOnly = false,
+    createButtonPosition = 'left',
+    createButtonAriaLabel,
     onTestGuide,
     onDownload,
     downloadButtonText = '↓ Descargar \u00d3rdenes',
@@ -186,7 +217,41 @@ export function DynamicFilters({
     const sortBySelectStyle = isBar ? { width: '11rem' } : undefined;
     const sortOrderSelectStyle = isBar ? { width: '8.5rem' } : undefined;
 
-    const chips = activeFilters.map((filter) => (
+    const createButtonLabel = createButtonAriaLabel || 'Crear nuevo';
+
+    const createButton = onCreate ? (
+        <button
+            style={{ background: 'var(--color-tertiary-500)' }}
+            onClick={() => {
+                onCreate();
+                setIsDropdownOpen(false);
+                setSelectedFilterKey(null);
+                setTempValue('');
+            }}
+            className={
+                isBar
+                    ? 'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg hover:shadow-md transition-all'
+                    : 'flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all'
+            }
+            title={createButtonIconOnly ? createButtonLabel : undefined}
+            aria-label={createButtonIconOnly ? createButtonLabel : undefined}
+        >
+            {createButtonIconOnly ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+            ) : (
+                createButtonText
+            )}
+        </button>
+    ) : null;
+
+    const chips = activeFilters.map((filter) => {
+        const filterDef = availableFilters.find((f) => f.key === filter.key);
+        const chipOption = filterDef?.avatarOptions
+            ? filterDef.options?.find((opt) => opt.value === filter.value.toString())
+            : undefined;
+        return (
         <div
             key={filter.key}
             className={
@@ -195,6 +260,7 @@ export function DynamicFilters({
                     : 'chip-business inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium'
             }
         >
+            {chipOption && <OptionAvatar option={chipOption} small />}
             <span>
                 {getFilterLabel(filter.key)}: {getFilterDisplayValue(filter)}
             </span>
@@ -206,7 +272,8 @@ export function DynamicFilters({
                 <XMarkIcon className={isBar ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
             </button>
         </div>
-    ));
+        );
+    });
 
     return (
         <div
@@ -258,31 +325,7 @@ export function DynamicFilters({
                                 </button>
                             )}
 
-                            {onCreate && (
-                                <button
-                                    style={{ background: 'var(--color-tertiary-500)' }}
-                                    onClick={() => {
-                                        onCreate();
-                                        setIsDropdownOpen(false);
-                                        setSelectedFilterKey(null);
-                                        setTempValue('');
-                                    }}
-                                    className={
-                                        isBar
-                                            ? 'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg hover:shadow-md transition-all'
-                                            : 'flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all'
-                                    }
-                                    title={createButtonIconOnly ? 'Crear nuevo' : undefined}
-                                >
-                                    {createButtonIconOnly ? (
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                        </svg>
-                                    ) : (
-                                        createButtonText
-                                    )}
-                                </button>
-                            )}
+                            {createButtonPosition === 'left' && createButton}
 
                             {onDownload && (
                                 isBar ? (
@@ -367,6 +410,48 @@ export function DynamicFilters({
                                                             Cancelar
                                                         </Button>
                                                     </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        if (filter.type === 'select' && filter.avatarOptions) {
+                                            return (
+                                                <div className="space-y-3">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        {filter.label}
+                                                    </label>
+                                                    <div className="max-h-64 space-y-0.5 overflow-y-auto pr-0.5">
+                                                        {filter.options?.length ? (
+                                                            filter.options.map((opt) => (
+                                                                <button
+                                                                    key={opt.value}
+                                                                    onClick={() => {
+                                                                        onAddFilter(selectedFilterKey, opt.value);
+                                                                        setTempValue('');
+                                                                        setSelectedFilterKey(null);
+                                                                        setIsDropdownOpen(false);
+                                                                    }}
+                                                                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                                                >
+                                                                    <OptionAvatar option={opt} />
+                                                                    <span className="min-w-0 truncate">{opt.label}</span>
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <p className="p-2 text-sm text-gray-500 dark:text-gray-400">Sin opciones</p>
+                                                        )}
+                                                    </div>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setSelectedFilterKey(null);
+                                                            setTempValue('');
+                                                        }}
+                                                        className="w-full"
+                                                    >
+                                                        Cancelar
+                                                    </Button>
                                                 </div>
                                             );
                                         }
@@ -498,7 +583,7 @@ export function DynamicFilters({
                     {!isBar && chips}
                 </div>
 
-                {(isBar || onSortChange) && (
+                {(isBar || onSortChange || (createButtonPosition === 'right' && createButton)) && (
                 <div className={isBar ? 'flex items-center gap-2 ml-auto flex-shrink-0' : 'flex items-center gap-2 flex-shrink-0'}>
                     {isBar && chips.length > 0 && (
                         <div className="flex flex-wrap items-center justify-end gap-1.5 max-w-[38vw]">{chips}</div>
@@ -531,6 +616,7 @@ export function DynamicFilters({
                             </select>
                         </>
                     )}
+                    {createButtonPosition === 'right' && createButton}
                 </div>
                 )}
             </div>

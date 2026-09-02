@@ -44,9 +44,11 @@ COPY . .
 ARG NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_SSE_BASE_URL
 ARG API_BASE_URL
+ARG NEXT_PUBLIC_APP_VERSION=dev
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_PUBLIC_SSE_BASE_URL=${NEXT_PUBLIC_SSE_BASE_URL}
 ENV API_BASE_URL=${API_BASE_URL}
+ENV NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
 
 # Variables de entorno para build
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -83,10 +85,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Variables de entorno
+ARG NEXT_PUBLIC_APP_VERSION=dev
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
 
 # IMPORTANTE: API_BASE_URL debe pasarse en runtime (no en build time)
 # Se configura en docker-compose.yml o docker run -e API_BASE_URL=...
