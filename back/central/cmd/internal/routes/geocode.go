@@ -1,4 +1,3 @@
-// Package routes defines HTTP route handlers for geocoding and address search.
 package routes
 
 import (
@@ -13,19 +12,13 @@ import (
 	"github.com/secamc93/probability/back/central/shared/env"
 )
 
-// GeocodingResult representa el resultado estandarizado de geocodificación.
 type GeocodingResult struct {
 	Lat      float64 `json:"lat"`
 	Lon      float64 `json:"lon"`
 	Found    bool    `json:"found"`
-	Fallback bool    `json:"fallback"` // true si se usó solo la ciudad como fallback
+	Fallback bool    `json:"fallback"`
 }
 
-// handleGeocode es un proxy server-side hacia Google Geocoding API.
-// El frontend no puede llamar a APIs externas directamente por restricciones de CORS,
-// pero el backend sí puede. Este endpoint actúa como intermediario.
-//
-// GET /geocode?address=Calle 98 62-37&city=Bogotá
 func handleGeocode(cfg env.IConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		address := c.Query("address")
@@ -42,18 +35,16 @@ func handleGeocode(cfg env.IConfig) gin.HandlerFunc {
 			return
 		}
 
-		// Intento 1: dirección completa
 		if address != "" {
 			query := fmt.Sprintf("%s, %s, Colombia", address, city)
-			lat, lon, ok := googleGeocode(query, apiKey)
+			lat, lon, ok := googleGeocode(query, apiKey, city)
 			if ok {
 				c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: false})
 				return
 			}
 		}
 
-		// Intento 2 (fallback): solo ciudad
-		lat, lon, ok := googleGeocode(fmt.Sprintf("%s, Colombia", city), apiKey)
+		lat, lon, ok := googleGeocode(fmt.Sprintf("%s, Colombia", city), apiKey, "")
 		if ok {
 			c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: true})
 			return
@@ -63,7 +54,6 @@ func handleGeocode(cfg env.IConfig) gin.HandlerFunc {
 	}
 }
 
-// AddressSearchResult representa una sugerencia de dirección.
 type AddressSearchResult struct {
 	DisplayName   string  `json:"display_name"`
 	PlaceID       string  `json:"place_id"`
@@ -75,11 +65,6 @@ type AddressSearchResult struct {
 	Postcode      string  `json:"postcode"`
 }
 
-// handleAddressSearch retorna un handler que usa Google Geocoding API como proxy.
-// Una sola llamada HTTP por búsqueda (más eficiente que Places Autocomplete + Details).
-// La API key se lee del config (cargada desde .env), nunca se expone al browser.
-//
-// GET /address-search?q=avenida+calle+145+128-40+bogota&country=co
 func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		q := c.Query("q")
@@ -96,13 +81,11 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 			return
 		}
 
-		// Si hay ciudad, la añadimos al query para mejor contexto
 		searchInput := q
 		if city != "" {
 			searchInput = q + ", " + city
 		}
 
-		// Google Geocoding API - una sola llamada, devuelve coordenadas + componentes
 		geocodeURL := fmt.Sprintf(
 			"https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s&language=es&components=country:%s",
 			url.QueryEscape(searchInput),
@@ -170,7 +153,6 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 	}
 }
 
-// placesSearchResponse represents the Google Places API response.
 type placesSearchResponse struct {
 	Status  string               `json:"status"`
 	Results []placesSearchResult `json:"results"`
@@ -188,8 +170,6 @@ type placesSearchResult struct {
 	} `json:"geometry"`
 }
 
-// handlePlacesSearch proxies a text search to Google Places API
-// GET /api/v1/places-search?query=Oficina+Coordinadora+Bogota
 func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		query := c.Query("query")
@@ -231,7 +211,7 @@ func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 			return
 		}
 
-		fmt.Printf("📍 Places API Response - Status: %s, Results: %d\n", pResp.Status, len(pResp.Results))
+		fmt.Printf("\U0001F4CD Places API Response - Status: %s, Results: %d\n", pResp.Status, len(pResp.Results))
 		if pResp.Status != "OK" {
 			fmt.Printf("⚠️ Google Places API returned: %s\n", pResp.Status)
 			fmt.Printf("Full response: %s\n", string(body))
@@ -253,17 +233,15 @@ func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 	}
 }
 
-
-// googleGeocodeResponse represents the Google Geocoding API response.
 type googleGeocodeResponse struct {
-	Status  string              `json:"status"`
+	Status  string                `json:"status"`
 	Results []googleGeocodeResult `json:"results"`
 }
 
 type googleGeocodeResult struct {
-	FormattedAddress  string `json:"formatted_address"`
-	PlaceID           string `json:"place_id"`
-	Geometry          struct {
+	FormattedAddress string `json:"formatted_address"`
+	PlaceID          string `json:"place_id"`
+	Geometry         struct {
 		Location struct {
 			Lat float64 `json:"lat"`
 			Lng float64 `json:"lng"`
@@ -276,8 +254,7 @@ type googleGeocodeResult struct {
 	} `json:"address_components"`
 }
 
-// googleGeocode performs a forward geocoding search using the Google Geocoding API.
-func googleGeocode(query, apiKey string) (float64, float64, bool) {
+func googleGeocode(query, apiKey, expectedCity string) (float64, float64, bool) {
 	endpoint := fmt.Sprintf(
 		"https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s&language=es",
 		url.QueryEscape(query),
@@ -300,6 +277,44 @@ func googleGeocode(query, apiKey string) (float64, float64, bool) {
 		return 0, 0, false
 	}
 
-	loc := result.Results[0].Geometry.Location
+	best := result.Results[0]
+	if expectedCity != "" && !resultMatchesCity(best, expectedCity) {
+		return 0, 0, false
+	}
+
+	loc := best.Geometry.Location
 	return loc.Lat, loc.Lng, true
+}
+
+func resultMatchesCity(result googleGeocodeResult, expectedCity string) bool {
+	expectedCityName := expectedCity
+	if idx := strings.Index(expectedCity, ","); idx >= 0 {
+		expectedCityName = expectedCity[:idx]
+	}
+	expectedNorm := normalizeLocationText(expectedCityName)
+	if expectedNorm == "" {
+		return true
+	}
+
+	for _, comp := range result.AddressComponents {
+		for _, t := range comp.Types {
+			if t == "locality" || t == "administrative_area_level_2" {
+				if normalizeLocationText(comp.LongName) == expectedNorm {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+var accentReplacer = strings.NewReplacer(
+	"á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u",
+	"Á", "A", "É", "E", "Í", "I", "Ó", "O", "Ú", "U",
+	"ñ", "n", "Ñ", "N",
+)
+
+func normalizeLocationText(text string) string {
+	normalized := accentReplacer.Replace(strings.ToUpper(strings.TrimSpace(text)))
+	return strings.Join(strings.Fields(normalized), " ")
 }
