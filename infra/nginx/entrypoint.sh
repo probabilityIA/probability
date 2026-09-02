@@ -27,6 +27,8 @@ upstream probability_frontend {
     server front-central-blue:3000 max_fails=3 fail_timeout=30s;
 }
 EOF
+    # El deploy corre como ubuntu (UID 1000) y tiene que poder reescribirlo.
+    chown 1000:1000 "$ACTIVE_FILE" 2>/dev/null || true
 fi
 
 BACKEND_TARGET=$(grep -o '[a-z-]*back-central-[a-z]*:[0-9]*' "$ACTIVE_FILE" | head -1)

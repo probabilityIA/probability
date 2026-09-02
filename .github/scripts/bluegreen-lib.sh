@@ -10,22 +10,72 @@ COMPOSE_DIR=/home/ubuntu/probability/infra/compose-prod
 UPSTREAMS_DIR="$COMPOSE_DIR/nginx-upstreams"
 ACTIVE_FILE="$UPSTREAMS_DIR/active.conf"
 
+# El entrypoint de nginx corre como root y puede crear active.conf; sin este
+# chown el deploy (usuario ubuntu) no puede reescribirlo y aborta a mitad de
+# camino, dejando el color nuevo arriba pero sin trafico. Paso exactamente eso
+# el 2026-09-02 y tumbo el sitio.
 bg_init() {
-  mkdir -p "$UPSTREAMS_DIR"
+  sudo mkdir -p "$UPSTREAMS_DIR"
+  sudo chown -R ubuntu:ubuntu "$UPSTREAMS_DIR"
+
   if [ ! -f "$ACTIVE_FILE" ]; then
-    echo "🎨 Sin archivo de upstreams, arrancando en blue"
-    bg_write_upstreams blue blue
+    echo "🎨 Sin archivo de upstreams, tomando el color que este corriendo"
+    bg_write_upstreams "$(bg_running_color back)" "$(bg_running_color front)"
+    return
+  fi
+
+  # Si el archivo nombra un color que no existe, nginx entra en bucle de panico.
+  # Se corrige solo apuntando al que si esta corriendo.
+  back=$(bg_file_color back)
+  front=$(bg_file_color front)
+  fixed=0
+  if ! bg_color_running back "$back"; then
+    back=$(bg_running_color back); fixed=1
+  fi
+  if ! bg_color_running front "$front"; then
+    front=$(bg_running_color front); fixed=1
+  fi
+  if [ "$fixed" = "1" ]; then
+    echo "⚠️  active.conf apuntaba a un color sin contenedor, corrigiendo"
+    bg_write_upstreams "$back" "$front"
   fi
 }
 
-# bg_active_color back|front -> blue|green
-bg_active_color() {
-  service="$1"
-  color=$(grep -o "${service}-central-[a-z]*" "$ACTIVE_FILE" 2>/dev/null | head -1 | sed "s/${service}-central-//")
+# bg_container_prefix back|front
+bg_container_prefix() {
+  if [ "$1" = "back" ]; then echo central_reserve_prod; else echo frontend_prod; fi
+}
+
+# bg_color_running back|front <color>
+bg_color_running() {
+  docker ps --format '{{.Names}}' | grep -qx "$(bg_container_prefix "$1")_$2"
+}
+
+# bg_running_color back|front -> color con contenedor arriba (blue si ninguno)
+bg_running_color() {
+  for c in blue green; do
+    if bg_color_running "$1" "$c"; then echo "$c"; return; fi
+  done
+  echo blue
+}
+
+# bg_file_color back|front -> lo que dice el archivo, sin validar
+bg_file_color() {
+  color=$(grep -o "$1-central-[a-z]*" "$ACTIVE_FILE" 2>/dev/null | head -1 | sed "s/$1-central-//")
   case "$color" in
     blue|green) echo "$color" ;;
     *) echo blue ;;
   esac
+}
+
+# bg_active_color back|front -> el color que realmente esta sirviendo
+bg_active_color() {
+  color=$(bg_file_color "$1")
+  if bg_color_running "$1" "$color"; then
+    echo "$color"
+  else
+    bg_running_color "$1"
+  fi
 }
 
 bg_other_color() {

@@ -94,3 +94,36 @@ imagen que no arranque) y confirmar que el sitio nunca respondio 502.
 Los dos urgentes hechos y verificados: primer deploy en verde con el sitio
 arriba, y `/probability/back-central` recibiendo eventos despues de un cambio de
 color.
+
+## Lo que paso en el primer rollout (2026-09-02 22:04 UTC)
+
+Los tres workflows (nginx, backend, frontend) salieron a la vez con el push y el
+sitio se cayo ~10 minutos. Secuencia real:
+
+1. nginx desplego bien y su entrypoint, **como root**, creo `active.conf`
+   apuntando a `blue`.
+2. El deploy del backend levanto `central_reserve_prod_green`, paso el health
+   check, y al reescribir `active.conf` murio con
+   `Permission denied` (el archivo era de root, el deploy es `ubuntu`).
+3. Con `set -e` el script aborto ahi: green arriba y sin trafico, `active.conf`
+   apuntando a `back-central-blue`, que **no existia** (el contenedor viejo se
+   llamaba `central_reserve_prod`, sin color).
+4. nginx no resuelve un upstream inexistente -> `exit 1` -> bucle de reinicio ->
+   502 en todo el sitio.
+5. El deploy del frontend fallo en cascada: su `startup.sh` espera al backend a
+   traves de nginx, que estaba en el bucle.
+
+Recuperacion manual: levantar `front-central-green`, escribir `active.conf` con
+green/green, reiniciar nginx, borrar los contenedores legacy.
+
+Correcciones ya en el codigo:
+
+- `bg_init` hace `sudo chown -R ubuntu:ubuntu` del directorio de upstreams.
+- El entrypoint de nginx hace `chown 1000:1000` del archivo que crea.
+- `bg_active_color` ya no cree ciegamente al archivo: si el color que nombra no
+  tiene contenedor corriendo, usa el que si lo tiene, y `bg_init` reescribe el
+  archivo. Un `active.conf` apuntando a un color muerto ahora se corrige solo en
+  el siguiente deploy en vez de tumbar el sitio.
+
+Estado tras la recuperacion: backend y frontend sirviendo en **green**, legacy
+borrado, RAM en 772 MB libres. El proximo deploy de cada uno ira a blue.
