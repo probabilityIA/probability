@@ -91,7 +91,7 @@ export default function TicketsBoard({
                 </div>
             )}
 
-            <div className={`flex gap-3 overflow-x-auto pb-3 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+            <div className={`flex w-full items-stretch gap-3 overflow-x-auto pb-3 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
                 {BOARD_COLUMNS.map((column) => {
                     const items = tickets.filter((t) => column.statuses.includes(t.status));
                     const isOver = overKey === column.key;
@@ -101,7 +101,7 @@ export default function TicketsBoard({
                             onDragOver={(e) => handleDragOver(e, column)}
                             onDragLeave={(e) => handleDragLeave(e, column)}
                             onDrop={(e) => handleDrop(e, column)}
-                            className={`flex w-[280px] min-w-[280px] flex-col rounded-xl border transition-colors ${
+                            className={`flex min-w-[260px] flex-1 basis-0 flex-col rounded-xl border transition-colors ${
                                 isOver
                                     ? 'border-purple-400 bg-purple-50 dark:border-purple-500 dark:bg-purple-900/20'
                                     : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/40'
