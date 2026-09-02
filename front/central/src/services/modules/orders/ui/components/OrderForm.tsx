@@ -430,6 +430,23 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const regeocodeForCity = useCallback(async (street: string, city: string, state: string) => {
+        if (!city.trim()) return;
+        try {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+            const res = await fetch(`${apiBase}/geocode?address=${encodeURIComponent(street)}&city=${encodeURIComponent(`${city}, ${state}`)}`);
+            if (!res.ok) return;
+            const d = await res.json();
+            if (d?.found && typeof d.lat === 'number' && typeof d.lon === 'number') {
+                setAddressCoords({ lat: d.lat, lon: d.lon });
+            } else {
+                setAddressCoords(null);
+            }
+        } catch {
+            setAddressCoords(null);
+        }
+    }, []);
+
     const handleCitySelect = (option: any) => {
         setFormData({
             ...formData,
@@ -440,6 +457,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         setShowCityResults(false);
         setCitySelected(true);
         setCityError(false);
+        regeocodeForCity(formData.shipping_street, option.ciudad, option.departamento);
     };
 
     const handleCityBlur = () => {
