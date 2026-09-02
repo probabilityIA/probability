@@ -699,7 +699,7 @@ export default function TicketsManager() {
                 />
             </Modal>
 
-            <Modal isOpen={!!openTicket} onClose={() => openTicketDetail(null)} title="" size="wide">
+            <Modal isOpen={!!openTicket} onClose={() => openTicketDetail(null)} title="" size="wide" noPadding noBodyScroll>
                 {openTicket && (
                     <TicketDetail
                         ticket={openTicket}
