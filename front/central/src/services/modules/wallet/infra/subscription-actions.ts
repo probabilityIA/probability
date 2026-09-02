@@ -46,6 +46,7 @@ export interface BusinessSubscription {
     payment_reference?: string;
     notes?: string;
     created_at?: string;
+    subscription_type?: SubscriptionType;
 }
 
 export interface BusinessModuleOverride {

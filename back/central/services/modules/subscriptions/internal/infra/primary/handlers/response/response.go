@@ -59,19 +59,20 @@ func FromSubscriptionTypes(types []entities.SubscriptionType) []SubscriptionType
 }
 
 type SubscriptionResponse struct {
-	ID                   uint      `json:"id"`
-	BusinessID           uint      `json:"business_id"`
-	SubscriptionTypeID   uint      `json:"subscription_type_id"`
-	SubscriptionTypeName string    `json:"subscription_type_name"`
-	Months               int       `json:"months"`
-	Amount               float64   `json:"amount"`
-	StartDate            time.Time `json:"start_date"`
-	EndDate              time.Time `json:"end_date"`
-	Status               string    `json:"status"`
-	PaymentMethod        string    `json:"payment_method"`
-	PaymentReference     *string   `json:"payment_reference,omitempty"`
-	Notes                *string   `json:"notes,omitempty"`
-	CreatedAt            time.Time `json:"created_at"`
+	ID                   uint                      `json:"id"`
+	BusinessID           uint                      `json:"business_id"`
+	SubscriptionTypeID   uint                      `json:"subscription_type_id"`
+	SubscriptionTypeName string                    `json:"subscription_type_name"`
+	Months               int                       `json:"months"`
+	Amount               float64                   `json:"amount"`
+	StartDate            time.Time                 `json:"start_date"`
+	EndDate              time.Time                 `json:"end_date"`
+	Status               string                    `json:"status"`
+	PaymentMethod        string                    `json:"payment_method"`
+	PaymentReference     *string                   `json:"payment_reference,omitempty"`
+	Notes                *string                   `json:"notes,omitempty"`
+	CreatedAt            time.Time                 `json:"created_at"`
+	SubscriptionType     *SubscriptionTypeResponse `json:"subscription_type,omitempty"`
 }
 
 func FromSubscription(s *entities.BusinessSubscription) SubscriptionResponse {
@@ -90,6 +91,15 @@ func FromSubscription(s *entities.BusinessSubscription) SubscriptionResponse {
 		Notes:                s.Notes,
 		CreatedAt:            s.CreatedAt,
 	}
+}
+
+func FromSubscriptionWithType(s *entities.BusinessSubscription, t *entities.SubscriptionType) SubscriptionResponse {
+	resp := FromSubscription(s)
+	if t != nil {
+		typeResp := FromSubscriptionType(t)
+		resp.SubscriptionType = &typeResp
+	}
+	return resp
 }
 
 func FromSubscriptions(subs []entities.BusinessSubscription) []SubscriptionResponse {

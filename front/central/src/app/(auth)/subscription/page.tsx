@@ -2672,15 +2672,12 @@ const PlanCatalog = forwardRef<PlanCatalogHandle, PlanCatalogProps>(function Pla
         openCurrentPlanPurchase: async () => {
             const targetId = currentSubscription?.subscription_type_id;
             if (!targetId) return;
-            let current = types.find((t) => t.id === targetId);
-            if (!current) {
-                // El plan actual puede ser uno personalizado (no vive en el catalogo publico)
-                const customRes = await listCustomPlansAction(businessId);
-                if (customRes.success && customRes.data) {
-                    current = customRes.data.find((t) => t.id === targetId);
-                }
+            const current = currentSubscription?.subscription_type ?? types.find((t) => t.id === targetId);
+            if (current) {
+                openPurchaseModal(current);
+            } else {
+                setMessage({ type: 'error', text: 'No se pudo cargar el plan actual. Intenta de nuevo.' });
             }
-            if (current) openPurchaseModal(current);
         },
     }));
 

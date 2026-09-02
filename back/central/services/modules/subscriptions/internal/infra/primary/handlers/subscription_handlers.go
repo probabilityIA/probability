@@ -28,7 +28,13 @@ func (h *Handlers) GetCurrentSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": response.FromSubscription(sub)})
+	subType, err := h.uc.GetSubscriptionType(c.Request.Context(), sub.SubscriptionTypeID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch subscription type"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": response.FromSubscriptionWithType(sub, subType)})
 }
 
 func (h *Handlers) GetMySubscriptionUsage(c *gin.Context) {
