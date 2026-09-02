@@ -17,6 +17,8 @@ type TicketResponse struct {
 	AssignedToID        *uint      `json:"assigned_to_id"`
 	AssignedToName      string     `json:"assigned_to_name,omitempty"`
 	AssignedToAvatarURL string     `json:"assigned_to_avatar_url,omitempty"`
+	SprintID            *uint      `json:"sprint_id"`
+	SprintName          string     `json:"sprint_name"`
 	Title               string     `json:"title"`
 	Description         string     `json:"description"`
 	Type                string     `json:"type"`
@@ -39,13 +41,13 @@ type TicketResponse struct {
 }
 
 type CommentResponse struct {
-	ID         uint                  `json:"id"`
-	TicketID   uint                  `json:"ticket_id"`
-	UserID     uint                  `json:"user_id"`
-	UserName   string                `json:"user_name"`
-	Body       string                `json:"body"`
-	IsInternal bool                  `json:"is_internal"`
-	CreatedAt  time.Time             `json:"created_at"`
+	ID          uint                 `json:"id"`
+	TicketID    uint                 `json:"ticket_id"`
+	UserID      uint                 `json:"user_id"`
+	UserName    string               `json:"user_name"`
+	Body        string               `json:"body"`
+	IsInternal  bool                 `json:"is_internal"`
+	CreatedAt   time.Time            `json:"created_at"`
 	Attachments []AttachmentResponse `json:"attachments,omitempty"`
 }
 
@@ -88,6 +90,8 @@ func FromTicket(t *entities.Ticket) TicketResponse {
 		AssignedToID:        t.AssignedToID,
 		AssignedToName:      t.AssignedToName,
 		AssignedToAvatarURL: t.AssignedToAvatarURL,
+		SprintID:            t.SprintID,
+		SprintName:          t.SprintName,
 		Title:               t.Title,
 		Description:         t.Description,
 		Type:                t.Type,

@@ -13,6 +13,7 @@ export class TicketUseCases {
     assign(id: number, assignedToId: number | null) { return this.repo.assign(id, assignedToId); }
     changeArea(id: number, area: string, note?: string) { return this.repo.changeArea(id, area, note); }
     escalate(id: number, note?: string) { return this.repo.escalate(id, note); }
+    changeSprint(id: number, sprintId: number | null) { return this.repo.changeSprint(id, sprintId); }
 
     listComments(id: number, businessId?: number) { return this.repo.listComments(id, businessId); }
     addComment(id: number, body: string, isInternal: boolean) { return this.repo.addComment(id, body, isInternal); }

@@ -38,6 +38,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipping_margins"
 	"github.com/secamc93/probability/back/central/services/modules/shippingconfig"
 	"github.com/secamc93/probability/back/central/services/modules/siigoreferrals"
+	"github.com/secamc93/probability/back/central/services/modules/sprints"
 	"github.com/secamc93/probability/back/central/services/modules/storefront"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions"
 	"github.com/secamc93/probability/back/central/services/modules/tickets"
@@ -119,6 +120,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	websiteconfig.New(router, database, logger, s3, environment)
 	tickets.New(router, database, logger, s3)
+	sprints.New(router, database, logger)
 	accounting.New(router, database, logger, environment, integrationCore, dianEmitter)
 
 	if rabbitMQ != nil {

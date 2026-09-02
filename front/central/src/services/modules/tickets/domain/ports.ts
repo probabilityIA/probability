@@ -19,6 +19,7 @@ export interface ITicketRepository {
     assign(id: number, assignedToId: number | null): Promise<Ticket>;
     changeArea(id: number, area: string, note?: string): Promise<Ticket>;
     escalate(id: number, note?: string): Promise<Ticket>;
+    changeSprint(id: number, sprintId: number | null): Promise<Ticket>;
 
     listComments(id: number, businessId?: number): Promise<TicketComment[]>;
     addComment(id: number, body: string, isInternal: boolean): Promise<TicketComment>;

@@ -11,6 +11,7 @@ func entityToModel(t *entities.Ticket) *models.Ticket {
 		BusinessID:     t.BusinessID,
 		CreatedByID:    t.CreatedByID,
 		AssignedToID:   t.AssignedToID,
+		SprintID:       t.SprintID,
 		Title:          t.Title,
 		Description:    t.Description,
 		Type:           t.Type,
@@ -35,6 +36,7 @@ func modelToEntity(m *models.Ticket) *entities.Ticket {
 		BusinessID:     m.BusinessID,
 		CreatedByID:    m.CreatedByID,
 		AssignedToID:   m.AssignedToID,
+		SprintID:       m.SprintID,
 		Title:          m.Title,
 		Description:    m.Description,
 		Type:           m.Type,
@@ -60,6 +62,9 @@ func modelToEntity(m *models.Ticket) *entities.Ticket {
 	if m.AssignedTo != nil {
 		out.AssignedToName = m.AssignedTo.Name
 		out.AssignedToAvatarURL = m.AssignedTo.AvatarURL
+	}
+	if m.Sprint != nil {
+		out.SprintName = m.Sprint.Name
 	}
 	return out
 }

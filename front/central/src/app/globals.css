@@ -1497,7 +1497,11 @@ textarea:focus {
 }
 
 :is(.dark) .sidebar-surface {
-  background-color: var(--color-sidebar, #1f2937);
+  background-color: #1f2937;
+}
+
+:is(.dark) .sidebar-tinted .sidebar-surface :is(a, span, p, label, small, h2, h3):not([class^="bg-"]):not([class*=" bg-"]):not([style*="background"]) {
+  color: revert-layer;
 }
 
 .sidebar-tinted .sidebar-surface :is(a, span, p, label, small, h2, h3):not([class^="bg-"]):not([class*=" bg-"]):not([style*="background"]) {
@@ -1513,7 +1517,11 @@ textarea:focus {
 }
 
 :is(.dark) .subnav-surface {
-  background-color: var(--color-topbar, #1f2937);
+  background-color: #1f2937;
+}
+
+:is(.dark) .topbar-tinted .subnav-surface :is(a, span, p, label, small, h2, h3):not([class^="bg-"]):not([class*=" bg-"]):not([style*="background"]) {
+  color: revert-layer;
 }
 
 .topbar-tinted .subnav-surface :is(a, span, p, label, small, h2, h3):not([class^="bg-"]):not([class*=" bg-"]):not([style*="background"]) {

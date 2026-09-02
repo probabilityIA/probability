@@ -15,4 +15,5 @@ var (
 	ErrTitleRequired       = errors.New("title is required")
 	ErrDescriptionRequired = errors.New("description is required")
 	ErrAssigneeNotFound    = errors.New("assigned user not found")
+	ErrSprintNotFound      = errors.New("sprint not found")
 )

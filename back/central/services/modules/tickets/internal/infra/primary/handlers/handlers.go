@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
@@ -45,10 +46,12 @@ func (h *Handlers) Create(c *gin.Context) {
 		Source:       source,
 		Area:         req.Area,
 		AssignedToID: req.AssignedToID,
+		SprintID:     req.SprintID,
 		DueDate:      req.DueDate,
 	}
 	if !isSuperAdmin {
 		dto.AssignedToID = nil
+		dto.SprintID = nil
 	}
 
 	t, err := h.uc.Create(c.Request.Context(), dto)
@@ -94,6 +97,14 @@ func (h *Handlers) List(c *gin.Context) {
 		OnlyMine:      c.Query("only_mine") == "true",
 		UserID:        userID,
 		IsSuperAdmin:  isSuperAdmin,
+	}
+	if v := strings.TrimSpace(c.Query("sprint_id")); v != "" {
+		if strings.EqualFold(v, "none") || strings.EqualFold(v, "null") {
+			params.SprintNone = true
+		} else if id, err := strconv.ParseUint(v, 10, 64); err == nil && id > 0 {
+			u := uint(id)
+			params.SprintID = &u
+		}
 	}
 	if isSuperAdmin {
 		if v := c.Query("business_id"); v != "" {
@@ -164,6 +175,8 @@ func (h *Handlers) Update(c *gin.Context) {
 		Severity:     req.Severity,
 		Area:         req.Area,
 		AssignedToID: req.AssignedToID,
+		SprintID:     req.SprintID,
+		ClearSprint:  req.ClearSprint,
 		DueDate:      req.DueDate,
 		ClearDueDate: req.ClearDueDate,
 	})

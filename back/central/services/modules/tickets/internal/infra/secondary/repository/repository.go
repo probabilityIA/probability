@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/tickets/internal/domain/dtos"
-	dom "github.com/secamc93/probability/back/central/services/modules/tickets/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/tickets/internal/domain/entities"
+	dom "github.com/secamc93/probability/back/central/services/modules/tickets/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/tickets/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/migration/shared/models"
@@ -58,6 +58,7 @@ func (r *Repository) GetByID(ctx context.Context, id uint) (*entities.Ticket, er
 		Preload("Business").
 		Preload("CreatedBy").
 		Preload("AssignedTo").
+		Preload("Sprint").
 		Where("id = ?", id).
 		First(&m).Error
 	if err != nil {
@@ -83,7 +84,8 @@ func (r *Repository) List(ctx context.Context, params dtos.ListTicketsParams) ([
 	q := r.db.Conn(ctx).Model(&models.Ticket{}).
 		Preload("Business").
 		Preload("CreatedBy").
-		Preload("AssignedTo")
+		Preload("AssignedTo").
+		Preload("Sprint")
 
 	if !params.IsSuperAdmin {
 		if params.BusinessID != nil {
@@ -100,6 +102,11 @@ func (r *Repository) List(ctx context.Context, params dtos.ListTicketsParams) ([
 	}
 	if params.AssignedToID != nil {
 		q = q.Where("assigned_to_id = ?", *params.AssignedToID)
+	}
+	if params.SprintNone {
+		q = q.Where("sprint_id IS NULL")
+	} else if params.SprintID != nil {
+		q = q.Where("sprint_id = ?", *params.SprintID)
 	}
 	if params.OnlyMine && params.UserID > 0 {
 		q = q.Where("created_by_id = ? OR assigned_to_id = ?", params.UserID, params.UserID)

@@ -60,6 +60,12 @@ export const changeTicketAreaAction = async (id: number, area: string, note?: st
     return r;
 };
 
+export const changeTicketSprintAction = async (id: number, sprintId: number | null) => {
+    const r = await (await getUseCases()).changeSprint(id, sprintId);
+    revalidatePath('/tickets');
+    return r;
+};
+
 export const escalateTicketAction = async (id: number, note?: string) => {
     const r = await (await getUseCases()).escalate(id, note);
     revalidatePath('/tickets');

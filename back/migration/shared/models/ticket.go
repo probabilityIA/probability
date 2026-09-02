@@ -20,6 +20,9 @@ type Ticket struct {
 	AssignedToID *uint `gorm:"index"`
 	AssignedTo   *User `gorm:"foreignKey:AssignedToID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
+	SprintID *uint   `gorm:"index"`
+	Sprint   *Sprint `gorm:"foreignKey:SprintID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+
 	Title       string `gorm:"size:255;not null"`
 	Description string `gorm:"type:text;not null"`
 

@@ -3,7 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { TourProvider, TourLauncherFloating } from '@/services/modules/tours/ui';
-import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar, WalletSubNavbar, AccountingSubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, TicketsSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar, WalletSubNavbar, AccountingSubNavbar } from '@/shared/ui';
 import { SelectedBusinessProvider } from '@/shared/contexts/selected-business-context';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { usePermissions } from '@/shared/contexts/permissions-context';
@@ -81,6 +81,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
           <TourProvider>
                       <AnnouncementTicker />
                       <OrdersSubNavbar />
+                      <TicketsSubNavbar />
                       <InventorySubNavbar />
                       <IntegrationsSubNavbar />
                       <NotificationsSubNavbar />
@@ -95,7 +96,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
                           {children}
                         </SubscriptionGuard>
                       </div>
-                      <TourLauncherFloating />
+                      {!pathname.startsWith('/tickets') && <TourLauncherFloating />}
           </TourProvider>
         </SelectedBusinessProvider>
         <style jsx>{`
