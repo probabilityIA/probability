@@ -11,6 +11,7 @@ type CreateTicketRequest struct {
 	Source       string  `json:"source"`
 	Area         string  `json:"area"`
 	AssignedToID *uint   `json:"assigned_to_id"`
+	SprintID     *uint   `json:"sprint_id"`
 	DueDate      *string `json:"due_date"`
 }
 
@@ -23,6 +24,8 @@ type UpdateTicketRequest struct {
 	Severity     *string `json:"severity"`
 	Area         *string `json:"area"`
 	AssignedToID *uint   `json:"assigned_to_id"`
+	SprintID     *uint   `json:"sprint_id"`
+	ClearSprint  bool    `json:"clear_sprint"`
 	DueDate      *string `json:"due_date"`
 	ClearDueDate bool    `json:"clear_due_date"`
 }
@@ -39,6 +42,10 @@ type ChangeAreaRequest struct {
 
 type AssignRequest struct {
 	AssignedToID *uint `json:"assigned_to_id"`
+}
+
+type ChangeSprintRequest struct {
+	SprintID *uint `json:"sprint_id"`
 }
 
 type EscalateRequest struct {

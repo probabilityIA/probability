@@ -19,6 +19,7 @@ type IUseCase interface {
 	ChangeStatus(ctx context.Context, dto dtos.ChangeStatusDTO) (*entities.Ticket, error)
 	ChangeArea(ctx context.Context, dto dtos.ChangeAreaDTO) (*entities.Ticket, error)
 	Assign(ctx context.Context, dto dtos.AssignTicketDTO) (*entities.Ticket, error)
+	ChangeSprint(ctx context.Context, dto dtos.ChangeSprintDTO) (*entities.Ticket, error)
 	Escalate(ctx context.Context, dto dtos.EscalateTicketDTO) (*entities.Ticket, error)
 
 	AddComment(ctx context.Context, dto dtos.CreateCommentDTO) (*entities.TicketComment, error)

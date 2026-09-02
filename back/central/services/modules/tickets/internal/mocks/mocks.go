@@ -19,13 +19,14 @@ type HistoryCall struct {
 }
 
 type RepositoryMock struct {
-	NextCodeFn   func(ctx context.Context) (string, error)
-	CreateFn     func(ctx context.Context, ticket *entities.Ticket) (*entities.Ticket, error)
-	GetByIDFn    func(ctx context.Context, id uint) (*entities.Ticket, error)
-	ListFn       func(ctx context.Context, params dtos.ListTicketsParams) ([]entities.Ticket, int64, error)
-	UpdateFn     func(ctx context.Context, id uint, updates map[string]any) (*entities.Ticket, error)
-	DeleteFn     func(ctx context.Context, id uint) error
-	UserExistsFn func(ctx context.Context, userID uint) (bool, error)
+	NextCodeFn       func(ctx context.Context) (string, error)
+	CreateFn         func(ctx context.Context, ticket *entities.Ticket) (*entities.Ticket, error)
+	GetByIDFn        func(ctx context.Context, id uint) (*entities.Ticket, error)
+	ListFn           func(ctx context.Context, params dtos.ListTicketsParams) ([]entities.Ticket, int64, error)
+	UpdateFn         func(ctx context.Context, id uint, updates map[string]any) (*entities.Ticket, error)
+	DeleteFn         func(ctx context.Context, id uint) error
+	UserExistsFn     func(ctx context.Context, userID uint) (bool, error)
+	FindSprintNameFn func(ctx context.Context, sprintID uint) (string, bool, error)
 
 	AddCommentFn   func(ctx context.Context, dto dtos.CreateCommentDTO) (*entities.TicketComment, error)
 	ListCommentsFn func(ctx context.Context, ticketID uint, includeInternal bool) ([]entities.TicketComment, error)
@@ -101,6 +102,13 @@ func (m *RepositoryMock) UserExists(ctx context.Context, userID uint) (bool, err
 		return m.UserExistsFn(ctx, userID)
 	}
 	return true, nil
+}
+
+func (m *RepositoryMock) FindSprintName(ctx context.Context, sprintID uint) (string, bool, error) {
+	if m.FindSprintNameFn != nil {
+		return m.FindSprintNameFn(ctx, sprintID)
+	}
+	return "Sprint mock", true, nil
 }
 
 func (m *RepositoryMock) AddComment(ctx context.Context, dto dtos.CreateCommentDTO) (*entities.TicketComment, error) {

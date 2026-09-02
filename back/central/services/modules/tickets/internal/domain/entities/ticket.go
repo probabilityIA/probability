@@ -3,33 +3,35 @@ package entities
 import "time"
 
 type Ticket struct {
-	ID          uint
-	Code        string
-	BusinessID  *uint
-	CreatedByID uint
-	AssignedToID *uint
-	Title       string
-	Description string
-	Type        string
-	Category    string
-	Priority    string
-	Status      string
-	Source      string
-	Severity    string
-	Area        string
+	ID             uint
+	Code           string
+	BusinessID     *uint
+	CreatedByID    uint
+	AssignedToID   *uint
+	SprintID       *uint
+	Title          string
+	Description    string
+	Type           string
+	Category       string
+	Priority       string
+	Status         string
+	Source         string
+	Severity       string
+	Area           string
 	EscalatedToDev bool
 	EscalatedAt    *time.Time
-	DueDate     *time.Time
-	ResolvedAt  *time.Time
-	ClosedAt    *time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	DueDate        *time.Time
+	ResolvedAt     *time.Time
+	ClosedAt       *time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 
-	BusinessName  string
-	CreatedByName string
-	CreatedByAvatarURL string
-	AssignedToName string
+	BusinessName        string
+	CreatedByName       string
+	CreatedByAvatarURL  string
+	AssignedToName      string
 	AssignedToAvatarURL string
+	SprintName          string
 
 	CommentsCount    int64
 	AttachmentsCount int64
@@ -52,16 +54,16 @@ type TicketComment struct {
 }
 
 type TicketAttachment struct {
-	ID           uint
-	TicketID     uint
-	CommentID    *uint
-	UploadedByID uint
+	ID             uint
+	TicketID       uint
+	CommentID      *uint
+	UploadedByID   uint
 	UploadedByName string
-	FileURL      string
-	FileName     string
-	MimeType     string
-	Size         int64
-	CreatedAt    time.Time
+	FileURL        string
+	FileName       string
+	MimeType       string
+	Size           int64
+	CreatedAt      time.Time
 }
 
 type TicketStatusHistory struct {

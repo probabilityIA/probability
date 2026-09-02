@@ -67,6 +67,14 @@ func (uc *UseCase) Create(ctx context.Context, dto dtos.CreateTicketDTO) (*entit
 		}
 	}
 
+	if dto.SprintID != nil {
+		if _, found, err := uc.repo.FindSprintName(ctx, *dto.SprintID); err != nil {
+			return nil, err
+		} else if !found {
+			return nil, dom.ErrSprintNotFound
+		}
+	}
+
 	code, err := uc.repo.NextCode(ctx)
 	if err != nil {
 		return nil, err
@@ -84,6 +92,7 @@ func (uc *UseCase) Create(ctx context.Context, dto dtos.CreateTicketDTO) (*entit
 		BusinessID:   dto.BusinessID,
 		CreatedByID:  dto.CreatedByID,
 		AssignedToID: dto.AssignedToID,
+		SprintID:     dto.SprintID,
 		Title:        title,
 		Description:  desc,
 		Type:         t,

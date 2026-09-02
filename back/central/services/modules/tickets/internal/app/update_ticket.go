@@ -68,6 +68,16 @@ func (uc *UseCase) Update(ctx context.Context, dto dtos.UpdateTicketDTO) (*entit
 		}
 		updates["assigned_to_id"] = *dto.AssignedToID
 	}
+	if dto.ClearSprint {
+		updates["sprint_id"] = nil
+	} else if dto.SprintID != nil {
+		if _, found, err := uc.repo.FindSprintName(ctx, *dto.SprintID); err != nil {
+			return nil, err
+		} else if !found {
+			return nil, dom.ErrSprintNotFound
+		}
+		updates["sprint_id"] = *dto.SprintID
+	}
 	if dto.ClearDueDate {
 		updates["due_date"] = nil
 	} else if dto.DueDate != nil && *dto.DueDate != "" {

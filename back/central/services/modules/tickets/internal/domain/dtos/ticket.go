@@ -7,6 +7,8 @@ type ListTicketsParams struct {
 	BusinessID    *uint
 	CreatedByID   *uint
 	AssignedToID  *uint
+	SprintID      *uint
+	SprintNone    bool
 	Status        []string
 	Priority      []string
 	Type          []string
@@ -15,8 +17,8 @@ type ListTicketsParams struct {
 	EscalatedOnly bool
 	Search        string
 
-	SortBy    string // created_at | updated_at | priority | status | code
-	SortOrder string // asc | desc
+	SortBy    string
+	SortOrder string
 
 	OnlyMine     bool
 	UserID       uint
@@ -24,17 +26,18 @@ type ListTicketsParams struct {
 }
 
 type CreateTicketDTO struct {
-	BusinessID  *uint
-	CreatedByID uint
-	Title       string
-	Description string
-	Type        string
-	Category    string
-	Priority    string
-	Severity    string
-	Source      string
-	Area        string
+	BusinessID   *uint
+	CreatedByID  uint
+	Title        string
+	Description  string
+	Type         string
+	Category     string
+	Priority     string
+	Severity     string
+	Source       string
+	Area         string
 	AssignedToID *uint
+	SprintID     *uint
 	DueDate      *string
 }
 
@@ -48,6 +51,8 @@ type UpdateTicketDTO struct {
 	Severity     *string
 	Area         *string
 	AssignedToID *uint
+	SprintID     *uint
+	ClearSprint  bool
 	DueDate      *string
 	ClearDueDate bool
 }
@@ -63,6 +68,12 @@ type ChangeStatusDTO struct {
 	TicketID    uint
 	NewStatus   string
 	Note        string
+	ChangedByID uint
+}
+
+type ChangeSprintDTO struct {
+	TicketID    uint
+	SprintID    *uint
 	ChangedByID uint
 }
 

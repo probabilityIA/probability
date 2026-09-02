@@ -36,6 +36,8 @@ export interface Ticket {
     assigned_to_id?: number | null;
     assigned_to_name?: string;
     assigned_to_avatar_url?: string;
+    sprint_id?: number | null;
+    sprint_name?: string;
     title: string;
     description: string;
     type: TicketType;
@@ -102,6 +104,7 @@ export interface CreateTicketDTO {
     source?: TicketSource;
     area?: TicketArea;
     assigned_to_id?: number | null;
+    sprint_id?: number | null;
     due_date?: string | null;
 }
 
@@ -128,6 +131,7 @@ export interface ListTicketsParams {
     area?: string;
     source?: string;
     escalated?: boolean;
+    sprint_id?: number | string;
     search?: string;
     only_mine?: boolean;
     assigned_to_id?: number;
@@ -146,13 +150,13 @@ export interface PaginatedTickets {
 
 export const STATUS_META: Record<TicketStatus, { label: string; color: string; bg: string; ring: string }> = {
     open:           { label: 'Abierto',         color: 'text-blue-700 dark:text-blue-200',     bg: 'bg-blue-100 dark:bg-blue-900/40',     ring: 'ring-blue-300' },
-    in_review:      { label: 'En revisión',     color: 'text-amber-700 dark:text-amber-200',   bg: 'bg-amber-100 dark:bg-amber-900/40',   ring: 'ring-amber-300' },
+    in_review:      { label: 'En revisi\u00f3n',     color: 'text-amber-700 dark:text-amber-200',   bg: 'bg-amber-100 dark:bg-amber-900/40',   ring: 'ring-amber-300' },
     in_development: { label: 'En desarrollo',   color: 'text-purple-700 dark:text-purple-200', bg: 'bg-purple-100 dark:bg-purple-900/40', ring: 'ring-purple-300' },
     testing:        { label: 'Pruebas',         color: 'text-cyan-700 dark:text-cyan-200',     bg: 'bg-cyan-100 dark:bg-cyan-900/40',     ring: 'ring-cyan-300' },
     blocked:        { label: 'Bloqueado',       color: 'text-red-700 dark:text-red-200',       bg: 'bg-red-100 dark:bg-red-900/40',       ring: 'ring-red-300' },
     resolved:       { label: 'Resuelto',        color: 'text-emerald-700 dark:text-emerald-200', bg: 'bg-emerald-100 dark:bg-emerald-900/40', ring: 'ring-emerald-300' },
     closed:         { label: 'Cerrado',         color: 'text-gray-700 dark:text-gray-200',     bg: 'bg-gray-200 dark:bg-gray-700',        ring: 'ring-gray-300' },
-    wont_fix:       { label: 'No se hará',      color: 'text-zinc-700 dark:text-zinc-200',     bg: 'bg-zinc-200 dark:bg-zinc-700',        ring: 'ring-zinc-300' },
+    wont_fix:       { label: 'No se har\u00e1',      color: 'text-zinc-700 dark:text-zinc-200',     bg: 'bg-zinc-200 dark:bg-zinc-700',        ring: 'ring-zinc-300' },
 };
 
 export const PRIORITY_META: Record<TicketPriority, { label: string; color: string; bg: string }> = {
@@ -167,7 +171,7 @@ export const TYPE_META: Record<TicketType, { label: string; icon: string }> = {
     improvement: { label: 'Mejora',             icon: 'IMP' },
     feature:     { label: 'Nueva funcionalidad', icon: 'NEW' },
     data:        { label: 'Datos',              icon: 'DAT' },
-    integration: { label: 'Integración',        icon: 'INT' },
+    integration: { label: 'Integraci\u00f3n',        icon: 'INT' },
     support:     { label: 'Soporte',            icon: 'SUP' },
     complaint:   { label: 'Queja',              icon: 'QJA' },
     claim:       { label: 'Reclamo',            icon: 'RCL' },
@@ -178,6 +182,20 @@ export const TICKET_STATUSES: TicketStatus[] = ['open', 'in_review', 'in_develop
 export const TICKET_PRIORITIES: TicketPriority[] = ['low', 'medium', 'high', 'critical'];
 export const TICKET_TYPES: TicketType[] = ['bug', 'improvement', 'feature', 'data', 'integration', 'support', 'complaint', 'claim', 'question'];
 export const TICKET_AREAS: TicketArea[] = ['comercial', 'soporte', 'desarrollo'];
+export const TICKET_SEVERITIES: TicketSeverity[] = ['', 'low', 'medium', 'high'];
+export const TICKET_SOURCES: TicketSource[] = ['internal', 'business'];
+
+export const SEVERITY_META: Record<TicketSeverity, { label: string }> = {
+    '':     { label: 'Sin severidad' },
+    low:    { label: 'Baja' },
+    medium: { label: 'Media' },
+    high:   { label: 'Alta' },
+};
+
+export const SOURCE_META: Record<TicketSource, { label: string }> = {
+    internal: { label: 'Interno' },
+    business: { label: 'Negocio' },
+};
 
 export const AREA_META: Record<TicketArea, { label: string; color: string; bg: string }> = {
     comercial:  { label: 'Comercial',  color: 'text-pink-700 dark:text-pink-200',     bg: 'bg-pink-100 dark:bg-pink-900/40' },

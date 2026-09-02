@@ -108,7 +108,7 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
   const canViewAnnouncements = isSuperAdmin;
-  const canViewTickets = !isDemo && hasSubscriptionModule('tickets');
+  const canViewTickets = isSuperAdmin && !isDemo && hasSubscriptionModule('tickets');
 
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
   const canViewInventory = isSuperAdmin

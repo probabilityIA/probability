@@ -14,7 +14,7 @@ interface ModalProps {
   showCloseButton?: boolean; // NEW: Mostrar o no el botón de cerrar
   title?: ReactNode;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | 'wide' | '5xl' | '6xl' | '7xl' | 'full';
   glass?: boolean; // Efecto glassmorphism
   transparent?: boolean; // NEW: Fondo transparente sin sombra
   zIndex?: number; // Z-index personalizado para el modal y backdrop
@@ -28,6 +28,7 @@ const sizeClasses = {
   xl: 'max-w-xl w-[95vw] sm:w-full',
   '2xl': 'max-w-2xl w-[95vw] sm:w-full',
   '4xl': 'max-w-4xl w-[95vw] sm:w-full',
+  wide: 'max-w-6xl w-[95vw] sm:w-full',
   '5xl': 'max-w-5xl w-[95vw] sm:w-full',
   '6xl': 'max-w-6xl w-[95vw] sm:w-full',
   '7xl': 'max-w-7xl w-[95vw] sm:w-full',

@@ -16,6 +16,7 @@ type IRepository interface {
 	Delete(ctx context.Context, id uint) error
 
 	UserExists(ctx context.Context, userID uint) (bool, error)
+	FindSprintName(ctx context.Context, sprintID uint) (string, bool, error)
 
 	AddComment(ctx context.Context, dto dtos.CreateCommentDTO) (*entities.TicketComment, error)
 	ListComments(ctx context.Context, ticketID uint, includeInternal bool) ([]entities.TicketComment, error)

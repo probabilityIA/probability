@@ -109,7 +109,7 @@ export const LoginForm = () => {
                         }
                     }
 
-                    router.push('/home');
+                    router.push(response.data.is_super_admin ? '/tickets' : '/home');
                 }
             } catch (err: any) {
                 console.error(err);

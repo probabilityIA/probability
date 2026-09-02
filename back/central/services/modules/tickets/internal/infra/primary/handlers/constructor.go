@@ -70,7 +70,8 @@ func (h *Handlers) handleError(c *gin.Context, err error) {
 	case errors.Is(err, dom.ErrInvalidStatus), errors.Is(err, dom.ErrInvalidPriority),
 		errors.Is(err, dom.ErrInvalidType), errors.Is(err, dom.ErrInvalidSeverity),
 		errors.Is(err, dom.ErrTitleRequired), errors.Is(err, dom.ErrDescriptionRequired),
-		errors.Is(err, dom.ErrAssigneeNotFound):
+		errors.Is(err, dom.ErrAssigneeNotFound), errors.Is(err, dom.ErrSprintNotFound),
+		errors.Is(err, dom.ErrInvalidArea):
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
