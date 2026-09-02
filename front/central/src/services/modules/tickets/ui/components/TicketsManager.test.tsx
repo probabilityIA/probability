@@ -16,8 +16,9 @@ vi.mock('@/shared/ui', () => ({
         ) : null,
     Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
     Input: (props: any) => <input {...props} />,
-    DynamicFilters: ({ availableFilters, activeFilters, onAddFilter, onRemoveFilter, onSortChange }: any) => (
+    DynamicFilters: ({ availableFilters, activeFilters, onAddFilter, onRemoveFilter, onSortChange, onCreate, createButtonAriaLabel }: any) => (
         <div data-testid="filters">
+            <button aria-label={createButtonAriaLabel} onClick={() => onCreate()} />
             <span data-testid="available-filters">{availableFilters.map((f: any) => f.key).join(',')}</span>
             <span data-testid="active-filters">{activeFilters.map((f: any) => f.key + '=' + f.value).join('|')}</span>
             <button onClick={() => onAddFilter('search', 'pago')}>add-search</button>
@@ -289,8 +290,8 @@ describe('TicketsManager', () => {
             const actions = document.getElementById('tickets-actions-slot') as HTMLElement;
             const filters = document.getElementById('tickets-filters-slot') as HTMLElement;
             await waitFor(() => expect(within(tabs).getByRole('button', { name: 'Tabla' })).toBeInTheDocument());
-            expect(within(actions).getByRole('button', { name: 'Nuevo ticket' })).toBeInTheDocument();
             expect(within(filters).getByTestId('filters')).toBeInTheDocument();
+            expect(within(filters).getByRole('button', { name: 'Nuevo ticket' })).toBeInTheDocument();
             expect(screen.getAllByRole('button', { name: 'Tabla' })).toHaveLength(1);
         });
 
