@@ -15,7 +15,7 @@ import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
 import dynamic from 'next/dynamic';
-import { Package, Copy, Check, X, Calendar, CreditCard, Truck, Receipt, Percent, Wallet, ShoppingBag, User, Phone, Mail, MapPin, ClipboardList, Save, MessageCircle, History, AlertTriangle, RefreshCw, Clock, FileText, ChevronRight, ArrowRight, Plus, CircleCheck, Scissors } from 'lucide-react';
+import { Package, Copy, Check, Link2, X, Calendar, CreditCard, Truck, Receipt, Percent, Wallet, ShoppingBag, User, Phone, Mail, MapPin, ClipboardList, Save, MessageCircle, History, AlertTriangle, RefreshCw, Clock, FileText, ChevronRight, ArrowRight, Plus, CircleCheck, Scissors } from 'lucide-react';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
 
 interface Quotation {
@@ -136,6 +136,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const [novelty, setNovelty] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [copiedNumber, setCopiedNumber] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
 
     const [hasWhatsApp, setHasWhatsApp] = useState(false);
     const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
@@ -294,6 +295,14 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         navigator.clipboard?.writeText(order.order_number || '').catch(() => {});
         setCopiedNumber(true);
         setTimeout(() => setCopiedNumber(false), 1500);
+    };
+
+    const handleCopyOrderLink = () => {
+        if (typeof window === 'undefined') return;
+        const enlace = `${window.location.origin}/orders?order_id=${order.id}`;
+        navigator.clipboard?.writeText(enlace).catch(() => {});
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 1500);
     };
 
     return (
@@ -469,6 +478,13 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-gray-700"
                                     >
                                         {copiedNumber ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                                    </button>
+                                    <button
+                                        onClick={handleCopyOrderLink}
+                                        title={'Copiar enlace a esta orden. Quien lo abra necesita permisos sobre el mismo negocio.'}
+                                        className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-gray-700"
+                                    >
+                                        {copiedLink ? <Check className="h-4 w-4 text-emerald-500" /> : <Link2 className="h-4 w-4" />}
                                     </button>
                                 </div>
                                 <p className="truncate font-mono text-[11px] text-slate-400">{order.internal_number || '-'}</p>

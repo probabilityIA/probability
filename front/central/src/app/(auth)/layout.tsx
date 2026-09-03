@@ -48,7 +48,11 @@ export default function AuthLayout({
 
         if (!userData) {
           console.warn('⚠️ No user data, redirecting to login');
-          router.push('/login');
+          const destino = typeof window !== 'undefined'
+            ? `${window.location.pathname}${window.location.search}`
+            : pathname;
+          const esRaiz = !destino || destino === '/' || destino === '/home';
+          router.push(esRaiz ? '/login' : `/login?next=${encodeURIComponent(destino)}`);
           setTimeout(() => setLoading(false), 0);
           return;
         }

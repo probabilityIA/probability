@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { loginAction, getRolesPermissionsAction, loginServerAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
 import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-theme';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { getActionError } from '@/shared/utils/action-result';
 import { DemoRegisterModal } from './DemoRegisterModal';
@@ -13,8 +13,15 @@ const MEDIA_BASE =
     process.env.NEXT_PUBLIC_S3_BASE_URL ||
     'https://probability-media-assets.s3.us-east-1.amazonaws.com';
 
+function destinoSeguro(next: string | null): string | null {
+    if (!next) return null;
+    if (!next.startsWith('/') || next.startsWith('//')) return null;
+    return next;
+}
+
 export const LoginForm = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -100,7 +107,8 @@ export const LoginForm = () => {
                         }
                     }
 
-                    router.push(response.data.is_super_admin ? '/tickets' : '/home');
+                    const destino = destinoSeguro(searchParams.get('next'));
+                    router.push(destino ?? (response.data.is_super_admin ? '/tickets' : '/home'));
                 }
             } catch (err: any) {
                 console.error(err);

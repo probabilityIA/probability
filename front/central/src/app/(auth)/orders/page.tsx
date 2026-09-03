@@ -12,11 +12,13 @@ import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import MassOrderUploadModal from '@/shared/ui/modals/mass-order-upload-modal';
 import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-modal';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { useToast } from '@/shared/providers/toast-provider';
 import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
 
 export default function OrdersPage() {
     const { setActionButtons } = useNavbarActions();
     const router = useRouter();
+    const { showToast } = useToast();
     const searchParams = useSearchParams();
     const deepLinkedOrderId = searchParams.get('order_id');
     const deepLinkHandled = useRef<string | null>(null);
@@ -75,15 +77,20 @@ export default function OrdersPage() {
                     setSelectedOrder(response.data);
                     setViewMode('details');
                     setShowViewModal(true);
+                } else {
+                    showToast('No se pudo abrir la orden del enlace', 'error');
                 }
-            } catch {
+            } catch (error: any) {
+                if (!cancelado) {
+                    showToast(error?.message || 'No se pudo abrir la orden del enlace', 'error');
+                }
             } finally {
                 if (!cancelado) router.replace('/orders');
             }
         })();
 
         return () => { cancelado = true; };
-    }, [deepLinkedOrderId, router]);
+    }, [deepLinkedOrderId, router, showToast]);
 
     const handleView = async (order: Order) => {
         try {

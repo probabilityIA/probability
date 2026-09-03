@@ -32,6 +32,9 @@ func (h *Handlers) GetOrderByID(c *gin.Context) {
 		return
 	}
 
+	tokenBusinessID, _ := c.Get("business_id")
+	requesterBusinessID, _ := tokenBusinessID.(uint)
+
 	// Llamar al caso de uso (retorna DTO de dominio)
 	domainResp, err := h.orderCRUD.GetOrderByID(c.Request.Context(), id)
 	if err != nil {
@@ -50,6 +53,17 @@ func (h *Handlers) GetOrderByID(c *gin.Context) {
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if requesterBusinessID > 0 {
+		if domainResp.BusinessID == nil || *domainResp.BusinessID != requesterBusinessID {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "No autorizado",
+				"error":   "la orden no pertenece a este negocio",
+			})
+			return
+		}
 	}
 
 	// ✅ Convertir Domain response -> HTTP response ([]byte -> datatypes.JSON)
