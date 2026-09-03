@@ -32,6 +32,10 @@ add_filter('woocommerce_cart_shipping_method_full_label', function ($label, $met
     return $label;
 }, 10, 2);
 
+if (!defined('PROBABILITY_SHIPPING_VERSION')) {
+    define('PROBABILITY_SHIPPING_VERSION', '1.7.0');
+}
+
 add_action('wp_enqueue_scripts', function () {
     if (!function_exists('is_checkout') || !is_checkout()) {
         return;
@@ -66,7 +70,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery', 'probability-leaflet'),
-        '1.6.7',
+        PROBABILITY_SHIPPING_VERSION,
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -75,7 +79,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data', 'wc-blocks-checkout', 'probability-leaflet'),
-        '1.6.7',
+        PROBABILITY_SHIPPING_VERSION,
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);

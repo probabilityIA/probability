@@ -182,6 +182,18 @@
         if (cityBox) cityBox.style.display = 'none';
     }
 
+    function cityHint(input, text) {
+        var hint = document.getElementById('probability-city-hint');
+        if (!text) { if (hint) hint.remove(); return; }
+        if (!hint) {
+            hint = document.createElement('p');
+            hint.id = 'probability-city-hint';
+            hint.style.cssText = 'margin:4px 0 0;font-size:13px;color:#b35900';
+            input.parentNode.appendChild(hint);
+        }
+        hint.textContent = text;
+    }
+
     function ensureCityBox(input) {
         if (cityBox && cityBox.parentNode) return cityBox;
         cityBox = document.createElement('ul');
@@ -216,8 +228,10 @@
             empty.style.cssText = 'padding:8px 10px;font-size:13px;color:#8a6d09';
             box.appendChild(empty);
             box.style.display = 'block';
+            cityHint(input, 'No encontramos esa ciudad. Escribe el nombre completo.');
             return;
         }
+        cityHint(input, 'Selecciona tu ciudad de la lista para calcular el envio.');
         cities.forEach(function (city) {
             var li = document.createElement('li');
             li.style.cssText = 'padding:8px 10px;font-size:13px;cursor:pointer';
@@ -230,6 +244,7 @@
                 lastCityQuery = city.name;
                 setNativeValue(input, city.name);
                 pushDane(city.code);
+                cityHint(input, '');
                 hideCityBox();
             });
             box.appendChild(li);
@@ -242,10 +257,10 @@
         if (!input) return;
 
         var term = (input.value || '').trim();
-        if (term === cityChosen.name && cityChosen.code) { hideCityBox(); return; }
+        if (term === cityChosen.name && cityChosen.code) { hideCityBox(); cityHint(input, ''); return; }
 
         if (cityChosen.code) { cityChosen = { name: '', code: '' }; pushDane(''); }
-        if (term.length < 3) { hideCityBox(); return; }
+        if (term.length < 3) { hideCityBox(); cityHint(input, ''); return; }
         if (term === lastCityQuery) return;
         lastCityQuery = term;
 
