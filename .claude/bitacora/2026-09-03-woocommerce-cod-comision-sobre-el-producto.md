@@ -1,6 +1,6 @@
 # 2026-09-03 - WooCommerce COD: la comision se cotizaba sobre el producto, no sobre el recaudo
 
-**Business:** 46 (Viga ropa deportiva) | **Canal:** WooCommerce 221 (`cod_includes_shipping: true`)
+**Ticket:** TKT-000071 | **Business:** 46 (Viga ropa deportiva) | **Canal:** WooCommerce 221 (`cod_includes_shipping: true`)
 **Solo afecta** ordenes que llegan de WooCommerce con el precio fijado en el checkout.
 
 ## Reporte del cliente
