@@ -12,12 +12,12 @@ const RUTAS_PUBLICAS = [
     '/tienda',
 ];
 
-function esRutaPublica(pathname: string): boolean {
+export function esRutaPublica(pathname: string): boolean {
     if (pathname === '/') return true;
     return RUTAS_PUBLICAS.some((ruta) => pathname === ruta || pathname.startsWith(`${ruta}/`));
 }
 
-function debeIrALogin(request: NextRequest): boolean {
+export function debeIrALogin(request: NextRequest): boolean {
     const { pathname, searchParams } = request.nextUrl;
 
     if (esRutaPublica(pathname)) return false;

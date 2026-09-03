@@ -37,6 +37,10 @@ func (h *Handlers) WooCommerceDaneCities(c *gin.Context) {
 		return
 	}
 
+	h.buscarCiudadesDane(c)
+}
+
+func (h *Handlers) buscarCiudadesDane(c *gin.Context) {
 	stateCode := strings.TrimSpace(c.Query("state"))
 	term := strings.TrimSpace(c.Query("q"))
 
