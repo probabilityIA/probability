@@ -17,6 +17,14 @@ const CHANNEL_LABELS: Record<string, string> = {
     api: 'API',
 };
 
+const CANALES_PROPIOS = ['manual', 'plataforma', 'platform', 'api', ''];
+
+export function esCanalDeVenta(platform?: string | null): boolean {
+    if (!platform) return false;
+    const key = platform.trim().toLowerCase().replace(/[\s_-]+/g, '');
+    return !CANALES_PROPIOS.includes(key);
+}
+
 export function salesChannelLabel(platform?: string | null): string {
     if (!platform) return '-';
     const key = platform.trim().toLowerCase().replace(/[\s_-]+/g, '');

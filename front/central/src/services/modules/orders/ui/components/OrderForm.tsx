@@ -25,7 +25,7 @@ import { getCustomerAddressesAction } from '../../../customers/infra/actions';
 import { getEffectivePriceAction, listClientGroupsAction, getCatalogPricesAction, listAvailableClientsAction } from '../../../pricing/infra/actions';
 import { ClientGroup } from '../../../pricing/domain/types';
 import { getActionError } from '@/shared/utils/action-result';
-import { salesChannelLabel } from '../../domain/sales-channel-labels';
+import { esCanalDeVenta, salesChannelLabel } from '../../domain/sales-channel-labels';
 
 interface OrderFormProps {
     order?: Order;
@@ -637,6 +637,25 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                     <Alert type="error" onClose={() => setError(null)}>
                         {error}
                     </Alert>
+                )}
+
+                {isEdit && order && esCanalDeVenta(order.platform) && (
+                    <div className="mb-4 flex gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-900/20">
+                        <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-2.598-1.5-3.464 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                        <div className="text-[12px] leading-snug text-amber-800 dark:text-amber-200">
+                            <p className="font-semibold">
+                                Esta orden lleg&oacute; de {salesChannelLabel(order.platform)}. Editarla tiene riesgos.
+                            </p>
+                            <p className="mt-1">
+                                {isCOD
+                                    ? 'Si cambias productos o montos, lo que recauda el mensajero y la factura pueden dejar de coincidir con lo que el comprador acept\u00f3 en la tienda.'
+                                    : 'Si cambias productos o montos, la factura puede dejar de coincidir con lo que el comprador acept\u00f3 en la tienda.'}
+                                {' '}El canal no se entera del cambio.
+                            </p>
+                        </div>
+                    </div>
                 )}
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
