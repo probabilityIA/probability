@@ -20,6 +20,7 @@ import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { playNotificationSound } from '@/shared/utils';
+import { Check, Copy, Link2 } from 'lucide-react';
 import RawOrderModal from './RawOrderModal';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
 import DownloadOrdersModal from '@/shared/ui/modals/download-orders-modal';
@@ -124,6 +125,20 @@ const OrderRow = memo(({
     showNotifications: boolean;
     onShowNotifications: (order: Order) => void;
 }) => {
+    const [copiado, setCopiado] = useState<'numero' | 'enlace' | null>(null);
+
+    const copiar = (e: React.MouseEvent, texto: string, cual: 'numero' | 'enlace') => {
+        e.stopPropagation();
+        navigator.clipboard?.writeText(texto).catch(() => {});
+        setCopiado(cual);
+        setTimeout(() => setCopiado(null), 1500);
+    };
+
+    const numeroVisible = order.order_number || order.external_id || order.id;
+    const enlaceOrden = typeof window !== 'undefined'
+        ? `${window.location.origin}/orders?order_id=${order.id}`
+        : '';
+
     return (
         <tr className={`bg-white dark:bg-gray-800 transition-all duration-300 hover:bg-purple-50 dark:hover:bg-gray-700 cursor-pointer ${isNew ? 'animate-slide-in' : ''}`}>
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
@@ -166,8 +181,28 @@ const OrderRow = memo(({
             <td className="px-2 sm:px-3 py-2">
                 <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium text-gray-900 dark:text-white">
-                        {order.order_number || order.external_id || order.id}
+                        {numeroVisible}
                     </span>
+                    <button
+                        onClick={(e) => copiar(e, String(numeroVisible), 'numero')}
+                        title={'Copiar n\u00famero de orden'}
+                        aria-label={'Copiar n\u00famero de orden'}
+                        className="rounded p-0.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                    >
+                        {copiado === 'numero'
+                            ? <Check className="h-3.5 w-3.5 text-emerald-500" />
+                            : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                    <button
+                        onClick={(e) => copiar(e, enlaceOrden, 'enlace')}
+                        title={'Copiar enlace a esta orden. Quien lo abra necesita permisos sobre el mismo negocio.'}
+                        aria-label="Copiar enlace a esta orden"
+                        className="rounded p-0.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                    >
+                        {copiado === 'enlace'
+                            ? <Check className="h-3.5 w-3.5 text-emerald-500" />
+                            : <Link2 className="h-3.5 w-3.5" />}
+                    </button>
                     {order.is_test && (
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">
                             TEST
