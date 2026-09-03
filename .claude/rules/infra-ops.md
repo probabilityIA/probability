@@ -135,6 +135,44 @@ entregable con instrucciones de credenciales.
 Al dar de alta a alguien: crear el usuario, adjuntar las dos politicas de arriba,
 entregar la llave por canal privado (nunca chat, correo ni git) y entregar el .md.
 
+## ECR - retencion de imagenes
+
+Cada repo tiene una **lifecycle policy** que expira las imagenes viejas. AWS la
+evalua una vez cada ~24 h, asi que ver mas imagenes de las que dice la regla no
+significa que este rota: son las acumuladas desde la ultima pasada.
+
+| Repo | Mantiene |
+|---|---|
+| `probability-backend`, `probability-frontend`, `probability-website`, `probability-nginx` | 5 |
+| `probability-testing-backend`, `probability-testing-frontend` | 3 |
+
+**Produccion mantiene 5 y no 1 a proposito:** el rollback manual de
+`.claude/rules/deploy.md` hace `docker tag <VERSION_ANTERIOR>` contra ECR. Con la
+regla vieja de "mantener 1" la version anterior ya no estaba en el registro y el
+rollback solo funcionaba si la imagen seguia cacheada en el disco del EC2 — que
+el propio deploy limpia. Bajar ese numero a 1 otra vez deja el rollback sin red.
+
+**Un repo nuevo NO hereda ninguna politica.** Hay que ponersela al crearlo o
+crece sin limite: `probability-testing-backend` llego a 198 imagenes (2,69 GB,
+61% del almacenamiento de ECR) simplemente porque nadie se la puso.
+
+```bash
+aws ecr put-lifecycle-policy --profile probability --region us-east-1 \
+  --repository-name <repo> --lifecycle-policy-text \
+  '{"rules":[{"rulePriority":1,"description":"Mantener las 5 imagenes mas recientes; el resto expira","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":5},"action":{"type":"expire"}}]}'
+
+# Que hay hoy, por repo
+aws ecr describe-images --profile probability --region us-east-1 \
+  --repository-name <repo> --query 'length(imageDetails)'
+```
+
+Antes de borrar imagenes a mano (`batch-delete-image`, irreversible), comprobar
+que ninguna este en uso: sacar el digest de cada contenedor en produccion con
+`docker inspect <id> --format '{{json .RepoDigests}}'` y verificar que no aparece
+en la lista a borrar. Ojo con la diferencia entre **tags** e **imagenes**: cada
+build empuja 4 tags de una misma imagen, asi que `list-images` cuenta hasta 4
+veces mas que `describe-images`.
+
 ## Auditoria - CloudTrail
 
 Trail `probability-trail`, activo desde 2026-08-21. Multi-region, con eventos
