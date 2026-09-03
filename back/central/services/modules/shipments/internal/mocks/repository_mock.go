@@ -62,6 +62,7 @@ type RepositoryMock struct {
 	GetProductDimensionsBySKUsFn      func(ctx context.Context, businessID uint, skus []string) (map[string]domain.ProductDimensions, error)
 	ListDaneStatesFn                  func(ctx context.Context) ([]domain.DaneItem, error)
 	ListDaneCitiesByStateFn           func(ctx context.Context, stateCode string) ([]domain.DaneItem, error)
+	SearchDaneCitiesFn                func(ctx context.Context, stateCode, term string, limit int) ([]domain.DaneItem, error)
 	UpdateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
 	DeleteOriginAddressFn             func(ctx context.Context, id uint) error
 	SetDefaultOriginAddressFn         func(ctx context.Context, businessID, addressID uint) error
@@ -422,6 +423,13 @@ func (m *RepositoryMock) ListDaneStates(ctx context.Context) ([]domain.DaneItem,
 func (m *RepositoryMock) ListDaneCitiesByState(ctx context.Context, stateCode string) ([]domain.DaneItem, error) {
 	if m.ListDaneCitiesByStateFn != nil {
 		return m.ListDaneCitiesByStateFn(ctx, stateCode)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) SearchDaneCities(ctx context.Context, stateCode, term string, limit int) ([]domain.DaneItem, error) {
+	if m.SearchDaneCitiesFn != nil {
+		return m.SearchDaneCitiesFn(ctx, stateCode, term, limit)
 	}
 	return nil, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -28,6 +29,8 @@ func (r *Repository) GetIntegrationBusinessID(ctx context.Context, integrationID
 }
 
 func (r *Repository) GetCityDaneByName(ctx context.Context, city, province string) (string, error) {
+	city = strings.TrimSpace(city)
+	province = strings.TrimSpace(province)
 	if city == "" {
 		return "", fmt.Errorf("ciudad de destino vacia")
 	}
@@ -40,7 +43,6 @@ func (r *Repository) GetCityDaneByName(ctx context.Context, city, province strin
 		  AND (
 		    unaccent(lower(g.name)) = unaccent(lower(@city))
 		    OR unaccent(lower(g.name)) LIKE unaccent(lower(@city)) || ',%'
-		    OR unaccent(lower(g.name)) LIKE unaccent(lower(@city)) || '%'
 		  )
 		ORDER BY
 		  (CASE WHEN @province <> '' AND (
@@ -48,7 +50,6 @@ func (r *Repository) GetCityDaneByName(ctx context.Context, city, province strin
 		      OR unaccent(lower(@province)) LIKE unaccent(lower(p.name)) || '%'
 		  ) THEN 0 ELSE 1 END),
 		  (unaccent(lower(g.name)) = unaccent(lower(@city))) DESC,
-		  (unaccent(lower(g.name)) LIKE unaccent(lower(@city)) || ',%') DESC,
 		  length(g.name) ASC
 		LIMIT 1`
 

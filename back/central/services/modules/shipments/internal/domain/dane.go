@@ -1,6 +1,7 @@
 package domain
 
 type DaneItem struct {
-	Code string
-	Name string
+	Code      string
+	Name      string
+	StateName string
 }

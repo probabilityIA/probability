@@ -2,13 +2,16 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 type daneItemResponse struct {
-	Code string `json:"code"`
-	Name string `json:"name"`
+	Code  string `json:"code"`
+	Name  string `json:"name"`
+	State string `json:"state,omitempty"`
 }
 
 func (h *Handlers) WooCommerceDaneStates(c *gin.Context) {
@@ -34,13 +37,17 @@ func (h *Handlers) WooCommerceDaneCities(c *gin.Context) {
 		return
 	}
 
-	stateCode := c.Query("state")
-	if stateCode == "" {
+	stateCode := strings.TrimSpace(c.Query("state"))
+	term := strings.TrimSpace(c.Query("q"))
+
+	if stateCode == "" && term == "" {
 		c.JSON(http.StatusOK, gin.H{"cities": []daneItemResponse{}})
 		return
 	}
 
-	cities, err := h.uc.Repo().ListDaneCitiesByState(c.Request.Context(), stateCode)
+	limit, _ := strconv.Atoi(c.Query("limit"))
+
+	cities, err := h.uc.Repo().SearchDaneCities(c.Request.Context(), stateCode, term, limit)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"cities": []daneItemResponse{}})
 		return
@@ -48,7 +55,7 @@ func (h *Handlers) WooCommerceDaneCities(c *gin.Context) {
 
 	out := make([]daneItemResponse, 0, len(cities))
 	for _, ct := range cities {
-		out = append(out, daneItemResponse{Code: ct.Code, Name: ct.Name})
+		out = append(out, daneItemResponse{Code: ct.Code, Name: ct.Name, State: ct.StateName})
 	}
 	c.JSON(http.StatusOK, gin.H{"cities": out})
 }

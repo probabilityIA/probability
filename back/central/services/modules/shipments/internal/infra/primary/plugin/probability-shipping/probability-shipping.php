@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.6.7
+ * Version: 1.7.0
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -193,13 +193,30 @@ add_action('woocommerce_blocks_loaded', function () {
     woocommerce_store_api_register_update_callback(array(
         'namespace' => 'probability_shipping',
         'callback'  => function ($data) {
-            if (!isset($data['cod']) || !function_exists('WC') || !WC() || !WC()->session) {
+            if (!function_exists('WC') || !WC() || !WC()->session) {
                 return;
             }
-            WC()->session->set('probability_shipping_cod', (bool) $data['cod']);
+            if (isset($data['cod'])) {
+                WC()->session->set('probability_shipping_cod', (bool) $data['cod']);
+            }
+            if (array_key_exists('dane_code', $data)) {
+                $dane = preg_replace('/[^0-9]/', '', (string) $data['dane_code']);
+                WC()->session->set('probability_shipping_dane', $dane);
+            }
         },
     ));
 });
+
+function probability_shipping_selected_dane() {
+    if (!function_exists('WC') || !WC() || !WC()->session) {
+        return '';
+    }
+    $dane = WC()->session->get('probability_shipping_dane');
+    if (!$dane) {
+        return '';
+    }
+    return preg_replace('/[^0-9]/', '', (string) $dane);
+}
 
 function probability_shipping_b64url_decode($data) {
     $pad = strlen($data) % 4;
@@ -449,6 +466,7 @@ add_action('woocommerce_shipping_init', function () {
                     'country'   => $country,
                     'state'     => $state_name,
                     'city'      => isset($dest['city']) ? $dest['city'] : '',
+                    'dane_code' => probability_shipping_selected_dane(),
                     'postcode'  => isset($dest['postcode']) ? $dest['postcode'] : '',
                     'address_1' => isset($dest['address']) ? $dest['address'] : '',
                     'address_2' => isset($dest['address_2']) ? $dest['address_2'] : '',

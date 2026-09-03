@@ -18,6 +18,7 @@ type wooRateDestination struct {
 	Country  string `json:"country"`
 	State    string `json:"state"`
 	City     string `json:"city"`
+	DaneCode string `json:"dane_code"`
 	Postcode string `json:"postcode"`
 	Address1 string `json:"address_1"`
 	Address2 string `json:"address_2"`
@@ -113,9 +114,16 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	businessID := resolved.BusinessID
 	carrier := resolved.Carrier
 
-	destDane := h.daneCached(ctx, req.Destination.City, req.Destination.State)
+	destDane := strings.TrimSpace(req.Destination.DaneCode)
 	if destDane == "" {
-		c.JSON(http.StatusOK, emptyRates)
+		destDane = h.daneCached(ctx, req.Destination.City, req.Destination.State)
+	}
+	if destDane == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"rates":         []wooRate{},
+			"address_error": "No reconocemos la ciudad \"" + strings.TrimSpace(req.Destination.City) + "\". Selecciona tu ciudad de la lista.",
+			"suggestions":   h.citySuggestions(ctx, req.Destination.City, req.Destination.State),
+		})
 		return
 	}
 
@@ -197,6 +205,27 @@ func filterRatesByAllowedCarriers(ratesList []map[string]interface{}, allowed []
 		if allowedSet[carrierName] {
 			out = append(out, rate)
 		}
+	}
+	return out
+}
+
+func (h *Handlers) citySuggestions(ctx context.Context, city, state string) []daneItemResponse {
+	out := make([]daneItemResponse, 0, 5)
+	city = strings.TrimSpace(city)
+	if city == "" {
+		return out
+	}
+
+	cities, err := h.uc.Repo().SearchDaneCities(ctx, state, city, 5)
+	if err != nil || len(cities) == 0 {
+		cities, err = h.uc.Repo().SearchDaneCities(ctx, "", city, 5)
+		if err != nil {
+			return out
+		}
+	}
+
+	for _, ct := range cities {
+		out = append(out, daneItemResponse{Code: ct.Code, Name: ct.Name, State: ct.StateName})
 	}
 	return out
 }

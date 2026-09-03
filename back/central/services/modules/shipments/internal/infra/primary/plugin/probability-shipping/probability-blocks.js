@@ -156,6 +156,121 @@
         validateTimer = setTimeout(validate, 900);
     }
 
+
+    // ---- Selector de ciudad ----------------------------------------------
+    // La ciudad deja de ser texto libre: se busca contra el listado DANE y el
+    // comprador elige. Se manda el codigo, asi el backend no adivina el
+    // municipio a partir del nombre.
+
+    var cityBox = null;
+    var cityTimer = null;
+    var cityChosen = { name: '', code: '' };
+    var lastCityQuery = '';
+
+    function cityInput() {
+        return document.getElementById('shipping-city') || document.getElementById('billing-city');
+    }
+
+    function setNativeValue(input, value) {
+        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function hideCityBox() {
+        if (cityBox) cityBox.style.display = 'none';
+    }
+
+    function ensureCityBox(input) {
+        if (cityBox && cityBox.parentNode) return cityBox;
+        cityBox = document.createElement('ul');
+        cityBox.id = 'probability-city-options';
+        cityBox.style.cssText = [
+            'position:absolute', 'z-index:9999', 'left:0', 'right:0', 'margin:2px 0 0',
+            'padding:0', 'list-style:none', 'background:#fff', 'color:#1a1a1a',
+            'border:1px solid #ccc', 'border-radius:6px', 'max-height:220px',
+            'overflow-y:auto', 'box-shadow:0 4px 12px rgba(0,0,0,.12)', 'display:none'
+        ].join(';');
+        var wrapper = input.parentNode;
+        if (getComputedStyle(wrapper).position === 'static') wrapper.style.position = 'relative';
+        wrapper.appendChild(cityBox);
+        return cityBox;
+    }
+
+    function pushDane(code) {
+        if (window.wc && window.wc.blocksCheckout && window.wc.blocksCheckout.extensionCartUpdate) {
+            window.wc.blocksCheckout.extensionCartUpdate({
+                namespace: 'probability_shipping',
+                data: { dane_code: code }
+            }).catch(function () {});
+        }
+    }
+
+    function renderCities(input, cities) {
+        var box = ensureCityBox(input);
+        box.innerHTML = '';
+        if (!cities || !cities.length) {
+            var empty = document.createElement('li');
+            empty.textContent = 'Sin resultados: revisa el nombre de la ciudad';
+            empty.style.cssText = 'padding:8px 10px;font-size:13px;color:#8a6d09';
+            box.appendChild(empty);
+            box.style.display = 'block';
+            return;
+        }
+        cities.forEach(function (city) {
+            var li = document.createElement('li');
+            li.style.cssText = 'padding:8px 10px;font-size:13px;cursor:pointer';
+            li.textContent = city.name + (city.state ? '  -  ' + city.state : '');
+            li.addEventListener('mouseenter', function () { li.style.background = '#f0f0f0'; });
+            li.addEventListener('mouseleave', function () { li.style.background = ''; });
+            li.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                cityChosen = { name: city.name, code: city.code };
+                lastCityQuery = city.name;
+                setNativeValue(input, city.name);
+                pushDane(city.code);
+                hideCityBox();
+            });
+            box.appendChild(li);
+        });
+        box.style.display = 'block';
+    }
+
+    function searchCities() {
+        var input = cityInput();
+        if (!input) return;
+
+        var term = (input.value || '').trim();
+        if (term === cityChosen.name && cityChosen.code) { hideCityBox(); return; }
+
+        if (cityChosen.code) { cityChosen = { name: '', code: '' }; pushDane(''); }
+        if (term.length < 3) { hideCityBox(); return; }
+        if (term === lastCityQuery) return;
+        lastCityQuery = term;
+
+        var addr = shippingAddress() || {};
+        var qs = 'q=' + encodeURIComponent(term) + '&limit=8';
+        if (addr.state) qs += '&state=' + encodeURIComponent(addr.state);
+
+        fetch(apiBase + '/dane/' + cfg.integrationId + '/cities?' + qs, { headers: headers })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (res) { renderCities(input, res && res.cities); })
+            .catch(function () {});
+    }
+
+    function bindCityInput() {
+        var input = cityInput();
+        if (!input || input.getAttribute('data-probability-city') === '1') return;
+        input.setAttribute('data-probability-city', '1');
+        input.setAttribute('autocomplete', 'off');
+        input.addEventListener('input', function () {
+            if (cityTimer) clearTimeout(cityTimer);
+            cityTimer = setTimeout(searchCities, 250);
+        });
+        input.addEventListener('blur', function () { setTimeout(hideCityBox, 150); });
+    }
+
     var lastCodSynced = null;
 
     function syncCodFlag() {
@@ -180,7 +295,8 @@
         if (!isBlockCheckout()) return;
 
         injectLogos();
-        var observer = new MutationObserver(function () { injectLogos(); });
+        bindCityInput();
+        var observer = new MutationObserver(function () { injectLogos(); bindCityInput(); });
         observer.observe(document.body, { childList: true, subtree: true });
 
         if (window.wp && window.wp.data && window.wp.data.subscribe) {
