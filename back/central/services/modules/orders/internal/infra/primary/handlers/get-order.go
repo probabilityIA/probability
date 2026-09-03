@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/mappers"
@@ -38,7 +39,7 @@ func (h *Handlers) GetOrderByID(c *gin.Context) {
 	// Llamar al caso de uso (retorna DTO de dominio)
 	domainResp, err := h.orderCRUD.GetOrderByID(c.Request.Context(), id)
 	if err != nil {
-		if err.Error() == "order not found" {
+		if strings.Contains(err.Error(), "order not found") {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": "Orden no encontrada",
