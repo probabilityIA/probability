@@ -1075,8 +1075,9 @@ textarea:focus {
 .login-logo-light {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 /* Marca: mismo simbolo que la app Flutter, circulo morado con el mark blanco */
@@ -1106,11 +1107,12 @@ textarea:focus {
 }
 
 .login-header-light {
-  margin-bottom: 24px;
+  margin-bottom: 22px;
+  text-align: center;
 }
 
 .login-title-light {
-  font-size: 27px;
+  font-size: 23px;
   font-weight: 800;
   color: #0b0b12;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1606,4 +1608,9 @@ textarea:focus {
 
 .legal-document p.item {
   padding-left: 1rem;
+}
+
+@keyframes loginFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }

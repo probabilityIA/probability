@@ -7,8 +7,27 @@ import { CookieStorage } from '@/shared/utils';
 import { useShopifyAuth } from '@/providers/ShopifyAuthProvider';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/shared/ui/theme-toggle';
-import { LoginHeroImage } from '@/shared/ui/login-hero-image';
+import { LoginHeroImage, LOGIN_CLIPS } from '@/shared/ui/login-hero-image';
 import { LoginBubbleCard } from '@/shared/ui/login-bubble-card';
+
+const SLIDES = [
+  {
+    titulo: 'Vende por redes, nosotros hacemos el resto',
+    detalle: 'Pedidos, env\u00edos y clientes en un solo lugar, sin saltar entre pesta\u00f1as.',
+  },
+  {
+    titulo: 'Cada pedido, listo para salir',
+    detalle: 'Cotiza y genera gu\u00edas con varias transportadoras desde el mismo panel.',
+  },
+  {
+    titulo: 'Tus clientes, siempre informados',
+    detalle: 'WhatsApp autom\u00e1tico en cada cambio de estado del env\u00edo.',
+  },
+  {
+    titulo: 'Menos devoluciones, m\u00e1s entregas',
+    detalle: 'Detecta a tiempo los pedidos que vienen de vuelta.',
+  },
+];
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -16,7 +35,7 @@ function LoginContent() {
   const router = useRouter();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [slide, setSlide] = useState(0);
 
   useEffect(() => {
     const error = searchParams.get('error');
@@ -26,14 +45,9 @@ function LoginContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      setRevealed(true);
-      return;
-    }
-    const id = setTimeout(() => setRevealed(true), 2200);
+    const id = setTimeout(() => setSlide((i) => (i + 1) % LOGIN_CLIPS.length), 9000);
     return () => clearTimeout(id);
-  }, []);
+  }, [slide]);
 
   useEffect(() => {
     const htmlElement = document.documentElement;
@@ -93,33 +107,55 @@ function LoginContent() {
     );
   }
 
+  const copy = SLIDES[slide];
+
   return (
-    <div className="h-screen w-screen relative overflow-hidden">
-      {/* El video arranca a pantalla completa y se corre a la derecha cuando entra el panel */}
-      <div
-        className={`absolute top-0 right-0 bottom-0 overflow-hidden ${isDark ? 'bg-[#14093a]' : 'bg-[#F0EEFF]'} ${revealed ? 'lg:left-[calc(min(42vw,560px)-56px)]' : 'left-0'}`}
-        style={{ transition: 'left 1000ms cubic-bezier(0.16, 1, 0.3, 1)' }}
-      >
-        <LoginHeroImage />
-      </div>
+    <div className="h-screen w-screen relative overflow-hidden bg-[#140c2d]">
+      {/* Fondo: los videos en carrusel, difuminados */}
+      <LoginHeroImage index={slide} />
 
       {/* Theme Toggle */}
       <div className="fixed top-5 left-5 z-50">
         <ThemeToggle />
       </div>
 
-      {/* Panel del login: entra desde la izquierda y le cede el resto al video */}
-      <div className="absolute inset-0 z-30 flex pointer-events-none">
-        <LoginBubbleCard isDark={isDark} visible={revealed}>
-          <LoginForm />
-        </LoginBubbleCard>
-      </div>
+      {/* Contenido centrado: mensaje a la izquierda, login a la derecha */}
+      <div className="relative z-30 h-full w-full overflow-y-auto">
+        <div className="mx-auto flex min-h-full w-full max-w-[1180px] flex-col items-center justify-center gap-10 px-6 py-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
 
-      {/* Enlaces al pie, sobre el video */}
-      <div className="absolute bottom-5 left-0 right-0 z-40 flex justify-center lg:justify-end lg:pr-[6vw] gap-6 text-xs font-semibold text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">
-        <a href="#" className="hover:text-white transition-colors">{'T\u00e9rminos'}</a>
-        <a href="#" className="hover:text-white transition-colors">Planes</a>
-        <a href="#" className="hover:text-white transition-colors">{'Cont\u00e1ctanos'}</a>
+          <div className="w-full max-w-[520px] text-center lg:text-left">
+            <h2
+              key={copy.titulo}
+              className="text-3xl sm:text-4xl font-extrabold leading-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)]"
+              style={{ animation: 'loginFadeUp 700ms ease-out' }}
+            >
+              {copy.titulo}
+            </h2>
+            <p
+              key={copy.detalle}
+              className="mt-4 text-base sm:text-lg text-white/85 drop-shadow-[0_1px_10px_rgba(0,0,0,0.4)]"
+              style={{ animation: 'loginFadeUp 700ms ease-out 120ms both' }}
+            >
+              {copy.detalle}
+            </p>
+
+            <div className="mt-7 flex justify-center gap-2 lg:justify-start">
+              {SLIDES.map((s2, i) => (
+                <button
+                  key={s2.titulo}
+                  type="button"
+                  onClick={() => setSlide(i)}
+                  aria-label={`Ver mensaje ${i + 1}`}
+                  className={`h-2 rounded-full transition-all ${i === slide ? 'w-7 bg-white' : 'w-2 bg-white/45 hover:bg-white/70'}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <LoginBubbleCard isDark={isDark}>
+            <LoginForm />
+          </LoginBubbleCard>
+        </div>
       </div>
     </div>
   );

@@ -211,7 +211,11 @@ export const LoginForm = () => {
 
             {showDemoModal && <DemoRegisterModal onClose={() => setShowDemoModal(false)} />}
 
-            {/* Footer */}
+            <div className="login-footer-light" style={{ marginTop: '20px' }}>
+                <a href="#">{'T\u00e9rminos'}</a>
+                <a href="#">Planes</a>
+                <a href="#">{'Cont\u00e1ctanos'}</a>
+            </div>
         </div>
     );
 };
