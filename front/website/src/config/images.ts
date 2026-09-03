@@ -7,7 +7,7 @@ export const INTEGRATION_LOGOS = [
   // Logistics & Shipping
   { name: 'Interrapidísimo', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/carriers/interrapidisimo.jpg', alt: 'Interrapidísimo' },
   { name: 'Envía', src: 'https://static.wikia.nocookie.net/logopedia/images/5/5e/Env%C3%ADa.png/revision/latest?cb=20250619001311&path-prefix=es', alt: 'Envía' },
-  { name: 'Coordinadora', src: 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png', alt: 'Coordinadora' },
+  { name: 'Coordinadora', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_coordinadora.png', alt: 'Coordinadora' },
 
   // Business Systems
   { name: 'Softpymes', src: 'https://soporte.softpymes.com.co/hubfs/SPT1%20(1).png', alt: 'Softpymes' },

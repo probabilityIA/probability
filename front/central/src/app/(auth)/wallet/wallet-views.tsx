@@ -823,7 +823,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                 <div className="flex flex-col items-center justify-center p-2 text-center">
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 mb-4 w-full max-w-[380px] flex justify-center">
                         <img
-                            src="https://images-cam93.s3.us-east-1.amazonaws.com/QR_Cuenta_de_probability.jpeg"
+                            src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/brand/QR_Cuenta_de_probability.jpeg"
                             alt="Nequi QR - Probability"
                             className="w-full h-auto object-contain"
                         />

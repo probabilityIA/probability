@@ -53,10 +53,10 @@ const COLORS = [
 
 // Mapeo de carrier (valor raw de BD) a logo URL
 const CARRIER_LOGOS: Record<string, string> = {
-    'SERVIENTREGA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
-    'servientrega': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
-    'COORDINADORA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
-    'coordinadora': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
+    'SERVIENTREGA': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_servientrega.png',
+    'servientrega': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_servientrega.png',
+    'COORDINADORA': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_coordinadora.png',
+    'coordinadora': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_coordinadora.png',
     'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
     'dhlexpress': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
     'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',

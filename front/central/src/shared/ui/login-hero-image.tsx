@@ -6,7 +6,7 @@ const MEDIA_BASE =
     process.env.NEXT_PUBLIC_S3_BASE_URL ||
     'https://probability-media-assets.s3.us-east-1.amazonaws.com';
 
-const CLIPS = ['login-hero-hq1', 'login-hero-hq2', 'login-hero-hq3'];
+const CLIPS = ['login-hero-hq1', 'login-hero-hq2', 'login-hero-hq3b', 'login-hero-hq4'];
 
 export function LoginHeroImage() {
     const [clip, setClip] = useState<string | null>(null);
