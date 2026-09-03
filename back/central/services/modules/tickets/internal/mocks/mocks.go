@@ -25,6 +25,7 @@ type RepositoryMock struct {
 	ListFn           func(ctx context.Context, params dtos.ListTicketsParams) ([]entities.Ticket, int64, error)
 	UpdateFn         func(ctx context.Context, id uint, updates map[string]any) (*entities.Ticket, error)
 	DeleteFn         func(ctx context.Context, id uint) error
+	ListCategoriesFn func(ctx context.Context) ([]string, error)
 	UserExistsFn     func(ctx context.Context, userID uint) (bool, error)
 	FindSprintNameFn func(ctx context.Context, sprintID uint) (string, bool, error)
 
@@ -87,6 +88,13 @@ func (m *RepositoryMock) Update(ctx context.Context, id uint, updates map[string
 		return m.UpdateFn(ctx, id, updates)
 	}
 	return &entities.Ticket{ID: id}, nil
+}
+
+func (m *RepositoryMock) ListCategories(ctx context.Context) ([]string, error) {
+	if m.ListCategoriesFn != nil {
+		return m.ListCategoriesFn(ctx)
+	}
+	return []string{}, nil
 }
 
 func (m *RepositoryMock) Delete(ctx context.Context, id uint) error {

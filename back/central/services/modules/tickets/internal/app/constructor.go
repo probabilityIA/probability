@@ -16,6 +16,7 @@ type IUseCase interface {
 	List(ctx context.Context, params dtos.ListTicketsParams) ([]entities.Ticket, int64, error)
 	Update(ctx context.Context, dto dtos.UpdateTicketDTO) (*entities.Ticket, error)
 	Delete(ctx context.Context, id uint) error
+	ListCategories(ctx context.Context) ([]string, error)
 	ChangeStatus(ctx context.Context, dto dtos.ChangeStatusDTO) (*entities.Ticket, error)
 	ChangeArea(ctx context.Context, dto dtos.ChangeAreaDTO) (*entities.Ticket, error)
 	Assign(ctx context.Context, dto dtos.AssignTicketDTO) (*entities.Ticket, error)

@@ -25,6 +25,7 @@ type useCaseMock struct {
 	CreateFn           func(ctx context.Context, dto dtos.CreateTicketDTO) (*entities.Ticket, error)
 	GetFn              func(ctx context.Context, id uint, userID uint, businessID *uint, isSuperAdmin bool) (*entities.Ticket, error)
 	ListFn             func(ctx context.Context, params dtos.ListTicketsParams) ([]entities.Ticket, int64, error)
+	ListCategoriesFn   func(ctx context.Context) ([]string, error)
 	UpdateFn           func(ctx context.Context, dto dtos.UpdateTicketDTO) (*entities.Ticket, error)
 	DeleteFn           func(ctx context.Context, id uint) error
 	ChangeStatusFn     func(ctx context.Context, dto dtos.ChangeStatusDTO) (*entities.Ticket, error)
@@ -85,6 +86,13 @@ func (m *useCaseMock) Update(ctx context.Context, dto dtos.UpdateTicketDTO) (*en
 		return m.UpdateFn(ctx, dto)
 	}
 	return &entities.Ticket{ID: dto.ID}, nil
+}
+
+func (m *useCaseMock) ListCategories(ctx context.Context) ([]string, error) {
+	if m.ListCategoriesFn != nil {
+		return m.ListCategoriesFn(ctx)
+	}
+	return []string{}, nil
 }
 
 func (m *useCaseMock) Delete(ctx context.Context, id uint) error {

@@ -110,7 +110,6 @@ describe('TicketForm', () => {
                     description: 'No carga el pago',
                     type: 'support',
                     priority: 'medium',
-                    severity: undefined,
                     area: 'soporte',
                     source: 'internal',
                     category: undefined,
@@ -129,16 +128,15 @@ describe('TicketForm', () => {
             const { onSubmit } = setup();
 
             fillRequired('Bug grave', 'Detalle del bug');
-            const [type, priority, severity, area, source, assigned, sprint, business] = combos();
+            const [type, priority, area, source, modulo, assigned, sprint, business] = combos();
             fireEvent.change(type, { target: { value: 'bug' } });
             fireEvent.change(priority, { target: { value: 'critical' } });
-            fireEvent.change(severity, { target: { value: 'high' } });
             fireEvent.change(area, { target: { value: 'desarrollo' } });
             fireEvent.change(source, { target: { value: 'business' } });
+            fireEvent.change(modulo, { target: { value: 'Env\u00edos' } });
             fireEvent.change(assigned, { target: { value: '12' } });
             fireEvent.change(sprint, { target: { value: '3' } });
             expect(business).toBeInTheDocument();
-            fireEvent.change(screen.getByPlaceholderText('Ej: env\u00edos, facturaci\u00f3n, frontend'), { target: { value: '  envios  ' } });
             fireEvent.change(screen.getByPlaceholderText('Opcional: contexto adicional para el equipo'), { target: { value: '  contexto  ' } });
             fireEvent.click(screen.getByLabelText('Nota interna (solo super admins)'));
             submitForm();
@@ -148,12 +146,11 @@ describe('TicketForm', () => {
             expect(payload.dto).toMatchObject({
                 type: 'bug',
                 priority: 'critical',
-                severity: 'high',
                 area: 'desarrollo',
                 source: 'business',
                 assigned_to_id: 12,
                 sprint_id: 3,
-                category: 'envios',
+                category: 'Env\u00edos',
             });
             expect(payload.comment).toBe('contexto');
             expect(payload.commentInternal).toBe(true);
@@ -370,5 +367,83 @@ describe('TicketForm', () => {
 
             expect(screen.queryByText(/No se puede adjuntar malo\.txt/)).toBeNull();
         });
+    });
+});
+
+describe('TicketForm - modulo y sprint', () => {
+    beforeEach(() => {
+        (useBusinessesSimple as any).mockReturnValue({ businesses: [], loading: false, error: null });
+    });
+
+    it('el select de modulo ofrece los del catalogo y los que ya existen en los tickets', () => {
+        setup({ modules: ['Bodegas'] });
+        const modulo = combos()[4];
+        const opciones = Array.from(modulo.querySelectorAll('option')).map((o) => o.textContent);
+        expect(opciones).toContain('Bodegas');
+        expect(opciones).toContain('\u00d3rdenes');
+        expect(opciones).toContain('+ Crear m\u00f3dulo...');
+    });
+
+    it('permite crear un modulo nuevo y lo envia en el dto', async () => {
+        const { onSubmit } = setup();
+
+        fillRequired('Nuevo modulo', 'Descripcion');
+        fireEvent.change(combos()[4], { target: { value: '__new__' } });
+        fireEvent.change(screen.getByPlaceholderText('Nombre del m\u00f3dulo'), { target: { value: '  Devoluciones  ' } });
+        fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+        submitForm();
+
+        await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+        expect(onSubmit.mock.calls[0][0].dto.category).toBe('Devoluciones');
+    });
+
+    it('no ofrece crear sprint cuando no hay callback', () => {
+        setup({ onCreateSprint: undefined });
+        const sprint = combos()[6];
+        const opciones = Array.from(sprint.querySelectorAll('option')).map((o) => o.textContent);
+        expect(opciones).not.toContain('+ Crear sprint...');
+    });
+
+    it('crea el sprint desde el formulario y lo deja seleccionado', async () => {
+        const onCreateSprint = vi.fn().mockResolvedValue({ id: 9, name: 'Sprint 9' });
+        const { onSubmit } = setup({ onCreateSprint });
+
+        fillRequired('Con sprint', 'Descripcion');
+        fireEvent.change(combos()[6], { target: { value: '__new__' } });
+        fireEvent.change(screen.getByPlaceholderText('Nombre del sprint'), { target: { value: 'Sprint 9' } });
+        const fechas = document.querySelectorAll('input[type="date"]');
+        fireEvent.change(fechas[1], { target: { value: '2026-09-10' } });
+        fireEvent.change(fechas[2], { target: { value: '2026-09-24' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Crear sprint' }));
+
+        await waitFor(() => expect(onCreateSprint).toHaveBeenCalledWith({
+            name: 'Sprint 9',
+            start_date: '2026-09-10',
+            end_date: '2026-09-24',
+        }));
+
+        submitForm();
+        await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+        expect(onSubmit.mock.calls[0][0].dto.sprint_id).toBe(9);
+    });
+
+    it('rechaza un sprint sin fechas coherentes', async () => {
+        const onCreateSprint = vi.fn();
+        setup({ onCreateSprint });
+
+        fireEvent.change(combos()[6], { target: { value: '__new__' } });
+        fireEvent.change(screen.getByPlaceholderText('Nombre del sprint'), { target: { value: 'Malo' } });
+        const fechas = document.querySelectorAll('input[type="date"]');
+        fireEvent.change(fechas[1], { target: { value: '2026-09-24' } });
+        fireEvent.change(fechas[2], { target: { value: '2026-09-10' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Crear sprint' }));
+
+        expect(await screen.findByText('La fecha de fin debe ser posterior a la de inicio')).toBeInTheDocument();
+        expect(onCreateSprint).not.toHaveBeenCalled();
+    });
+
+    it('ya no muestra el campo de severidad', () => {
+        setup();
+        expect(screen.queryByText('Severidad')).toBeNull();
     });
 });

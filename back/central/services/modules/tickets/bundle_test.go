@@ -25,7 +25,7 @@ func TestNew_MontaElModuloCompletoSobreElRouter(t *testing.T) {
 		montadas[ruta.Method+" "+ruta.Path] = true
 	}
 
-	require.Len(t, montadas, 16, "el modulo expone 16 rutas")
+	require.Len(t, montadas, 17, "el modulo expone 17 rutas")
 	assert.True(t, montadas["GET /api/v1/tickets"])
 	assert.True(t, montadas["POST /api/v1/tickets"])
 	assert.True(t, montadas["PATCH /api/v1/tickets/:id/sprint"])

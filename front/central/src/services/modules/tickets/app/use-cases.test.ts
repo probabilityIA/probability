@@ -80,6 +80,7 @@ const makeFile = () => new File(['x'], 'evidencia.png', { type: 'image/png' });
 function createMockRepository(): ITicketRepository {
     return {
         list: vi.fn(),
+        listCategories: vi.fn(),
         get: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),

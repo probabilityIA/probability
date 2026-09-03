@@ -9,6 +9,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	g := router.Group("/tickets", middleware.JWT(), middleware.RequireSuperAdmin())
 	{
 		g.GET("", h.List)
+		g.GET("categories", h.ListCategories)
 		g.POST("", h.Create)
 		g.GET(":id", h.Get)
 		g.PUT(":id", h.Update)

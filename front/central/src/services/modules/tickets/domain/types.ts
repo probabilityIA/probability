@@ -183,6 +183,23 @@ export const TICKET_PRIORITIES: TicketPriority[] = ['low', 'medium', 'high', 'cr
 export const TICKET_TYPES: TicketType[] = ['bug', 'improvement', 'feature', 'data', 'integration', 'support', 'complaint', 'claim', 'question'];
 export const TICKET_AREAS: TicketArea[] = ['comercial', 'soporte', 'desarrollo'];
 export const TICKET_SEVERITIES: TicketSeverity[] = ['', 'low', 'medium', 'high'];
+export const TICKET_MODULES: string[] = [
+    '\u00d3rdenes',
+    'Env\u00edos',
+    'Facturaci\u00f3n',
+    'Productos',
+    'Inventario',
+    'Clientes',
+    'Pagos y billetera',
+    'Integraciones',
+    'WhatsApp',
+    'Usuarios y permisos',
+    'Dashboard',
+    'P\u00e1gina web',
+    'M\u00f3vil',
+    'Infraestructura',
+];
+
 export const TICKET_SOURCES: TicketSource[] = ['internal', 'business'];
 
 export const SEVERITY_META: Record<TicketSeverity, { label: string }> = {

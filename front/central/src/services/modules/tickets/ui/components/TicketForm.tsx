@@ -3,22 +3,20 @@
 import { useRef, useState } from 'react';
 import { Button, Input } from '@/shared/ui';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
-import { Sprint } from '@/services/modules/sprints/domain/types';
+import { Sprint, CreateSprintDTO } from '@/services/modules/sprints/domain/types';
 import {
     CreateTicketDTO,
     TICKET_TYPES,
     TICKET_PRIORITIES,
     TICKET_AREAS,
-    TICKET_SEVERITIES,
     TICKET_SOURCES,
+    TICKET_MODULES,
     TYPE_META,
     PRIORITY_META,
     AREA_META,
-    SEVERITY_META,
     SOURCE_META,
     TicketType,
     TicketPriority,
-    TicketSeverity,
     TicketSource,
     TicketArea,
 } from '../../domain/types';
@@ -40,6 +38,8 @@ interface Props {
     isSuperAdmin: boolean;
     users?: UserOption[];
     sprints?: Sprint[];
+    modules?: string[];
+    onCreateSprint?: (data: CreateSprintDTO) => Promise<Sprint | null>;
     onSubmit: (payload: CreateTicketPayload) => Promise<void>;
     onCancel: () => void;
     submitting?: boolean;
@@ -47,9 +47,12 @@ interface Props {
 }
 
 const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1';
+const NEW_OPTION = '__new__';
+const miniButtonClass = 'shrink-0 rounded-md px-2.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 disabled:opacity-50';
+const miniGhostClass = 'shrink-0 rounded-md px-2.5 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700';
 const controlClass = 'block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
-export default function TicketForm({ isSuperAdmin, users = [], sprints = [], onSubmit, onCancel, submitting, submitLabel }: Props) {
+export default function TicketForm({ isSuperAdmin, users = [], sprints = [], modules = [], onCreateSprint, onSubmit, onCancel, submitting, submitLabel }: Props) {
     const { businesses } = useBusinessesSimple();
     const fileRef = useRef<HTMLInputElement>(null);
     const [businessId, setBusinessId] = useState<string>('');
@@ -57,10 +60,15 @@ export default function TicketForm({ isSuperAdmin, users = [], sprints = [], onS
     const [description, setDescription] = useState('');
     const [type, setType] = useState<TicketType>('support');
     const [priority, setPriority] = useState<TicketPriority>('medium');
-    const [severity, setSeverity] = useState<TicketSeverity>('');
     const [area, setArea] = useState<TicketArea>('soporte');
     const [source, setSource] = useState<TicketSource>(isSuperAdmin ? 'internal' : 'business');
     const [category, setCategory] = useState('');
+    const [creatingModule, setCreatingModule] = useState(false);
+    const [newModule, setNewModule] = useState('');
+    const [creatingSprint, setCreatingSprint] = useState(false);
+    const [newSprint, setNewSprint] = useState({ name: '', start_date: '', end_date: '' });
+    const [sprintError, setSprintError] = useState<string | null>(null);
+    const [savingSprint, setSavingSprint] = useState(false);
     const [dueDate, setDueDate] = useState('');
     const [assignedToId, setAssignedToId] = useState<string>('');
     const [sprintId, setSprintId] = useState<string>('');
@@ -106,6 +114,49 @@ export default function TicketForm({ isSuperAdmin, users = [], sprints = [], onS
         addFiles(e.dataTransfer.files);
     };
 
+    const moduleOptions = Array.from(
+        new Set([...TICKET_MODULES, ...modules, ...(category ? [category] : [])].map((m) => m.trim()).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b, 'es'));
+
+    const confirmNewModule = () => {
+        const value = newModule.trim();
+        if (!value) return;
+        setCategory(value);
+        setCreatingModule(false);
+        setNewModule('');
+    };
+
+    const confirmNewSprint = async () => {
+        if (!onCreateSprint) return;
+        const name = newSprint.name.trim();
+        if (!name || !newSprint.start_date || !newSprint.end_date) {
+            setSprintError('Nombre, inicio y fin son obligatorios');
+            return;
+        }
+        if (newSprint.end_date <= newSprint.start_date) {
+            setSprintError('La fecha de fin debe ser posterior a la de inicio');
+            return;
+        }
+        setSavingSprint(true);
+        setSprintError(null);
+        try {
+            const created = await onCreateSprint({
+                name,
+                start_date: newSprint.start_date,
+                end_date: newSprint.end_date,
+            });
+            if (created) {
+                setSprintId(String(created.id));
+                setCreatingSprint(false);
+                setNewSprint({ name: '', start_date: '', end_date: '' });
+            }
+        } catch (err: any) {
+            setSprintError(err?.message || 'No se pudo crear el sprint');
+        } finally {
+            setSavingSprint(false);
+        }
+    };
+
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -120,7 +171,6 @@ export default function TicketForm({ isSuperAdmin, users = [], sprints = [], onS
                     description: description.trim(),
                     type,
                     priority,
-                    severity: severity || undefined,
                     area,
                     source,
                     category: category.trim() || undefined,
@@ -197,15 +247,6 @@ export default function TicketForm({ isSuperAdmin, users = [], sprints = [], onS
                         </div>
 
                         <div>
-                            <label className={labelClass}>Severidad</label>
-                            <select value={severity} onChange={(e) => setSeverity(e.target.value as TicketSeverity)} className={controlClass}>
-                                {TICKET_SEVERITIES.map((s) => (
-                                    <option key={s || 'none'} value={s}>{SEVERITY_META[s].label}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
                             <label className={labelClass}>{'\u00c1rea'}</label>
                             <select value={area} onChange={(e) => setArea(e.target.value as TicketArea)} className={controlClass}>
                                 {TICKET_AREAS.map((a) => (
@@ -224,8 +265,50 @@ export default function TicketForm({ isSuperAdmin, users = [], sprints = [], onS
                         </div>
 
                         <div>
-                            <label className={labelClass}>{'Categor\u00eda'}</label>
-                            <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder={'Ej: env\u00edos, facturaci\u00f3n, frontend'} />
+                            <label className={labelClass}>{'M\u00f3dulo'}</label>
+                            {creatingModule ? (
+                                <div className="flex gap-1.5">
+                                    <Input
+                                        value={newModule}
+                                        onChange={(e) => setNewModule(e.target.value)}
+                                        placeholder={'Nombre del m\u00f3dulo'}
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                confirmNewModule();
+                                            }
+                                        }}
+                                    />
+                                    <button type="button" onClick={confirmNewModule} className={miniButtonClass}>OK</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setCreatingModule(false); setNewModule(''); }}
+                                        className={miniGhostClass}
+                                    >
+                                        {'\u00d7'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <select
+                                    value={category}
+                                    onChange={(e) => {
+                                        if (e.target.value === NEW_OPTION) {
+                                            setCreatingModule(true);
+                                            setNewModule('');
+                                            return;
+                                        }
+                                        setCategory(e.target.value);
+                                    }}
+                                    className={controlClass}
+                                >
+                                    <option value="">{'Sin m\u00f3dulo'}</option>
+                                    {moduleOptions.map((m) => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                    <option value={NEW_OPTION}>{'+ Crear m\u00f3dulo...'}</option>
+                                </select>
+                            )}
                         </div>
 
                         <div>
@@ -243,14 +326,73 @@ export default function TicketForm({ isSuperAdmin, users = [], sprints = [], onS
                             </select>
                         </div>
 
-                        <div>
+                        <div className={creatingSprint ? 'sm:col-span-2' : undefined}>
                             <label className={labelClass}>Sprint</label>
-                            <select value={sprintId} onChange={(e) => setSprintId(e.target.value)} className={controlClass}>
-                                <option value="">Sin sprint</option>
-                                {sprints.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </select>
+                            {creatingSprint ? (
+                                <div className="rounded-lg border border-gray-300 dark:border-gray-600 p-3 space-y-2">
+                                    <Input
+                                        value={newSprint.name}
+                                        onChange={(e) => setNewSprint((p) => ({ ...p, name: e.target.value }))}
+                                        placeholder="Nombre del sprint"
+                                        autoFocus
+                                    />
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">Inicio</span>
+                                            <Input
+                                                type="date"
+                                                value={newSprint.start_date}
+                                                onChange={(e) => setNewSprint((p) => ({ ...p, start_date: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div>
+                                            <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">Fin</span>
+                                            <Input
+                                                type="date"
+                                                value={newSprint.end_date}
+                                                onChange={(e) => setNewSprint((p) => ({ ...p, end_date: e.target.value }))}
+                                            />
+                                        </div>
+                                    </div>
+                                    {sprintError && <div className="text-xs text-red-600 dark:text-red-400">{sprintError}</div>}
+                                    <div className="flex justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setCreatingSprint(false); setSprintError(null); }}
+                                            className={miniGhostClass}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={confirmNewSprint}
+                                            disabled={savingSprint}
+                                            className={miniButtonClass}
+                                        >
+                                            {savingSprint ? 'Creando...' : 'Crear sprint'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <select
+                                    value={sprintId}
+                                    onChange={(e) => {
+                                        if (e.target.value === NEW_OPTION) {
+                                            setCreatingSprint(true);
+                                            setSprintError(null);
+                                            return;
+                                        }
+                                        setSprintId(e.target.value);
+                                    }}
+                                    className={controlClass}
+                                >
+                                    <option value="">Sin sprint</option>
+                                    {sprints.map((s) => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                    {onCreateSprint && <option value={NEW_OPTION}>+ Crear sprint...</option>}
+                                </select>
+                            )}
                         </div>
 
                         {isSuperAdmin && (

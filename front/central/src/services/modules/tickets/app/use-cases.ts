@@ -5,6 +5,7 @@ export class TicketUseCases {
     constructor(private repo: ITicketRepository) {}
 
     list(params?: ListTicketsParams) { return this.repo.list(params); }
+    listCategories() { return this.repo.listCategories(); }
     get(id: number, businessId?: number) { return this.repo.get(id, businessId); }
     create(data: CreateTicketDTO) { return this.repo.create(data); }
     update(id: number, data: UpdateTicketDTO) { return this.repo.update(id, data); }

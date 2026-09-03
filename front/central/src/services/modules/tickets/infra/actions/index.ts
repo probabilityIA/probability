@@ -21,6 +21,10 @@ export const listTicketsAction = async (params?: ListTicketsParams) => {
     return (await getUseCases()).list(params);
 };
 
+export const listTicketCategoriesAction = async () => {
+    return (await getUseCases()).listCategories();
+};
+
 export const getTicketAction = async (id: number, businessId?: number) => {
     return (await getUseCases()).get(id, businessId);
 };

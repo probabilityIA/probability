@@ -170,6 +170,19 @@ func (r *Repository) List(ctx context.Context, params dtos.ListTicketsParams) ([
 	return out, total, nil
 }
 
+func (r *Repository) ListCategories(ctx context.Context) ([]string, error) {
+	var categories []string
+	err := r.db.Conn(ctx).Model(&models.Ticket{}).
+		Distinct().
+		Where("category IS NOT NULL AND TRIM(category) <> ''").
+		Order("category ASC").
+		Pluck("category", &categories).Error
+	if err != nil {
+		return nil, err
+	}
+	return categories, nil
+}
+
 func (r *Repository) Update(ctx context.Context, id uint, updates map[string]any) (*entities.Ticket, error) {
 	res := r.db.Conn(ctx).Model(&models.Ticket{}).Where("id = ?", id).Updates(updates)
 	if res.Error != nil {

@@ -11,6 +11,7 @@ import {
 
 export interface ITicketRepository {
     list(params?: ListTicketsParams): Promise<PaginatedTickets>;
+    listCategories(): Promise<string[]>;
     get(id: number, businessId?: number): Promise<Ticket>;
     create(data: CreateTicketDTO): Promise<Ticket>;
     update(id: number, data: UpdateTicketDTO): Promise<Ticket>;

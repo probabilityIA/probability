@@ -52,6 +52,14 @@ export class TicketApiRepository implements ITicketRepository {
         });
     }
 
+    async listCategories(): Promise<string[]> {
+        const res = await this.request<{ data: string[] }>('/tickets/categories', {
+            method: 'GET',
+            headers: this.headers(),
+        });
+        return res?.data || [];
+    }
+
     get(id: number, businessId?: number): Promise<Ticket> {
         return this.request<Ticket>(this.withQuery(`/tickets/${id}`, { business_id: businessId }), {
             method: 'GET',

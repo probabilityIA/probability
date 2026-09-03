@@ -14,6 +14,7 @@ type IRepository interface {
 	List(ctx context.Context, params dtos.ListTicketsParams) ([]entities.Ticket, int64, error)
 	Update(ctx context.Context, id uint, updates map[string]any) (*entities.Ticket, error)
 	Delete(ctx context.Context, id uint) error
+	ListCategories(ctx context.Context) ([]string, error)
 
 	UserExists(ctx context.Context, userID uint) (bool, error)
 	FindSprintName(ctx context.Context, sprintID uint) (string, bool, error)

@@ -747,6 +747,7 @@ func TestRegisterRoutes_MontaLaTablaCompletaBajoTickets(t *testing.T) {
 		"POST /api/v1/tickets/:id/attachments",
 		"DELETE /api/v1/tickets/attachments/:attachment_id",
 		"GET /api/v1/tickets/:id/history",
+		"GET /api/v1/tickets/categories",
 	}
 	for _, ruta := range esperadas {
 		assert.True(t, montadas[ruta], "falta la ruta %q", ruta)

@@ -27,10 +27,11 @@ import {
     assignTicketAction,
     uploadAttachmentAction,
     addCommentAction,
+    listTicketCategoriesAction,
 } from '../../infra/actions';
 import { getUsersAction } from '@/services/auth/users/infra/actions';
-import { Sprint } from '@/services/modules/sprints/domain/types';
-import { listSprintsAction } from '@/services/modules/sprints/infra/actions';
+import { Sprint, CreateSprintDTO } from '@/services/modules/sprints/domain/types';
+import { listSprintsAction, createSprintAction } from '@/services/modules/sprints/infra/actions';
 import { PriorityBadge, TypeBadge } from './TicketBadges';
 import TicketForm, { CreateTicketPayload } from './TicketForm';
 import TicketDetail from './TicketDetail';
@@ -109,6 +110,7 @@ export default function TicketsManager() {
     const [view, setView] = useState<ViewMode>('table');
     const [error, setError] = useState<string | null>(null);
     const [sprints, setSprints] = useState<Sprint[]>([]);
+    const [modules, setModules] = useState<string[]>([]);
     const [sprintsLoading, setSprintsLoading] = useState(true);
     const [sprintsError, setSprintsError] = useState<string | null>(null);
     const [boardSprintId, setBoardSprintId] = useState<string>('');
@@ -130,6 +132,17 @@ export default function TicketsManager() {
         } catch {}
     }, []);
 
+    const loadModules = useCallback(async () => {
+        try {
+            setModules(await listTicketCategoriesAction());
+        } catch (e) {
+            console.error('Error listando modulos', e);
+            setModules([]);
+        }
+    }, []);
+
+    useEffect(() => { void loadModules(); }, [loadModules]);
+
     const loadSprints = useCallback(async () => {
         setSprintsLoading(true);
         try {
@@ -146,6 +159,12 @@ export default function TicketsManager() {
     }, []);
 
     useEffect(() => { void loadSprints(); }, [loadSprints]);
+
+    const handleCreateSprint = useCallback(async (data: CreateSprintDTO) => {
+        const created = await createSprintAction(data);
+        await loadSprints();
+        return (created || null) as Sprint | null;
+    }, [loadSprints]);
 
     useEffect(() => {
         if (boardSprintDefaulted.current || sprints.length === 0) return;
@@ -692,6 +711,8 @@ export default function TicketsManager() {
                     isSuperAdmin={isSuperAdmin}
                     users={users}
                     sprints={sprints}
+                    modules={modules}
+                    onCreateSprint={handleCreateSprint}
                     onSubmit={handleCreate}
                     onCancel={() => setShowCreate(false)}
                     submitting={submitting}
