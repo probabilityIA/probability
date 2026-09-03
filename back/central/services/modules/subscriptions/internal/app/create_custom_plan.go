@@ -39,6 +39,7 @@ func (uc *UseCase) CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPl
 		Price:                dto.Price,
 		BillingPeriod:        billingPeriod,
 		Active:               true,
+		Payable:              true,
 		ModuleCodes:          dto.ModuleCodes,
 		MaxEcommerceChannels: dto.MaxEcommerceChannels,
 		BusinessID:           &businessID,

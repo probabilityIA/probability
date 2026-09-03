@@ -26,6 +26,9 @@ LOCAL_USER=postgres
 LOCAL_PASS=postgres
 CLIENT_IMAGE=postgis/postgis:17-3.4
 
+DOCKER_HOST_ADDR=127.0.0.1
+[ "$(uname -s)" = "Darwin" ] && DOCKER_HOST_ADDR=host.docker.internal
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$ROOT_DIR/back/central/.env"
 
@@ -47,8 +50,8 @@ prod_in() { docker run --rm -i --network host -e PGPASSWORD="$PROD_PASS" "$CLIEN
 locl() { docker run --rm --network host -e PGPASSWORD="$LOCAL_PASS" "$CLIENT_IMAGE" "$@"; }
 locl_in() { docker run --rm -i --network host -e PGPASSWORD="$LOCAL_PASS" "$CLIENT_IMAGE" "$@"; }
 
-PSQL_PROD=(psql -h "$PROD_HOST" -p "$PROD_PORT" -U "$PROD_USER" -d "$PROD_DB" -v ON_ERROR_STOP=1)
-PSQL_LOCAL=(psql -h "$LOCAL_HOST" -p "$LOCAL_PORT" -U "$LOCAL_USER" -d "$LOCAL_DB" -v ON_ERROR_STOP=1)
+PSQL_PROD=(psql -h "$DOCKER_HOST_ADDR" -p "$PROD_PORT" -U "$PROD_USER" -d "$PROD_DB" -v ON_ERROR_STOP=1)
+PSQL_LOCAL=(psql -h "$DOCKER_HOST_ADDR" -p "$LOCAL_PORT" -U "$LOCAL_USER" -d "$LOCAL_DB" -v ON_ERROR_STOP=1)
 
 say "verificando requisitos"
 docker info >/dev/null 2>&1 || die "docker no responde"
@@ -99,7 +102,7 @@ SKIP_TABLES="commercial_prospects payment_webhook_events bold_webhook_events spa
 say "1/4 estructura (schema-only) desde produccion"
 SCHEMA_SQL=$(mktemp)
 trap 'rm -f "$SCHEMA_SQL"' EXIT
-prod pg_dump -h "$PROD_HOST" -p "$PROD_PORT" -U "$PROD_USER" -d "$PROD_DB" \
+prod pg_dump -h "$DOCKER_HOST_ADDR" -p "$PROD_PORT" -U "$PROD_USER" -d "$PROD_DB" \
   --schema-only --no-owner --no-privileges --no-comments \
   --exclude-schema='tiger*' --exclude-schema=topology > "$SCHEMA_SQL"
 ok "estructura obtenida ($(wc -l < "$SCHEMA_SQL") lineas)"

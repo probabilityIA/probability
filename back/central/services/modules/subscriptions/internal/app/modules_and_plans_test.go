@@ -70,6 +70,24 @@ func TestHasModuleAccess_SinPlanAsignado_TodoLoNoRestringidoEsVisible(t *testing
 	}
 }
 
+func TestHasModuleAccess_SinPlanYCuentaDeshabilitada_TodoQuedaCerrado(t *testing.T) {
+	repo := &mocks.RepositoryMock{
+		GetBusinessCurrentSubscriptionTypeIDFn: func(ctx context.Context, businessID uint) (*uint, error) {
+			return nil, nil
+		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusCancelled}, nil
+		},
+	}
+	uc := newSubsUseCase(repo, nil, nil)
+
+	for _, code := range []string{"orders", "shipments", "inventory", "invoicing"} {
+		got, err := uc.HasModuleAccess(context.Background(), 26, code)
+		require.NoError(t, err)
+		assert.False(t, got, "cuenta deshabilitada sin plan, %s debe quedar cerrado", code)
+	}
+}
+
 func TestHasModuleAccess_PlanQueNoExiste_SeComportaComoSinPlan(t *testing.T) {
 	repo := &mocks.RepositoryMock{
 		GetBusinessCurrentSubscriptionTypeIDFn: func(ctx context.Context, businessID uint) (*uint, error) {
@@ -84,6 +102,25 @@ func TestHasModuleAccess_PlanQueNoExiste_SeComportaComoSinPlan(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, got)
+}
+
+func TestHasModuleAccess_PlanBorradoYCuentaDeshabilitada_TodoQuedaCerrado(t *testing.T) {
+	repo := &mocks.RepositoryMock{
+		GetBusinessCurrentSubscriptionTypeIDFn: func(ctx context.Context, businessID uint) (*uint, error) {
+			return uintPtr(999), nil
+		},
+		GetSubscriptionTypeFn: func(ctx context.Context, id uint) (*entities.SubscriptionType, error) {
+			return nil, nil
+		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusExpired}, nil
+		},
+	}
+
+	got, err := newSubsUseCase(repo, nil, nil).HasModuleAccess(context.Background(), 26, "orders")
+
+	require.NoError(t, err)
+	assert.False(t, got, "el plan del negocio ya no existe y la cuenta esta expired, no debe quedar abierto")
 }
 
 func TestHasModuleAccess_ModuloEnElPlan_SeVe(t *testing.T) {

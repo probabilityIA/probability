@@ -17,6 +17,7 @@ func (r *Repository) CreateSubscriptionType(ctx context.Context, subType *entiti
 		Price:                subType.Price,
 		BillingPeriod:        subType.BillingPeriod,
 		Active:               subType.Active,
+		Payable:              subType.Payable,
 		Features:             marshalModuleCodes(subType.ModuleCodes),
 		MaxEcommerceChannels: subType.MaxEcommerceChannels,
 		BusinessID:           subType.BusinessID,

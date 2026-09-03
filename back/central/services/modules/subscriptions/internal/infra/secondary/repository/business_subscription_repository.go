@@ -22,6 +22,7 @@ func (r *Repository) CreateSubscriptionAndActivate(ctx context.Context, subscrip
 		if paymentMethod == "" {
 			paymentMethod = entities.PaymentMethodWallet
 		}
+		subscription.PaymentMethod = paymentMethod
 
 		subDB := &models.BusinessSubscription{
 			BusinessID:         subscription.BusinessID,
