@@ -55,6 +55,7 @@ var (
 
 	// Pago
 	ErrOrderNotPaid            = errors.New("la orden no está pagada")
+	ErrOrderWithoutGuide       = errors.New("la orden todav\u00eda no tiene gu\u00eda generada")
 	ErrPaymentMethodNotAllowed = errors.New("el método de pago no está permitido")
 
 	// Orden

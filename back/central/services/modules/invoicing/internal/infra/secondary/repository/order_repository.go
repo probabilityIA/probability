@@ -43,6 +43,22 @@ func detectIsCOD(order *models.Order) bool {
 	return false
 }
 
+func hasGeneratedGuide(order *models.Order) bool {
+	for i := range order.Shipments {
+		shipment := order.Shipments[i]
+		if shipment.Status == "failed" || shipment.Status == "cancelled" {
+			continue
+		}
+		if shipment.TrackingNumber != nil && strings.TrimSpace(*shipment.TrackingNumber) != "" {
+			return true
+		}
+		if shipment.GuideURL != nil && strings.TrimSpace(*shipment.GuideURL) != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func codCarrierFeeFromOrder(order *models.Order) float64 {
 	if len(order.ShippingDetails) == 0 {
 		return 0
@@ -100,6 +116,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, orderID string) (*dtos.Or
 
 	err := r.db.Conn(ctx).
 		Preload("OrderItems.Product").
+		Preload("Shipments").
 		Where("id = ?", orderID).
 		First(&order).Error
 
@@ -168,6 +185,7 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 	}
 
 	orderData.CodCarrierFee = codCarrierFeeFromOrder(order)
+	orderData.HasGuide = hasGeneratedGuide(order)
 
 	if order.BusinessID != nil {
 		orderData.BusinessID = *order.BusinessID
@@ -281,6 +299,7 @@ func (r *Repository) GetInvoiceableOrders(ctx context.Context, filter dtos.Invoi
 
 	offset := (filter.Page - 1) * filter.PageSize
 	if err := base.
+		Preload("Shipments").
 		Order(fmt.Sprintf("%s %s", filter.SortColumn(), filter.SortOrder)).
 		Offset(offset).
 		Limit(filter.PageSize).

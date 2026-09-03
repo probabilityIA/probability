@@ -20,6 +20,7 @@ const (
 	// Filtros de pago
 	FilterTypePaymentStatus  FilterType = "payment_status"
 	FilterTypePaymentMethods FilterType = "payment_methods"
+	FilterTypeRequireGuide   FilterType = "require_guide"
 
 	// Filtros de orden
 	FilterTypeOrderTypes      FilterType = "order_types"
@@ -67,6 +68,7 @@ type FilterConfig struct {
 	PaymentStatus  *string `json:"payment_status,omitempty"`
 	PaymentMethods []uint  `json:"payment_methods,omitempty"`
 	InvoiceCOD     *bool   `json:"invoice_cod,omitempty"`
+	RequireGuide   *bool   `json:"require_guide,omitempty"`
 
 	// Orden
 	OrderTypes      []string `json:"order_types,omitempty"`      // ["delivery", "pickup"]

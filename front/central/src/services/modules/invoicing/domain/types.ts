@@ -116,6 +116,7 @@ export interface InvoicingFilters {
   payment_status?: 'paid' | 'unpaid' | 'partial';
   payment_methods?: number[];
   invoice_cod?: boolean;
+  require_guide?: boolean;
 
   // Filtros de orden
   order_types?: string[];

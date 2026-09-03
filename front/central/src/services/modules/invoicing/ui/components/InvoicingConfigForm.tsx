@@ -51,6 +51,7 @@ export function InvoicingConfigForm({
     auto_invoice: initialData?.auto_invoice ?? false,
     payment_status: (initialData?.filters?.payment_status as string) ?? '',
     invoice_cod: (initialData?.filters?.invoice_cod as boolean) ?? false,
+    require_guide: (initialData?.filters?.require_guide as boolean) ?? false,
     force_default_customer: initialData?.config?.force_default_customer ?? false,
     send_cash_receipt: initialData?.config?.send_cash_receipt ?? false,
     payment_type: (initialData?.config?.payment_type as string) ?? 'EF',
@@ -195,6 +196,9 @@ export function InvoicingConfigForm({
     }
     if (formData.invoice_cod) {
       filters.invoice_cod = true;
+    }
+    if (formData.require_guide) {
+      filters.require_guide = true;
     }
     const invoiceConfig: Record<string, any> = {};
     if (formData.force_default_customer) {
@@ -477,6 +481,25 @@ export function InvoicingConfigForm({
             onToggle={(v) => setFormData({ ...formData, invoice_cod: v })}
             disabled={loading}
           />
+
+          <FilaSwitch
+            titulo={'Facturar solo con gu\u00eda generada'}
+            descripcion={'La factura no se emite hasta que la orden tenga gu\u00eda. As\u00ed el env\u00edo y la comisi\u00f3n del carrier que quedan en la factura son los reales y no los estimados del checkout.'}
+            checked={formData.require_guide}
+            onToggle={(v) => setFormData({ ...formData, require_guide: v })}
+            disabled={loading}
+          >
+            {formData.require_guide && (
+              <p className="mt-2 rounded px-2 py-1.5 text-[11px] leading-snug" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, white)', color: 'color-mix(in srgb, var(--color-primary) 80%, black)' }}>
+                {'Activado: al entrar la orden no se factura. La factura sale sola apenas se genere la gu\u00eda.'}
+              </p>
+            )}
+            {!formData.require_guide && (
+              <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                {'Desactivado: se factura al entrar la orden, con el env\u00edo y la comisi\u00f3n estimados en el checkout.'}
+              </p>
+            )}
+          </FilaSwitch>
 
           {isSiigo && (
             <FilaSwitch

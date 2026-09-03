@@ -77,6 +77,15 @@ func (v *PaymentStatusValidator) Validate(order *dtos.OrderData) error {
 	return nil
 }
 
+type RequireGuideValidator struct{}
+
+func (v *RequireGuideValidator) Validate(order *dtos.OrderData) error {
+	if order.HasGuide {
+		return nil
+	}
+	return errors.ErrOrderWithoutGuide
+}
+
 type PaymentMethodsValidator struct {
 	AllowedMethods []uint
 }

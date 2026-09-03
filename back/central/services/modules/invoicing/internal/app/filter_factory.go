@@ -31,6 +31,9 @@ func CreateValidators(config *entities.FilterConfig, provider string) []FilterVa
 			Provider:       provider,
 		})
 	}
+	if config.RequireGuide != nil && *config.RequireGuide {
+		validators = append(validators, &RequireGuideValidator{})
+	}
 	if len(config.PaymentMethods) > 0 {
 		validators = append(validators, &PaymentMethodsValidator{AllowedMethods: config.PaymentMethods})
 	}

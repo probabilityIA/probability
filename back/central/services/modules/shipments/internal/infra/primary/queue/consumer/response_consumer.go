@@ -311,6 +311,8 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 						Str("carrier", carrier).
 						Msg("✅ guide_link and carrier synced to order")
 				}
+
+				c.publishGuideGeneratedForInvoicing(ctx, *shipment.OrderID, businessID)
 			}
 		}
 
@@ -362,6 +364,40 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 
 		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL, effectiveCarrier, notification)
 	}
+}
+
+func (c *ResponseConsumer) publishGuideGeneratedForInvoicing(ctx context.Context, orderID string, businessID uint) {
+	integrationID, err := c.repo.GetOrderIntegrationID(ctx, orderID)
+	if err != nil {
+		c.log.Warn(ctx).Err(err).
+			Str("order_id", orderID).
+			Msg("No se pudo resolver la integracion de la orden: no se avisa a facturacion que ya hay guia")
+		return
+	}
+
+	event := map[string]interface{}{
+		"event_type":     "order.guide_generated",
+		"order_id":       orderID,
+		"business_id":    businessID,
+		"integration_id": integrationID,
+		"timestamp":      time.Now().Format(time.RFC3339),
+	}
+
+	payload, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+
+	if err := c.queue.Publish(ctx, rabbitmq.QueueOrdersToInvoicing, payload); err != nil {
+		c.log.Warn(ctx).Err(err).
+			Str("order_id", orderID).
+			Msg("No se pudo publicar el evento de guia generada para facturacion")
+		return
+	}
+
+	c.log.Info(ctx).
+		Str("order_id", orderID).
+		Msg("Facturacion notificada: la orden ya tiene guia generada")
 }
 
 func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *TransportResponseMessage) {

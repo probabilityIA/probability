@@ -81,9 +81,10 @@ func (c *OrderConsumer) handleOrderEvent(message []byte) error {
 func (c *OrderConsumer) shouldProcessEvent(eventType string) bool {
 	// Eventos relevantes para facturación
 	relevantEvents := map[string]bool{
-		"order.created": true,
-		"order.paid":    true,
-		"order.updated": false, // Por ahora no procesamos actualizaciones
+		"order.created":         true,
+		"order.paid":            true,
+		"order.guide_generated": true,
+		"order.updated":         false,
 	}
 
 	return relevantEvents[eventType]

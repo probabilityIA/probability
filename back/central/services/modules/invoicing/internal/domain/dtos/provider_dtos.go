@@ -57,6 +57,7 @@ type OrderData struct {
 	CustomerDNI      string
 	IsPaid           bool
 	IsCOD            bool
+	HasGuide         bool
 	PaymentMethodID  uint
 	Invoiceable      bool
 	IsTest           bool

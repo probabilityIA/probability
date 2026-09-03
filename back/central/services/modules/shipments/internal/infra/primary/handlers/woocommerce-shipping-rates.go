@@ -88,14 +88,7 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	}
 
 	if resolved.FreeShippingEnabled && resolved.FreeShippingMin > 0 {
-		var subtotal float64
-		for _, it := range req.Contents {
-			qty := it.Quantity
-			if qty <= 0 {
-				qty = 1
-			}
-			subtotal += it.Price * float64(qty)
-		}
+		subtotal := wooContentValue(req)
 		if subtotal >= resolved.FreeShippingMin {
 			currency := req.Currency
 			if currency == "" {
@@ -157,6 +150,10 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	}
 	ratesList = filterRatesByAllowedCarriers(ratesList, allowedCarriers)
 
+	if req.COD {
+		ratesList = h.calibrateWooCODRates(ctx, carrier, businessID, payload, ratesList, wooContentValue(req), resolved.AlwaysInsure)
+	}
+
 	var quoteID uint
 	if len(ratesList) > 0 {
 		saved, saveErr := h.uc.Quotes.SaveQuote(ctx, domain.SaveQuoteInput{
@@ -202,6 +199,18 @@ func filterRatesByAllowedCarriers(ratesList []map[string]interface{}, allowed []
 		}
 	}
 	return out
+}
+
+func wooContentValue(req wooRateRequest) float64 {
+	var total float64
+	for _, it := range req.Contents {
+		qty := it.Quantity
+		if qty <= 0 {
+			qty = 1
+		}
+		total += it.Price * float64(qty)
+	}
+	return total
 }
 
 func normalizeDaneCode(code string) string {
@@ -298,14 +307,7 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 		street = strings.TrimSpace(street + " " + dest.Address2)
 	}
 
-	var contentValue float64
-	for _, it := range req.Contents {
-		qty := it.Quantity
-		if qty <= 0 {
-			qty = 1
-		}
-		contentValue += it.Price * float64(qty)
-	}
+	contentValue := wooContentValue(req)
 
 	pkg := map[string]interface{}{
 		"weight": pkgDims.Weight,
