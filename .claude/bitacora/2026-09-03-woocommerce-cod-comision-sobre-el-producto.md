@@ -166,6 +166,74 @@ prepago. El sondeo agrega ~2,5 s.
 - Config de facturacion 17: `require_guide: true`, `final_customer_when_no_id: true`.
 - EC2 `woo-store` (`i-0e41ea3a2f1747cd3`) encendida.
 
+## Los otros dos puntos de entrada del mismo error (misma fecha)
+
+El usuario probo desde el panel y encontro que **Interrapidisimo no aparece en
+las opciones contra entrega**. Es el mismo error de fondo en otro camino, uno
+que la primera verificacion no cubrio: se probo el checkout y la generacion de
+guia, no el cotizador del panel.
+
+**Cotizador del panel** (`POST /shipments/quote`): mandaba
+`codValue = cod_total` y `contentValue = subtotal`. Reproducido contra el API
+real, cambiando una sola variable:
+
+| codValue | contentValue | Interrapidisimo contra entrega |
+|---|---|---|
+| 45.000 | 45.000 | si |
+| 60.261 | 45.000 | **no** |
+| 60.261 | 60.261 | si |
+
+Es la causa raiz del 2026-08-06 aplicada al panel. Corregido con
+`alignCODContentValue`, que iguala `contentValue` a `codValue` en contra
+entrega, que ademas es lo que la guia termina declarando.
+
+**Retomar cotizacion** (`POST /shipments/quotes/:id/retry-guide`):
+`buildRetryPayload` no seteaba `codNetTarget` ni pasaba por `overrideCodValue`,
+asi que `applyCODCalibration` no corria y se declaraba el `codValue` crudo de la
+cotizacion. Tampoco llevaba `totalCost` ni `codCarrierFee`, que salen de la
+tarifa elegida. Y mandaba `external_order_id` con el UUID de 36 caracteres
+cuando EnvioClick rechaza mas de 28. Todo corregido, con tests.
+
+### Falsa alarma verificada: el valor que "no coincidia"
+
+En la orden 151 el panel mostraba Coordinadora en 10.700 contra los 9.145 del
+checkout. No es error de calculo: **el flete cambio de 6.391 a 8.550 en hora y
+media**. Comprobado cotizando con codValue de 45.000, 60.261 y con los dos
+iguales: el flete da 8.550 en los tres casos, asi que no depende del monto
+declarado. Es la deriva de tarifa del proveedor, que asume quien fija el precio
+en el checkout.
+
+## Prueba end to end desde el navegador (2026-09-03)
+
+Compra real en `woo.probabilityia.com.co` con Playwright, replicando las
+condiciones de la orden 14687 de Viga: producto de 45.000, Envigado,
+Calle39Dsur #25-50, contra entrega, Interrapidisimo.
+
+| | |
+|---|---|
+| Checkout mostro | Subtotal 45.000, Entrega 13.907, Total 58.907 |
+| Orden 158 en Probability | cod_total 58.907, comision 4.505, envio 9.402 |
+| Facturas al entrar | 0 (filtro require_guide) |
+| Sondeos de la guia | 54.402 -> 58.638 -> 58.906 |
+| Guia real | 240060500174, comision real 4.504 |
+| Neto al negocio | 58.906 - 4.504 = 54.402 = 45.000 + 9.402 (exacto) |
+| PDF Interrapidisimo | "Valor a cobrar: $58.906" |
+| Factura | FE-24446-1003, emitida 0,1 s despues de la guia, envio 13.907 |
+
+Con el codigo anterior esa orden habria cobrado 3.677 de comision y el negocio
+habria perdido unos 830 pesos.
+
+Detalles que costaron tiempo en montar la prueba:
+
+- Los productos de la tienda estaban en `outofstock` y WooCommerce los pinta
+  como "Leer mas": no se pueden agregar al carrito. Hay que reponer stock por
+  la REST API y devolverlo despues.
+- El plugin cotiza contra entrega **solo cuando cambia el metodo de pago**. Al
+  entrar al checkout cotiza prepago; hay que alternar a otro metodo y volver a
+  contra entrega para que dispare la cotizacion COD.
+- El bloque de checkout limpia los campos de envio cuando se re-renderiza por
+  el cambio de departamento: hay que rellenarlos despues.
+
 ## Pendiente
 
 - [x] Desplegar (`3312a469`).
@@ -176,4 +244,5 @@ prepago. El sondeo agrega ~2,5 s.
       manual ($5.400): es el que deberia absorber la deriva de tarifa entre el
       checkout y la guia.
 - [ ] Decidir si se activa `require_guide` en Viga (business 46).
-- [ ] `retry-guide` sin calibracion COD ni `external_order_id` acotado.
+- [x] `retry-guide` sin calibracion COD ni `external_order_id` acotado (corregido
+      y desplegado el 2026-09-03, commit `39c7f007`).
