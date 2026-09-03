@@ -52,6 +52,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://probability-media-assets.s3.us-east-1.amazonaws.com" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{if(localStorage.getItem('probability-dark-mode')==='true'){document.documentElement.classList.add('dark')}}catch(e){}})();`,

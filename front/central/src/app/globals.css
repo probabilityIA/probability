@@ -841,7 +841,7 @@ textarea:focus {
 
 /* DARK MODE (Login V2) */
 .login-form-dark {
-  background-color: #0f0a1e;
+  background-color: transparent;
   color: #ffffff;
 }
 
@@ -1068,7 +1068,7 @@ textarea:focus {
 
 /* LIGHT MODE (Login V3) */
 .login-form-light {
-  background-color: #ffffff;
+  background-color: transparent;
   color: #1a1a2e;
 }
 
@@ -1093,15 +1093,15 @@ textarea:focus {
 .login-title-light {
   font-size: 34px;
   font-weight: 800;
-  color: #1a1a2e;
+  color: #0b0b12;
   font-family: 'Plus Jakarta Sans', sans-serif;
   margin-bottom: 10px;
 }
 
 .login-subtitle-light {
   font-size: 15px;
-  font-weight: normal;
-  color: #71717a;
+  font-weight: 500;
+  color: #27272a;
   font-family: 'Inter', sans-serif;
   line-height: 1.5;
   max-width: 350px;
@@ -1117,7 +1117,7 @@ textarea:focus {
 .login-label-light {
   font-size: 13px;
   font-weight: 600;
-  color: #3f3f46;
+  color: #18181b;
   font-family: 'Inter', sans-serif;
 }
 
@@ -1129,8 +1129,8 @@ textarea:focus {
 
 .login-forgot-light {
   font-size: 12px;
-  font-weight: 500;
-  color: #7c3aed;
+  font-weight: 600;
+  color: #5b21b6;
   text-decoration: none;
   transition: color 200ms;
 }
@@ -1143,7 +1143,7 @@ textarea:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  background-color: #f4f4f5;
+  background-color: #ffffff;
   border: 1px solid #e4e4e7;
   border-radius: 12px;
   padding: 14px 16px;
@@ -1157,7 +1157,7 @@ textarea:focus {
 
 .login-input-wrapper-light input {
   flex: 1;
-  background: #f5f3ff !important;
+  background: transparent !important;
   border: none;
   color: #18181b;
   font-size: 14px;
@@ -1171,7 +1171,7 @@ textarea:focus {
 .login-input-wrapper-light input:-webkit-autofill:hover,
 .login-input-wrapper-light input:-webkit-autofill:focus,
 .login-input-wrapper-light input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #f5f3ff inset !important;
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
   -webkit-text-fill-color: #18181b !important;
 }
 
@@ -1182,7 +1182,7 @@ textarea:focus {
 .login-input-wrapper-light svg {
   width: 18px;
   height: 18px;
-  color: #a1a1aa;
+  color: #71717a;
   flex-shrink: 0;
 }
 
@@ -1193,7 +1193,7 @@ textarea:focus {
   padding: 0;
   display: flex;
   align-items: center;
-  color: #a1a1aa;
+  color: #71717a;
   transition: color 200ms;
 }
 
@@ -1284,19 +1284,19 @@ textarea:focus {
   gap: 24px;
   justify-content: center;
   font-size: 12px;
-  font-weight: 500;
-  color: #a1a1aa;
+  font-weight: 600;
+  color: #27272a;
   font-family: 'Inter', sans-serif;
 }
 
 .login-footer-light a {
-  color: #a1a1aa;
+  color: #27272a;
   text-decoration: none;
   transition: color 200ms;
 }
 
 .login-footer-light a:hover {
-  color: #71717a;
+  color: #1a1a2e;
 }
 
 /* ============================================

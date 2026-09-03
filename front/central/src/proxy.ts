@@ -24,6 +24,7 @@ export function proxy(request: NextRequest) {
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https: https://*.bold.co",
         "font-src 'self' data:",
+        "media-src 'self' https://probability-media-assets.s3.us-east-1.amazonaws.com",
         "connect-src 'self' http://localhost:3050 https://*.probabilityia.com.co wss://*.probabilityia.com.co https://cdn.shopify.com https://*.bold.co",
         "frame-src 'self' https://admin.shopify.com https://*.bold.co https://www.openstreetmap.org",
     ].join('; ');

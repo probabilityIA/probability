@@ -37,12 +37,13 @@ export * from './user-profile-modal';
 export * from './footer';
 export * from './shopify-iframe-detector';
 export * from './version-watcher';
+export * from './login-hero-image';
+export * from './login-bubble-card';
 export * from './super-admin-business-selector';
 export { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 export * from './theme-toggle';
 export * from './cod-includes-shipping-toggle';
 export * from './dashboard-panel';
-export * from './login-hero-panel';
 
 export type {
   TableColumn,

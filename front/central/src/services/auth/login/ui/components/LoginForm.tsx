@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { loginAction, getRolesPermissionsAction, loginServerAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
 import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-theme';
@@ -16,20 +16,7 @@ export const LoginForm = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
-    const [isDark, setIsDark] = useState(false);
     const [showDemoModal, setShowDemoModal] = useState(false);
-
-    useEffect(() => {
-        const htmlElement = document.documentElement;
-        setIsDark(htmlElement.classList.contains('dark'));
-
-        const observer = new MutationObserver(() => {
-            setIsDark(htmlElement.classList.contains('dark'));
-        });
-
-        observer.observe(htmlElement, { attributes: true });
-        return () => observer.disconnect();
-    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -118,44 +105,44 @@ export const LoginForm = () => {
         });
     };
 
-    const formClass = isDark ? 'login-form-dark' : 'login-form-light';
+    const formClass = 'login-form-light';
 
     return (
         <div className={`w-full max-w-sm ${formClass}`}>
             {/* Logo */}
-            <div className={isDark ? 'login-logo-dark' : 'login-logo-light'}>
+            <div className="login-logo-light">
                 <img
                     src="https://images-cam93.s3.us-east-1.amazonaws.com/logo+(2).png"
                     alt="ProbabilityIA Logo"
                     className="w-8 h-8"
                 />
-                <div className={isDark ? 'login-logo-text-dark' : 'login-logo-text-light'}>
+                <div className="login-logo-text-light">
                     ProbabilityIA
                 </div>
             </div>
 
             {/* Header */}
-            <div className={isDark ? 'login-header-dark' : 'login-header-light'}>
-                <h1 className={isDark ? 'login-title-dark' : 'login-title-light'}>
-                    {isDark ? 'Bienvenido de vuelta' : '¡Bienvenido!'}
+            <div className="login-header-light">
+                <h1 className="login-title-light">
+                    {'¡Bienvenido!'}
                 </h1>
-                <p className={isDark ? 'login-subtitle-dark' : 'login-subtitle-light'}>
-                    {isDark ? 'Ingresa tus credenciales para acceder al panel de gestión.' : 'Inicia sesión con tu correo electrónico y contraseña.'}
+                <p className="login-subtitle-light">
+                    {'Inicia sesión con tu correo electrónico y contraseña.'}
                 </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="w-full">
                 {/* Email Field */}
-                <div className={isDark ? 'login-form-group-dark' : 'login-form-group-light'}>
-                    <label className={isDark ? 'login-label-dark' : 'login-label-light'}>
-                        {isDark ? 'Correo electrónico' : 'Correo'}
+                <div className="login-form-group-light">
+                    <label className="login-label-light">
+                        Correo
                     </label>
-                    <div className={isDark ? 'login-input-wrapper-dark' : 'login-input-wrapper-light'}>
+                    <div className="login-input-wrapper-light">
                         <EnvelopeIcon className="w-5 h-5" />
                         <input
                             type="email"
-                            placeholder={isDark ? 'correo@ejemplo.com' : 'usuario@gmail.com'}
+                            placeholder="usuario@gmail.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -164,16 +151,12 @@ export const LoginForm = () => {
                 </div>
 
                 {/* Password Field */}
-                <div className={isDark ? 'login-form-group-dark' : 'login-form-group-light'}>
-                    {isDark ? (
-                        <label className="login-label-dark">Contraseña</label>
-                    ) : (
-                        <div className="login-label-row-light">
-                            <label className="login-label-light">Contraseña</label>
-                            <a href="/forgot-password" className="login-forgot-light">¿Olvidó su contraseña?</a>
-                        </div>
-                    )}
-                    <div className={isDark ? 'login-input-wrapper-dark' : 'login-input-wrapper-light'}>
+                <div className="login-form-group-light">
+                    <div className="login-label-row-light">
+                        <label className="login-label-light">Contraseña</label>
+                        <a href="/forgot-password" className="login-forgot-light">¿Olvidó su contraseña?</a>
+                    </div>
+                    <div className="login-input-wrapper-light">
                         <LockClosedIcon className="w-5 h-5" />
                         <input
                             type={showPassword ? 'text' : 'password'}
@@ -198,7 +181,7 @@ export const LoginForm = () => {
 
                 {/* Error */}
                 {error && (
-                    <div className={`p-3 rounded-lg text-sm mb-5 ${isDark ? 'bg-red-900/30 text-red-400 border border-red-800/50' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                    <div className="p-3 rounded-lg text-sm mb-5 bg-red-50 text-red-600 border border-red-200">
                         {error}
                     </div>
                 )}
@@ -207,17 +190,17 @@ export const LoginForm = () => {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className={isDark ? 'login-button-dark' : 'login-button-light'}
+                    className="login-button-light"
                 >
                     {isPending ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
                 </button>
 
-                <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="mt-4 text-center text-sm font-medium text-gray-800">
                     ¿No tienes cuenta?{' '}
                     <button
                         type="button"
                         onClick={() => setShowDemoModal(true)}
-                        className="font-semibold text-indigo-600 hover:text-indigo-500"
+                        className="font-bold text-[#5b21b6] hover:text-[#4c1d95]"
                     >
                         Crea tu demo gratis
                     </button>
@@ -227,7 +210,7 @@ export const LoginForm = () => {
             {showDemoModal && <DemoRegisterModal onClose={() => setShowDemoModal(false)} />}
 
             {/* Footer */}
-            <div className={isDark ? 'login-footer-dark' : 'login-footer-light'} style={{ marginTop: '32px' }}>
+            <div className="login-footer-light" style={{ marginTop: '32px' }}>
                 <a href="#">Términos</a>
                 <a href="#">Planes</a>
                 <a href="#">Contáctanos</a>
