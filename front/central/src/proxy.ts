@@ -1,7 +1,42 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const RUTAS_PUBLICAS = [
+    '/login',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-code',
+    '/verify-demo',
+    '/verify-email',
+    '/storefront/registro',
+    '/tienda',
+];
+
+function esRutaPublica(pathname: string): boolean {
+    if (pathname === '/') return true;
+    return RUTAS_PUBLICAS.some((ruta) => pathname === ruta || pathname.startsWith(`${ruta}/`));
+}
+
+function debeIrALogin(request: NextRequest): boolean {
+    const { pathname, searchParams } = request.nextUrl;
+
+    if (esRutaPublica(pathname)) return false;
+    if (searchParams.has('shop') || searchParams.has('embedded')) return false;
+    if (request.headers.get('x-shopify-shop-domain')) return false;
+
+    return !request.cookies.get('session_token')?.value;
+}
+
 export function proxy(request: NextRequest) {
+    if (debeIrALogin(request)) {
+        const destino = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+        const login = new URL('/login', request.url);
+        if (destino && destino !== '/home') {
+            login.searchParams.set('next', destino);
+        }
+        return NextResponse.redirect(login);
+    }
+
     const response = NextResponse.next();
 
     const shop = request.nextUrl.searchParams.get('shop') ||

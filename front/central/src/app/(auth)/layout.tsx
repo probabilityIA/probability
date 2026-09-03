@@ -53,7 +53,6 @@ export default function AuthLayout({
             : pathname;
           const esRaiz = !destino || destino === '/' || destino === '/home';
           router.push(esRaiz ? '/login' : `/login?next=${encodeURIComponent(destino)}`);
-          setTimeout(() => setLoading(false), 0);
           return;
         }
 
@@ -71,7 +70,6 @@ export default function AuthLayout({
             console.error('❌ Usuario business sin negocios asignados');
             TokenStorage.clearSession();
             router.push('/login?error=no_business');
-            setTimeout(() => setLoading(false), 0);
             return;
           }
         }
@@ -85,7 +83,6 @@ export default function AuthLayout({
         console.error('❌ Error checking authentication:', error);
         // En caso de error (ej: localStorage bloqueado en iframe), redirigir a login
         router.push('/login');
-        setTimeout(() => setLoading(false), 0);
       }
     } else {
       setTimeout(() => setLoading(false), 0);
@@ -119,7 +116,7 @@ export default function AuthLayout({
     }
   }
 
-  if (loading && !isPublicPage) {
+  if ((loading || !user) && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
