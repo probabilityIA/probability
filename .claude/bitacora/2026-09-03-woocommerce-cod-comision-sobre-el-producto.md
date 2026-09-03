@@ -234,6 +234,18 @@ Detalles que costaron tiempo en montar la prueba:
 - El bloque de checkout limpia los campos de envio cuando se re-renderiza por
   el cambio de departamento: hay que rellenarlos despues.
 
+## Cobertura de pruebas
+
+Los tres puntos de entrada quedaron con unitarios:
+`woocommerce_cod_calibration_test.go`, `quote_cod_content_test.go` y
+`retry_quote_guide_test.go`. El switch de facturacion y el evento que lo
+despierta, con `require_guide_test.go`, `guide_generated_event_test.go` y
+`order_consumer_events_test.go`.
+
+Ese ultimo separa dos eventos que se parecen y ya confundieron una vez durante
+el diagnostico: `order.guide_generated` (cola, dispara facturacion) y
+`shipment.guide_generated` (SSE, refresca la pantalla).
+
 ## Pendiente
 
 - [x] Desplegar (`3312a469`).

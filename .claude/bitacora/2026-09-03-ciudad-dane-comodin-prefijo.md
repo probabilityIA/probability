@@ -96,6 +96,29 @@ que el navegador servia la copia cacheada aunque los archivos en disco fueran lo
 nuevos. **Cualquier actualizacion futura del plugin habria tenido el mismo
 problema.** La version pasa a la constante `PROBABILITY_SHIPPING_VERSION`.
 
+## Alias explicito para Cartagena y Buga (mismo dia)
+
+Al quitar el comodin, "Cartagena" dejo de resolver: el nombre oficial DANE es
+CARTAGENA DE INDIAS y nadie lo escribe asi. Eran 179 ordenes en 3 meses, todas
+correctas. Se decidio agregar dos alias:
+
+```
+cartagena -> 13001  CARTAGENA DE INDIAS
+buga      -> 76111  GUADALAJARA DE BUGA
+```
+
+**No es volver a la adivinanza:** el alias corre SOLO si la busqueda estricta no
+encontro nada, asi que "Cartagena del Chaira" sigue resolviendo a Caqueta por su
+nombre completo. Son dos entradas verificables contra el DANE, no un patron.
+
+El de Buga corrige ademas un despacho equivocado activo: Guadalajara de Buga
+(76111) **es** Buga, Valle del Cauca, y el comodin mandaba esas ordenes a
+BUGALAGRANDE (76113), otro municipio a 40 km. Los dos empiezan con "Buga" y
+"BUGALAGRANDE" es el nombre mas corto, por eso ganaba. Si alguna de esas 20
+ordenes se devolvio o llego tarde, ahi esta la explicacion.
+
+Commit `c94c70c6`.
+
 ## Costo para clientes con plugin viejo
 
 El 93% de las ordenes no cambia. Se pierden las que resolvian por comodin: en 60
@@ -113,7 +136,8 @@ cliente listaba ciudades: verificado en la tienda real de Viga, donde
 ## Pendiente
 
 - [ ] Probar el buscador de punta a punta: al cerrar el ticket la tienda todavia
-      servia el JS cacheado.
+      servia el JS cacheado. **Sin unitarios tampoco**: es JS sobre el DOM de
+      WooCommerce Blocks y no hay runner en esa carpeta.
 - [ ] Actualizar el plugin en Moto Mello y Viga.
 - [ ] Checkout clasico: la ciudad sigue siendo texto libre.
 - [ ] El aviso de WooCommerce cuando no hay tarifas sale en ingles porque la
