@@ -59,9 +59,48 @@ func (r *Repository) GetCityDaneByName(ctx context.Context, city, province strin
 		Scan(&code).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", nil
+			return aliasCityDane(city), nil
 		}
 		return "", err
 	}
+	if code == "" {
+		return aliasCityDane(city), nil
+	}
 	return code, nil
+}
+
+var cityDaneAliases = map[string]string{
+	"cartagena": "13001",
+	"buga":      "76111",
+}
+
+func aliasCityDane(city string) string {
+	return cityDaneAliases[normalizeCityKey(city)]
+}
+
+func normalizeCityKey(city string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(strings.TrimSpace(city)) {
+		switch r {
+		case 'a', 'e', 'i', 'o', 'u', 'n', 'c':
+			b.WriteRune(r)
+		case '\u00e1':
+			b.WriteRune('a')
+		case '\u00e9':
+			b.WriteRune('e')
+		case '\u00ed':
+			b.WriteRune('i')
+		case '\u00f3':
+			b.WriteRune('o')
+		case '\u00fa', '\u00fc':
+			b.WriteRune('u')
+		case '\u00f1':
+			b.WriteRune('n')
+		default:
+			if (r >= 'a' && r <= 'z') || r == ' ' {
+				b.WriteRune(r)
+			}
+		}
+	}
+	return strings.Join(strings.Fields(b.String()), " ")
 }
