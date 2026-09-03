@@ -277,6 +277,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const codCarrierFee = order.shipment?.cod_carrier_fee || 0;
     const codNet = order.cod_total || 0;
     const codToCollect = codNet + codCarrierFee;
+    const envioNeto = (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0);
+    const envioMasComision = envioNeto + codCarrierFee;
 
     const paymentTone = (order.payment_details?.financial_status === 'paid' || order.is_paid)
         ? 'bg-emerald-600'
@@ -640,6 +642,14 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                     ? `${order.shipment?.carrier || 'Transportadora'} - contra entrega`
                                                     : 'Se liquida al confirmar el recaudo'}
                                             </p>
+                                            {codCarrierFee > 0 && envioMasComision > 0 && (
+                                                <p className="mt-1 text-[10px] leading-snug text-slate-500 dark:text-gray-400">
+                                                    Env&iacute;o + comisi&oacute;n:{' '}
+                                                    <span className="font-semibold tabular-nums text-slate-700 dark:text-gray-200">
+                                                        {formatCurrency(envioMasComision, order.currency)}
+                                                    </span>
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                     {isCodOrder && (

@@ -6,6 +6,9 @@
   contenido: el detalle vive en la alerta o documento que cada linea referencia.
   Consultar antes de preguntar "que sigue".
 - `.claude/alerts/` - pendientes urgentes. Revisar al iniciar sesion.
+- **Tickets** - todo bug, correccion o desarrollo se registra en un ticket y se
+  cierra comentandolo con el diagnostico y la correccion. Buscar el ticket antes
+  de empezar; si no existe, crearlo. Reglas: `.claude/rules/tickets.md`
 - `.claude/bitacora/` - historico de soportes, incidentes y correcciones, un
   archivo por caso. Buscar aca antes de investigar un problema parecido.
   Reglas: `.claude/rules/bitacora.md`

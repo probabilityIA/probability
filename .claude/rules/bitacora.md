@@ -6,6 +6,9 @@ acumulativo que crezca sin fin.
 
 Indice y estructura de una entrada: `.claude/bitacora/README.md`.
 
+Toda entrada de bitacora referencia el ticket del que salio, y el comentario de
+cierre del ticket referencia la entrada. Reglas: `.claude/rules/tickets.md`.
+
 ## Diferencia con `.claude/alerts/`
 
 | | alerts | bitacora |
