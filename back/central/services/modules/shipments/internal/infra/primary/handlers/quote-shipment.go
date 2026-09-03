@@ -64,6 +64,8 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 	}
 	delete(raw, "items")
 
+	alignCODContentValue(raw)
+
 	correlationID := uuid.New().String()
 
 	result, err := h.runQuote(c.Request.Context(), carrier, businessID, raw, correlationID, 30*time.Second)
@@ -140,6 +142,17 @@ type quoteResult struct {
 	Status string
 	Data   map[string]interface{}
 	Error  string
+}
+
+func alignCODContentValue(raw map[string]interface{}) {
+	codValue, ok := raw["codValue"].(float64)
+	if !ok || codValue <= 0 {
+		return
+	}
+	if contentValue, ok := raw["contentValue"].(float64); ok && contentValue == codValue {
+		return
+	}
+	raw["contentValue"] = codValue
 }
 
 func (h *Handlers) runQuote(ctx context.Context, carrier *domain.CarrierInfo, businessID uint, payload map[string]interface{}, correlationID string, timeout time.Duration) (*quoteResult, error) {

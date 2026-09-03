@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flujo de colas: facturacion</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#fff; --ink:#16181d; --muted:#5b6472; --line:#dde1e7;
+    --central:#5b46d6; --central-soft:#eeeaff;
+    --router:#0d7f8a; --router-soft:#e2f5f6;
+    --prov:#b4530a; --prov-soft:#fdeee1;
+    --queue:#0f5ea8; --queue-soft:#e5f0fb;
+    --ok:#1a7f47; --err:#b32436; --warn:#8a6d09;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1115; --panel:#171a21; --ink:#e8eaee; --muted:#98a2b3; --line:#2a2f3a;
+      --central-soft:#241d54; --router-soft:#0d2f33; --prov-soft:#38210c; --queue-soft:#10263d;
+      --central:#a99bff; --router:#4fd1c5; --prov:#f0a15e; --queue:#7cb8f5;
+      --ok:#5ed19a; --err:#ff8c9c; --warn:#e2c65c;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 20px 80px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:40px 0 12px;letter-spacing:-.01em}
+  h3{font-size:15px;margin:26px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  p{margin:10px 0}
+  .lead{color:var(--muted);margin:0 0 4px}
+  .meta{color:var(--muted);font-size:13px;margin:0 0 26px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:18px 0}
+  .scroll{overflow-x:auto}
+  svg{display:block;min-width:900px;margin:0 auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  code,.q{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
+  .q{background:var(--queue-soft);color:var(--queue);padding:1px 6px;border-radius:5px;white-space:nowrap}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.04em}
+  .t-ok{background:var(--queue-soft);color:var(--ok)}
+  .t-err{background:var(--queue-soft);color:var(--err)}
+  .t-warn{background:var(--queue-soft);color:var(--warn)}
+  ul{margin:8px 0;padding-left:20px} li{margin:5px 0}
+  .note{border-left:3px solid var(--warn);padding-left:14px;color:var(--muted);margin:14px 0}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Facturaci&oacute;n: flujo de colas entre el m&oacute;dulo central y las integraciones</h1>
+<p class="lead">C&oacute;mo viaja una factura desde que se decide emitirla hasta que el proveedor responde, y qui&eacute;n reintenta cuando falla.</p>
+<p class="meta">back/central &middot; <code>services/modules/invoicing</code> (central) y <code>services/integrations/invoicing</code> (integraciones)</p>
+
+<h2>Mapa general</h2>
+<div class="card scroll">
+<svg viewBox="0 0 1120 620" width="100%" height="620" role="img" aria-label="Diagrama del flujo de colas de facturacion">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- MODULO CENTRAL -->
+  <rect x="20" y="30" width="300" height="470" rx="14" fill="var(--central-soft)" stroke="var(--central)" stroke-width="1.5"/>
+  <text x="40" y="58" font-size="13" font-weight="700" fill="var(--central)">MODULO CENTRAL DE FACTURAS</text>
+  <text x="40" y="76" font-size="11" fill="var(--muted)">services/modules/invoicing</text>
+
+  <rect x="40" y="92" width="260" height="52" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="56" y="113" font-size="13" font-weight="600" fill="var(--ink)">OrderConsumer</text>
+  <text x="56" y="131" font-size="11" fill="var(--muted)">order.created / paid / guide_generated</text>
+
+  <rect x="40" y="156" width="260" height="52" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="56" y="177" font-size="13" font-weight="600" fill="var(--ink)">CreateInvoice + filtros</text>
+  <text x="56" y="195" font-size="11" fill="var(--muted)">require_guide, invoice_cod, montos...</text>
+
+  <rect x="40" y="220" width="260" height="52" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="56" y="241" font-size="13" font-weight="600" fill="var(--ink)">RetryConsumer</text>
+  <text x="56" y="259" font-size="11" fill="var(--muted)">ticker ~5 min, barre invoice_sync_logs</text>
+
+  <rect x="40" y="284" width="260" height="52" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="56" y="305" font-size="13" font-weight="600" fill="var(--ink)">BulkInvoiceConsumer</text>
+  <text x="56" y="323" font-size="11" fill="var(--muted)">facturacion masiva</text>
+
+  <rect x="40" y="348" width="260" height="70" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="56" y="369" font-size="13" font-weight="600" fill="var(--ink)">ResponseConsumer</text>
+  <text x="56" y="387" font-size="11" fill="var(--muted)">handleSuccess / handlePendingValidation</text>
+  <text x="56" y="403" font-size="11" fill="var(--muted)">handleError -&gt; status failed + error_message</text>
+
+  <rect x="40" y="430" width="260" height="50" rx="8" fill="var(--panel)" stroke="var(--line)" stroke-dasharray="4 3"/>
+  <text x="56" y="450" font-size="13" font-weight="600" fill="var(--ink)">Base de datos</text>
+  <text x="56" y="468" font-size="11" fill="var(--muted)">invoices &middot; invoice_sync_logs</text>
+
+  <!-- COLA DE ENTRADA -->
+  <rect x="352" y="92" width="150" height="34" rx="7" fill="var(--queue-soft)" stroke="var(--queue)"/>
+  <text x="427" y="114" font-size="11" text-anchor="middle" fill="var(--queue)" font-family="monospace">orders.events.invoicing</text>
+
+  <!-- COLA REQUESTS -->
+  <rect x="352" y="230" width="150" height="34" rx="7" fill="var(--queue-soft)" stroke="var(--queue)"/>
+  <text x="427" y="252" font-size="11" text-anchor="middle" fill="var(--queue)" font-family="monospace">invoicing.requests</text>
+
+  <!-- COLA RESPONSES -->
+  <rect x="352" y="366" width="150" height="34" rx="7" fill="var(--queue-soft)" stroke="var(--queue)"/>
+  <text x="427" y="388" font-size="11" text-anchor="middle" fill="var(--queue)" font-family="monospace">invoicing.responses</text>
+
+  <!-- ROUTER -->
+  <rect x="540" y="200" width="200" height="96" rx="12" fill="var(--router-soft)" stroke="var(--router)" stroke-width="1.5"/>
+  <text x="640" y="228" font-size="13" font-weight="700" text-anchor="middle" fill="var(--router)">ROUTER</text>
+  <text x="640" y="248" font-size="11" text-anchor="middle" fill="var(--muted)">integrations/invoicing/router</text>
+  <text x="640" y="270" font-size="11" text-anchor="middle" fill="var(--muted)">lee header.provider</text>
+  <text x="640" y="286" font-size="11" text-anchor="middle" fill="var(--muted)">reenvia el mensaje intacto</text>
+
+  <!-- PROVEEDORES -->
+  <rect x="800" y="30" width="300" height="470" rx="14" fill="var(--prov-soft)" stroke="var(--prov)" stroke-width="1.5"/>
+  <text x="820" y="58" font-size="13" font-weight="700" fill="var(--prov)">INTEGRACIONES DE FACTURACION</text>
+  <text x="820" y="76" font-size="11" fill="var(--muted)">services/integrations/invoicing</text>
+
+  <rect x="820" y="92" width="260" height="44" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="836" y="112" font-size="12.5" font-weight="600" fill="var(--ink)">siigo</text>
+  <text x="836" y="128" font-size="10.5" fill="var(--muted)" font-family="monospace">invoicing.siigo.requests</text>
+
+  <rect x="820" y="146" width="260" height="44" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="836" y="166" font-size="12.5" font-weight="600" fill="var(--ink)">softpymes</text>
+  <text x="836" y="182" font-size="10.5" fill="var(--muted)" font-family="monospace">invoicing.softpymes.requests</text>
+
+  <rect x="820" y="200" width="260" height="44" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="836" y="220" font-size="12.5" font-weight="600" fill="var(--ink)">factus</text>
+  <text x="836" y="236" font-size="10.5" fill="var(--muted)" font-family="monospace">invoicing.factus.requests</text>
+
+  <rect x="820" y="254" width="260" height="44" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="836" y="274" font-size="12.5" font-weight="600" fill="var(--ink)">alegra</text>
+  <text x="836" y="290" font-size="10.5" fill="var(--muted)" font-family="monospace">invoicing.alegra.requests</text>
+
+  <rect x="820" y="308" width="260" height="44" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="836" y="328" font-size="12.5" font-weight="600" fill="var(--ink)">world_office</text>
+  <text x="836" y="344" font-size="10.5" fill="var(--muted)" font-family="monospace">invoicing.world_office.requests</text>
+
+  <rect x="820" y="362" width="260" height="44" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="836" y="382" font-size="12.5" font-weight="600" fill="var(--ink)">helisa</text>
+  <text x="836" y="398" font-size="10.5" fill="var(--muted)" font-family="monospace">invoicing.helisa.requests</text>
+
+  <rect x="820" y="422" width="260" height="58" rx="8" fill="var(--panel)" stroke="var(--line)" stroke-dasharray="4 3"/>
+  <text x="836" y="442" font-size="12.5" font-weight="600" fill="var(--ink)">API del proveedor (HTTPS)</text>
+  <text x="836" y="459" font-size="10.5" fill="var(--muted)">2 reintentos, 3 s de espera</text>
+  <text x="836" y="474" font-size="10.5" fill="var(--muted)">timeout: siigo 90 s, softpymes 30 s</text>
+
+  <!-- FLECHAS -->
+  <g stroke-width="1.8" fill="none">
+    <g color="var(--central)">
+      <path d="M300 118 L352 111" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M427 126 L427 150 L300 172" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M300 190 L340 190 L340 236 L352 240" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M300 250 L352 249" stroke="currentColor" marker-end="url(#a)" stroke-dasharray="5 3"/>
+    </g>
+    <g color="var(--router)">
+      <path d="M502 247 L540 247" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M740 240 L780 240 L780 114 L820 114" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M740 248 L790 248 L790 168 L820 168" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M740 256 L800 256 L800 222" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M740 264 L790 264 L790 330 L820 330" stroke="currentColor" marker-end="url(#a)"/>
+    </g>
+    <g color="var(--ok)">
+      <path d="M820 470 L520 470 L502 400" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M352 383 L300 383" stroke="currentColor" marker-end="url(#a)"/>
+    </g>
+    <g color="var(--muted)">
+      <path d="M170 418 L170 430" stroke="currentColor" marker-end="url(#a)"/>
+      <path d="M120 272 L120 348" stroke="currentColor" marker-end="url(#a)" stroke-dasharray="4 3"/>
+    </g>
+  </g>
+
+  <text x="530" y="524" font-size="11" fill="var(--muted)">Linea punteada del RetryConsumer: relee la base y vuelve a publicar en invoicing.requests</text>
+  <text x="530" y="542" font-size="11" fill="var(--muted)">Todas las integraciones responden a UNA sola cola de retorno</text>
+</svg>
+<div class="legend">
+  <span><i class="dot" style="background:var(--central)"></i>M&oacute;dulo central</span>
+  <span><i class="dot" style="background:var(--router)"></i>Router</span>
+  <span><i class="dot" style="background:var(--prov)"></i>Integraciones</span>
+  <span><i class="dot" style="background:var(--queue)"></i>Colas RabbitMQ</span>
+</div>
+</div>
+
+<h2>Las colas, una por una</h2>
+<div class="card scroll">
+<table>
+<thead><tr><th>Cola</th><th>Publica</th><th>Consume</th><th>Para qu&eacute;</th></tr></thead>
+<tbody>
+<tr><td><span class="q">orders.events.invoicing</span></td><td>M&oacute;dulo <code>orders</code><br>M&oacute;dulo <code>shipments</code></td><td>OrderConsumer</td><td>Avisa que hay algo que facturar: <code>order.created</code>, <code>order.paid</code> y <code>order.guide_generated</code>.</td></tr>
+<tr><td><span class="q">invoicing.requests</span></td><td>M&oacute;dulo central</td><td>Router</td><td>Solicitud de emisi&oacute;n. Unica puerta de salida del central hacia las integraciones.</td></tr>
+<tr><td><span class="q">invoicing.&lt;proveedor&gt;.requests</span></td><td>Router</td><td>Cada integraci&oacute;n</td><td>Seis colas: siigo, softpymes, factus, alegra, world_office, helisa.</td></tr>
+<tr><td><span class="q">invoicing.responses</span></td><td>Todas las integraciones</td><td>ResponseConsumer</td><td>Retorno unico: exito, pendiente de validaci&oacute;n DIAN o error.</td></tr>
+<tr><td><span class="q">invoicing.bulk.create</span></td><td>M&oacute;dulo central</td><td>BulkInvoiceConsumer</td><td>Trabajos de facturaci&oacute;n masiva.</td></tr>
+<tr><td><span class="q">invoicing.events</span></td><td>M&oacute;dulo central</td><td class="t-warn">sin consumidor hoy</td><td>Eventos de factura publicados para quien quiera escucharlos. Hoy nadie los consume en el backend.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>El camino de ida</h2>
+<div class="card">
+<ol>
+<li>Entra un evento a <span class="q">orders.events.invoicing</span>. El <strong>OrderConsumer</strong> descarta los tipos que no le interesan.</li>
+<li><strong>CreateInvoice</strong> resuelve la config del negocio, verifica que no exista ya una factura v&aacute;lida y corre los filtros. Si alguno rechaza, no se crea nada y la orden queda sin factura.</li>
+<li>Se crea la fila en <code>invoices</code> y su <code>invoice_sync_log</code>, y se publica la solicitud en <span class="q">invoicing.requests</span>.</li>
+<li>El <strong>router</strong> lee <code>header.provider</code> y reenv&iacute;a el mensaje <em>sin transformarlo</em> a la cola del proveedor.</li>
+<li>La integraci&oacute;n arma el payload propio y llama al API del proveedor.</li>
+</ol>
+<p class="note">El router no reencola si el proveedor es desconocido: registra el error y descarta, para no dejar un mensaje girando para siempre. Si falla el reenv&iacute;o s&iacute; devuelve error, porque ah&iacute; reintentar tiene sentido.</p>
+</div>
+
+<h2>El camino de vuelta</h2>
+<div class="card scroll">
+<table>
+<thead><tr><th>Respuesta</th><th>Qu&eacute; hace el ResponseConsumer</th><th>Estado final</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-ok">SUCCESS</span></td><td>Guarda n&uacute;mero de factura, CUFE y <code>external_id</code>.</td><td><code>issued</code></td></tr>
+<tr><td><span class="tag t-warn">PENDING</span></td><td>La DIAN a&uacute;n no responde: agenda una nueva consulta de estado.</td><td><code>pending</code></td></tr>
+<tr><td><span class="tag t-err">ERROR</span></td><td>Guarda el mensaje del proveedor en <code>error_message</code> y agenda <code>next_retry_at</code>.</td><td><code>failed</code></td></tr>
+</tbody>
+</table>
+<p>Ese <code>failed</code> con <code>next_retry_at</code> es exactamente lo que el <strong>RetryConsumer</strong> busca en su barrido. Sin la respuesta, la factura se quedar&iacute;a en <code>processing</code> para siempre.</p>
+</div>
+
+<h2>Las dos capas de reintento</h2>
+<div class="card scroll">
+<table>
+<thead><tr><th>Capa</th><th>Qui&eacute;n</th><th>Qu&eacute; reintenta</th><th>Cadencia</th></tr></thead>
+<tbody>
+<tr><td>HTTP</td><td>Cliente de cada integraci&oacute;n</td><td>La llamada concreta al API</td><td>2 intentos, 3 s de espera</td></tr>
+<tr><td>Factura</td><td>RetryConsumer del m&oacute;dulo central</td><td>La emisi&oacute;n completa, republicando en <span class="q">invoicing.requests</span></td><td>Ticker ~5 min (jitter 60 s). Backoff 15 min &rarr; 6 h, lotes de 50</td></tr>
+</tbody>
+</table>
+<p>El RetryConsumer <strong>no escucha ninguna cola</strong>: consulta la base.</p>
+<pre><code>status IN ('failed','pending')
+  AND next_retry_at &lt;= now()
+  AND retry_count &lt; max_retries
+ORDER BY next_retry_at ASC</code></pre>
+<p>Es agn&oacute;stico del proveedor: solo vuelve a disparar la operaci&oacute;n y el enrutamiento se resuelve otra vez en el router. Retira del ciclo los errores que no cambian por reintentar: <code>ErrProviderNotConfigured</code>, <code>ErrInvoiceNotFound</code>, <code>ErrMaxRetriesExceeded</code>, <code>ErrRetryNotAllowed</code>, <code>ErrSyncLogNotFound</code>.</p>
+</div>
+
+<h2>El evento de gu&iacute;a generada</h2>
+<div class="card">
+<p>Agregado el 2026-09-03 junto con el filtro <code>require_guide</code>. Antes, facturaci&oacute;n solo se enteraba de una orden al crearse o pagarse; que se generara una gu&iacute;a le era invisible.</p>
+<pre><code>EnvioClick confirma la guia
+  -&gt; ResponseConsumer de shipments sincroniza la guia a la orden
+  -&gt; publica order.guide_generated en orders.events.invoicing
+  -&gt; OrderConsumer de facturacion -&gt; DispatchOrderInvoicing
+  -&gt; el filtro require_guide ve HasGuide = true -&gt; emite</code></pre>
+<p>Medido en produccion (negocio Demo, orden 151): <strong>131 ms</strong> entre la respuesta de la transportadora y la factura emitida.</p>
+<p class="note">Solo lo dispara la generaci&oacute;n de gu&iacute;a v&iacute;a EnvioClick. Una gu&iacute;a que llega por webhook del canal (Shopify, Mercado Env&iacute;os) no publica este evento, as&iacute; que <code>require_guide</code> no debe activarse en negocios cuya log&iacute;stica es del canal.</p>
+</div>
+
+<h2>Puntos fr&aacute;giles conocidos</h2>
+<div class="card">
+<ul>
+<li><strong>El OrderConsumer hace <code>return nil</code> ante cualquier error</strong>: confirma el mensaje y lo descarta. Es deliberado, para no caer en el bucle caliente de <code>.claude/rules/colas-errores-permanentes.md</code>. La red de seguridad es la factura en <code>failed</code>, que s&iacute; se reintenta.</li>
+<li><strong>Si el proceso muere antes de crear la factura y su sync log</strong>, no queda rastro y el barrido no tiene qu&eacute; encontrar. Es el &uacute;nico hueco real del circuito.</li>
+<li><strong><code>shared/rabbitmq</code> no tiene l&iacute;mite de reintentos, backoff ni DLQ.</strong> Un handler que devuelva error reencola al instante y sin tope. Pendiente de fondo, com&uacute;n a todos los consumers.</li>
+<li><strong>Un backend local apuntado al RDS de producci&oacute;n arrastra este flujo</strong>: su RetryConsumer barre facturas reales y compite por las colas. Ver la bit&aacute;cora del backend zombie.</li>
+</ul>
+</div>
+
+<p class="meta" style="margin-top:34px">Reglas relacionadas: <code>.claude/rules/colas-errores-permanentes.md</code> &middot; <code>.claude/rules/backend-conventions.md</code> &middot; <code>.claude/rules/architecture.md</code></p>
+
+</div>
+</body>
+</html>

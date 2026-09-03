@@ -114,6 +114,7 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 	}
 
 	payload := buildRetryPayload(quote, recipient, orderUUID)
+	h.overrideCodValue(c, payload, buildShipmentRequest(payload, carrier))
 
 	var shipmentID uint
 	var retryConflict *guideConflict
@@ -304,10 +305,50 @@ func buildRetryPayload(quote *domain.SavedQuote, r *domain.OrderRecipient, order
 	payload["idRate"] = *quote.SelectedIDRate
 	payload["carrier"] = quote.SelectedCarrier
 	payload["order_uuid"] = orderUUID
-	payload["external_order_id"] = orderUUID
-	payload["myShipmentReference"] = orderUUID
+
+	reference := shipmentReference(quote.OrderNumber, orderUUID)
+	payload["external_order_id"] = reference
+	payload["myShipmentReference"] = reference
+
+	if rate := findRateByID(quote.Rates, *quote.SelectedIDRate); rate != nil {
+		alwaysInsure, _ := quote.RequestPayload["insurance"].(bool)
+		payload["totalCost"] = rateGuideCost(rate, alwaysInsure)
+		if fee := toFloat(rate["codCarrierFee"]); fee > 0 {
+			payload["codCarrierFee"] = fee
+		}
+	}
 
 	return payload
+}
+
+const maxShipmentReferenceLen = 28
+
+func shipmentReference(orderNumber, orderUUID string) string {
+	reference := strings.TrimSpace(orderNumber)
+	if reference == "" {
+		reference = orderUUID
+	}
+	if len(reference) > maxShipmentReferenceLen {
+		reference = reference[:maxShipmentReferenceLen]
+	}
+	return reference
+}
+
+func findRateByID(rates []map[string]interface{}, idRate int64) map[string]interface{} {
+	for _, rate := range rates {
+		if int64(toFloat(rate["idRate"])) == idRate {
+			return rate
+		}
+	}
+	return nil
+}
+
+func rateGuideCost(rate map[string]interface{}, alwaysInsure bool) float64 {
+	cost := toFloat(rate["flete"]) + toFloat(rate["minimumInsurance"]) + toFloat(rate["codProbabilityMargin"])
+	if alwaysInsure {
+		cost += toFloat(rate["extraInsurance"])
+	}
+	return cost
 }
 
 func asString(v interface{}) string {

@@ -119,3 +119,54 @@ func TestMissingRecipientData(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildRetryPayload_ReferenciaAcotadaA28(t *testing.T) {
+	quote := &domain.SavedQuote{
+		SelectedIDRate: i64ptr(1),
+		OrderNumber:    "VIG-0136",
+		RequestPayload: map[string]interface{}{},
+	}
+	recipient := &domain.OrderRecipient{FirstName: "A", Email: "a@b.co", Phone: "3155707677", Address: "calle 1", City: "BUGA"}
+
+	payload := buildRetryPayload(quote, recipient, "6033f6f8-3991-491a-a1a9-1529b4360799")
+
+	if payload["external_order_id"] != "VIG-0136" {
+		t.Fatalf("se esperaba el numero de orden como referencia, obtenido: %v", payload["external_order_id"])
+	}
+
+	quote.OrderNumber = ""
+	payload = buildRetryPayload(quote, recipient, "6033f6f8-3991-491a-a1a9-1529b4360799")
+
+	ref, _ := payload["external_order_id"].(string)
+	if len(ref) > 28 {
+		t.Fatalf("EnvioClick rechaza mas de 28 caracteres, se envio %d: %q", len(ref), ref)
+	}
+}
+
+func TestBuildRetryPayload_LlevaCostoYComisionDeLaTarifaElegida(t *testing.T) {
+	quote := &domain.SavedQuote{
+		SelectedIDRate: i64ptr(25828313),
+		RequestPayload: map[string]interface{}{"insurance": true},
+		Rates: []map[string]interface{}{
+			{"idRate": float64(99999999), "flete": 1.0},
+			{
+				"idRate":               float64(25828313),
+				"flete":                6391.0,
+				"minimumInsurance":     650.0,
+				"extraInsurance":       604.0,
+				"codProbabilityMargin": 1500.0,
+				"codCarrierFee":        6116.0,
+			},
+		},
+	}
+	recipient := &domain.OrderRecipient{FirstName: "A", Email: "a@b.co", Phone: "3155707677", Address: "calle 1", City: "BUGA"}
+
+	payload := buildRetryPayload(quote, recipient, "order-uuid")
+
+	if payload["totalCost"] != 9145.0 {
+		t.Fatalf("el costo de la guia debe salir de la tarifa elegida (6391+650+604+1500), obtenido: %v", payload["totalCost"])
+	}
+	if payload["codCarrierFee"] != 6116.0 {
+		t.Fatalf("se esperaba la comision de la tarifa elegida, obtenida: %v", payload["codCarrierFee"])
+	}
+}
