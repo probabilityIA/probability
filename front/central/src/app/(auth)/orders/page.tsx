@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
 
 import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
@@ -15,6 +16,10 @@ import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
 
 export default function OrdersPage() {
     const { setActionButtons } = useNavbarActions();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const deepLinkedOrderId = searchParams.get('order_id');
+    const deepLinkHandled = useRef<string | null>(null);
     const { selectedBusinessId } = useOrdersBusiness();
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -56,6 +61,29 @@ export default function OrdersPage() {
 
         return () => setActionButtons(null);
     }, [setActionButtons]);
+
+    useEffect(() => {
+        if (!deepLinkedOrderId || deepLinkHandled.current === deepLinkedOrderId) return;
+        deepLinkHandled.current = deepLinkedOrderId;
+
+        let cancelado = false;
+        (async () => {
+            try {
+                const response = await getOrderByIdAction(deepLinkedOrderId);
+                if (cancelado) return;
+                if (response.success && response.data) {
+                    setSelectedOrder(response.data);
+                    setViewMode('details');
+                    setShowViewModal(true);
+                }
+            } catch {
+            } finally {
+                if (!cancelado) router.replace('/orders');
+            }
+        })();
+
+        return () => { cancelado = true; };
+    }, [deepLinkedOrderId, router]);
 
     const handleView = async (order: Order) => {
         try {

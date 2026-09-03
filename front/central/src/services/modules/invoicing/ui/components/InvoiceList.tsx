@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
+import Link from 'next/link';
 import { EyeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
@@ -588,11 +589,23 @@ export const InvoiceList = forwardRef(function InvoiceList(
       label: 'Orden',
       render: (_: unknown, invoice: Invoice) => (
         <div>
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            {invoice.order_number || '—'}
-          </div>
+          {invoice.order_id ? (
+            <Link
+              href={`/orders?order_id=${invoice.order_id}`}
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => e.stopPropagation()}
+              title={`Ver la orden ${invoice.order_number || ''} en el m\u00f3dulo de \u00f3rdenes`}
+              className="text-sm font-semibold text-[var(--color-primary)] hover:underline"
+            >
+              {invoice.order_number || invoice.order_id.substring(0, 8)}
+            </Link>
+          ) : (
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              {invoice.order_number || '\u2014'}
+            </div>
+          )}
           <div className="text-xs text-gray-400 font-mono">
-            {invoice.order_id ? `${invoice.order_id.substring(0, 8)}...` : '—'}
+            {invoice.order_id ? `${invoice.order_id.substring(0, 8)}...` : '\u2014'}
           </div>
           {invoice.source_channel_name && (
             <span className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
