@@ -108,12 +108,72 @@ Tests: `woocommerce_cod_calibration_test.go` (Interrapidisimo y Coordinadora en
   que la factura no podia saber la comision real. Facturar despues no recupera un
   peso, porque el monto se lo prometio la tienda al comprador en el checkout.
 
+## Verificacion en produccion (2026-09-03, business 26 Demo)
+
+Desplegado (commit `3312a469`, Backend y Frontend CI/CD en verde). Probado con la
+tienda de pruebas `woo.probabilityia.com.co` contra produccion, con guias
+**reales** a EnvioClick, y la facturacion Siigo apuntando al mock
+(`back-testing:9095`, integracion 198 con `is_testing: true`).
+
+Orden #150, Interrapidisimo, guia real 240060488806:
+
+| | |
+|---|---|
+| Checkout | flete 6.518 + seguro 1.384 + margen 1.500 + comision 4.505 = 13.907 -> cobra 58.907 |
+| Sondeos de la guia | 54.402 -> 58.638 -> 58.906 |
+| Guia | declarado 58.906, comision real 4.504, costo 9.402 |
+| Neto | 58.906 - 4.504 = 54.402 = 45.000 + 9.402 (exacto) |
+| PDF Interrapidisimo | "Valor a cobrar: $58.906" |
+| Factura mock | FE-24446-1001, Envio 13.907, pago 58.907 |
+
+La comision cotizada en el checkout (4.505) y la cobrada por el carrier (4.504)
+difieren en **1 peso**. Con el codigo anterior habrian sido 3.677 contra 4.504.
+
+Orden #151, Coordinadora, guia real 84151734575: checkout 15.261 -> cobra 60.261;
+sondeos 54.145 -> 60.261 (pendiente 0, pega el minimo); neto 60.261 - 6.116 =
+54.145 = 45.000 + 9.145 exacto; PDF "Valor a recaudar: 60,261"; factura
+FE-24446-1002.
+
+Wallet debitado 18.547 = 9.402 + 9.145, exacto. Las dos guias quedaron canceladas
+en EnvioClick.
+
+**Switch `require_guide`:** #150 entro antes de activarlo y se facturo a los 3
+segundos sin guia; #151 entro con el switch activo, quedo sin factura, y la
+factura salio sola **38 segundos despues de generarse la guia**, disparada por
+`order.guide_generated`.
+
+Latencia del checkout: 8 s en contra entrega (dos cotizaciones) contra 5,5 s en
+prepago. El sondeo agrega ~2,5 s.
+
+### Hallazgos secundarios de la prueba
+
+- **`retry-guide` no calibra.** `POST /shipments/quotes/:id/retry-guide` ->
+  `buildRetryPayload` no setea `codNetTarget`, asi que `applyCODCalibration`
+  no corre y se declara el `codValue` crudo de la cotizacion (el valor de los
+  productos). Ademas manda `external_order_id` con el UUID de 36 caracteres y
+  EnvioClick rechaza mas de 28. Ese camino esta roto para contra entrega.
+- **Cancelar una guia no devuelve el saldo al wallet** (los 18.547 siguen
+  descontados de Demo). Relacionado con
+  `.claude/alerts/wallet-cobro-guias-no-atomico.md`.
+- **`pickupDate` es obligatorio** en el payload de generacion; sin el EnvioClick
+  responde 422 "el campo debe ser de tipo fecha AAAA-MM-DD".
+
+### Configuracion que quedo cambiada en Demo
+
+- Integracion 197 (Woo): `INTERRAPIDISIMO` agregado a `allowed_carriers_cod`.
+- Integracion 198 (Siigo mock): `seller_id = 629` (faltaba, y por eso fallaba
+  la primera factura).
+- Config de facturacion 17: `require_guide: true`, `final_customer_when_no_id: true`.
+- EC2 `woo-store` (`i-0e41ea3a2f1747cd3`) encendida.
+
 ## Pendiente
 
-- [ ] Desplegar.
+- [x] Desplegar (`3312a469`).
 - [ ] Las 3 ordenes del 03/09 (14685, 14687, 14689) siguen sin recaudar. Se
       pueden cancelar y regenerar despues del deploy para no perder los $4.439.
 - [ ] FV-2-27 ya esta ante la DIAN: nota credito o factura adicional por $1.213.
 - [ ] Revisar el margen COD de Viga en WooCommerce ($1.500) contra el del flujo
       manual ($5.400): es el que deberia absorber la deriva de tarifa entre el
       checkout y la guia.
+- [ ] Decidir si se activa `require_guide` en Viga (business 46).
+- [ ] `retry-guide` sin calibracion COD ni `external_order_id` acotado.
