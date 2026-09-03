@@ -16,6 +16,7 @@ function LoginContent() {
   const router = useRouter();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     const error = searchParams.get('error');
@@ -23,6 +24,16 @@ function LoginContent() {
       console.warn('Usuario no tiene negocio asignado. Contacte al administrador.');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      setRevealed(true);
+      return;
+    }
+    const id = setTimeout(() => setRevealed(true), 2200);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const htmlElement = document.documentElement;
@@ -84,31 +95,31 @@ function LoginContent() {
 
   return (
     <div className="h-screen w-screen relative overflow-hidden">
-      {/* Portada a pantalla completa */}
-      <div className={`absolute inset-0 ${isDark ? 'bg-[#14093a]' : 'bg-[#F0EEFF]'}`}>
+      {/* El video arranca a pantalla completa y se corre a la derecha cuando entra el panel */}
+      <div
+        className={`absolute top-0 right-0 bottom-0 overflow-hidden ${isDark ? 'bg-[#14093a]' : 'bg-[#F0EEFF]'} ${revealed ? 'lg:left-[calc(min(42vw,560px)-56px)]' : 'left-0'}`}
+        style={{ transition: 'left 1000ms cubic-bezier(0.16, 1, 0.3, 1)' }}
+      >
         <LoginHeroImage />
       </div>
-
-      {/* Velo para que el formulario se lea sobre cualquier foto */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: isDark
-            ? 'radial-gradient(120% 90% at 50% 50%, rgba(10,6,26,0.55) 0%, rgba(10,6,26,0.78) 100%)'
-            : 'radial-gradient(120% 90% at 50% 50%, rgba(255,255,255,0.15) 0%, rgba(60,40,110,0.32) 100%)',
-        }}
-      />
 
       {/* Theme Toggle */}
       <div className="fixed top-5 left-5 z-50">
         <ThemeToggle />
       </div>
 
-      {/* Login emergiendo como burbuja */}
-      <div className="absolute inset-0 z-30 flex items-center justify-center px-5 py-8 overflow-y-auto">
-        <LoginBubbleCard isDark={isDark}>
+      {/* Panel del login: entra desde la izquierda y le cede el resto al video */}
+      <div className="absolute inset-0 z-30 flex pointer-events-none">
+        <LoginBubbleCard isDark={isDark} visible={revealed}>
           <LoginForm />
         </LoginBubbleCard>
+      </div>
+
+      {/* Enlaces al pie, sobre el video */}
+      <div className="absolute bottom-5 left-0 right-0 z-40 flex justify-center lg:justify-end lg:pr-[6vw] gap-6 text-xs font-semibold text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">
+        <a href="#" className="hover:text-white transition-colors">{'T\u00e9rminos'}</a>
+        <a href="#" className="hover:text-white transition-colors">Planes</a>
+        <a href="#" className="hover:text-white transition-colors">{'Cont\u00e1ctanos'}</a>
       </div>
     </div>
   );

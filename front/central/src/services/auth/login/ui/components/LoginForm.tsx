@@ -9,6 +9,10 @@ import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/
 import { getActionError } from '@/shared/utils/action-result';
 import { DemoRegisterModal } from './DemoRegisterModal';
 
+const MEDIA_BASE =
+    process.env.NEXT_PUBLIC_S3_BASE_URL ||
+    'https://probability-media-assets.s3.us-east-1.amazonaws.com';
+
 export const LoginForm = () => {
     const router = useRouter();
     const [email, setEmail] = useState('');
@@ -111,11 +115,12 @@ export const LoginForm = () => {
         <div className={`w-full max-w-sm ${formClass}`}>
             {/* Logo */}
             <div className="login-logo-light">
-                <img
-                    src="https://images-cam93.s3.us-east-1.amazonaws.com/logo+(2).png"
-                    alt="ProbabilityIA Logo"
-                    className="w-8 h-8"
-                />
+                <div className="login-logo-mark">
+                    <img
+                        src={`${MEDIA_BASE}/public/brand/logo-mark-white.png`}
+                        alt="ProbabilityIA"
+                    />
+                </div>
                 <div className="login-logo-text-light">
                     ProbabilityIA
                 </div>
@@ -126,9 +131,6 @@ export const LoginForm = () => {
                 <h1 className="login-title-light">
                     {'¡Bienvenido!'}
                 </h1>
-                <p className="login-subtitle-light">
-                    {'Inicia sesión con tu correo electrónico y contraseña.'}
-                </p>
             </div>
 
             {/* Form */}
@@ -210,11 +212,6 @@ export const LoginForm = () => {
             {showDemoModal && <DemoRegisterModal onClose={() => setShowDemoModal(false)} />}
 
             {/* Footer */}
-            <div className="login-footer-light" style={{ marginTop: '32px' }}>
-                <a href="#">Términos</a>
-                <a href="#">Planes</a>
-                <a href="#">Contáctanos</a>
-            </div>
         </div>
     );
 };
