@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { EyeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
@@ -51,6 +52,10 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const deepLinkedInvoiceId = searchParams.get('invoice_id');
+  const deepLinkHandled = useRef<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRetryFailedModal, setShowRetryFailedModal] = useState(false);
@@ -229,6 +234,27 @@ export const InvoiceList = forwardRef(function InvoiceList(
     setSelectedInvoice(invoice);
     setShowDetailModal(true);
   };
+
+  useEffect(() => {
+    if (!deepLinkedInvoiceId || deepLinkHandled.current === deepLinkedInvoiceId) return;
+    deepLinkHandled.current = deepLinkedInvoiceId;
+
+    let cancelado = false;
+    (async () => {
+      try {
+        const invoice = await getInvoiceByIdAction(Number(deepLinkedInvoiceId));
+        if (cancelado || !invoice) return;
+        setSelectedInvoice(invoice);
+        setShowDetailModal(true);
+      } catch {
+        showToast('No se pudo abrir la factura', 'error');
+      } finally {
+        if (!cancelado) router.replace('/invoicing/invoices');
+      }
+    })();
+
+    return () => { cancelado = true; };
+  }, [deepLinkedInvoiceId, router, showToast]);
 
   const handleRetryFailed = async () => {
     try {

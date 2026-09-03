@@ -4,6 +4,7 @@ import { Order, OrderHistory } from '../../domain/types';
 import MapComponent from '@/shared/ui/MapComponent';
 import { getAIRecommendationAction, getOrderByIdAction, getOrderHistoryAction, updateOrderAction, requestWhatsAppConfirmationAction, checkWhatsAppIntegrationAction } from '../../infra/actions';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import { ChangeStatusModal } from './ChangeStatusModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
@@ -1057,6 +1058,15 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 <p className="mt-0.5 text-[13px] font-medium text-slate-800 dark:text-white">
                                                     {order.invoice && order.invoice.status === 'issued' ? 'Emitida' : 'Sin emitir'}
                                                 </p>
+                                                {order.invoice?.id ? (
+                                                    <Link
+                                                        href={`/invoicing/invoices?invoice_id=${order.invoice.id}`}
+                                                        title="Ver esta factura en el m&oacute;dulo de facturaci&oacute;n"
+                                                        className="mt-0.5 inline-block text-[13px] font-semibold text-[var(--color-primary)] hover:underline"
+                                                    >
+                                                        {order.invoice.invoice_number || `ID ${order.invoice.id}`}
+                                                    </Link>
+                                                ) : null}
                                             </div>
                                             <span
                                                 className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${order.invoice && order.invoice.status === 'issued'
