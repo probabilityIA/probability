@@ -6,10 +6,9 @@ const DELAY_MS = 900;
 
 interface Props {
     children: ReactNode;
-    isDark?: boolean;
 }
 
-export function LoginBubbleCard({ children, isDark = false }: Props) {
+export function LoginBubbleCard({ children }: Props) {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
@@ -27,11 +26,8 @@ export function LoginBubbleCard({ children, isDark = false }: Props) {
 
     return (
         <div
-            className={`w-full max-w-[380px] rounded-2xl px-7 py-8 ${
-                isDark ? 'bg-[#15102b]' : 'bg-white'
-            }`}
+            className="w-full max-w-[380px] px-2 py-2 text-gray-900"
             style={{
-                boxShadow: '0 24px 70px rgba(0, 0, 0, 0.35)',
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(18px)',
                 transition: 'opacity 700ms ease-out, transform 800ms cubic-bezier(0.16, 1, 0.3, 1)',
