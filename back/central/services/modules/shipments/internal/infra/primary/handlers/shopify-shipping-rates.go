@@ -96,6 +96,19 @@ func (h *Handlers) ShopifyShippingRates(c *gin.Context) {
 
 	destDane, _ := h.uc.Repo().GetCityDaneByName(ctx, req.Rate.Destination.City, req.Rate.Destination.Province)
 	if destDane == "" {
+		sugerencias := h.citySuggestions(ctx, req.Rate.Destination.City, req.Rate.Destination.Province)
+		nombres := make([]string, 0, len(sugerencias))
+		for _, s := range sugerencias {
+			nombres = append(nombres, s.Name)
+		}
+		h.logCot().Warn(ctx).
+			Uint("business_id", businessID).
+			Uint("integration_id", uint(integrationID64)).
+			Str("ciudad", req.Rate.Destination.City).
+			Str("departamento", req.Rate.Destination.Province).
+			Strs("sugerencias", nombres).
+			Msg("Sin tarifas: no se pudo resolver la ciudad del destino")
+
 		c.JSON(http.StatusOK, emptyRates)
 		return
 	}
@@ -106,6 +119,18 @@ func (h *Handlers) ShopifyShippingRates(c *gin.Context) {
 	correlationID := uuid.New().String()
 	result, err := h.runQuote(ctx, carrier, businessID, payload, correlationID, 8*time.Second)
 	if err != nil || result.Status != quoteStatusSuccess {
+		estado := ""
+		if result != nil {
+			estado = result.Status
+		}
+		h.logCot().Error(ctx).Err(err).
+			Uint("business_id", businessID).
+			Uint("integration_id", uint(integrationID64)).
+			Str("correlation_id", correlationID).
+			Str("estado", estado).
+			Str("dane_destino", destDane).
+			Msg("Sin tarifas: la cotizacion al transportador no respondio")
+
 		c.JSON(http.StatusOK, emptyRates)
 		return
 	}
@@ -134,6 +159,22 @@ func (h *Handlers) ShopifyShippingRates(c *gin.Context) {
 	}
 
 	rates := mapQuoteRatesToShopify(ratesList, currency, quoteID)
+
+	evento := h.logCot().Info(ctx)
+	if len(rates) == 0 {
+		evento = h.logCot().Warn(ctx)
+	}
+	evento.
+		Uint("business_id", businessID).
+		Uint("integration_id", uint(integrationID64)).
+		Str("correlation_id", correlationID).
+		Uint("quote_id", quoteID).
+		Str("ciudad", req.Rate.Destination.City).
+		Str("dane_destino", destDane).
+		Int("tarifas", len(rates)).
+		Int("tarifas_del_transportador", len(ratesList)).
+		Msg("Cotizacion de checkout Shopify resuelta")
+
 	c.JSON(http.StatusOK, gin.H{"rates": rates})
 }
 
