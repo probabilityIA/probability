@@ -18,13 +18,23 @@ func (h *Handlers) GetCurrentSubscription(c *gin.Context) {
 		return
 	}
 
+	meta, err := h.uc.GetBusinessSubscriptionMeta(c.Request.Context(), businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch business subscription status"})
+		return
+	}
+	businessStatus := ""
+	if meta != nil {
+		businessStatus = meta.Status
+	}
+
 	sub, err := h.uc.GetBusinessSubscription(c.Request.Context(), businessID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch subscription"})
 		return
 	}
 	if sub == nil {
-		c.JSON(http.StatusOK, gin.H{"data": nil})
+		c.JSON(http.StatusOK, gin.H{"data": nil, "business_subscription_status": businessStatus})
 		return
 	}
 
@@ -34,7 +44,9 @@ func (h *Handlers) GetCurrentSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": response.FromSubscriptionWithType(sub, subType)})
+	resp := response.FromSubscriptionWithType(sub, subType)
+	resp.BusinessSubscriptionStatus = businessStatus
+	c.JSON(http.StatusOK, gin.H{"data": resp})
 }
 
 func (h *Handlers) GetMySubscriptionUsage(c *gin.Context) {

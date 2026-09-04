@@ -395,6 +395,7 @@ func (r *Repository) GetBusinessStaffRelation(ctx context.Context, userID uint, 
 			EnableDelivery:     bs.Business.EnableDelivery,
 			EnablePickup:       bs.Business.EnablePickup,
 			EnableReservations: bs.Business.EnableReservations,
+			SubscriptionStatus: bs.Business.SubscriptionStatus,
 		}
 		if bs.Business.BusinessType.ID != 0 {
 			businessInfo.BusinessTypeName = bs.Business.BusinessType.Name

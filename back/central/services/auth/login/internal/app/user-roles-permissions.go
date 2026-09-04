@@ -82,6 +82,7 @@ func (uc *AuthUseCase) GetUserRolesPermissions(ctx context.Context, userID uint,
 	var businessType *domain.BusinessTypeInfo
 	var activeResourcesMap map[uint]bool
 	var roleIDPtr *uint = bsRelation.RoleID
+	businessSubscriptionStatus := claims.SubscriptionStatus
 
 	if roleIDPtr == nil {
 		uc.log.Warn().Uint("user_id", userID).Any("business_id", bsRelation.BusinessID).Msg("Relación encontrada pero role_id es NULL")
@@ -105,6 +106,7 @@ func (uc *AuthUseCase) GetUserRolesPermissions(ctx context.Context, userID uint,
 			Code:           bsRelation.Business.Code,
 			BusinessTypeID: bsRelation.Business.BusinessTypeID,
 		}
+		businessSubscriptionStatus = bsRelation.Business.SubscriptionStatus
 
 		businessType = &domain.BusinessTypeInfo{
 			ID:          bsRelation.Business.BusinessTypeID,
@@ -157,7 +159,7 @@ func (uc *AuthUseCase) GetUserRolesPermissions(ctx context.Context, userID uint,
 		IsSuper:            isSuper,
 		Role:               domain.RoleInfo{}, // Se llenará después
 		Permissions:        make([]domain.PermissionInfo, 0),
-		SubscriptionStatus: claims.SubscriptionStatus, // From JWT
+		SubscriptionStatus: businessSubscriptionStatus,
 	}
 
 	// Setear campos de business solo si existe
