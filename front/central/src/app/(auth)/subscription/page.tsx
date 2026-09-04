@@ -2560,6 +2560,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">Pago automático de la suscripción</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             Si hay saldo suficiente en tu billetera, la suscripción se paga sola el día que vence, sin necesidad de que la pagues manualmente.
+                            Se revisa todos los días a las 8:00 a. m.
                         </p>
                     </div>
                     <button

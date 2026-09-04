@@ -113,7 +113,7 @@ export const invoicingTour: TourDefinition = {
 
 export const subscriptionTour: TourDefinition = {
     key: 'subscription',
-    version: 2,
+    version: 3,
     title: 'Suscripción',
     routes: ['/subscription'],
     autoStart: true,
@@ -121,28 +121,40 @@ export const subscriptionTour: TourDefinition = {
         {
             id: 'welcome',
             title: 'Tu suscripción',
-            body: 'Que plan tienes, que módulos incluye y hasta cuando esta vigente.',
+            body: 'Qué plan tienes, qué módulos incluye y hasta cuándo está vigente.',
         },
         {
             id: 'periodo-cobro',
-            title: 'Periodo de cobro',
-            body: 'El periodo facturado dura un mes. Al vencer, tienes unos días de gracia para pagar sin que se suspenda la cuenta: aquí te decimos exactamente entre que fechas puedes pagar.',
+            title: 'Periodo facturado',
+            body: 'Tu suscripción se factura por periodos de un mes. No puedes pagar por adelantado antes de que el periodo actual termine: el pago solo se habilita el día que vence.',
+            target: '#subscription-payment-window',
+            placement: 'top',
+        },
+        {
+            id: 'ventana-pago',
+            title: 'Días para pagar sin que te suspendan',
+            body: 'El día que vence tu periodo empieza la ventana de pago: tienes varios días de gracia para pagar (manual o automático) antes de que la cuenta quede suspendida. Aquí te decimos exactamente entre qué fechas puedes pagar.',
             target: '#subscription-payment-window',
             placement: 'top',
         },
         {
             id: 'pagar-extender',
             title: 'Pagar / Extender',
-            body: 'Este botón solo se activa cuando empieza el periodo de cobro (el día que vence el ciclo actual). No se puede adelantar el pago antes de esa fecha.',
+            body: 'Este botón solo se activa una vez empieza tu ventana de pago (el día que vence el ciclo actual), no antes. Al pagar, el nuevo periodo arranca justo donde terminó el anterior, sin perder ni regalar días.',
             target: '#subscription-pay-button',
             placement: 'left',
         },
         {
             id: 'autopago',
             title: 'Pago automático',
-            body: 'Actívalo para que la suscripción se pague sola desde tu billetera el día que vence, sin que tengas que acordarte de hacerlo manual.',
+            body: 'Actívalo para que la suscripción se pague sola desde tu billetera el día que vence, sin que tengas que acordarte de pagarla manual. El sistema revisa todos los días a las 8:00 a. m. si te toca cobrar; si en ese momento no hay saldo suficiente, sigue el proceso normal de pago manual y días de gracia.',
             target: '#subscription-auto-payment-toggle',
             placement: 'top',
+        },
+        {
+            id: 'suspension',
+            title: 'Si se te pasan los días de pago',
+            body: 'Si terminan los días de gracia sin que se pague, la cuenta queda suspendida: no vas a poder crear órdenes ni cotizaciones desde el panel hasta que pongas la suscripción al día. Tranquilo: los pedidos que te lleguen de tus canales conectados (Shopify, WooCommerce, etc.) se siguen recibiendo igual, no se pierde ninguna venta mientras tanto.',
         },
         {
             id: 'cuotas',
