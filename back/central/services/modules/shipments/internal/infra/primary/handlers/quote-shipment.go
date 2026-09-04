@@ -67,12 +67,31 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 	alignCODContentValue(raw)
 
 	correlationID := uuid.New().String()
+	destinoDane := ""
+	if dest, ok := raw["destination"].(map[string]interface{}); ok {
+		destinoDane, _ = dest["daneCode"].(string)
+	}
+	codValue, _ := raw["codValue"].(float64)
 
 	result, err := h.runQuote(c.Request.Context(), carrier, businessID, raw, correlationID, 30*time.Second)
 	if err != nil {
+		h.logCot().Error(c.Request.Context()).Err(err).
+			Uint("business_id", businessID).
+			Str("correlation_id", correlationID).
+			Str("dane_destino", destinoDane).
+			Msg("La cotizacion del panel no se pudo enviar")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al enviar solicitud de cotización: " + err.Error()})
 		return
 	}
+
+	h.logCot().Info(c.Request.Context()).
+		Uint("business_id", businessID).
+		Str("correlation_id", correlationID).
+		Str("dane_destino", destinoDane).
+		Float64("cod_value", codValue).
+		Bool("cod", quoteIsCOD).
+		Str("estado", result.Status).
+		Msg("Cotizacion del panel resuelta")
 
 	switch result.Status {
 	case quoteStatusTimeout:

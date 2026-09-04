@@ -115,14 +115,29 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	carrier := resolved.Carrier
 
 	destDane := strings.TrimSpace(req.Destination.DaneCode)
+	daneDelPlugin := destDane != ""
 	if destDane == "" {
 		destDane = h.daneCached(ctx, req.Destination.City, req.Destination.State)
 	}
 	if destDane == "" {
+		sugerencias := h.citySuggestions(ctx, req.Destination.City, req.Destination.State)
+		nombres := make([]string, 0, len(sugerencias))
+		for _, s := range sugerencias {
+			nombres = append(nombres, s.Name)
+		}
+		h.logCot().Warn(ctx).
+			Uint("business_id", businessID).
+			Uint("integration_id", uint(integrationID64)).
+			Str("ciudad", strings.TrimSpace(req.Destination.City)).
+			Str("departamento", strings.TrimSpace(req.Destination.State)).
+			Bool("cod", req.COD).
+			Strs("sugerencias", nombres).
+			Msg("Sin tarifas: no se pudo resolver la ciudad del destino")
+
 		c.JSON(http.StatusOK, gin.H{
 			"rates":         []wooRate{},
 			"address_error": "No reconocemos la ciudad \"" + strings.TrimSpace(req.Destination.City) + "\". Selecciona tu ciudad de la lista.",
-			"suggestions":   h.citySuggestions(ctx, req.Destination.City, req.Destination.State),
+			"suggestions":   sugerencias,
 		})
 		return
 	}
@@ -134,6 +149,19 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	correlationID := uuid.New().String()
 	result, err := h.runQuote(ctx, carrier, businessID, payload, correlationID, 12*time.Second)
 	if err != nil || result.Status != quoteStatusSuccess {
+		estado := ""
+		if result != nil {
+			estado = result.Status
+		}
+		h.logCot().Error(ctx).Err(err).
+			Uint("business_id", businessID).
+			Uint("integration_id", uint(integrationID64)).
+			Str("correlation_id", correlationID).
+			Str("estado", estado).
+			Str("dane_destino", destDane).
+			Bool("cod", req.COD).
+			Msg("Sin tarifas: la cotizacion al transportador no respondio")
+
 		c.JSON(http.StatusOK, emptyRates)
 		return
 	}
@@ -184,6 +212,31 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"rates": []wooRate{}, "cod_blocked": true})
 		return
 	}
+
+	carriers := make([]string, 0, len(rates))
+	for _, r := range rates {
+		if c, ok := r.MetaData["carrier"].(string); ok {
+			carriers = append(carriers, c)
+		}
+	}
+
+	evento := h.logCot().Info(ctx)
+	if len(rates) == 0 {
+		evento = h.logCot().Warn(ctx)
+	}
+	evento.
+		Uint("business_id", businessID).
+		Uint("integration_id", uint(integrationID64)).
+		Str("correlation_id", correlationID).
+		Uint("quote_id", quoteID).
+		Str("ciudad", strings.TrimSpace(req.Destination.City)).
+		Str("dane_destino", destDane).
+		Bool("dane_del_plugin", daneDelPlugin).
+		Bool("cod", req.COD).
+		Int("tarifas", len(rates)).
+		Int("tarifas_del_transportador", len(ratesList)).
+		Strs("transportadoras", carriers).
+		Msg("Cotizacion de checkout resuelta")
 
 	c.JSON(http.StatusOK, gin.H{"rates": rates})
 }

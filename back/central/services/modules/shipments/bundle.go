@@ -91,7 +91,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		RedisPrefix: "shiprates",
 	}, redisClient, logger)
 	geo := geocoder.New(environment.Get("GOOGLE_MAPS_API_KEY"))
-	h := handlers.New(uc, transportPub, repo, redisClient, tokenSecret, pluginBaseURL, ratesLimiter, geo)
+	h := handlers.New(uc, transportPub, repo, redisClient, tokenSecret, pluginBaseURL, ratesLimiter, geo, logger)
 
 	// 7. Register Routes
 	h.RegisterRoutes(router)

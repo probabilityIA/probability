@@ -162,13 +162,39 @@ func (h *Handlers) calibrateWooCODRates(
 
 	result, err := h.runQuote(ctx, carrier, businessID, probePayload, uuid.New().String(), 12*time.Second)
 	if err != nil || result == nil || result.Status != quoteStatusSuccess {
+		h.logCot().Warn(ctx).Err(err).
+			Uint("business_id", businessID).
+			Float64("sondeo", probeDeclared).
+			Msg("Sin calibrar: el sondeo de comision COD no respondio, se cotiza sobre el valor del producto")
 		return ratesList
 	}
 
 	probeRates := toRatesList(getRatesFromData(result.Data))
 	if len(probeRates) == 0 {
+		h.logCot().Warn(ctx).
+			Uint("business_id", businessID).
+			Float64("sondeo", probeDeclared).
+			Msg("Sin calibrar: el sondeo no devolvio tarifas")
 		return ratesList
 	}
 
-	return calibrateCODRates(ratesList, probeRates, contentValue, contentValue, probeDeclared, alwaysInsure)
+	calibradas := calibrateCODRates(ratesList, probeRates, contentValue, contentValue, probeDeclared, alwaysInsure)
+
+	for i := range calibradas {
+		antes := toFloat(ratesList[i]["codCarrierFee"])
+		ahora := toFloat(calibradas[i]["codCarrierFee"])
+		if antes == ahora {
+			continue
+		}
+		h.logCot().Info(ctx).
+			Uint("business_id", businessID).
+			Str("transportadora", toStr(calibradas[i]["carrier"])).
+			Float64("productos", contentValue).
+			Float64("comision_sobre_producto", antes).
+			Float64("comision_calibrada", ahora).
+			Float64("envio", codTargetCost(calibradas[i], alwaysInsure)+ahora).
+			Msg("Comision COD calibrada sobre el total a recaudar")
+	}
+
+	return calibradas
 }
