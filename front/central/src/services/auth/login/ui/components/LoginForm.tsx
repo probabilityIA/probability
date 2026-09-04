@@ -125,7 +125,7 @@ export const LoginForm = () => {
             <div className="login-logo-light">
                 <div className="login-logo-mark">
                     <img
-                        src={`${MEDIA_BASE}/public/brand/logo-mark-white.png`}
+                        src={`${MEDIA_BASE}/public/brand/logo-mark-badge.svg`}
                         alt="ProbabilityIA"
                     />
                 </div>

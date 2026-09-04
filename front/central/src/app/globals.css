@@ -1086,7 +1086,6 @@ textarea:focus {
   height: 40px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #5e17eb 55%, #3b0f91 100%);
   box-shadow: 0 6px 18px rgba(94, 23, 235, 0.35);
   display: flex;
   align-items: center;
@@ -1094,8 +1093,8 @@ textarea:focus {
 }
 
 .login-logo-mark img {
-  width: 44%;
-  height: 44%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 

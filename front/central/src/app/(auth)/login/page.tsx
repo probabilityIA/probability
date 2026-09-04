@@ -114,7 +114,7 @@ function LoginContent() {
           <div className="mx-auto flex h-16 w-full max-w-[1180px] items-center justify-between gap-4 px-6">
             <div className="flex items-center gap-3">
               <Image
-                src="/logo2recortado.png"
+                src="/logo-wordmark-v2.png"
                 alt="ProbabilityIA"
                 width={150}
                 height={36}

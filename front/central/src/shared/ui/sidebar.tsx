@@ -244,7 +244,7 @@ export function Sidebar({ user }: SidebarProps) {
               className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}
             >
               <Image
-                src={primaryExpanded ? "/logo2recortado.png" : "/logo.ico"}
+                src={primaryExpanded ? "/logo-wordmark-v2.png" : "/logo-badge.png"}
                 alt="Probability Logo"
                 fill
                 className="object-contain"
@@ -790,7 +790,7 @@ export function Sidebar({ user }: SidebarProps) {
               className={`flex items-center justify-center gap-1.5 py-2 opacity-50 hover:opacity-90 transition-opacity ${primaryExpanded ? '' : 'px-1'}`}
               title="Probability"
             >
-              <Image src="/logo.ico" alt="Probability" width={16} height={16} className="object-contain flex-shrink-0" />
+              <Image src="/logo-badge.png" alt="Probability" width={16} height={16} className="object-contain flex-shrink-0" />
               {primaryExpanded && <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">Powered by Probability</span>}
             </a>
           )}
