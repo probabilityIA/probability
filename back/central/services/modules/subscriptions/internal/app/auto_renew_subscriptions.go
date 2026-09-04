@@ -18,6 +18,9 @@ func (uc *UseCase) autoRenewIfEnabled(ctx context.Context, business entities.Exp
 	if err != nil || subType == nil || !subType.Active || !subType.Payable {
 		return false
 	}
+	if subType.Code == freePlanCode {
+		return false
+	}
 
 	current, err := uc.repo.GetLatestByBusinessID(ctx, business.BusinessID)
 	if err != nil {
