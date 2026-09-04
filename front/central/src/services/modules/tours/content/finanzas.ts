@@ -113,7 +113,7 @@ export const invoicingTour: TourDefinition = {
 
 export const subscriptionTour: TourDefinition = {
     key: 'subscription',
-    version: 1,
+    version: 2,
     title: 'Suscripción',
     routes: ['/subscription'],
     autoStart: true,
@@ -122,6 +122,27 @@ export const subscriptionTour: TourDefinition = {
             id: 'welcome',
             title: 'Tu suscripción',
             body: 'Que plan tienes, que módulos incluye y hasta cuando esta vigente.',
+        },
+        {
+            id: 'periodo-cobro',
+            title: 'Periodo de cobro',
+            body: 'El periodo facturado dura un mes. Al vencer, tienes unos días de gracia para pagar sin que se suspenda la cuenta: aquí te decimos exactamente entre que fechas puedes pagar.',
+            target: '#subscription-payment-window',
+            placement: 'top',
+        },
+        {
+            id: 'pagar-extender',
+            title: 'Pagar / Extender',
+            body: 'Este botón solo se activa cuando empieza el periodo de cobro (el día que vence el ciclo actual). No se puede adelantar el pago antes de esa fecha.',
+            target: '#subscription-pay-button',
+            placement: 'left',
+        },
+        {
+            id: 'autopago',
+            title: 'Pago automático',
+            body: 'Actívalo para que la suscripción se pague sola desde tu billetera el día que vence, sin que tengas que acordarte de hacerlo manual.',
+            target: '#subscription-auto-payment-toggle',
+            placement: 'top',
         },
         {
             id: 'cuotas',

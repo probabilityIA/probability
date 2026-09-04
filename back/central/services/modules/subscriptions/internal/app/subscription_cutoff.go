@@ -9,14 +9,19 @@ import (
 const defaultCutoffGraceDays = 6
 
 func cutoffReached(business entities.ExpiringBusiness, now time.Time) bool {
-	cutoffDate := business.EndDate.AddDate(0, 0, defaultCutoffGraceDays)
-	if business.CutoffDay != nil {
-		cutoffDate = nextCutoffOnOrAfter(business.EndDate, *business.CutoffDay)
-	}
-	if business.CourtesyUntil != nil && business.CourtesyUntil.After(cutoffDate) {
-		cutoffDate = *business.CourtesyUntil
-	}
+	cutoffDate := computeCutoffDate(business.EndDate, business.CutoffDay, business.CourtesyUntil)
 	return !now.Before(cutoffDate)
+}
+
+func computeCutoffDate(endDate time.Time, cutoffDay *int, courtesyUntil *time.Time) time.Time {
+	cutoffDate := endDate.AddDate(0, 0, defaultCutoffGraceDays)
+	if cutoffDay != nil {
+		cutoffDate = nextCutoffOnOrAfter(endDate, *cutoffDay)
+	}
+	if courtesyUntil != nil && courtesyUntil.After(cutoffDate) {
+		cutoffDate = *courtesyUntil
+	}
+	return cutoffDate
 }
 
 func nextCutoffOnOrAfter(after time.Time, cutoffDay int) time.Time {

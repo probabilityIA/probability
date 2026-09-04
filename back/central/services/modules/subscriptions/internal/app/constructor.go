@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/entities"
@@ -31,6 +32,7 @@ type IUseCase interface {
 	GetBusinessSubscription(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
 	GetBusinessSubscriptionMeta(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error)
 	SetAutoPaymentEnabled(ctx context.Context, businessID uint, enabled bool, actorUserID uint) error
+	GetPaymentWindow(ctx context.Context, businessID uint) (*time.Time, *time.Time, error)
 	GetSubscriptionUsage(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error)
 	CheckShipmentOverage(ctx context.Context, businessID uint) (blocked bool, reason string, fee float64, err error)
 	AcceptShipmentOverage(ctx context.Context, businessID uint) error

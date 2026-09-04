@@ -75,6 +75,8 @@ type SubscriptionResponse struct {
 	SubscriptionType           *SubscriptionTypeResponse `json:"subscription_type,omitempty"`
 	BusinessSubscriptionStatus string                    `json:"business_subscription_status,omitempty"`
 	AutoPaymentEnabled         bool                      `json:"auto_payment_enabled"`
+	PaymentWindowStart         *time.Time                `json:"payment_window_start,omitempty"`
+	PaymentWindowEnd           *time.Time                `json:"payment_window_end,omitempty"`
 }
 
 func FromSubscription(s *entities.BusinessSubscription) SubscriptionResponse {

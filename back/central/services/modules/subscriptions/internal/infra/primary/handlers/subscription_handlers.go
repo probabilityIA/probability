@@ -44,9 +44,17 @@ func (h *Handlers) GetCurrentSubscription(c *gin.Context) {
 		return
 	}
 
+	windowStart, windowEnd, err := h.uc.GetPaymentWindow(c.Request.Context(), businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to compute payment window"})
+		return
+	}
+
 	resp := response.FromSubscriptionWithType(sub, subType)
 	resp.BusinessSubscriptionStatus = businessStatus
 	resp.AutoPaymentEnabled = meta != nil && meta.AutoPaymentEnabled
+	resp.PaymentWindowStart = windowStart
+	resp.PaymentWindowEnd = windowEnd
 	c.JSON(http.StatusOK, gin.H{"data": resp})
 }
 

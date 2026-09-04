@@ -49,6 +49,8 @@ export interface BusinessSubscription {
     subscription_type?: SubscriptionType;
     business_subscription_status?: string;
     auto_payment_enabled?: boolean;
+    payment_window_start?: string;
+    payment_window_end?: string;
 }
 
 export interface BusinessModuleOverride {

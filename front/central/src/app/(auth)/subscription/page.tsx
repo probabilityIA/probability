@@ -2474,7 +2474,9 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
 
     const hasOverage = !!(usage?.forecasted_payment != null && subscription && usage.forecasted_payment > subscription.amount);
 
-    const canPayNow = isExpired || !subscription?.end_date || new Date(subscription.end_date) <= new Date();
+    const canPayNow = isExpired
+        || !subscription?.payment_window_start
+        || new Date(subscription.payment_window_start) <= new Date();
 
     const handleToggleAutoPayment = async () => {
         if (!subscription || savingAutoPayment) return;
@@ -2508,8 +2510,9 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                     </div>
                     {subscription && (
                         <Button
+                            id="subscription-pay-button"
                             variant="secondary"
-                            className="!bg-white !text-violet-700 hover:!bg-white/90 flex-shrink-0"
+                            className={`flex-shrink-0 ${canPayNow ? '!bg-white !text-violet-700 hover:!bg-white/90' : '!bg-white/40 !text-violet-700/60 !cursor-not-allowed hover:!bg-white/40'}`}
                             disabled={!canPayNow}
                             onClick={() => planCatalogRef.current?.openCurrentPlanPurchase()}
                         >
@@ -2529,9 +2532,11 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                         </div>
                     </div>
                 )}
-                {subscription && !canPayNow && (
-                    <p className="text-white/60 text-[11px] mt-2">
-                        El pago se habilita a partir del {formatDate(subscription.end_date)}.
+                {subscription && subscription.payment_window_start && subscription.payment_window_end && (
+                    <p id="subscription-payment-window" className="text-white/60 text-[11px] mt-2">
+                        {canPayNow
+                            ? `Podrás pagar la membresía hasta el ${formatDate(subscription.payment_window_end)} antes de que se suspenda la cuenta.`
+                            : `Periodo facturado hasta el ${formatDate(subscription.payment_window_start)}. Podrás pagar la membresía del ${formatDate(subscription.payment_window_start)} al ${formatDate(subscription.payment_window_end)}.`}
                     </p>
                 )}
                 {subscription && !isExpired && (
@@ -2550,7 +2555,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
             </div>
 
             {subscription && (
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center justify-between gap-4">
+                <div id="subscription-auto-payment-toggle" className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center justify-between gap-4">
                     <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">Pago automático de la suscripción</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
