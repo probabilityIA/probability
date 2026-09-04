@@ -370,7 +370,10 @@ func TestPurchaseSubscription_ConSuscripcionVigente_SeEncadenaAlFinal(t *testing
 	}
 	repo := &mocks.RepositoryMock{
 		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
-			return &entities.BusinessSubscription{ID: 1, EndDate: finVigente}, nil
+			return &entities.BusinessSubscription{ID: 1, SubscriptionTypeID: 99, EndDate: finVigente}, nil
+		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive}, nil
 		},
 	}
 
@@ -379,7 +382,7 @@ func TestPurchaseSubscription_ConSuscripcionVigente_SeEncadenaAlFinal(t *testing
 
 	require.NoError(t, err)
 	assert.Equal(t, finVigente, got.StartDate,
-		"renovar antes de vencer no debe regalar ni quitar dias: se encadena al final")
+		"cambiar de plan antes de vencer no debe regalar ni quitar dias: se encadena al final")
 	assert.Equal(t, finVigente.AddDate(0, 1, 0), got.EndDate)
 }
 
@@ -401,6 +404,49 @@ func TestPurchaseSubscription_ConSuscripcionYaVencida_ArrancaDesdeAhora(t *testi
 	require.NoError(t, err)
 	assert.False(t, got.StartDate.Before(antes),
 		"una suscripcion vencida no encadena hacia atras")
+}
+
+func TestPurchaseSubscription_MismoPlanAntesDeVencer_Bloqueado(t *testing.T) {
+	finVigente := time.Now().AddDate(0, 0, 10)
+	wallet := &mocks.WalletDebiterMock{
+		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
+	}
+	repo := &mocks.RepositoryMock{
+		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
+			return &entities.BusinessSubscription{ID: 1, SubscriptionTypeID: 3, EndDate: finVigente}, nil
+		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive}, nil
+		},
+	}
+
+	_, err := newSubsUseCase(repo, wallet, nil).PurchaseSubscription(context.Background(),
+		dtos.PurchaseSubscriptionDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
+
+	require.ErrorIs(t, err, errs.ErrCannotRenewBeforeCycleEnds,
+		"no se puede pagar el mismo plan antes de que termine el periodo facturado")
+}
+
+func TestPurchaseSubscription_MismoPlanDentroDeLaGracia_SeAnclaAlVencimientoAnterior(t *testing.T) {
+	finVencido := time.Now().AddDate(0, 0, -2)
+	wallet := &mocks.WalletDebiterMock{
+		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
+	}
+	repo := &mocks.RepositoryMock{
+		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
+			return &entities.BusinessSubscription{ID: 1, SubscriptionTypeID: 3, EndDate: finVencido}, nil
+		},
+		GetBusinessSubscriptionMetaFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {
+			return &entities.BusinessSubscriptionMeta{Status: entities.BusinessStatusActive}, nil
+		},
+	}
+
+	got, err := newSubsUseCase(repo, wallet, nil).PurchaseSubscription(context.Background(),
+		dtos.PurchaseSubscriptionDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
+
+	require.NoError(t, err)
+	assert.Equal(t, finVencido, got.StartDate,
+		"pagar dentro de la ventana de gracia debe anclar al vencimiento anterior, no a hoy")
 }
 
 func TestPurchaseSubscription_ErrorAlLeerLaVigente_SePropaga(t *testing.T) {

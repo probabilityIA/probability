@@ -396,22 +396,25 @@ func TestGetUserRolesPermissions_SinRol_SinPermisos(t *testing.T) {
 	assert.False(t, consultadoPermisos, "sin rol asignado no hay permisos que cargar")
 }
 
-func TestGetUserRolesPermissions_PropagaLaSuscripcionDelToken(t *testing.T) {
+func TestGetUserRolesPermissions_PropagaLaSuscripcionDelNegocio(t *testing.T) {
+	relacion := relacionConNegocio(36, uintPtr(5))
+	relacion.Business.SubscriptionStatus = "cancelled"
+
 	repo := &mocks.AuthRepositoryMock{
 		GetUserByIDFn: func(ctx context.Context, userID uint) (*domain.UserAuthInfo, error) {
 			return usuarioActivo(userID, "x"), nil
 		},
 		GetBusinessStaffRelationFn: func(ctx context.Context, userID uint, businessID *uint) (*domain.BusinessStaffRelation, error) {
-			return relacionConNegocio(36, uintPtr(5)), nil
+			return relacion, nil
 		},
 	}
-	uc := buildLoginUseCase(repo, jwtQueValida(1, "expired"), nil)
+	uc := buildLoginUseCase(repo, jwtQueValida(1, "active"), nil)
 
 	got, err := uc.GetUserRolesPermissions(context.Background(), 1, 36, "token")
 
 	require.NoError(t, err)
-	assert.Equal(t, "expired", got.SubscriptionStatus,
-		"el estado de suscripcion sale del JWT, no de la base de datos")
+	assert.Equal(t, "cancelled", got.SubscriptionStatus,
+		"el estado de suscripcion sale de business.subscription_status en vivo, no del JWT viejo")
 }
 
 func TestGetUserRolesPermissions_FallaRelacion_ErrorInterno(t *testing.T) {

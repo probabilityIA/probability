@@ -46,7 +46,29 @@ func (h *Handlers) GetCurrentSubscription(c *gin.Context) {
 
 	resp := response.FromSubscriptionWithType(sub, subType)
 	resp.BusinessSubscriptionStatus = businessStatus
+	resp.AutoPaymentEnabled = meta != nil && meta.AutoPaymentEnabled
 	c.JSON(http.StatusOK, gin.H{"data": resp})
+}
+
+func (h *Handlers) SetAutoPayment(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
+		return
+	}
+
+	var req request.SetAutoPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.uc.SetAutoPaymentEnabled(c.Request.Context(), businessID, req.Enabled, c.GetUint("user_id")); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update auto payment setting"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{"auto_payment_enabled": req.Enabled}})
 }
 
 func (h *Handlers) GetMySubscriptionUsage(c *gin.Context) {

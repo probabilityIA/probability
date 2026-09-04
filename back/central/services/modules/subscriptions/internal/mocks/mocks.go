@@ -33,6 +33,7 @@ type RepositoryMock struct {
 	UpdateBusinessSubscriptionEndDateFn       func(ctx context.Context, businessID uint, endDate time.Time) error
 	UpdateBusinessSubscriptionCutoffDayFn     func(ctx context.Context, businessID uint, cutoffDay int) error
 	UpdateBusinessSubscriptionCourtesyUntilFn func(ctx context.Context, businessID uint, until time.Time) error
+	UpdateBusinessAutoPaymentEnabledFn        func(ctx context.Context, businessID uint, enabled bool) error
 	GetBusinessSubscriptionMetaFn             func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error)
 	GetBusinessCurrentSubscriptionTypeIDFn    func(ctx context.Context, businessID uint) (*uint, error)
 	ListBusinessesExpiringBetweenFn           func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error)
@@ -222,6 +223,13 @@ func (m *RepositoryMock) UpdateBusinessSubscriptionCutoffDay(ctx context.Context
 func (m *RepositoryMock) UpdateBusinessSubscriptionCourtesyUntil(ctx context.Context, businessID uint, until time.Time) error {
 	if m.UpdateBusinessSubscriptionCourtesyUntilFn != nil {
 		return m.UpdateBusinessSubscriptionCourtesyUntilFn(ctx, businessID, until)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) UpdateBusinessAutoPaymentEnabled(ctx context.Context, businessID uint, enabled bool) error {
+	if m.UpdateBusinessAutoPaymentEnabledFn != nil {
+		return m.UpdateBusinessAutoPaymentEnabledFn(ctx, businessID, enabled)
 	}
 	return nil
 }

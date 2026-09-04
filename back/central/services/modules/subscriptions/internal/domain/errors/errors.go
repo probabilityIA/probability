@@ -19,4 +19,5 @@ var (
 	ErrInvalidDays                 = errors.New("days must be greater than zero")
 	ErrNoOverageDue                = errors.New("no hay cargo de excedente pendiente de pago")
 	ErrSubscriptionTypeNotPayable  = errors.New("este plan no se puede comprar, se asigna automaticamente")
+	ErrCannotRenewBeforeCycleEnds  = errors.New("no se puede pagar la suscripcion antes de que termine el periodo facturado actual")
 )

@@ -30,6 +30,7 @@ type IUseCase interface {
 	ListAuditLogs(ctx context.Context, businessID uint, limit int) ([]entities.SubscriptionAuditLog, error)
 	GetBusinessSubscription(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
 	GetBusinessSubscriptionMeta(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error)
+	SetAutoPaymentEnabled(ctx context.Context, businessID uint, enabled bool, actorUserID uint) error
 	GetSubscriptionUsage(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error)
 	CheckShipmentOverage(ctx context.Context, businessID uint) (blocked bool, reason string, fee float64, err error)
 	AcceptShipmentOverage(ctx context.Context, businessID uint) error

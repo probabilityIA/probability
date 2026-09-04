@@ -14,6 +14,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.POST("/overage/accept", h.AcceptShipmentOverage)
 		g.POST("/overage/pay", h.PayShipmentOverage)
 		g.POST("/purchase", h.PurchaseSubscription)
+		g.PUT("/me/auto-payment", h.SetAutoPayment)
 		g.GET("/module-codes", h.GetModuleCodes)
 		g.GET("/module-catalog", h.GetModuleCatalog)
 		g.GET("/my-modules", h.GetMyModules)

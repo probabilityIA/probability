@@ -9,11 +9,16 @@ import (
 
 func TestCutoffReached_NoCutoffConfigured(t *testing.T) {
 	end := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
-	now := end
 	business := entities.ExpiringBusiness{EndDate: end, CutoffDay: nil}
 
-	if !cutoffReached(business, now) {
-		t.Fatal("sin dia de corte configurado deberia comportarse como antes: expirar de inmediato")
+	if cutoffReached(business, end) {
+		t.Fatal("sin dia de corte configurado, debe dar 6 dias de gracia antes de expirar")
+	}
+	if cutoffReached(business, end.AddDate(0, 0, 5)) {
+		t.Fatal("no deberia expirar antes de cumplirse los 6 dias de gracia")
+	}
+	if !cutoffReached(business, end.AddDate(0, 0, 6)) {
+		t.Fatal("deberia expirar exactamente a los 6 dias de gracia")
 	}
 }
 

@@ -25,6 +25,9 @@ func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 		return err
 	}
 	for _, business := range justExpired {
+		if uc.autoRenewIfEnabled(ctx, business) {
+			continue
+		}
 		if !cutoffReached(business, now) {
 			continue
 		}

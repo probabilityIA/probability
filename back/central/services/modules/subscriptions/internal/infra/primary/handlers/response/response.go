@@ -74,6 +74,7 @@ type SubscriptionResponse struct {
 	CreatedAt                  time.Time                 `json:"created_at"`
 	SubscriptionType           *SubscriptionTypeResponse `json:"subscription_type,omitempty"`
 	BusinessSubscriptionStatus string                    `json:"business_subscription_status,omitempty"`
+	AutoPaymentEnabled         bool                      `json:"auto_payment_enabled"`
 }
 
 func FromSubscription(s *entities.BusinessSubscription) SubscriptionResponse {

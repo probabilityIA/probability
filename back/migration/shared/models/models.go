@@ -75,6 +75,7 @@ type Business struct {
 	SubscriptionCourtesyUntil *time.Time        `gorm:"column:subscription_courtesy_until"`
 	SubscriptionTypeID        *uint             `gorm:"index"`
 	SubscriptionType          *SubscriptionType `gorm:"foreignKey:SubscriptionTypeID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	SubscriptionAutoPaymentEnabled bool `gorm:"column:subscription_auto_payment_enabled;default:false"`
 
 	// Configuración de funcionalidades
 	EnableDelivery     bool `gorm:"default:false"`

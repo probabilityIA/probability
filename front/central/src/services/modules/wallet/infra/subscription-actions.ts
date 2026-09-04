@@ -48,6 +48,7 @@ export interface BusinessSubscription {
     created_at?: string;
     subscription_type?: SubscriptionType;
     business_subscription_status?: string;
+    auto_payment_enabled?: boolean;
 }
 
 export interface BusinessModuleOverride {
@@ -142,6 +143,25 @@ export async function getMySubscriptionAction(businessId?: number): Promise<{ su
         if (!res.ok) throw new Error(`Error ${res.status}`);
         const json = await res.json();
         return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function setAutoPaymentAction(enabled: boolean, businessId?: number): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        headers['Content-Type'] = 'application/json';
+        const url = businessId
+            ? `${env.API_BASE_URL}/subscriptions/me/auto-payment?business_id=${businessId}`
+            : `${env.API_BASE_URL}/subscriptions/me/auto-payment`;
+        const res = await fetch(url, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({ enabled }),
+        });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        return { success: true };
     } catch (err: any) {
         return { success: false, error: err.message };
     }

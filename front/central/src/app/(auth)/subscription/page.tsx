@@ -22,6 +22,7 @@ import {
     deleteSubscriptionTypeAction,
     getModuleCatalogAction,
     purchaseSubscriptionAction,
+    setAutoPaymentAction,
     listOverridesAction,
     grantOverrideAction,
     revokeOverrideAction,
@@ -2433,6 +2434,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
     const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
+    const [savingAutoPayment, setSavingAutoPayment] = useState(false);
     const planCatalogRef = useRef<PlanCatalogHandle>(null);
 
     const fetchSub = useCallback(async () => {
@@ -2472,6 +2474,19 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
 
     const hasOverage = !!(usage?.forecasted_payment != null && subscription && usage.forecasted_payment > subscription.amount);
 
+    const canPayNow = isExpired || !subscription?.end_date || new Date(subscription.end_date) <= new Date();
+
+    const handleToggleAutoPayment = async () => {
+        if (!subscription || savingAutoPayment) return;
+        setSavingAutoPayment(true);
+        const next = !subscription.auto_payment_enabled;
+        const res = await setAutoPaymentAction(next, businessId);
+        setSavingAutoPayment(false);
+        if (res.success) {
+            setSubscription({ ...subscription, auto_payment_enabled: next });
+        }
+    };
+
     return (
         <div className="space-y-6">
             {isSuperAdminView && (
@@ -2495,6 +2510,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                         <Button
                             variant="secondary"
                             className="!bg-white !text-violet-700 hover:!bg-white/90 flex-shrink-0"
+                            disabled={!canPayNow}
                             onClick={() => planCatalogRef.current?.openCurrentPlanPurchase()}
                         >
                             {isExpired ? 'Renovar ahora' : 'Pagar / Extender'}
@@ -2513,6 +2529,11 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                         </div>
                     </div>
                 )}
+                {subscription && !canPayNow && (
+                    <p className="text-white/60 text-[11px] mt-2">
+                        El pago se habilita a partir del {formatDate(subscription.end_date)}.
+                    </p>
+                )}
                 {subscription && !isExpired && (
                     <div className="mt-4 pt-4 border-t border-white/20">
                         <div className="flex items-center justify-between text-[11px] text-white/70 mb-1">
@@ -2527,6 +2548,27 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                     </div>
                 )}
             </div>
+
+            {subscription && (
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Pago automático de la suscripción</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Si hay saldo suficiente en tu billetera, la suscripción se paga sola el día que vence, sin necesidad de que la pagues manualmente.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={!!subscription.auto_payment_enabled}
+                        disabled={savingAutoPayment}
+                        onClick={handleToggleAutoPayment}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${subscription.auto_payment_enabled ? 'bg-violet-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                    >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${subscription.auto_payment_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                </div>
+            )}
 
             {usage && !isExpired && (limitRows.length > 0 || usage.module_codes.length > 0) && (
                 <div className={`grid gap-4 md:grid-cols-2 transition-all duration-500 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>

@@ -39,6 +39,16 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		return nil, err
 	}
 
+	meta, err := uc.repo.GetBusinessSubscriptionMeta(ctx, dto.BusinessID)
+	if err != nil {
+		return nil, err
+	}
+	stillWithinCycle := meta != nil && meta.Status == entities.BusinessStatusActive
+
+	if current != nil && stillWithinCycle && current.SubscriptionTypeID == subType.ID && time.Now().Before(current.EndDate) {
+		return nil, errs.ErrCannotRenewBeforeCycleEnds
+	}
+
 	overage, err := uc.computeCurrentCycleOverage(ctx, dto.BusinessID, current)
 	if err != nil {
 		return nil, err
@@ -54,7 +64,7 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		return nil, errs.ErrInsufficientBalance
 	}
 
-	start, endDate, err := uc.computeSubscriptionWindowFrom(current, dto.Months, nil, subType)
+	start, endDate, err := uc.computeSubscriptionWindowFrom(current, dto.Months, nil, subType, stillWithinCycle)
 	if err != nil {
 		return nil, err
 	}
@@ -95,16 +105,28 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 // incorrectas (1 mes calendario no son los dias de duracion del trial).
 func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int, startOverride *time.Time, subType *entities.SubscriptionType) (time.Time, time.Time, error) {
 	if startOverride != nil {
-		return uc.computeSubscriptionWindowFrom(nil, months, startOverride, subType)
+		return uc.computeSubscriptionWindowFrom(nil, months, startOverride, subType, false)
 	}
 	current, err := uc.repo.GetLatestByBusinessID(ctx, businessID)
 	if err != nil {
 		return time.Time{}, time.Time{}, err
 	}
-	return uc.computeSubscriptionWindowFrom(current, months, startOverride, subType)
+	meta, err := uc.repo.GetBusinessSubscriptionMeta(ctx, businessID)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	stillWithinCycle := meta != nil && meta.Status == entities.BusinessStatusActive
+	return uc.computeSubscriptionWindowFrom(current, months, startOverride, subType, stillWithinCycle)
 }
 
-func (uc *UseCase) computeSubscriptionWindowFrom(current *entities.BusinessSubscription, months int, startOverride *time.Time, subType *entities.SubscriptionType) (time.Time, time.Time, error) {
+// computeSubscriptionWindowFrom calcula el inicio/fin del nuevo periodo. El
+// periodo de facturacion siempre continua desde el EndDate del ciclo anterior
+// (sin importar si el pago llego antes de vencer o dentro de la ventana de
+// gracia del corte), para que la fecha ancla no se mueva mes a mes. Solo si
+// el negocio ya quedo realmente expired/cancelled (fuera de la ventana de
+// gracia) el nuevo periodo arranca desde hoy: eso ya no es una renovacion,
+// es una reactivacion.
+func (uc *UseCase) computeSubscriptionWindowFrom(current *entities.BusinessSubscription, months int, startOverride *time.Time, subType *entities.SubscriptionType, anchorToCurrentEnd bool) (time.Time, time.Time, error) {
 	addPeriod := func(start time.Time) time.Time {
 		if subType != nil && subType.TrialDurationDays != nil && *subType.TrialDurationDays > 0 {
 			return start.AddDate(0, 0, *subType.TrialDurationDays)
@@ -117,9 +139,8 @@ func (uc *UseCase) computeSubscriptionWindowFrom(current *entities.BusinessSubsc
 		return start, addPeriod(start), nil
 	}
 
-	now := time.Now()
-	start := now
-	if current != nil && current.EndDate.After(now) {
+	start := time.Now()
+	if current != nil && anchorToCurrentEnd {
 		start = current.EndDate
 	}
 

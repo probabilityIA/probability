@@ -85,6 +85,10 @@ type ReactivateSubscriptionRequest struct {
 	BusinessID uint `json:"business_id" binding:"required"`
 }
 
+type SetAutoPaymentRequest struct {
+	Enabled bool `json:"enabled"`
+}
+
 type ExtendCourtesyRequest struct {
 	BusinessID uint   `json:"business_id" binding:"required"`
 	Days       int    `json:"days" binding:"required,gt=0"`

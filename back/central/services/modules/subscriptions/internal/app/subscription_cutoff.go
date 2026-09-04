@@ -6,8 +6,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/entities"
 )
 
+const defaultCutoffGraceDays = 6
+
 func cutoffReached(business entities.ExpiringBusiness, now time.Time) bool {
-	cutoffDate := business.EndDate
+	cutoffDate := business.EndDate.AddDate(0, 0, defaultCutoffGraceDays)
 	if business.CutoffDay != nil {
 		cutoffDate = nextCutoffOnOrAfter(business.EndDate, *business.CutoffDay)
 	}

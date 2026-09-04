@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/entities"
@@ -20,6 +21,21 @@ func (uc *UseCase) RegisterPayment(ctx context.Context, dto dtos.RegisterPayment
 	}
 	if subType == nil {
 		return nil, errs.ErrSubscriptionTypeNotFound
+	}
+
+	if dto.StartDate == nil {
+		current, err := uc.repo.GetLatestByBusinessID(ctx, dto.BusinessID)
+		if err != nil {
+			return nil, err
+		}
+		meta, err := uc.repo.GetBusinessSubscriptionMeta(ctx, dto.BusinessID)
+		if err != nil {
+			return nil, err
+		}
+		stillWithinCycle := meta != nil && meta.Status == entities.BusinessStatusActive
+		if current != nil && stillWithinCycle && current.SubscriptionTypeID == subType.ID && time.Now().Before(current.EndDate) {
+			return nil, errs.ErrCannotRenewBeforeCycleEnds
+		}
 	}
 
 	amount := subType.Price * float64(dto.Months)

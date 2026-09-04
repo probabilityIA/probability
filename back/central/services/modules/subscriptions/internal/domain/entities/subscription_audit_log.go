@@ -24,4 +24,7 @@ const (
 	AuditActionTrialDowngraded         = "trial_downgraded_to_free"
 	AuditActionOverageSettled          = "overage_settled"
 	AuditActionOverageDuePaid          = "overage_due_paid"
+	AuditActionAutoPaymentEnabled      = "auto_payment_enabled"
+	AuditActionAutoPaymentDisabled     = "auto_payment_disabled"
+	AuditActionAutoRenewed             = "auto_renewed"
 )
