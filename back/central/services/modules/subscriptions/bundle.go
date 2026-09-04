@@ -11,17 +11,18 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 type Bundle struct {
 	UseCase app.IUseCase
 }
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, wallet ports.IWalletDebiter, announcements ports.IAnnouncementsGateway) *Bundle {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, wallet ports.IWalletDebiter, announcements ports.IAnnouncementsGateway, rabbitMQ rabbitmq.IQueue) *Bundle {
 	moduleLogger := logger.WithModule("subscriptions")
 
 	repo := repository.New(database)
-	useCase := app.New(repo, wallet, announcements, moduleLogger)
+	useCase := app.New(repo, wallet, announcements, rabbitMQ, moduleLogger)
 	handler := handlers.New(useCase)
 	handler.RegisterRoutes(router)
 

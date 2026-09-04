@@ -55,6 +55,11 @@ type ExpiringBusiness struct {
 	AutoPaymentEnabled bool
 }
 
+type WhatsAppContact struct {
+	Phone        string
+	BusinessName string
+}
+
 type BusinessSubscriptionMeta struct {
 	Status             string
 	EndDate            *time.Time

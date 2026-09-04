@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 type IUseCase interface {
@@ -61,10 +62,11 @@ type UseCase struct {
 	repo          ports.IRepository
 	wallet        ports.IWalletDebiter
 	announcements ports.IAnnouncementsGateway
+	rabbit        rabbitmq.IQueue
 	log           log.ILogger
 	systemUserID  uint
 }
 
-func New(repo ports.IRepository, wallet ports.IWalletDebiter, announcements ports.IAnnouncementsGateway, logger log.ILogger) IUseCase {
-	return &UseCase{repo: repo, wallet: wallet, announcements: announcements, log: logger}
+func New(repo ports.IRepository, wallet ports.IWalletDebiter, announcements ports.IAnnouncementsGateway, rabbitMQ rabbitmq.IQueue, logger log.ILogger) IUseCase {
+	return &UseCase{repo: repo, wallet: wallet, announcements: announcements, rabbit: rabbitMQ, log: logger}
 }

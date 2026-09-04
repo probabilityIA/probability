@@ -28,6 +28,7 @@ func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 		if uc.autoRenewIfEnabled(ctx, business) {
 			continue
 		}
+		uc.notifyPaymentWindowIfNeeded(ctx, business)
 		if !cutoffReached(business, now) {
 			continue
 		}

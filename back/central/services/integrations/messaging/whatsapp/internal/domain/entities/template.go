@@ -302,6 +302,18 @@ var Templates = map[string]TemplateDefinition{
 		Description: "Aviso automatico de saldo bajo en la billetera del negocio",
 		Body:        "Hola {{1}}, este es tu reporte del día en Probability 📊. Tu saldo disponible en Billetera es {{2}} pesos.",
 	},
+	"resumen_pago_suscripcion": {
+		Name:     "resumen_pago_suscripcion",
+		Language: "es",
+		Variables: []string{
+			"nombre_negocio",
+			"fecha_vencimiento",
+			"valor_ciclo",
+			"saldo_billetera",
+		},
+		Description: "Aviso al negocio cuando empieza su ventana de pago de la suscripcion: cuanto debe y con cuanto saldo cuenta",
+		Body:        "Hola {{1}}, este es el resumen de tu suscripción en Probability. Tu periodo de pago vence el {{2}}. Valor del ciclo: {{3}} pesos. Saldo disponible en tu Billetera en este momento: {{4}} pesos.",
+	},
 }
 
 func RenderTemplateBody(templateName string, variables map[string]string) string {

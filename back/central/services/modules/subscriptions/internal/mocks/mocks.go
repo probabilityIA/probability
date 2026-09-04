@@ -34,6 +34,8 @@ type RepositoryMock struct {
 	UpdateBusinessSubscriptionCutoffDayFn     func(ctx context.Context, businessID uint, cutoffDay int) error
 	UpdateBusinessSubscriptionCourtesyUntilFn func(ctx context.Context, businessID uint, until time.Time) error
 	UpdateBusinessAutoPaymentEnabledFn        func(ctx context.Context, businessID uint, enabled bool) error
+	GetWhatsAppContactFn                      func(ctx context.Context, businessID uint) (*entities.WhatsAppContact, error)
+	HasAuditLogSinceFn                        func(ctx context.Context, businessID uint, action string, since time.Time) (bool, error)
 	GetBusinessSubscriptionMetaFn             func(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error)
 	GetBusinessCurrentSubscriptionTypeIDFn    func(ctx context.Context, businessID uint) (*uint, error)
 	ListBusinessesExpiringBetweenFn           func(ctx context.Context, from, to time.Time) ([]entities.ExpiringBusiness, error)
@@ -232,6 +234,20 @@ func (m *RepositoryMock) UpdateBusinessAutoPaymentEnabled(ctx context.Context, b
 		return m.UpdateBusinessAutoPaymentEnabledFn(ctx, businessID, enabled)
 	}
 	return nil
+}
+
+func (m *RepositoryMock) GetWhatsAppContact(ctx context.Context, businessID uint) (*entities.WhatsAppContact, error) {
+	if m.GetWhatsAppContactFn != nil {
+		return m.GetWhatsAppContactFn(ctx, businessID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) HasAuditLogSince(ctx context.Context, businessID uint, action string, since time.Time) (bool, error) {
+	if m.HasAuditLogSinceFn != nil {
+		return m.HasAuditLogSinceFn(ctx, businessID, action, since)
+	}
+	return false, nil
 }
 
 func (m *RepositoryMock) GetBusinessSubscriptionMeta(ctx context.Context, businessID uint) (*entities.BusinessSubscriptionMeta, error) {

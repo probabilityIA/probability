@@ -98,7 +98,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	ai.New(router, logger)
 	dashboard.New(router, database, redisClient, logger)
 	payBundle := pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
-	subscriptionsBundle := subscriptions.New(router, database, logger, payBundle, announcementsBundle)
+	subscriptionsBundle := subscriptions.New(router, database, logger, payBundle, announcementsBundle, rabbitMQ)
 	integrationCore.SetEcommerceLimitChecker(subscriptionsBundle.UseCase.EcommerceChannelLimit)
 	shipmentsBundle.SetSubscriptionOverageChecker(subscriptionsBundle.UseCase.CheckShipmentOverage)
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "invoicing"))

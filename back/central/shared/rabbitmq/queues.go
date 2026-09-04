@@ -147,6 +147,10 @@ const (
 )
 
 const (
+	QueueSubscriptionPaymentWindowRequested = "subscription.payment_window.requested"
+)
+
+const (
 	QueueAuthPasswordResetOTP = "auth.password_reset.otp"
 )
 

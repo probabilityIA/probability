@@ -25,7 +25,7 @@ func newSubsUseCase(repo *mocks.RepositoryMock, wallet *mocks.WalletDebiterMock,
 	if ann == nil {
 		ann = &mocks.AnnouncementsGatewayMock{}
 	}
-	return New(repo, wallet, ann, mocks.NewSilentLogger())
+	return New(repo, wallet, ann, nil, mocks.NewSilentLogger())
 }
 
 func uintPtr(v uint) *uint           { return &v }

@@ -52,6 +52,9 @@ type IRepository interface {
 
 	ListBusinessesForAdmin(ctx context.Context, page, pageSize int, search, statusFilter string) ([]entities.AdminBusinessRow, int64, error)
 	GetAdminKPIs(ctx context.Context) (entities.AdminKPIs, error)
+
+	GetWhatsAppContact(ctx context.Context, businessID uint) (*entities.WhatsAppContact, error)
+	HasAuditLogSince(ctx context.Context, businessID uint, action string, since time.Time) (bool, error)
 }
 
 type IWalletDebiter interface {

@@ -27,4 +27,5 @@ const (
 	AuditActionAutoPaymentEnabled      = "auto_payment_enabled"
 	AuditActionAutoPaymentDisabled     = "auto_payment_disabled"
 	AuditActionAutoRenewed             = "auto_renewed"
+	AuditActionPaymentWindowNotified   = "payment_window_notified"
 )
