@@ -12,92 +12,45 @@ type IWhatsApp interface {
 	SendTextMessage(ctx context.Context, phoneNumberID uint, toPhone, text, accessToken string) (string, error)
 }
 
-// ============================================
-// CACHE INTERFACES (reemplazan repositorios DB)
-// ============================================
-
-// HumanSession representa una sesión de atención humana activa.
-// Se crea cuando un agente humano responde manualmente a un cliente.
-// Permite que las respuestas del cliente lleguen al dashboard en lugar del bot AI.
 type HumanSession struct {
 	ConversationID string
 	BusinessID     uint
 	PhoneNumber    string
 }
 
-// IConversationCache define operaciones de cache para conversaciones WhatsApp.
-// Las conversaciones se mantienen en Redis como fuente primaria de estado
-// en tiempo real, y se persisten asincrónicamente en DB via RabbitMQ.
 type IConversationCache interface {
-	// GetByID obtiene una conversación del cache por su ID
 	GetByID(ctx context.Context, id string) (*entities.Conversation, error)
-
-	// GetByPhoneAndOrder obtiene una conversación por teléfono + número de orden
 	GetByPhoneAndOrder(ctx context.Context, phoneNumber, orderNumber string) (*entities.Conversation, error)
-
-	// GetActiveByPhone obtiene la conversación activa de un teléfono
 	GetActiveByPhone(ctx context.Context, phoneNumber string) (*entities.Conversation, error)
-
-	// Save guarda una conversación en cache (clave principal + índices).
-	// Si el estado es terminal, elimina el índice active.
 	Save(ctx context.Context, conversation *entities.Conversation) error
-
-	// Expire marca una conversación como expirada y limpia índices activos
 	Expire(ctx context.Context, id string) error
-
-	// ActivateHumanSession crea o renueva una sesión de atención humana para un teléfono.
-	// TTL: 24h (alineado con la ventana de servicio de WhatsApp).
-	// Cada llamada renueva el TTL automáticamente.
 	ActivateHumanSession(ctx context.Context, phoneNumber, conversationID string, businessID uint) error
-
-	// GetHumanSession retorna la sesión humana activa para un teléfono.
-	// Retorna nil, nil si no existe (no es un error).
 	GetHumanSession(ctx context.Context, phoneNumber string) (*HumanSession, error)
-
-	// SetAIPaused pausa el bot AI para un teléfono. TTL: 24h.
 	SetAIPaused(ctx context.Context, phoneNumber, conversationID string, businessID uint) error
-
-	// IsAIPaused retorna true si el AI está pausado para este teléfono.
 	IsAIPaused(ctx context.Context, phoneNumber string) bool
-
-	// ClearAIPaused reactiva el AI para un teléfono.
 	ClearAIPaused(ctx context.Context, phoneNumber string) error
 }
 
-// ICredentialsCache lee credenciales de WhatsApp desde Redis.
-// Las claves son calentadas por integrations/core al startup.
 type ICredentialsCache interface {
-	// GetWhatsAppConfig obtiene credenciales de WhatsApp para un business.
-	// Lee de: integration:idx:biz:{businessID}:type:2 -> integration:creds:{id} + integration:meta:{id}
 	GetWhatsAppConfig(ctx context.Context, businessID uint) (*WhatsAppConfig, error)
-
-	// GetWhatsAppDefaultConfig obtiene credenciales globales de plataforma.
-	// Lee de: integration:platform_creds:2
+	GetWhatsAppConfigByIntegration(ctx context.Context, integrationID uint) (*WhatsAppConfig, error)
 	GetWhatsAppDefaultConfig(ctx context.Context) (*WhatsAppConfig, error)
+	ResolveByPhoneNumberID(ctx context.Context, phoneNumberID string) (*IntegrationOwner, error)
 }
 
-// ============================================
-// PERSISTENCE PUBLISHER (async DB via RabbitMQ)
-// ============================================
+type IntegrationOwner struct {
+	IntegrationID uint
+	BusinessID    uint
+}
 
-// IPersistencePublisher publica eventos para persistencia asíncrona en DB.
-// notification_config consume estos eventos y los persiste.
 type IPersistencePublisher interface {
-	// Conversation events
 	PublishConversationCreated(ctx context.Context, conversation *entities.Conversation) error
 	PublishConversationUpdated(ctx context.Context, conversation *entities.Conversation) error
 	PublishConversationExpired(ctx context.Context, conversationID string) error
-
-	// MessageLog events
 	PublishMessageLogCreated(ctx context.Context, messageLog *entities.MessageLog) error
 	PublishMessageStatusUpdated(ctx context.Context, messageID string, status entities.MessageStatus, timestamps map[string]time.Time) error
 }
 
-// ============================================
-// EVENT PUBLISHER (business events via RabbitMQ)
-// ============================================
-
-// IEventPublisher define el contrato para publicar eventos en RabbitMQ
 type IEventPublisher interface {
 	PublishOrderConfirmed(ctx context.Context, orderNumber, phoneNumber string, businessID uint) error
 	PublishOrderCancelled(ctx context.Context, orderNumber, reason, phoneNumber string, businessID uint) error
@@ -105,21 +58,15 @@ type IEventPublisher interface {
 	PublishHandoffRequested(ctx context.Context, orderNumber, phoneNumber string, businessID uint, conversationID string) error
 }
 
-// WhatsAppConfig contiene la configuración de WhatsApp
 type WhatsAppConfig struct {
 	PhoneNumberID uint
 	AccessToken   string
 	IntegrationID uint
 	WhatsAppURL   string
+	WABAID        string
+	OwnNumber     bool
 }
 
-// ============================================
-// AI FORWARDER (forward messages to AI Sales agent)
-// ============================================
-
-// IAIForwarder reenvia mensajes sin conversacion activa al agente de ventas AI.
-// La implementacion lee platform_creds de Redis para verificar ai_sales_enabled
-// y obtener el business_id demo antes de publicar a whatsapp.ai.incoming.
 type IAIForwarder interface {
 	ForwardToAI(ctx context.Context, phoneNumber, messageText, messageID, messageType string) error
 }
@@ -127,12 +74,55 @@ type IAIForwarder interface {
 type IPlatformCredentialsGetter interface {
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
 	GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error)
+	GetIntegrationConfigAndCredentials(ctx context.Context, integrationID uint) (map[string]any, map[string]any, error)
+	FindIntegrationByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (uint, uint, error)
 }
 
-// ISSEEventPublisher publica eventos SSE al exchange de eventos (para notificar al frontend en tiempo real).
-// Implementado por infra/secondary/queue/sse_publisher.go usando rabbitmq.PublishEvent.
 type ISSEEventPublisher interface {
 	PublishMessageReceived(ctx context.Context, businessID uint, conversationID, phoneNumber, messageID, content string) error
 	PublishConversationStarted(ctx context.Context, businessID uint, conversationID, phoneNumber string) error
 	PublishMessageStatusUpdated(ctx context.Context, businessID uint, messageID, status string) error
+}
+
+type TemplateStatus struct {
+	Name        string
+	Language    string
+	Status      string
+	Category    string
+	MetaID      string
+	Reason      string
+	UpdatedAt   time.Time
+	Provisioned bool
+}
+
+type WABATemplatesSnapshot struct {
+	IntegrationID uint
+	BusinessID    uint
+	WABAID        string
+	Templates     []TemplateStatus
+	RefreshedAt   time.Time
+}
+
+type ITemplateAPI interface {
+	ListTemplates(ctx context.Context, wabaID, accessToken string) ([]TemplateDefinitionRemote, error)
+	CreateTemplate(ctx context.Context, wabaID, accessToken string, template TemplateDefinitionRemote) (string, error)
+}
+
+type TemplateDefinitionRemote struct {
+	ID              string
+	Name            string
+	Language        string
+	Category        string
+	Status          string
+	RejectedReason  string
+	ParameterFormat string
+	Components      []map[string]any
+}
+
+type ITemplateStatusCache interface {
+	Get(ctx context.Context, integrationID uint) (*WABATemplatesSnapshot, error)
+	Save(ctx context.Context, snapshot *WABATemplatesSnapshot) error
+	UpdateStatusByWABA(ctx context.Context, wabaID, name, language, status, reason string) error
+	IndexWABA(ctx context.Context, wabaID string, integrationID uint) error
+	IntegrationByWABA(ctx context.Context, wabaID string) (uint, error)
 }

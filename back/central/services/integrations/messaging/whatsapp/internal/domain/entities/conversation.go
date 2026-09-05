@@ -20,6 +20,7 @@ type ConversationType string
 const (
 	ConversationTypeOrder       ConversationType = "order"
 	ConversationTypeSystemAlert ConversationType = "system_alert"
+	ConversationTypeInbound     ConversationType = "inbound"
 )
 
 type Conversation struct {

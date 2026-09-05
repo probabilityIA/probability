@@ -35,3 +35,7 @@ func storeTypeIndexKey(storeID string, typeID uint) string {
 func platformCredentialsKey(integrationTypeID uint) string {
 	return fmt.Sprintf("integration:platform_creds:%d", integrationTypeID)
 }
+
+func configValueIndexKey(typeID uint, field, value string) string {
+	return fmt.Sprintf("integration:idx:cfg:%d:%s:%s", typeID, field, value)
+}

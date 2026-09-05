@@ -53,6 +53,14 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		}
 	}
 	if dto.Config != nil {
+		var previousConfig map[string]interface{}
+		if len(existing.Config) > 0 {
+			if err := json.Unmarshal(existing.Config, &previousConfig); err == nil {
+				if err := uc.cache.InvalidateConfigValueIndexes(ctx, existing.IntegrationTypeID, previousConfig); err != nil {
+					uc.log.Warn(ctx).Err(err).Uint("id", id).Msg("Failed to invalidate config value indexes")
+				}
+			}
+		}
 		existing.Config = *dto.Config
 	}
 	if dto.Credentials != nil {

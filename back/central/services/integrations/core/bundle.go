@@ -87,6 +87,8 @@ type IIntegrationCore interface {
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
 	GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error)
+	GetIntegrationConfigAndCredentials(ctx context.Context, integrationID uint) (map[string]any, map[string]any, error)
+	FindIntegrationByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (uint, uint, error)
 	GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error)
 	GetGlobalIntegrationIDByTypeCode(ctx context.Context, typeCode string) (uint, error)
 	EnsureGlobalIntegration(ctx context.Context, typeCode, name string, config map[string]interface{}, credentials map[string]interface{}) (uint, error)
@@ -340,4 +342,62 @@ func (ic *integrationCore) GetIntegrationIDByBusinessAndType(ctx context.Context
 	_ = ic.cache.SetBusinessTypeIndex(ctx, businessID, integrationTypeID, integration.ID)
 
 	return integration.ID, nil
+}
+
+func (ic *integrationCore) GetIntegrationConfigAndCredentials(ctx context.Context, integrationID uint) (map[string]any, map[string]any, error) {
+	if integrationID == 0 {
+		return nil, nil, fmt.Errorf("integration id is required")
+	}
+
+	withCreds, err := ic.useCase.GetIntegrationByIDWithCredentials(ctx, integrationID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if withCreds == nil {
+		return nil, nil, fmt.Errorf("integration %d not found", integrationID)
+	}
+
+	config := map[string]any{}
+	if len(withCreds.Config) > 0 {
+		if err := json.Unmarshal(withCreds.Config, &config); err != nil {
+			return nil, nil, fmt.Errorf("invalid config for integration %d: %w", integrationID, err)
+		}
+	}
+
+	credentials := map[string]any{}
+	for key, value := range withCreds.DecryptedCredentials {
+		credentials[key] = value
+	}
+
+	return config, credentials, nil
+}
+
+func (ic *integrationCore) FindIntegrationByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (uint, uint, error) {
+	if field == "" || value == "" {
+		return 0, 0, fmt.Errorf("field and value are required")
+	}
+
+	if cached, err := ic.cache.GetByConfigValue(ctx, integrationTypeID, field, value); err == nil && cached != nil {
+		var businessID uint
+		if cached.BusinessID != nil {
+			businessID = *cached.BusinessID
+		}
+		return cached.ID, businessID, nil
+	}
+
+	integration, err := ic.repo.FindActiveIntegrationByConfigValue(ctx, integrationTypeID, field, value)
+	if err != nil {
+		return 0, 0, err
+	}
+	if integration == nil {
+		return 0, 0, nil
+	}
+
+	_ = ic.cache.SetConfigValueIndex(ctx, integrationTypeID, field, value, integration.ID)
+
+	var businessID uint
+	if integration.BusinessID != nil {
+		businessID = *integration.BusinessID
+	}
+	return integration.ID, businessID, nil
 }

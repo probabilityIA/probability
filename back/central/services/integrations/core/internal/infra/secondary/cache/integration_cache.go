@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
@@ -73,6 +74,18 @@ func (c *IntegrationCache) SetIntegration(ctx context.Context, integration *doma
 			if err := c.redis.Delete(ctx, storeIdx); err != nil {
 				c.log.Warn(ctx).Err(err).Str("store_id", integration.StoreID).Msg("Failed to remove stale store+type index")
 			}
+		}
+	}
+
+	for _, field := range indexedConfigFields {
+		value := configValueAsString(integration.Config[field])
+		if value == "" {
+			continue
+		}
+		if integration.IsActive {
+			_ = c.SetConfigValueIndex(ctx, integration.IntegrationTypeID, field, value, integration.ID)
+		} else {
+			_ = c.InvalidateConfigValueIndex(ctx, integration.IntegrationTypeID, field, value)
 		}
 	}
 
@@ -314,4 +327,74 @@ func (c *IntegrationCache) GetByBusinessAndType(ctx context.Context, businessID,
 	}
 
 	return c.GetIntegration(ctx, uint(id))
+}
+
+var indexedConfigFields = []string{"phone_number_id"}
+
+func (c *IntegrationCache) GetByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (*domain.CachedIntegration, error) {
+	if field == "" || value == "" {
+		return nil, fmt.Errorf("config index requires field and value")
+	}
+
+	idStr, err := c.redis.Get(ctx, configValueIndexKey(integrationTypeID, field, value))
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Str("field", field).Msg("Failed to parse cached ID from config index")
+		return nil, err
+	}
+
+	return c.GetIntegration(ctx, uint(id))
+}
+
+func (c *IntegrationCache) SetConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string, integrationID uint) error {
+	if field == "" || value == "" {
+		return nil
+	}
+	key := configValueIndexKey(integrationTypeID, field, value)
+	if err := c.redis.Set(ctx, key, strconv.Itoa(int(integrationID)), ttlMetadata); err != nil {
+		c.log.Warn(ctx).Err(err).Str("key", key).Msg("Failed to cache config value index")
+		return err
+	}
+	return nil
+}
+
+func (c *IntegrationCache) InvalidateConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string) error {
+	if field == "" || value == "" {
+		return nil
+	}
+	key := configValueIndexKey(integrationTypeID, field, value)
+	if err := c.redis.Delete(ctx, key); err != nil {
+		c.log.Warn(ctx).Err(err).Str("key", key).Msg("Failed to delete config value index")
+		return err
+	}
+	return nil
+}
+
+func configValueAsString(raw interface{}) string {
+	switch v := raw.(type) {
+	case string:
+		return strings.TrimSpace(v)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case json.Number:
+		return v.String()
+	}
+	return ""
+}
+
+func (c *IntegrationCache) InvalidateConfigValueIndexes(ctx context.Context, integrationTypeID uint, config map[string]interface{}) error {
+	for _, field := range indexedConfigFields {
+		value := configValueAsString(config[field])
+		if value == "" {
+			continue
+		}
+		if err := c.InvalidateConfigValueIndex(ctx, integrationTypeID, field, value); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -48,7 +48,7 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		"2": formatCOP(event.Balance),
 	}
 
-	messageID, err := c.useCase.SendTemplate(
+	messageID, err := c.useCase.SendPlatformTemplate(
 		context.Background(),
 		templateName,
 		event.PhoneNumber,

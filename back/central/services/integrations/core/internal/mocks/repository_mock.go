@@ -193,3 +193,11 @@ func (m *RepositoryMock) UpdateProductMatchRules(ctx context.Context, id uint, r
 	args := m.Called(ctx, id, rules)
 	return args.Error(0)
 }
+
+func (m *RepositoryMock) FindActiveIntegrationByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (*domain.Integration, error) {
+	args := m.Called(ctx, integrationTypeID, field, value)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Integration), args.Error(1)
+}

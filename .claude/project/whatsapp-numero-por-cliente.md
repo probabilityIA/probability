@@ -1,6 +1,10 @@
 # WhatsApp: numero propio por cliente
 
 Fecha: 2026-09-04
+Codigo de las fases 1 a 5: implementado el 2026-09-05 (rama
+`claude/whatsapp-numero-por-cliente-s22bjf`). Lo que queda sin verificar esta en
+`.claude/alerts/whatsapp-numero-propio-pendientes.md`. Detalle tecnico de lo que
+quedo en el codigo: `back/central/services/integrations/messaging/whatsapp/NUMERO-PROPIO.md`.
 
 Objetivo: que cada negocio pueda enviar y recibir WhatsApp desde SU propio
 numero, con Probability como administrador de su cuenta, sin que ningun cliente
@@ -76,7 +80,7 @@ Nosotros anotamos `waba_id` y `phone_number_id`, y suscribimos la app:
 POST /{waba_id}/subscribed_apps
 ```
 
-### Fase 1 - Credenciales por negocio (1-2 dias)
+### Fase 1 - Credenciales por negocio (1-2 dias) - HECHA
 
 - `credentials_cache.go:39-56`: que `GetWhatsAppConfig` lea de verdad el `config`
   y las `credentials` de la fila `Integration` del negocio. Con
@@ -91,7 +95,7 @@ POST /{waba_id}/subscribed_apps
 El fallback no es opcional: los negocios que hoy usan nuestro numero deben
 seguir funcionando sin tocarles nada.
 
-### Fase 2 - Ruteo del webhook por numero (1-2 dias)
+### Fase 2 - Ruteo del webhook por numero (1-2 dias) - HECHA
 
 - Consulta nueva `phone_number_id -> (business_id, integration_id)`: SELECT sobre
   `integrations` filtrando `config->>'phone_number_id'`. Replicada en el repo del
@@ -101,9 +105,16 @@ seguir funcionando sin tocarles nada.
   resolver el negocio por `metadata.phone_number_id`.
 - La firma HMAC no cambia: el `webhook_secret` es de la app, igual para todos.
 
-### Fase 3 - Plantillas en el WABA del cliente (2-3 dias)
+### Fase 3 - Plantillas en el WABA del cliente (2-3 dias) - HECHA (sin probar contra un WABA real)
 
 Las 13 plantillas viven en nuestro WABA. Cada cliente necesita las suyas.
+
+Se implemento replicando desde nuestro WABA (`GET /{waba_id}/message_templates`)
+en vez de reconstruir el cuerpo de cada plantilla en Go: varias definiciones de
+`entities/template.go` no tienen `Body`, asi que una provision desde el codigo
+habria creado plantillas incompletas. Con Meta como origen, el catalogo no se
+desincroniza. El estado vive en Redis con TTL de 6 h, no en base: la fuente de
+verdad es Meta y el modulo es cache-first por diseno.
 
 - Provision al conectar: `POST /{waba_id}/message_templates` con las 13.
 - Guardar estado por plantilla y por WABA. Meta aprueba en horas o dias, y
@@ -114,7 +125,7 @@ Las 13 plantillas viven en nuestro WABA. Cada cliente necesita las suyas.
 Es la fase que mas se subestima: introduce el estado "cliente conectado pero sin
 plantillas aprobadas", que la UI tiene que saber mostrar.
 
-### Fase 4 - Lo que NO debe migrar (medio dia)
+### Fase 4 - Lo que NO debe migrar (medio dia) - HECHA
 
 Estos consumidores deben seguir en el numero de Probability:
 
@@ -122,9 +133,16 @@ Estos consumidores deben seguir en el numero de Probability:
 - `consumerauthotp/otp_consumer.go:57` - OTP de login de la plataforma
 - `consumerai/response_consumer.go:58` - revisar caso por caso
 
+Los tres ya usaban `GetWhatsAppDefaultConfig`, asi que no habia nada que aislar.
+Lo que si faltaba: `consumerwalletalert` y `consumersubscriptionalert` mandaban
+por `SendTemplate(businessID)`, o sea que con el cambio de la fase 1 el aviso de
+saldo bajo y el de vencimiento de suscripcion habrian salido del numero del
+propio negocio hacia el propio negocio, y con una plantilla que solo existe en
+nuestro WABA. Pasaron a `SendPlatformTemplate`.
+
 Si se mezcla, las alertas del servidor le salen al cliente por su propio numero.
 
-### Fase 5 - UI (1-2 dias)
+### Fase 5 - UI (1-2 dias) - HECHA
 
 Pantalla de conexion: `waba_id`, `phone_number_id`, token, boton de probar
 conexion (ya existe `usecasetestconnection`) y estado de plantillas. Con Embedded

@@ -553,3 +553,30 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 
 	return integration
 }
+
+func (r *Repository) FindActiveIntegrationByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (*domain.Integration, error) {
+	if field == "" || value == "" {
+		return nil, fmt.Errorf("field y value son requeridos para buscar por config")
+	}
+
+	var model models.Integration
+	err := r.db.Conn(ctx).
+		Preload("IntegrationType").
+		Preload("IntegrationType.Category").
+		Where("integration_type_id = ? AND is_active = ? AND deleted_at IS NULL", integrationTypeID, true).
+		Where("config ->> ? = ?", field, value).
+		Order("business_id IS NULL, id").
+		First(&model).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		r.log.Error(ctx).Err(err).
+			Uint("integration_type_id", integrationTypeID).
+			Str("field", field).
+			Msg("Error al buscar integracion por valor de config")
+		return nil, fmt.Errorf("error al buscar integracion por config %s: %w", field, err)
+	}
+
+	return r.toDomain(&model), nil
+}

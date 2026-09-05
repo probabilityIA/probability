@@ -113,3 +113,25 @@ func (m *CacheMock) GetPlatformCredentials(ctx context.Context, integrationTypeI
 	}
 	return args.Get(0).(map[string]interface{}), args.Error(1)
 }
+
+func (m *CacheMock) GetByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (*domain.CachedIntegration, error) {
+	args := m.Called(ctx, integrationTypeID, field, value)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.CachedIntegration), args.Error(1)
+}
+
+func (m *CacheMock) SetConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string, integrationID uint) error {
+	args := m.Called(ctx, integrationTypeID, field, value, integrationID)
+	return args.Error(0)
+}
+
+func (m *CacheMock) InvalidateConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string) error {
+	args := m.Called(ctx, integrationTypeID, field, value)
+	return args.Error(0)
+}
+
+func (m *CacheMock) InvalidateConfigValueIndexes(ctx context.Context, integrationTypeID uint, config map[string]interface{}) error {
+	return nil
+}

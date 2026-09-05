@@ -20,7 +20,7 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 }
 
 func (r *Repository) Migrate(ctx context.Context) error {
-	return nil
+	return r.migrateWhatsappInboundConversationType(ctx)
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {

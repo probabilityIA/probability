@@ -39,6 +39,7 @@ o hay un incidente que ya ocurrio y puede repetirse identico.
 | 9 | Siigo: cerrar los pendientes criticos y validar E2E las 6 operaciones. | `.claude/alerts/siigo-pendientes.md` |
 | 10 | MELI: token a Redis (el core ya recibe `redis.IRedis`, falta cablearlo) y verificacion E2E de >6h con varios ciclos de refresh. | `.claude/alerts/meli-token-persistence.md` |
 | 11 | Bancolombia QR: el webhook falla ABIERTO si no hay `webhook_secret` cargado. | `.claude/alerts/bancolombia-qr-spec-pendiente.md` |
+| 11b | WhatsApp numero propio por cliente: el codigo de las fases 1 a 5 esta escrito, falta correr la migracion, probar la fase 1 contra la base local y cargar el `waba_id` de plataforma. Toca a TODOS los negocios que hoy envian por nuestro numero. | `.claude/alerts/whatsapp-numero-propio-pendientes.md` |
 
 ---
 
