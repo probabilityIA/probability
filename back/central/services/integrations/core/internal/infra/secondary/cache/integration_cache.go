@@ -385,3 +385,16 @@ func configValueAsString(raw interface{}) string {
 	}
 	return ""
 }
+
+func (c *IntegrationCache) InvalidateConfigValueIndexes(ctx context.Context, integrationTypeID uint, config map[string]interface{}) error {
+	for _, field := range indexedConfigFields {
+		value := configValueAsString(config[field])
+		if value == "" {
+			continue
+		}
+		if err := c.InvalidateConfigValueIndex(ctx, integrationTypeID, field, value); err != nil {
+			return err
+		}
+	}
+	return nil
+}

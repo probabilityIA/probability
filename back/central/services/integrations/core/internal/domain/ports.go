@@ -194,4 +194,5 @@ type IIntegrationCache interface {
 	GetByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (*CachedIntegration, error)
 	SetConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string, integrationID uint) error
 	InvalidateConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string) error
+	InvalidateConfigValueIndexes(ctx context.Context, integrationTypeID uint, config map[string]interface{}) error
 }

@@ -131,3 +131,7 @@ func (m *CacheMock) InvalidateConfigValueIndex(ctx context.Context, integrationT
 	args := m.Called(ctx, integrationTypeID, field, value)
 	return args.Error(0)
 }
+
+func (m *CacheMock) InvalidateConfigValueIndexes(ctx context.Context, integrationTypeID uint, config map[string]interface{}) error {
+	return nil
+}

@@ -142,13 +142,23 @@ Persiste en BD via RabbitMQ (persistence publisher)
 | Persistence exchange | `message_log.created` | Nuevo mensaje (inbound o outbound) |
 | Persistence exchange | `message_log.status_updated` | Estado actualizado de mensaje |
 
+### Numero propio por negocio
+
+Un negocio puede enviar y recibir desde su propio numero, con Probability como
+administrador de su cuenta de WhatsApp. El detalle (que decide de que numero sale
+cada mensaje, el ruteo del webhook por `phone_number_id`, las plantillas por WABA
+y el onboarding manual con Meta) esta en
+[`NUMERO-PROPIO.md`](./NUMERO-PROPIO.md).
+
 ### Credenciales de plataforma (compartidas)
 
-Todas las integraciones WhatsApp usan las mismas credenciales del **integration_type** WhatsApp (ID: 2):
+Los negocios que no tienen numero propio usan las credenciales del
+**integration_type** WhatsApp (ID: 2):
 - `phone_number_id` — ID del número en Meta
 - `access_token` — Token permanente del system user
 - `verify_token` — Para verificación de webhook
 - `webhook_secret` — Para validación HMAC-SHA256
+- `waba_id` — WABA de la plataforma, origen del catálogo de plantillas que se replica a los clientes
 
 Cacheadas en Redis (`integration:platform_creds:2`) durante el warmup del servidor. Se leen via `core.GetCachedPlatformCredentials()`.
 
@@ -224,6 +234,8 @@ whatsApp/
 | `POST` | `/whatsapp/conversations/:id/reply` | JWT | Respuesta manual del agente |
 | `POST` | `/whatsapp/conversations/:id/pause-ai` | JWT | Pausa IA, activa sesión humana |
 | `POST` | `/whatsapp/conversations/:id/resume-ai` | JWT | Reactiva IA |
+| `GET` | `/whatsapp/templates/status` | JWT | Estado de las plantillas del negocio (`?refresh=true` consulta a Meta) |
+| `POST` | `/whatsapp/templates/provision` | JWT | Crea en el WABA del negocio las plantillas que le falten |
 
 ---
 

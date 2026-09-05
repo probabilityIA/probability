@@ -3,12 +3,15 @@
 import { useState } from 'react';
 import { Alert, Button } from '@/shared/ui';
 import { ChatBubbleLeftRightIcon, CheckCircleIcon, PhoneIcon } from '@heroicons/react/24/outline';
+import WhatsAppConnectionForm from './WhatsAppConnectionForm';
+import WhatsAppTemplatesPanel from './WhatsAppTemplatesPanel';
 
 interface WhatsAppIntegrationViewProps {
     integration: {
         id: number;
         name: string;
         code: string;
+        business_id?: number | null;
         config?: Record<string, any>;
         credentials?: Record<string, any>;
         is_active: boolean;
@@ -18,6 +21,11 @@ interface WhatsAppIntegrationViewProps {
     imageUrl?: string;
     onToggleActive?: (id: number, currentlyActive: boolean) => Promise<boolean>;
     onUpdateConfig?: (id: number, config: Record<string, any>) => Promise<{ success: boolean; message?: string }>;
+    onUpdateConnection?: (
+        id: number,
+        config: Record<string, any>,
+        credentials: Record<string, any>
+    ) => Promise<{ success: boolean; message?: string }>;
     onTestConnection?: (id: number) => Promise<{ success: boolean; message?: string }>;
     onRefresh?: () => void;
 }
@@ -27,6 +35,7 @@ export default function WhatsAppIntegrationView({
     imageUrl,
     onToggleActive,
     onUpdateConfig,
+    onUpdateConnection,
     onTestConnection,
     onRefresh,
 }: WhatsAppIntegrationViewProps) {
@@ -38,6 +47,8 @@ export default function WhatsAppIntegrationView({
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const savedPhone = integration.config?.test_phone_number || '';
+    const usesOwnNumber =
+        integration.config?.use_platform_token === false && Boolean(integration.config?.phone_number_id);
     const hasUnsavedChanges = testPhone !== savedPhone;
 
     const handleToggle = async () => {
@@ -76,7 +87,6 @@ export default function WhatsAppIntegrationView({
     const handleTestConnection = async () => {
         if (!onTestConnection) return;
 
-        // Si hay cambios sin guardar, guardar primero
         if (hasUnsavedChanges && onUpdateConfig && testPhone.trim()) {
             setSaving(true);
             try {
@@ -113,7 +123,7 @@ export default function WhatsAppIntegrationView({
 
     return (
         <div className="space-y-6 max-w-2xl mx-auto py-4">
-            {/* Header con icono */}
+
             <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 overflow-hidden">
                     {imageUrl ? (
@@ -134,7 +144,6 @@ export default function WhatsAppIntegrationView({
                 <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 font-mono">{integration.code}</p>
             </div>
 
-            {/* Estado actual - clickeable para activar/desactivar */}
             <div className="flex items-center justify-center">
                 {onToggleActive ? (
                     <button
@@ -181,7 +190,6 @@ export default function WhatsAppIntegrationView({
                 )}
             </div>
 
-            {/* Fechas */}
             <div className="grid grid-cols-2 gap-4 text-center text-sm">
                 <div>
                     <p className="text-gray-500 dark:text-gray-400 dark:text-gray-400">Creada</p>
@@ -193,7 +201,6 @@ export default function WhatsAppIntegrationView({
                 </div>
             </div>
 
-            {/* Numero de telefono de prueba */}
             {isActive && (onUpdateConfig || onTestConnection) && (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">
@@ -239,7 +246,21 @@ export default function WhatsAppIntegrationView({
                 </div>
             )}
 
-            {/* Mensajes de feedback */}
+            {isActive && onUpdateConnection && (
+                <WhatsAppConnectionForm
+                    config={integration.config || {}}
+                    onSave={(config, credentials) => onUpdateConnection(integration.id, config, credentials)}
+                    onSaved={onRefresh}
+                />
+            )}
+
+            {isActive && (
+                <WhatsAppTemplatesPanel
+                    businessId={integration.business_id || undefined}
+                    enabled={usesOwnNumber}
+                />
+            )}
+
             {message && (
                 <Alert type={message.type} onClose={() => setMessage(null)}>
                     {message.text}
