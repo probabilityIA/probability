@@ -8,6 +8,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 )
 
 func (u *usecases) SendTemplate(
@@ -18,10 +19,34 @@ func (u *usecases) SendTemplate(
 	orderNumber string,
 	businessID uint,
 ) (string, error) {
+	return u.sendTemplate(ctx, templateName, phoneNumber, variables, orderNumber, businessID, false)
+}
+
+func (u *usecases) SendPlatformTemplate(
+	ctx context.Context,
+	templateName string,
+	phoneNumber string,
+	variables map[string]string,
+	orderNumber string,
+	businessID uint,
+) (string, error) {
+	return u.sendTemplate(ctx, templateName, phoneNumber, variables, orderNumber, businessID, true)
+}
+
+func (u *usecases) sendTemplate(
+	ctx context.Context,
+	templateName string,
+	phoneNumber string,
+	variables map[string]string,
+	orderNumber string,
+	businessID uint,
+	forcePlatformNumber bool,
+) (string, error) {
 	u.log.Info(ctx).
 		Str("template_name", templateName).
 		Str("phone_number", phoneNumber).
 		Str("order_number", orderNumber).
+		Bool("platform_number", forcePlatformNumber).
 		Msg("[WhatsApp UseCase] - enviando plantilla")
 
 	templateDef, exists := entities.GetTemplateDefinition(templateName)
@@ -49,7 +74,13 @@ func (u *usecases) SendTemplate(
 		return "", fmt.Errorf("número de teléfono inválido: %w", err)
 	}
 
-	whatsappConfig, err := u.credentialsCache.GetWhatsAppConfig(ctx, businessID)
+	var whatsappConfig *ports.WhatsAppConfig
+	var err error
+	if forcePlatformNumber {
+		whatsappConfig, err = u.credentialsCache.GetWhatsAppDefaultConfig(ctx)
+	} else {
+		whatsappConfig, err = u.credentialsCache.GetWhatsAppConfig(ctx, businessID)
+	}
 	if err != nil {
 		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error obteniendo configuración de WhatsApp")
 		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
@@ -185,7 +216,13 @@ func (u *usecases) SendTemplateWithConversation(
 	}
 
 	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, templateDef)
-	messageID, err := u.whatsApp.SendMessage(ctx, whatsappConfig.PhoneNumberID, msg, whatsappConfig.AccessToken)
+
+	waClient := u.whatsApp
+	if whatsappConfig.WhatsAppURL != "" && u.clientFactory != nil {
+		waClient = u.clientFactory(whatsappConfig.WhatsAppURL)
+	}
+
+	messageID, err := waClient.SendMessage(ctx, whatsappConfig.PhoneNumberID, msg, whatsappConfig.AccessToken)
 	if err != nil {
 		return "", err
 	}

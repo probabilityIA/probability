@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasemessaging"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasetemplates"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/mappers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/request"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -12,16 +13,18 @@ import (
 )
 
 type Consumer struct {
-	queue   rabbitmq.IQueue
-	useCase usecasemessaging.IUseCase
-	log     log.ILogger
+	queue     rabbitmq.IQueue
+	useCase   usecasemessaging.IUseCase
+	templates usecasetemplates.IUseCase
+	log       log.ILogger
 }
 
-func New(queue rabbitmq.IQueue, useCase usecasemessaging.IUseCase, logger log.ILogger) *Consumer {
+func New(queue rabbitmq.IQueue, useCase usecasemessaging.IUseCase, templates usecasetemplates.IUseCase, logger log.ILogger) *Consumer {
 	return &Consumer{
-		queue:   queue,
-		useCase: useCase,
-		log:     logger.WithModule("whatsapp.webhook_consumer"),
+		queue:     queue,
+		useCase:   useCase,
+		templates: templates,
+		log:       logger.WithModule("whatsapp.webhook_consumer"),
 	}
 }
 
@@ -42,7 +45,7 @@ func (c *Consumer) Start(ctx context.Context) {
 				c.log.Error(ctx).Err(err).Msg("Mensaje de webhook WhatsApp invalido, descartado")
 				return nil
 			}
-			Dispatch(context.Background(), c.useCase, c.log, webhook)
+			Dispatch(context.Background(), c.useCase, c.templates, c.log, webhook)
 			return nil
 		})
 		if err != nil {
@@ -53,7 +56,7 @@ func (c *Consumer) Start(ctx context.Context) {
 	c.log.Info(ctx).Msg("Consumer de webhooks WhatsApp iniciado")
 }
 
-func Dispatch(ctx context.Context, useCase usecasemessaging.IUseCase, logger log.ILogger, webhook request.WebhookPayload) {
+func Dispatch(ctx context.Context, useCase usecasemessaging.IUseCase, templates usecasetemplates.IUseCase, logger log.ILogger, webhook request.WebhookPayload) {
 	webhookDTO := mappers.WebhookPayloadToDomain(webhook)
 
 	for _, entry := range webhookDTO.Entry {
@@ -71,7 +74,24 @@ func Dispatch(ctx context.Context, useCase usecasemessaging.IUseCase, logger log
 					}
 				}
 			case "message_template_status_update":
-				logger.Info(ctx).Msg("Actualizacion de estado de plantilla recibida")
+				logger.Info(ctx).
+					Str("waba_id", entry.ID).
+					Str("template", change.Value.TemplateName).
+					Str("event", change.Value.TemplateEvent).
+					Msg("Actualizacion de estado de plantilla recibida")
+				if templates == nil {
+					continue
+				}
+				if err := templates.HandleStatusUpdate(
+					ctx,
+					entry.ID,
+					change.Value.TemplateName,
+					change.Value.TemplateLanguage,
+					change.Value.TemplateEvent,
+					change.Value.TemplateReason,
+				); err != nil {
+					logger.Error(ctx).Err(err).Msg("Error actualizando estado de plantilla")
+				}
 			default:
 				logger.Warn(ctx).Str("field", change.Field).Msg("Campo de webhook WhatsApp no reconocido")
 			}

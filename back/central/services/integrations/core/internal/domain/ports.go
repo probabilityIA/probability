@@ -19,6 +19,7 @@ type IRepository interface {
 	ListIntegrations(ctx context.Context, filters IntegrationFilters) ([]*Integration, int64, error)
 	GetIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*Integration, error)
 	GetActiveIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*Integration, error)
+	FindActiveIntegrationByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (*Integration, error)
 	ListIntegrationsByBusiness(ctx context.Context, businessID uint) ([]*Integration, error)
 	ListIntegrationsByIntegrationTypeID(ctx context.Context, integrationTypeID uint) ([]*Integration, error)
 	SetIntegrationAsDefault(ctx context.Context, id uint) error
@@ -189,4 +190,8 @@ type IIntegrationCache interface {
 	SetBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID, integrationID uint) error
 	GetByStoreAndType(ctx context.Context, storeID string, integrationTypeID uint) (*CachedIntegration, error)
 	InvalidateStoreTypeIndex(ctx context.Context, storeID string, integrationTypeID uint) error
+
+	GetByConfigValue(ctx context.Context, integrationTypeID uint, field, value string) (*CachedIntegration, error)
+	SetConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string, integrationID uint) error
+	InvalidateConfigValueIndex(ctx context.Context, integrationTypeID uint, field, value string) error
 }

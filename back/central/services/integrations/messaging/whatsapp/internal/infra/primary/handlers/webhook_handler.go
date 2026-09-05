@@ -16,17 +16,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// @Summary Verifica el webhook de WhatsApp
-// @Description Endpoint para verificación del webhook por Meta. Retorna el challenge si el token es válido.
-// @Tags WhatsApp Webhooks
-// @Accept json
-// @Produce plain
-// @Param hub.mode query string true "Modo de suscripción (debe ser 'subscribe')"
-// @Param hub.verify_token query string true "Token de verificación"
-// @Param hub.challenge query string true "Challenge a retornar"
-// @Success 200 {string} string "Challenge token"
-// @Failure 403 {string} string "Forbidden"
-// @Router /integrations/whatsapp/webhook [get]
 func (h *handler) VerifyWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -70,18 +59,6 @@ func (h *handler) VerifyWebhook(c *gin.Context) {
 	c.String(http.StatusOK, challenge)
 }
 
-// @Summary Recibe eventos de WhatsApp
-// @Description Endpoint para recibir eventos de mensajes y estados desde Meta WhatsApp Business API
-// @Tags WhatsApp Webhooks
-// @Accept json
-// @Produce json
-// @Param X-Hub-Signature-256 header string true "Firma HMAC-SHA256 del payload"
-// @Param payload body request.WebhookPayload true "Payload del webhook"
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]interface{}
-// @Failure 401 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /integrations/whatsapp/webhook [post]
 func (h *handler) ReceiveWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -151,7 +128,7 @@ func (h *handler) enqueueWebhook(bodyBytes []byte, webhook request.WebhookPayloa
 		h.log.Warn(ctx).Msg("[Webhook Handler] - no se pudo encolar el webhook, procesando inline como fallback")
 	}
 
-	go consumerwebhook.Dispatch(ctx, h.useCase, h.log, webhook)
+	go consumerwebhook.Dispatch(ctx, h.useCase, h.templatesUseCase, h.log, webhook)
 }
 
 const whatsAppTypeID = uint(2)

@@ -11,7 +11,7 @@ type WhatsAppConversation struct {
 	ID               uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	PhoneNumber      string         `gorm:"type:varchar(20);not null;index:idx_whatsapp_phone_order,priority:1"`
 	OrderNumber      string         `gorm:"type:varchar(100);index:idx_whatsapp_phone_order,priority:2"`
-	ConversationType string         `gorm:"type:varchar(20);not null;default:'order';check:conversation_type IN ('order','system_alert')"`
+	ConversationType string         `gorm:"type:varchar(20);not null;default:'order';check:conversation_type IN ('order','system_alert','inbound')"`
 	BusinessID       uint           `gorm:"not null;index:idx_whatsapp_business_id"`
 	CurrentState     string         `gorm:"type:varchar(50);not null;index:idx_whatsapp_current_state"`
 	LastMessageID    string         `gorm:"type:varchar(255)"`

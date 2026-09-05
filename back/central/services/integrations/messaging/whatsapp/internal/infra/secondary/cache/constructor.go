@@ -11,8 +11,9 @@ type ICredentialsCacheMutable interface {
 	SetResolver(resolver ports.IPlatformCredentialsGetter)
 }
 
-func New(redis redisclient.IRedis, logger log.ILogger) (ports.IConversationCache, ICredentialsCacheMutable) {
+func New(redis redisclient.IRedis, logger log.ILogger) (ports.IConversationCache, ICredentialsCacheMutable, ports.ITemplateStatusCache) {
 	convCache := newConversationCache(redis, logger)
 	credsCache := newCredentialsCache(logger)
-	return convCache, credsCache
+	tmplCache := newTemplatesCache(redis, logger)
+	return convCache, credsCache, tmplCache
 }

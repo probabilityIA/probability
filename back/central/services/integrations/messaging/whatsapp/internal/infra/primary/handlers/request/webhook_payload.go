@@ -1,139 +1,125 @@
 package request
 
-// WebhookPayload representa el payload completo de un webhook de WhatsApp
 type WebhookPayload struct {
-	Object string         `json:"object"` // Siempre "whatsapp_business_account"
+	Object string         `json:"object"`
 	Entry  []WebhookEntry `json:"entry"`
 }
 
-// WebhookEntry representa una entrada en el webhook
 type WebhookEntry struct {
-	ID      string          `json:"id"` // ID de la cuenta de WhatsApp Business
+	ID      string          `json:"id"`
 	Changes []WebhookChange `json:"changes"`
 }
 
-// WebhookChange representa un cambio en el webhook
 type WebhookChange struct {
 	Value WebhookValue `json:"value"`
-	Field string       `json:"field"` // "messages" o "message_template_status_update"
+	Field string       `json:"field"`
 }
 
-// WebhookValue contiene los datos del webhook
 type WebhookValue struct {
-	MessagingProduct string           `json:"messaging_product"` // "whatsapp"
+	MessagingProduct string           `json:"messaging_product"`
 	Metadata         WebhookMetadata  `json:"metadata"`
 	Contacts         []WebhookContact `json:"contacts,omitempty"`
 	Messages         []WebhookMessage `json:"messages,omitempty"`
 	Statuses         []WebhookStatus  `json:"statuses,omitempty"`
+
+	Event                   string `json:"event,omitempty"`
+	MessageTemplateID       int64  `json:"message_template_id,omitempty"`
+	MessageTemplateName     string `json:"message_template_name,omitempty"`
+	MessageTemplateLanguage string `json:"message_template_language,omitempty"`
+	Reason                  string `json:"reason,omitempty"`
 }
 
-// WebhookMetadata contiene metadata del webhook
 type WebhookMetadata struct {
-	DisplayPhoneNumber string `json:"display_phone_number"` // Número de teléfono del negocio
-	PhoneNumberID      string `json:"phone_number_id"`      // ID del número de teléfono
+	DisplayPhoneNumber string `json:"display_phone_number"`
+	PhoneNumberID      string `json:"phone_number_id"`
 }
 
-// WebhookContact representa información de contacto
 type WebhookContact struct {
 	Profile WebhookProfile `json:"profile"`
-	WaID    string         `json:"wa_id"` // WhatsApp ID (número de teléfono)
+	WaID    string         `json:"wa_id"`
 }
 
-// WebhookProfile contiene el perfil del contacto
 type WebhookProfile struct {
-	Name string `json:"name"` // Nombre del contacto
+	Name string `json:"name"`
 }
 
-// WebhookMessage representa un mensaje recibido
 type WebhookMessage struct {
-	From        string               `json:"from"`                  // Número de teléfono del remitente
-	ID          string               `json:"id"`                    // ID del mensaje
-	Timestamp   string               `json:"timestamp"`             // Unix timestamp
-	Type        string               `json:"type"`                  // "text", "button", "interactive"
-	Text        *TextContent         `json:"text,omitempty"`        // Solo si type="text"
-	Button      *ButtonResponse      `json:"button,omitempty"`      // Solo si type="button"
-	Interactive *InteractiveResponse `json:"interactive,omitempty"` // Solo si type="interactive"
-	Context     *MessageContext      `json:"context,omitempty"`     // Contexto del mensaje (reply)
+	From        string               `json:"from"`
+	ID          string               `json:"id"`
+	Timestamp   string               `json:"timestamp"`
+	Type        string               `json:"type"`
+	Text        *TextContent         `json:"text,omitempty"`
+	Button      *ButtonResponse      `json:"button,omitempty"`
+	Interactive *InteractiveResponse `json:"interactive,omitempty"`
+	Context     *MessageContext      `json:"context,omitempty"`
 }
 
-// TextContent representa contenido de texto
 type TextContent struct {
-	Body string `json:"body"` // Texto del mensaje
+	Body string `json:"body"`
 }
 
-// ButtonResponse representa la respuesta a un botón quick reply
 type ButtonResponse struct {
-	Payload string `json:"payload"` // Payload del botón (opcional)
-	Text    string `json:"text"`    // Texto del botón presionado
+	Payload string `json:"payload"`
+	Text    string `json:"text"`
 }
 
-// InteractiveResponse representa respuesta a mensaje interactivo
 type InteractiveResponse struct {
-	Type        string           `json:"type"` // "button_reply", "list_reply"
+	Type        string           `json:"type"`
 	ButtonReply *ButtonReplyData `json:"button_reply,omitempty"`
 	ListReply   *ListReplyData   `json:"list_reply,omitempty"`
 }
 
-// ButtonReplyData contiene datos de respuesta de botón
 type ButtonReplyData struct {
-	ID    string `json:"id"`    // ID del botón
-	Title string `json:"title"` // Título del botón
+	ID    string `json:"id"`
+	Title string `json:"title"`
 }
 
-// ListReplyData contiene datos de respuesta de lista
 type ListReplyData struct {
-	ID          string `json:"id"`          // ID de la opción seleccionada
-	Title       string `json:"title"`       // Título de la opción
-	Description string `json:"description"` // Descripción de la opción
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
-// MessageContext representa el contexto de un mensaje (reply)
 type MessageContext struct {
-	From string `json:"from"` // ID del mensaje al que responde
-	ID   string `json:"id"`   // ID del mensaje original
+	From string `json:"from"`
+	ID   string `json:"id"`
 }
 
-// WebhookStatus representa un cambio de estado de mensaje
 type WebhookStatus struct {
-	ID                 string            `json:"id"`                   // ID del mensaje
-	Status             string            `json:"status"`               // "sent", "delivered", "read", "failed"
-	Timestamp          string            `json:"timestamp"`            // Unix timestamp
-	RecipientID        string            `json:"recipient_id"`         // Número de teléfono del destinatario
-	RecipientLogicalID string            `json:"recipient_logical_id"` // ID lógico del destinatario
+	ID                 string            `json:"id"`
+	Status             string            `json:"status"`
+	Timestamp          string            `json:"timestamp"`
+	RecipientID        string            `json:"recipient_id"`
+	RecipientLogicalID string            `json:"recipient_logical_id"`
 	Conversation       *ConversationInfo `json:"conversation,omitempty"`
 	Pricing            *PricingInfo      `json:"pricing,omitempty"`
 	Errors             []WebhookError    `json:"errors,omitempty"`
 }
 
-// ConversationInfo contiene información de la conversación
 type ConversationInfo struct {
-	ID                  string             `json:"id"`                             // ID de la conversación
-	Origin              ConversationOrigin `json:"origin"`                         // Objeto con tipo de origen
-	ExpirationTimestamp string             `json:"expiration_timestamp,omitempty"` // Timestamp de expiración
+	ID                  string             `json:"id"`
+	Origin              ConversationOrigin `json:"origin"`
+	ExpirationTimestamp string             `json:"expiration_timestamp,omitempty"`
 }
 
-// ConversationOrigin representa el origen de la conversación (Meta envía un objeto)
 type ConversationOrigin struct {
-	Type string `json:"type"` // "utility", "marketing", "service", "authentication"
+	Type string `json:"type"`
 }
 
-// PricingInfo contiene información de precio del mensaje
 type PricingInfo struct {
-	Billable     bool   `json:"billable"`      // Si es facturable
-	PricingModel string `json:"pricing_model"` // "PMP" o "CBP"
-	Category     string `json:"category"`      // "utility", "marketing", "service", etc.
-	Type         string `json:"type"`          // "regular"
+	Billable     bool   `json:"billable"`
+	PricingModel string `json:"pricing_model"`
+	Category     string `json:"category"`
+	Type         string `json:"type"`
 }
 
-// WebhookError representa un error en el webhook
 type WebhookError struct {
-	Code    int    `json:"code"`    // Código de error
-	Title   string `json:"title"`   // Título del error
-	Message string `json:"message"` // Mensaje de error
-	Details string `json:"details"` // Detalles adicionales
+	Code    int    `json:"code"`
+	Title   string `json:"title"`
+	Message string `json:"message"`
+	Details string `json:"details"`
 }
 
-// GetMessageText extrae el texto del mensaje independientemente del tipo
 func (m *WebhookMessage) GetMessageText() string {
 	switch m.Type {
 	case "text":
@@ -157,7 +143,6 @@ func (m *WebhookMessage) GetMessageText() string {
 	return ""
 }
 
-// IsButtonResponse verifica si el mensaje es una respuesta de botón
 func (m *WebhookMessage) IsButtonResponse() bool {
 	return m.Type == "button" || (m.Type == "interactive" && m.Interactive != nil && m.Interactive.ButtonReply != nil)
 }

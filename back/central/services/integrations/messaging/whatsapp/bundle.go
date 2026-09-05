@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasemessaging"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasetemplates"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasetestconnection"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
@@ -63,17 +64,18 @@ func buildDiagnosticoResultTemplateMessage(phoneNumber, name, surveyTitle, level
 
 type bundle struct {
 	core.BaseIntegration
-	wa          ports.IWhatsApp
-	useCase     usecasemessaging.IUseCase
-	testUsecase usecasetestconnection.ITestConnectionUseCase
-	handler     handlers.IHandler
-	credsCache  cache.ICredentialsCacheMutable
+	wa               ports.IWhatsApp
+	useCase          usecasemessaging.IUseCase
+	testUsecase      usecasetestconnection.ITestConnectionUseCase
+	templatesUseCase usecasetemplates.IUseCase
+	handler          handlers.IHandler
+	credsCache       cache.ICredentialsCacheMutable
 }
 
 func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisClient redisclient.IRedis) core.IIntegrationContract {
 	logger = logger.WithModule("whatsapp")
 
-	convCache, credsCache := cache.New(redisClient, logger)
+	convCache, credsCache, templatesCache := cache.New(redisClient, logger)
 
 	persistPub := queue.NewPersistencePublisher(rabbit, logger)
 
@@ -115,10 +117,19 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 
 	testUsecase := usecasetestconnection.New(config, logger)
 
-	handler := handlers.New(useCase, logger, config, rabbit)
+	templatesAPIFactory := func(baseURL string) ports.ITemplateAPI {
+		if baseURL == "" {
+			baseURL = whatsappURL
+		}
+		return client.NewTemplatesClient(baseURL, logger)
+	}
+
+	templatesUseCase := usecasetemplates.New(credsCache, templatesCache, templatesAPIFactory, logger)
+
+	handler := handlers.New(useCase, templatesUseCase, logger, config, rabbit)
 
 	if rabbit != nil {
-		webhookConsumer := consumerwebhook.New(rabbit, useCase, logger)
+		webhookConsumer := consumerwebhook.New(rabbit, useCase, templatesUseCase, logger)
 		webhookConsumer.Start(context.Background())
 
 		orderConsumer := consumerorder.New(
@@ -177,11 +188,12 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 	}
 
 	return &bundle{
-		wa:          wa,
-		useCase:     useCase,
-		testUsecase: testUsecase,
-		handler:     handler,
-		credsCache:  credsCache,
+		wa:               wa,
+		useCase:          useCase,
+		testUsecase:      testUsecase,
+		templatesUseCase: templatesUseCase,
+		handler:          handler,
+		credsCache:       credsCache,
 	}
 }
 

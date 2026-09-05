@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 )
 
 func (u *usecases) HandleIncomingMessage(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
@@ -87,6 +88,12 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 			return nil
 		}
 
+		if handled, routeErr := u.routeToOwnNumberBusiness(ctx, message, metadata, messageText); routeErr != nil {
+			return routeErr
+		} else if handled {
+			return nil
+		}
+
 		if u.aiForwarder != nil {
 			if fwdErr := u.aiForwarder.ForwardToAI(ctx, phoneNumber, messageText, message.ID, message.Type); fwdErr != nil {
 				u.log.Error(ctx).Err(fwdErr).
@@ -143,6 +150,124 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 	}
 
 	return nil
+}
+
+func (u *usecases) resolveBusinessByPhoneNumberID(ctx context.Context, phoneNumberID string) *ports.IntegrationOwner {
+	if phoneNumberID == "" || u.credentialsCache == nil {
+		return nil
+	}
+
+	owner, err := u.credentialsCache.ResolveByPhoneNumberID(ctx, phoneNumberID)
+	if err != nil {
+		u.log.Warn(ctx).Err(err).
+			Str("phone_number_id", phoneNumberID).
+			Msg("[WhatsApp Webhook] - no se pudo resolver el negocio por phone_number_id")
+		return nil
+	}
+	if owner == nil || owner.BusinessID == 0 {
+		return nil
+	}
+
+	return owner
+}
+
+func (u *usecases) routeToOwnNumberBusiness(
+	ctx context.Context,
+	message dtos.WebhookMessageDTO,
+	metadata dtos.WebhookMetadataDTO,
+	messageText string,
+) (bool, error) {
+	owner := u.resolveBusinessByPhoneNumberID(ctx, metadata.PhoneNumberID)
+	if owner == nil {
+		return false, nil
+	}
+
+	phoneNumber := message.From
+
+	conversation, err := u.getOrCreateInboundConversation(ctx, phoneNumber, owner.BusinessID)
+	if err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("phone_number", phoneNumber).
+			Uint("business_id", owner.BusinessID).
+			Msg("[WhatsApp Webhook] - error creando conversación entrante para número propio")
+		return true, err
+	}
+
+	messageLog := &entities.MessageLog{
+		ConversationID: conversation.ID,
+		Direction:      entities.MessageDirectionInbound,
+		MessageID:      message.ID,
+		Content:        messageText,
+		Status:         entities.MessageStatusDelivered,
+		CreatedAt:      time.Now(),
+	}
+	if logErr := u.persistPublisher.PublishMessageLogCreated(ctx, messageLog); logErr != nil {
+		u.log.Error(ctx).Err(logErr).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - error persistiendo mensaje entrante de número propio")
+	}
+
+	if sseErr := u.ssePublisher.PublishMessageReceived(
+		ctx,
+		owner.BusinessID,
+		conversation.ID,
+		phoneNumber,
+		message.ID,
+		messageText,
+	); sseErr != nil {
+		u.log.Error(ctx).Err(sseErr).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - error publicando SSE de mensaje entrante")
+	}
+
+	u.log.Info(ctx).
+		Str("phone_number", phoneNumber).
+		Str("phone_number_id", metadata.PhoneNumberID).
+		Uint("business_id", owner.BusinessID).
+		Uint("integration_id", owner.IntegrationID).
+		Str("conversation_id", conversation.ID).
+		Msg("[WhatsApp Webhook] - mensaje enrutado al negocio dueño del número")
+
+	return true, nil
+}
+
+func (u *usecases) getOrCreateInboundConversation(
+	ctx context.Context,
+	phoneNumber string,
+	businessID uint,
+) (*entities.Conversation, error) {
+	if existing, err := u.conversationCache.GetActiveByPhone(ctx, phoneNumber); err == nil && existing != nil {
+		return existing, nil
+	}
+
+	conversation := &entities.Conversation{
+		PhoneNumber:      phoneNumber,
+		ConversationType: entities.ConversationTypeInbound,
+		BusinessID:       businessID,
+		CurrentState:     entities.StateHandoffToHuman,
+		Metadata:         make(map[string]interface{}),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		ExpiresAt:        time.Now().Add(24 * time.Hour),
+	}
+
+	if err := u.conversationCache.Save(ctx, conversation); err != nil {
+		return nil, err
+	}
+
+	if err := u.persistPublisher.PublishConversationCreated(ctx, conversation); err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - error publicando creación de conversación entrante")
+	}
+
+	if err := u.ssePublisher.PublishConversationStarted(ctx, businessID, conversation.ID, phoneNumber); err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - error publicando SSE conversation_started")
+	}
+
+	return conversation, nil
 }
 
 func (u *usecases) processConversationFlow(ctx context.Context, conversation *entities.Conversation, userResponse string) error {
@@ -273,7 +398,7 @@ func (u *usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.Webho
 			}
 
 			for _, status := range change.Value.Statuses {
-				if err := u.processMessageStatus(ctx, status); err != nil {
+				if err := u.processMessageStatus(ctx, status, change.Value.Metadata); err != nil {
 					u.log.Error(ctx).Err(err).
 						Str("message_id", status.ID).
 						Str("status", status.Status).
@@ -287,7 +412,7 @@ func (u *usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.Webho
 	return nil
 }
 
-func (u *usecases) processMessageStatus(ctx context.Context, status dtos.WebhookStatusDTO) error {
+func (u *usecases) processMessageStatus(ctx context.Context, status dtos.WebhookStatusDTO, metadata dtos.WebhookMetadataDTO) error {
 	u.log.Info(ctx).
 		Str("message_id", status.ID).
 		Str("status", status.Status).
@@ -339,8 +464,15 @@ func (u *usecases) processMessageStatus(ctx context.Context, status dtos.Webhook
 		return err
 	}
 
+	businessID := uint(0)
 	if conv, convErr := u.conversationCache.GetActiveByPhone(ctx, status.RecipientID); convErr == nil && conv != nil {
-		if sseErr := u.ssePublisher.PublishMessageStatusUpdated(ctx, conv.BusinessID, status.ID, string(messageStatus)); sseErr != nil {
+		businessID = conv.BusinessID
+	} else if owner := u.resolveBusinessByPhoneNumberID(ctx, metadata.PhoneNumberID); owner != nil {
+		businessID = owner.BusinessID
+	}
+
+	if businessID > 0 {
+		if sseErr := u.ssePublisher.PublishMessageStatusUpdated(ctx, businessID, status.ID, string(messageStatus)); sseErr != nil {
 			u.log.Error(ctx).Err(sseErr).
 				Str("message_id", status.ID).
 				Msg("[WhatsApp Webhook] - error publicando SSE message_status_updated")

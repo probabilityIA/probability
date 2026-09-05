@@ -1,11 +1,12 @@
 package mappers
 
 import (
+	"strconv"
+
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/request"
 )
 
-// WebhookPayloadToDomain convierte request.WebhookPayload -> dtos.WebhookPayloadDTO
 func WebhookPayloadToDomain(req request.WebhookPayload) dtos.WebhookPayloadDTO {
 	entries := make([]dtos.WebhookEntryDTO, len(req.Entry))
 	for i, entry := range req.Entry {
@@ -53,7 +54,17 @@ func mapWebhookValue(req request.WebhookValue) dtos.WebhookValueDTO {
 		statuses[i] = mapWebhookStatus(status)
 	}
 
+	templateID := ""
+	if req.MessageTemplateID != 0 {
+		templateID = strconv.FormatInt(req.MessageTemplateID, 10)
+	}
+
 	return dtos.WebhookValueDTO{
+		TemplateEvent:    req.Event,
+		TemplateID:       templateID,
+		TemplateName:     req.MessageTemplateName,
+		TemplateLanguage: req.MessageTemplateLanguage,
+		TemplateReason:   req.Reason,
 		MessagingProduct: req.MessagingProduct,
 		Metadata: dtos.WebhookMetadataDTO{
 			DisplayPhoneNumber: req.Metadata.DisplayPhoneNumber,
