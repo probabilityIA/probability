@@ -83,14 +83,17 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 
 	matchRules := productmatch.Sanitize(integration.ProductMatchRules)
 	wooRefsByProduct := make(map[int]productmatch.ExternalRefs)
-	if wooProducts, werr := uc.client.GetProducts(ctx, storeURL, consumerKey, consumerSecret); werr != nil {
-		uc.logger.Warn(ctx).Err(werr).Msg("No se pudo listar productos de WooCommerce para conciliar el catalogo")
-	} else {
-		outcome := productmatch.Reconcile(matchRules, probabilityItems(products), wooItems(wooProducts))
-		for _, pair := range outcome.Pairs {
-			if refs := wooRefs(wooProducts[pair.ChannelIndex]); refs.ProductID != "" {
-				wooRefsByProduct[pair.ProbabilityIndex] = refs
-			}
+	wooProducts, werr := uc.client.GetProducts(ctx, storeURL, consumerKey, consumerSecret)
+	if werr != nil {
+		uc.logger.Error(ctx).Err(werr).
+			Uint("integration_id", uint(integIDUint)).
+			Msg("No se pudo listar el catalogo de WooCommerce, se aborta la sincronizacion de stock")
+		return fmt.Errorf("listing woocommerce products: %w", werr)
+	}
+	outcome := productmatch.Reconcile(matchRules, probabilityItems(products), wooItems(wooProducts))
+	for _, pair := range outcome.Pairs {
+		if refs := wooRefs(wooProducts[pair.ChannelIndex]); refs.ProductID != "" {
+			wooRefsByProduct[pair.ProbabilityIndex] = refs
 		}
 	}
 
@@ -100,7 +103,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		"total":          total,
 	})
 
-	created := 0
+	skipped := 0
 	updated := 0
 	failed := 0
 
@@ -108,7 +111,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		if p.SKU == "" {
 			failed++
 			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			uc.maybeStockProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, skipped, updated, failed)
 			continue
 		}
 
@@ -116,7 +119,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		if gerr != nil {
 			failed++
 			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			uc.maybeStockProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, skipped, updated, failed)
 			continue
 		}
 
@@ -126,7 +129,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 					uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al mapear producto existente de WooCommerce")
 					failed++
 					uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
-					uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+					uc.maybeStockProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, skipped, updated, failed)
 					continue
 				}
 				externalID = refs.ProductID
@@ -143,53 +146,29 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 				updated++
 				uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "updated")
 			}
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			uc.maybeStockProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, skipped, updated, failed)
 			continue
 		}
 
-		newID, cerr := uc.client.CreateProduct(ctx, storeURL, consumerKey, consumerSecret, domain.CreateProductInput{
-			Name:          p.Name,
-			SKU:           p.SKU,
-			Price:         p.Price,
-			Description:   p.Description,
-			StockQuantity: p.StockQuantity,
-			ManageStock:   p.TrackInventory,
-		})
-		if cerr != nil {
-			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en WooCommerce")
-			failed++
-			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
-			continue
-		}
-
-		newRefs := productmatch.ExternalRefs{ProductID: newID, SKU: p.SKU, Barcode: p.Barcode}
-		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newRefs); merr != nil {
-			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
-			failed++
-			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
-			continue
-		}
-		created++
-		uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "created")
-		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+		skipped++
+		uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "skipped")
+		uc.maybeStockProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, skipped, updated, failed)
 	}
 
 	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.completed", map[string]interface{}{
 		"correlation_id": correlationID,
 		"total":          total,
-		"created":        created,
+		"skipped":        skipped,
 		"updated":        updated,
 		"failed":         failed,
 	})
 
 	uc.logger.Info(ctx).
 		Int("total", total).
-		Int("created", created).
+		Int("skipped", skipped).
 		Int("updated", updated).
 		Int("failed", failed).
-		Msg("Sincronizacion de productos a WooCommerce completada")
+		Msg("Sincronizacion de stock a WooCommerce completada")
 
 	return nil
 }
@@ -228,5 +207,19 @@ func (uc *wooCommerceUseCase) emitSyncEvent(ctx context.Context, businessID, int
 		BusinessID:    businessID,
 		IntegrationID: integrationID,
 		Data:          data,
+	})
+}
+
+func (uc *wooCommerceUseCase) maybeStockProgress(ctx context.Context, businessID, integrationID uint, correlationID string, processed, total, skipped, updated, failed int) {
+	if processed%productSyncProgressBatch != 0 && processed != total {
+		return
+	}
+	uc.emitSyncEvent(ctx, businessID, integrationID, "woocommerce.product.sync.progress", map[string]interface{}{
+		"correlation_id": correlationID,
+		"processed":      processed,
+		"total":          total,
+		"skipped":        skipped,
+		"updated":        updated,
+		"failed":         failed,
 	})
 }

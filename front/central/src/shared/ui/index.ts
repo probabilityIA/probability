@@ -6,6 +6,7 @@ export * from './filters';
 export * from './dynamic-filters';
 export * from './icon-action-button';
 export * from './whatsapp-icon';
+export * from './action-confirm-dialog';
 export * from './confirm-modal';
 export * from './date-picker';
 export * from './date-range-picker';

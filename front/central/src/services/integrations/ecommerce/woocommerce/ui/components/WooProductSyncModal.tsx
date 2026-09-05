@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, ArrowDownToLine, ArrowRightLeft, Link2 } from 'lucide-react';
 import { useSSE } from '@/shared/hooks/use-sse';
+import { ActionConfirmDialog } from '@/shared/ui/action-confirm-dialog';
+import { CONFIRM_TEXTS } from './sync-confirm-texts';
+import { ActionBadge, ProductList, SelectableProductList } from './sync-modal-parts';
+import type { Brief, SyncAction } from './sync-modal-parts';
 import { reconcileWooProductsAction, applyWooProductsAction, syncWooProductsAction, associateWooProductsAction } from '../../infra/actions';
 
 interface WooProductSyncModalProps {
@@ -11,11 +15,6 @@ interface WooProductSyncModalProps {
     integrationId: number;
     businessId: number | null;
     onCompleted?: () => void;
-}
-
-interface Brief {
-    sku: string;
-    name: string;
 }
 
 interface Diff {
@@ -38,11 +37,22 @@ interface SyncItem {
     sku: string;
     name: string;
     quantity: number;
-    action: 'created' | 'updated' | 'failed';
+    action: SyncAction;
 }
 
 type Phase = 'analyzing' | 'diff' | 'running' | 'done' | 'error';
 type Direction = 'to_woo' | 'to_probability';
+
+interface PendingAction {
+    title: string;
+    description: string;
+    count: number;
+    countLabel: string;
+    warning?: string;
+    tone: 'danger' | 'warning' | 'info';
+    confirmText: string;
+    run: () => void;
+}
 
 export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId, onCompleted }: WooProductSyncModalProps) {
     const [phase, setPhase] = useState<Phase>('analyzing');
@@ -51,12 +61,15 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
     const [total, setTotal] = useState(0);
     const [processed, setProcessed] = useState(0);
     const [created, setCreated] = useState(0);
+    const [skipped, setSkipped] = useState(0);
     const [updated, setUpdated] = useState(0);
     const [failed, setFailed] = useState(0);
     const [isFullSync, setIsFullSync] = useState(false);
     const [items, setItems] = useState<SyncItem[]>([]);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const [pending, setPending] = useState<PendingAction | null>(null);
 
     const correlationRef = useRef<string | null>(null);
 
@@ -89,25 +102,28 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             setTotal(0);
             setProcessed(0);
             setCreated(0);
+            setSkipped(0);
             setUpdated(0);
             setFailed(0);
             setIsFullSync(false);
             setItems([]);
             setSelected(new Set());
             setErrorMessage(null);
+            setPending(null);
             correlationRef.current = null;
             return;
         }
         analyze();
     }, [isOpen, analyze]);
 
-    const handleApply = async (dir: Direction) => {
+    const runApply = async (dir: Direction) => {
         setDirection(dir);
         setIsFullSync(false);
         setPhase('running');
         setTotal(dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0));
         setProcessed(0);
         setCreated(0);
+        setSkipped(0);
         setUpdated(0);
         setFailed(0);
         setItems([]);
@@ -121,13 +137,14 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         correlationRef.current = res.correlation_id;
     };
 
-    const handleAssociate = async (skus?: string[]) => {
+    const runAssociate = async (skus?: string[]) => {
         setDirection(null);
         setIsFullSync(false);
         setPhase('running');
         setTotal(skus ? skus.length : (diff?.matchedNotAssociated.length || 0));
         setProcessed(0);
         setCreated(0);
+        setSkipped(0);
         setUpdated(0);
         setFailed(0);
         setItems([]);
@@ -141,6 +158,35 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         correlationRef.current = res.correlation_id;
     };
 
+    const ask = (a: PendingAction) => setPending(a);
+
+    const confirmPending = () => {
+        const a = pending;
+        setPending(null);
+        a?.run();
+    };
+
+    const askFullSync = () => ask({
+        ...CONFIRM_TEXTS.stock,
+        count: diff?.matched || 0,
+        tone: 'info',
+        run: () => { void runFullSync(); },
+    });
+
+    const askApply = (dir: Direction) => ask({
+        ...(dir === 'to_woo' ? CONFIRM_TEXTS.createInWoo : CONFIRM_TEXTS.createInProbability),
+        count: dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0),
+        tone: dir === 'to_woo' ? 'danger' : 'warning',
+        run: () => { void runApply(dir); },
+    });
+
+    const askAssociate = (skus: string[]) => ask({
+        ...CONFIRM_TEXTS.associate,
+        count: skus.length,
+        tone: 'info',
+        run: () => { void runAssociate(skus); },
+    });
+
     const toggleSelected = (sku: string) => {
         setSelected((prev) => {
             const next = new Set(prev);
@@ -150,13 +196,14 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         });
     };
 
-    const handleFullSync = async () => {
+    const runFullSync = async () => {
         setDirection('to_woo');
         setIsFullSync(true);
         setPhase('running');
         setTotal(diff?.matched || 0);
         setProcessed(0);
         setCreated(0);
+        setSkipped(0);
         setUpdated(0);
         setFailed(0);
         setItems([]);
@@ -186,16 +233,18 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                     sku: String(data.sku || ''),
                     name: String(data.name || ''),
                     quantity: Number(data.quantity) || 0,
-                    action: (data.action === 'created' || data.action === 'failed') ? data.action : 'updated',
+                    action: (data.action === 'created' || data.action === 'failed' || data.action === 'skipped') ? data.action : 'updated',
                 }]);
             } else if (eventType === 'woocommerce.product.sync.progress') {
                 setProcessed(Number(data.processed) || 0);
+                setSkipped(Number(data.skipped) || 0);
                 setCreated(Number(data.created) || 0);
                 setUpdated(Number(data.updated) || 0);
                 setFailed(Number(data.failed) || 0);
             } else if (eventType === 'woocommerce.product.sync.completed') {
                 setProcessed(Number(data.total) || 0);
                 setTotal(Number(data.total) || 0);
+                setSkipped(Number(data.skipped) || 0);
                 setCreated(Number(data.created) || 0);
                 setUpdated(Number(data.updated) || 0);
                 setFailed(Number(data.failed) || 0);
@@ -263,9 +312,9 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                             <div className="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10 p-3 flex items-start justify-between gap-3">
                                 <div>
                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Sincronizar stock a WooCommerce</p>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">Vincula por SKU los productos que ya existen y actualiza su stock en WooCommerce.</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Actualiza el stock de los productos ya vinculados. No crea productos en la tienda.</p>
                                 </div>
-                                <button onClick={handleFullSync} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                <button onClick={askFullSync} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                     <RefreshCw size={14} /> Sincronizar stock
                                 </button>
                             </div>
@@ -277,14 +326,14 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no están asociados a este canal</p>
                                             <p className="text-[11px] text-gray-400 mt-0.5">Crea la relación (sin tocar stock) para que el canal los reconozca como propios.</p>
                                         </div>
-                                        <button onClick={() => handleAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                        <button onClick={() => askAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                             <Link2 size={14} /> Asociar todos
                                         </button>
                                     </div>
                                     <SelectableProductList items={diff.matchedNotAssociated} selected={selected} onToggle={toggleSelected} />
                                     <div className="mt-2 flex items-center justify-between">
                                         <span className="text-[11px] text-gray-400">{selected.size} seleccionado{selected.size !== 1 ? 's' : ''}</span>
-                                        <button onClick={() => handleAssociate(Array.from(selected))} disabled={selected.size === 0} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-700 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                                        <button onClick={() => askAssociate(Array.from(selected))} disabled={selected.size === 0} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-700 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                                             <Link2 size={14} /> Asociar seleccionados
                                         </button>
                                     </div>
@@ -306,7 +355,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no están en WooCommerce</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en tu tienda WooCommerce (con imagen si tienen).</p>
                                                 </div>
-                                                <button onClick={() => handleApply('to_woo')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                                <button onClick={() => askApply('to_woo')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                                     <ArrowUpFromLine size={14} /> Crear en WooCommerce
                                                 </button>
                                             </div>
@@ -321,7 +370,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En WooCommerce hay {diff.onlyInWoo.length} producto{diff.onlyInWoo.length !== 1 ? 's' : ''} que no están en Probability</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuración de bodegas.</p>
                                                 </div>
-                                                <button onClick={() => handleApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                                <button onClick={() => askApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                                     <ArrowDownToLine size={14} /> Crear en Probability
                                                 </button>
                                             </div>
@@ -354,11 +403,17 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                 <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-300" style={{ width: `${progressPct}%` }} />
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-4">
-                                <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                                    <span>Creados</span><span className="tabular-nums">{created}</span>
-                                </div>
+                                {isFullSync ? (
+                                    <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                        <span>Omitidos</span><span className="tabular-nums">{skipped}</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                        <span>Creados</span><span className="tabular-nums">{created}</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                                    <span>Mapeados</span><span className="tabular-nums">{updated}</span>
+                                    <span>{isFullSync ? 'Actualizados' : 'Mapeados'}</span><span className="tabular-nums">{updated}</span>
                                 </div>
                                 <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
                                     <span>Fallidos</span><span className="tabular-nums">{failed}</span>
@@ -399,52 +454,19 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                     )}
                 </div>
             </div>
-        </div>
-    );
-}
 
-function ActionBadge({ action }: { action: SyncItem['action'] }) {
-    const map = {
-        created: { label: 'Creado', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
-        updated: { label: 'Actualizado', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-        failed: { label: 'Fallido', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-    };
-    const { label, cls } = map[action];
-    return <span className={`px-1.5 py-0.5 rounded font-semibold ${cls}`}>{label}</span>;
-}
-
-function ProductList({ items }: { items: Brief[] }) {
-    if (items.length === 0) return null;
-    return (
-        <div className="mt-2 max-h-32 overflow-y-auto rounded-md bg-gray-50 dark:bg-gray-800/60 divide-y divide-gray-100 dark:divide-gray-700">
-            {items.slice(0, 100).map((p, i) => (
-                <div key={i} className="flex items-center justify-between px-2.5 py-1.5 text-[11px]">
-                    <span className="text-gray-700 dark:text-gray-200 truncate">{p.name || '(sin nombre)'}</span>
-                    <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
-                </div>
-            ))}
-            {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} más...</div>}
-        </div>
-    );
-}
-
-function SelectableProductList({ items, selected, onToggle }: { items: Brief[]; selected: Set<string>; onToggle: (sku: string) => void }) {
-    if (items.length === 0) return null;
-    return (
-        <div className="mt-2 max-h-40 overflow-y-auto rounded-md bg-white dark:bg-gray-800/60 border border-amber-100 dark:border-amber-900/40 divide-y divide-gray-100 dark:divide-gray-700">
-            {items.slice(0, 200).map((p, i) => (
-                <label key={i} className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] cursor-pointer hover:bg-amber-50/50 dark:hover:bg-amber-900/10">
-                    <input
-                        type="checkbox"
-                        checked={selected.has(p.sku)}
-                        onChange={() => onToggle(p.sku)}
-                        className="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                    />
-                    <span className="text-gray-700 dark:text-gray-200 truncate flex-1">{p.name || '(sin nombre)'}</span>
-                    <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
-                </label>
-            ))}
-            {items.length > 200 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 200} mas (usa "Asociar todos")...</div>}
+            <ActionConfirmDialog
+                isOpen={pending !== null}
+                title={pending?.title || ''}
+                description={pending?.description || ''}
+                count={pending?.count || 0}
+                countLabel={pending?.countLabel || ''}
+                warning={pending?.warning}
+                tone={pending?.tone}
+                confirmText={pending?.confirmText || 'Confirmar'}
+                onConfirm={confirmPending}
+                onCancel={() => setPending(null)}
+            />
         </div>
     );
 }
