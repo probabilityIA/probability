@@ -267,6 +267,13 @@ func (u *usecases) getOrCreateInboundConversation(
 			Msg("[WhatsApp Webhook] - error publicando SSE conversation_started")
 	}
 
+	if err := u.conversationCache.ActivateHumanSession(ctx, phoneNumber, conversation.ID, businessID); err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - error activando sesión humana para el número propio")
+		return nil, err
+	}
+
 	return conversation, nil
 }
 

@@ -43,7 +43,12 @@ filtrando `config->>'phone_number_id'`, con indice en Redis
 integracion y se invalida al cambiarle el `config`.
 
 - Si el numero es de un negocio: se abre una conversacion `inbound` para ese
-  negocio, se persiste el mensaje y se publica por SSE a su dashboard.
+  negocio, se persiste el mensaje, se publica por SSE a su dashboard y se
+  activa la `HumanSession` de ese telefono apuntando a esa conversacion. Esa
+  activacion no es un detalle: el estado `HANDOFF_TO_HUMAN` es terminal, asi que
+  `Save` borra el indice `active` y sin la sesion humana cada mensaje siguiente
+  abriria una conversacion nueva. Con ella, los mensajes posteriores entran por
+  la rama de sesion humana que ya existia y van al chat del dashboard.
 - Si no es de nadie (o es el numero de la plataforma): sigue el camino de
   siempre, el agente AI Sales.
 
