@@ -333,6 +333,32 @@ export function SyncDetailPanel({
 
     const allVisibleSelected = selectableItems.length > 0 && selectableItems.every(item => selected.has(item.sku));
 
+    interface VisibleGroup { parentRef: string | null; parentLabel: string | null; items: (SyncDetailItem & { originalIndex: number })[] }
+    const visibleGroups = useMemo(() => {
+        const order: string[] = [];
+        const byKey = new Map<string, VisibleGroup>();
+        visible.forEach((item, originalIndex) => {
+            const key = item.parentRef || `__single__:${item.sku}:${originalIndex}`;
+            if (!byKey.has(key)) {
+                byKey.set(key, { parentRef: item.parentRef || null, parentLabel: item.parentLabel || null, items: [] });
+                order.push(key);
+            }
+            byKey.get(key)!.items.push({ ...item, originalIndex });
+        });
+        return order.map(key => byKey.get(key)!);
+    }, [visible]);
+
+    const toggleGroup = (group: VisibleGroup, checked: boolean) => {
+        setSelected(prev => {
+            const next = new Set(prev);
+            for (const item of group.items) {
+                if (!selectable(item)) continue;
+                if (checked) next.add(item.sku); else next.delete(item.sku);
+            }
+            return next;
+        });
+    };
+
     const creaEnCanal = action?.key === 'createInChannel' || action?.key === 'createBothSides';
     const bloqueado = creaEnCanal && !creacionDesbloqueada;
     const excedeLote = creaEnCanal && selected.size > MAX_CREACION_POR_LOTE;
@@ -444,67 +470,99 @@ export function SyncDetailPanel({
                                 : 'Sin productos en este grupo'}
                     </p>
                 )}
-                {!reloading && visible.map((item, index) => {
-                    const style = GROUP_STYLES[item.group];
-                    const parent = item.parentRef ? parentColor(item.parentRef) : null;
-                    const firstOfParent =
-                        parent != null && (index === 0 || visible[index - 1]?.parentRef !== item.parentRef);
-                    return (
-                        <label
-                            key={`${item.group}-${item.sku}-${index}`}
-                            className={`flex cursor-pointer items-start gap-2 border-b border-gray-100 py-1 text-[11px] last:border-0 hover:bg-white dark:border-gray-700/60 dark:hover:bg-gray-800/60 ${
-                                parent ? 'pl-0 pr-1' : 'px-1'
-                            }`}
-                        >
-                            {parent && <span className={`-my-1 w-0.5 flex-shrink-0 self-stretch rounded-full ${parent.bar}`} />}
-                            {selectable(item) && (
-                                <input
-                                    type="checkbox"
-                                    checked={selected.has(item.sku)}
-                                    onChange={() => toggle(item.sku)}
-                                    className="mt-0.5 h-3 w-3 flex-shrink-0 accent-blue-600"
-                                />
-                            )}
-                            <span className={`mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full ${style.dot}`} />
-                            <span
-                                className={`w-28 flex-shrink-0 truncate ${
-                                    item.group === 'channel_no_sku'
-                                        ? 'italic font-semibold text-red-600 dark:text-red-400'
-                                        : item.group === 'sku_typo'
-                                            ? 'font-mono font-semibold text-amber-800 dark:text-amber-300'
-                                        : item.group === 'sku_changed'
-                                            ? 'font-mono font-semibold text-red-700 dark:text-red-400'
-                                            : 'font-mono font-semibold text-gray-700 dark:text-gray-200'
+                {!reloading && visibleGroups.map((group) => {
+                    const isFamily = group.parentRef != null && group.items.length > 1;
+                    const parent = group.parentRef ? parentColor(group.parentRef) : null;
+                    const groupSelectableItems = group.items.filter(selectable);
+                    const groupSelectedCount = groupSelectableItems.filter(item => selected.has(item.sku)).length;
+                    const groupAllSelected = groupSelectableItems.length > 0 && groupSelectedCount === groupSelectableItems.length;
+                    const groupSomeSelected = groupSelectedCount > 0 && !groupAllSelected;
+
+                    const rows = group.items.map((item) => {
+                        const style = GROUP_STYLES[item.group];
+                        return (
+                            <label
+                                key={`${item.group}-${item.sku}-${item.originalIndex}`}
+                                className={`flex cursor-pointer items-start gap-2 border-b border-gray-100 py-1 text-[11px] last:border-0 hover:bg-white dark:border-gray-700/60 dark:hover:bg-gray-800/60 ${
+                                    parent ? 'pl-0 pr-1' : 'px-1'
                                 }`}
                             >
-                                {item.sku}
-                            </span>
-                            {parent ? (
-                                <span className="flex min-w-0 flex-1 items-center gap-1">
-                                    <span
-                                        title={`Variante de la publicaci\u00f3n ${item.parentLabel || item.parentRef} (${item.parentRef})`}
-                                        className={`flex-shrink-0 truncate rounded-full px-1.5 py-0.5 font-semibold ${parent.chip} ${
-                                            firstOfParent ? 'max-w-[9rem]' : 'max-w-[9rem] opacity-60'
-                                        }`}
-                                    >
-                                        {item.parentLabel || item.parentRef}
-                                    </span>
-                                    <span className={`min-w-0 flex-1 truncate ${style.text}`}>
-                                        {item.variantLabel || item.label}
-                                    </span>
-                                </span>
-                            ) : (
-                                <span className={`min-w-0 flex-1 truncate ${style.text}`}>{item.label}</span>
-                            )}
-                            {item.matchedBy && (
+                                {parent && <span className={`-my-1 w-0.5 flex-shrink-0 self-stretch rounded-full ${parent.bar}`} />}
+                                {selectable(item) && (
+                                    <input
+                                        type="checkbox"
+                                        checked={selected.has(item.sku)}
+                                        onChange={() => toggle(item.sku)}
+                                        className="mt-0.5 h-3 w-3 flex-shrink-0 accent-blue-600"
+                                    />
+                                )}
+                                <span className={`mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full ${style.dot}`} />
                                 <span
-                                    title={`Coincidencia por ${matchRuleLabel(item.matchedBy)}${item.matchedValue ? `: ${item.matchedValue}` : ''}`}
-                                    className="flex-shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                                    className={`w-28 flex-shrink-0 truncate ${
+                                        item.group === 'channel_no_sku'
+                                            ? 'italic font-semibold text-red-600 dark:text-red-400'
+                                            : item.group === 'sku_typo'
+                                                ? 'font-mono font-semibold text-amber-800 dark:text-amber-300'
+                                            : item.group === 'sku_changed'
+                                                ? 'font-mono font-semibold text-red-700 dark:text-red-400'
+                                                : 'font-mono font-semibold text-gray-700 dark:text-gray-200'
+                                    }`}
                                 >
-                                    {matchRuleLabel(item.matchedBy)}
+                                    {item.sku}
                                 </span>
-                            )}
-                        </label>
+                                {parent ? (
+                                    <span className="flex min-w-0 flex-1 items-center gap-1">
+                                        {!isFamily && (
+                                            <span
+                                                title={`Variante de la publicaci\u00f3n ${item.parentLabel || item.parentRef} (${item.parentRef})`}
+                                                className={`flex-shrink-0 truncate rounded-full px-1.5 py-0.5 font-semibold ${parent.chip} max-w-[9rem]`}
+                                            >
+                                                {item.parentLabel || item.parentRef}
+                                            </span>
+                                        )}
+                                        <span className={`min-w-0 flex-1 truncate ${style.text}`}>
+                                            {item.variantLabel || item.label}
+                                        </span>
+                                    </span>
+                                ) : (
+                                    <span className={`min-w-0 flex-1 truncate ${style.text}`}>{item.label}</span>
+                                )}
+                                {item.matchedBy && (
+                                    <span
+                                        title={`Coincidencia por ${matchRuleLabel(item.matchedBy)}${item.matchedValue ? `: ${item.matchedValue}` : ''}`}
+                                        className="flex-shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                                    >
+                                        {matchRuleLabel(item.matchedBy)}
+                                    </span>
+                                )}
+                            </label>
+                        );
+                    });
+
+                    if (!isFamily) return rows;
+
+                    return (
+                        <div key={group.parentRef} className="mb-0.5">
+                            <label className="flex cursor-pointer items-center gap-2 rounded-md bg-white/60 px-1 py-1 text-[11px] dark:bg-gray-800/60">
+                                {groupSelectableItems.length > 0 && (
+                                    <input
+                                        type="checkbox"
+                                        checked={groupAllSelected}
+                                        ref={(el) => { if (el) el.indeterminate = groupSomeSelected; }}
+                                        onChange={() => toggleGroup(group, !groupAllSelected)}
+                                        className="h-3 w-3 flex-shrink-0 accent-blue-600"
+                                    />
+                                )}
+                                <span className={`-my-0.5 w-0.5 flex-shrink-0 self-stretch rounded-full ${parent!.bar}`} />
+                                <span className={`truncate rounded-full px-1.5 py-0.5 font-bold ${parent!.chip}`}>
+                                    {group.parentLabel || group.parentRef}
+                                </span>
+                                <span className="text-[10.5px] font-semibold text-gray-400 dark:text-gray-500">
+                                    {groupSelectedCount}/{group.items.length} variantes
+                                </span>
+                            </label>
+                            <div className="pl-4">{rows}</div>
+                        </div>
                     );
                 })}
                 {!isLive && loading && (
