@@ -32,7 +32,7 @@ const SAMPLE_VALUES: Record<string, string> = {
   "customer.last_product": "Camiseta blanca",
   "customer.total_orders": "3",
   "business.name": "Mi Tienda",
-  "sender.name": "Isabel Rojas",
+  "sender.name": "Tu nombre",
   "campaign.name": "Ruta 30",
 };
 
@@ -56,22 +56,22 @@ const STARTERS: Array<{ label: string; body: string; sources: string[] }> = [
 
 const CAMPAIGN_STARTERS: Array<{ label: string; body: string; sources: string[] }> = [
   {
-    label: "Ruta 30 - control DIAN",
+    label: "Ruta 30 - controles de la DIAN",
     body:
-      "Hola {{1}}, mucho gusto, soy {{2}} de Siigo. Estamos acompanando a las empresas frente a los controles de la DIAN a la facturacion electronica. Para orientarte, contame: como estas facturando hoy en tu negocio?",
-    sources: ["customer.first_name", "sender.name"],
+      "Hola {{1}}, \u00bfc\u00f3mo est\u00e1s? Soy {{2}}, de {{3}}. Estamos acompa\u00f1ando a las empresas frente a los nuevos controles de la DIAN a la facturaci\u00f3n electr\u00f3nica. Para orientarte mejor, cu\u00e9ntame: \u00bfc\u00f3mo est\u00e1s facturando hoy en tu negocio?",
+    sources: ["customer.first_name", "sender.name", "business.name"],
   },
   {
     label: "Ruta 30 - ahorro de tiempo",
     body:
-      "Hola {{1}}, mucho gusto, soy {{2}}. Ayudo a empresas a reducir el tiempo que gastan en facturacion electronica, control de inventario y cobros usando Siigo. Hoy tenes esos procesos en una sola plataforma o usas varios sistemas?",
-    sources: ["customer.first_name", "sender.name"],
+      "Hola {{1}}, \u00bfc\u00f3mo est\u00e1s? Soy {{2}}, de {{3}}. Ayudo a las empresas a reducir el tiempo que gastan en facturaci\u00f3n electr\u00f3nica, control de inventario y cobros. \u00bfHoy manejas esos procesos en una sola plataforma o usas varios sistemas?",
+    sources: ["customer.first_name", "sender.name", "business.name"],
   },
   {
-    label: "Ruta 30 - validacion de sistema",
+    label: "Ruta 30 - validacion del sistema",
     body:
-      "Hola {{1}}, mucho gusto, soy {{2}}. Estamos haciendo una campana de validacion para que las empresas no queden expuestas a los nuevos controles de la DIAN. Que sistema usas hoy para facturar en tu empresa?",
-    sources: ["customer.first_name", "sender.name"],
+      "Hola {{1}}, \u00bfc\u00f3mo est\u00e1s? Soy {{2}}, de {{3}}. Estamos revisando con las empresas que su facturaci\u00f3n no quede expuesta a los nuevos controles de la DIAN. \u00bfQu\u00e9 sistema usas hoy para facturar en tu empresa?",
+    sources: ["customer.first_name", "sender.name", "business.name"],
   },
 ];
 

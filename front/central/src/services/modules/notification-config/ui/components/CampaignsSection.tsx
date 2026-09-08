@@ -200,7 +200,7 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         title={editing ? "Editar campaña" : "Nueva campaña"}
-        size="4xl"
+        size="6xl"
       >
         {isFormOpen && (
           <CampaignForm
