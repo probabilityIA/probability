@@ -24,6 +24,8 @@ type DetailItem struct {
 	Group        string `json:"group,omitempty"`
 	ParentRef    string `json:"parent_ref,omitempty"`
 	ParentLabel  string `json:"parent_label,omitempty"`
+	GroupRef     string `json:"group_ref,omitempty"`
+	GroupLabel   string `json:"group_label,omitempty"`
 	VariantLabel string `json:"variant_label,omitempty"`
 
 	CounterpartSKU  string `json:"counterpart_sku,omitempty"`

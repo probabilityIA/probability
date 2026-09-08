@@ -93,6 +93,8 @@ func replaceDetailItems(tx *gorm.DB, runID uint, detail []domain.DetailItem) err
 			Tone:         truncate(item.Tone, 16),
 			ParentRef:    truncate(item.ParentRef, 64),
 			ParentLabel:  truncate(item.ParentLabel, 300),
+			GroupRef:     truncate(item.GroupRef, 64),
+			GroupLabel:   truncate(item.GroupLabel, 300),
 			VariantLabel: truncate(item.VariantLabel, 200),
 
 			CounterpartSKU:  truncate(item.CounterpartSKU, 120),
@@ -165,6 +167,8 @@ func (r *repository) ListDetail(ctx context.Context, query domain.DetailQuery) (
 			Group:        row.GroupCode,
 			ParentRef:    row.ParentRef,
 			ParentLabel:  row.ParentLabel,
+			GroupRef:     row.GroupRef,
+			GroupLabel:   row.GroupLabel,
 			VariantLabel: row.VariantLabel,
 		})
 	}

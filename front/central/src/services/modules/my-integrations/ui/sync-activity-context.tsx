@@ -66,6 +66,8 @@ export interface SyncDetailItem {
     matchedValue?: string;
     parentRef?: string;
     parentLabel?: string;
+    groupRef?: string;
+    groupLabel?: string;
     variantLabel?: string;
 }
 

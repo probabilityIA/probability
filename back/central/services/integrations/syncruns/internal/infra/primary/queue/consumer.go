@@ -171,6 +171,8 @@ func reconcileDetail(data map[string]interface{}) []domain.DetailItem {
 		group, _ := obj["group"].(string)
 		parentRef, _ := obj["parent_ref"].(string)
 		parentLabel, _ := obj["parent_label"].(string)
+		groupRef, _ := obj["group_ref"].(string)
+		groupLabel, _ := obj["group_label"].(string)
 		variantLabel, _ := obj["variant_label"].(string)
 		counterpartSKU, _ := obj["counterpart_sku"].(string)
 		counterpartName, _ := obj["counterpart_name"].(string)
@@ -178,7 +180,9 @@ func reconcileDetail(data map[string]interface{}) []domain.DetailItem {
 		pattern, _ := obj["pattern"].(string)
 		detail = append(detail, domain.DetailItem{
 			SKU: sku, Label: label, Tone: tone, Group: group,
-			ParentRef: parentRef, ParentLabel: parentLabel, VariantLabel: variantLabel,
+			ParentRef: parentRef, ParentLabel: parentLabel,
+			GroupRef: groupRef, GroupLabel: groupLabel,
+			VariantLabel: variantLabel,
 			CounterpartSKU: counterpartSKU, CounterpartName: counterpartName,
 			ChannelQty: optionalInt(obj, "channel_qty"), OwnQty: optionalInt(obj, "own_qty"),
 			FixSide: fixSide, Pattern: pattern,

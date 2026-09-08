@@ -60,7 +60,9 @@ func (h *handler) ListDetail(c *gin.Context) {
 	for _, item := range result.Items {
 		items = append(items, detailResponse{
 			SKU: item.SKU, Label: item.Label, Tone: item.Tone, Group: item.Group,
-			ParentRef: item.ParentRef, ParentLabel: item.ParentLabel, VariantLabel: item.VariantLabel,
+			ParentRef: item.ParentRef, ParentLabel: item.ParentLabel,
+			GroupRef: item.GroupRef, GroupLabel: item.GroupLabel,
+			VariantLabel: item.VariantLabel,
 		})
 	}
 
