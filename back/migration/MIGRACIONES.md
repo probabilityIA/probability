@@ -19,10 +19,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 }
 ```
 
-3. Correr `cd back/migration && go run cmd/main.go`.
+3. Correr `cd back/migration && go run cmd/main.go` (contra local, `DB_HOST=127.0.0.1` puerto `5434`).
 4. Verificar el efecto en la base.
-5. **Dejar `Migrate()` en cero otra vez** (`return nil`).
-6. Registrar la corrida en la tabla de abajo.
+5. Correr contra produccion: `./scripts/run-migration-prod.sh` (ver abajo).
+6. **Dejar `Migrate()` en cero otra vez** (`return nil`).
+7. Registrar la corrida en la tabla de abajo.
 
 Los DDL (AutoMigrate, `CREATE ... IF NOT EXISTS`) se conservan como archivo.
 Los DML y seeds puntuales se pueden borrar una vez aplicados en produccion.
@@ -31,11 +32,38 @@ Los DML y seeds puntuales se pueden borrar una vez aplicados en produccion.
 No se llama desde ningun lado; sirve como referencia y para reconstruir un
 entorno desde cero si algun dia hace falta.
 
+## Correr contra produccion sin tunel
+
+`./scripts/aws-tunnel.sh` requiere un proceso vivo en la laptop (el tunel SSM):
+si la terminal que lo sostiene se cierra, se duerme, o el comando se ejecuta a
+traves de un proxy efimero (como el `!` de Claude Code), el tunel muere a mitad
+de camino y la migracion queda sin poder verificarse.
+
+`./scripts/run-migration-prod.sh` evita eso por completo: compila el binario de
+`back/migration` para `linux/arm64`, lo sube a S3 y lo ejecuta directo en el EC2
+de produccion via `aws ssm send-command` (mismo patron que
+`.github/scripts/ssm-deploy.sh`). El EC2 ya tiene ruta de red directa a la RDS
+(por eso el backend corre ahi sin tunel), asi que no hace falta abrir nada.
+
+```bash
+./scripts/run-migration-prod.sh
+```
+
+Requiere el perfil AWS `probability` configurado localmente
+(`aws configure list --profile probability`). El script mapea las variables del
+`.env` de `infra/compose-prod` (`DB_PASSWORD`/`DB_SSLMODE`) a los nombres que
+espera el binario (`DB_PASS`/`PGSSLMODE`) y corre con `RELAX_ENV=1` porque ese
+`.env` no trae variables que solo usa el backend (`USER_PASS_DEFAULT`,
+`EMAIL_USER_DEFAULT`, etc.) y que la migracion no necesita.
+
+Sigue aplicando el mismo flujo: agregar la migracion a `Migrate()`, correr el
+script, verificar, y dejar `Migrate()` en cero otra vez.
+
 ## Historico
 
 | Fecha | Migracion | Que hizo | Entorno |
 |-------|-----------|----------|---------|
-| 2026-09-07 | `migrateProductFamilyParent` | Agrega `parent_family_id` (nullable, FK a si misma) a `product_families`, con indice. Base de las "mega familias": una familia sin madre sigue funcionando exactamente igual que hoy; si tiene `parent_family_id`, el push a WooCommerce agrupa todas las subfamilias de esa madre en un solo producto variable. Jerarquia de 2 niveles fijos (la madre no puede tener madre, no se valida en DB, solo en la app). **Corrida y verificada en local (2026-09-07)**, pendiente en produccion | local |
+| 2026-09-08 | `migrateProductFamilyParent` | Agrega `parent_family_id` (nullable, FK a si misma) a `product_families`, con indice. Base de las "mega familias": una familia sin madre sigue funcionando exactamente igual que hoy; si tiene `parent_family_id`, el push a WooCommerce agrupa todas las subfamilias de esa madre en un solo producto variable. Jerarquia de 2 niveles fijos (la madre no puede tener madre, no se valida en DB, solo en la app). Corrida en local el 2026-09-07; corrida en produccion el 2026-09-08 via `./scripts/run-migration-prod.sh` (primer uso de esta via, sin tunel) y verificada con `\d product_families` directo en el EC2 | local + produccion |
 | 2026-09-06 | `migrateWhatsappPhoneNumberUnique` | Indice unico parcial `uq_integrations_whatsapp_phone_number_id` sobre `integrations ((config->>'phone_number_id'))` para `integration_type_id = 2`, vivas y con valor. Impide que dos negocios declaren el mismo `phone_number_id`: como el webhook rutea el mensaje entrante al negocio dueno de ese numero, un duplicado le entrega a un negocio los mensajes de otro. Tambien sirve de indice de esa consulta. **Corrida y verificada en local (2026-09-06)**, pendiente en produccion | local |
 | 2026-09-05 | `migrateWhatsappInboundConversationType` | Extiende el CHECK de `whatsapp_conversations.conversation_type` para aceptar `inbound`, ademas de `order` y `system_alert`. Lo necesita el ruteo del webhook por `phone_number_id`: cuando un cliente escribe al numero propio de un negocio y no hay conversacion ni sesion humana, se abre una conversacion `inbound` para ese negocio en vez de perder el mensaje. **Corrida y verificada en local (2026-09-06)**, pendiente en produccion; `Migrate()` encadena esta y `migrateWhatsappPhoneNumberUnique`, dejarlo en cero despues de correrlas | local |
 | 2026-09-04 | `migrateSubscriptionAutoPayment` | Agrega `subscription_auto_payment_enabled` a `business` (default `false`): toggle del negocio para que la suscripcion se pague sola desde la billetera el dia que vence, si hay saldo. Lo lee `ListBusinessesJustExpired`/`autoRenewIfEnabled` en el worker de expiracion, antes de aplicar el corte. Corrida contra produccion via `.env` apuntado al tunel con `PGSSLMODE=require` (con `disable` el RDS rechaza la conexion: "no pg_hba.conf entry ... no encryption") | local + produccion |
