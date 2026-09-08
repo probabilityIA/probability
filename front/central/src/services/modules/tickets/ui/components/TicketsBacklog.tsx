@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal } from '@/shared/ui';
+import { Modal, UserAvatar, UnassignedAvatar } from '@/shared/ui';
 import {
     Sprint,
     SprintStatus,
@@ -362,12 +362,10 @@ export default function TicketsBacklog({
                 <span className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium md:inline-flex ${statusMeta.bg} ${statusMeta.color}`}>
                     {statusMeta.label}
                 </span>
-                {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
+                {t.assigned_to_name ? (
+                    <UserAvatar name={t.assigned_to_name} avatarUrl={avatarUrl} title={t.assigned_to_name} />
                 ) : (
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] text-gray-600 dark:bg-gray-600 dark:text-gray-300">
-                        {t.assigned_to_name ? t.assigned_to_name[0].toUpperCase() : '-'}
-                    </div>
+                    <UnassignedAvatar />
                 )}
             </div>
         );

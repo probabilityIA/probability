@@ -17,6 +17,7 @@ export * from './input';
 export * from './secret-input';
 export * from './modal';
 export * from './select';
+export * from './user-select';
 export * from './sidebar';
 export * from './orders-subnavbar';
 export * from './tickets-subnavbar';

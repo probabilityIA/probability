@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, UserSelect } from '@/shared/ui';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { Sprint, CreateSprintDTO } from '@/services/modules/sprints/domain/types';
 import {
@@ -32,6 +32,8 @@ export interface CreateTicketPayload {
 interface UserOption {
     id: number;
     name: string;
+    email?: string;
+    avatar_url?: string;
 }
 
 interface Props {
@@ -318,12 +320,13 @@ export default function TicketForm({ isSuperAdmin, users = [], sprints = [], mod
 
                         <div>
                             <label className={labelClass}>Asignado a</label>
-                            <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} className={controlClass}>
-                                <option value="">Sin asignar</option>
-                                {users.map((u) => (
-                                    <option key={u.id} value={u.id}>{u.name}</option>
-                                ))}
-                            </select>
+                            <UserSelect
+                                value={assignedToId ? Number(assignedToId) : null}
+                                options={users}
+                                onChange={(id) => setAssignedToId(id ? String(id) : '')}
+                                showEmail
+                                buttonClassName="py-2 text-sm"
+                            />
                         </div>
 
                         <div className={creatingSprint ? 'sm:col-span-2' : undefined}>

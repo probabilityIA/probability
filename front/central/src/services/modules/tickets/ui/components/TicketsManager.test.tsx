@@ -3,7 +3,12 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import TicketsManager from './TicketsManager';
 import { PaginatedTickets, Ticket } from '../../domain/types';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui', async () => {
+    const real = await import('@/shared/ui/user-select');
+    return {
+    UserSelect: real.UserSelect,
+    UserAvatar: real.UserAvatar,
+    UnassignedAvatar: real.UnassignedAvatar,
     TICKETS_TABS_SLOT_ID: 'tickets-tabs-slot',
     TICKETS_ACTIONS_SLOT_ID: 'tickets-actions-slot',
     TICKETS_FILTERS_SLOT_ID: 'tickets-filters-slot',
@@ -48,7 +53,8 @@ vi.mock('@/shared/ui', () => ({
             <button onClick={() => onPageSizeChange(50)}>set-size-50</button>
         </div>
     ),
-}));
+    };
+});
 
 vi.mock('@/shared/contexts/permissions-context', () => ({
     usePermissions: vi.fn(() => ({ isSuperAdmin: true })),
@@ -158,6 +164,12 @@ const makeDataTransfer = () => {
 const makeFile = (name: string, type = 'image/png') => new File(['x'], name, { type });
 
 const rowOf = (code: string): HTMLElement => screen.getByText(code).closest('tr') as HTMLElement;
+
+const openRowAssign = (code: string) =>
+    fireEvent.click(within(rowOf(code)).getByRole('button', { name: 'Asignado a' }));
+
+const pickRowAssign = (code: string, name: string | RegExp) =>
+    fireEvent.click(within(rowOf(code)).getByRole('option', { name }));
 
 const boardColumn = (title: string): HTMLElement =>
     screen.getByRole('heading', { name: title }).parentElement!.parentElement as HTMLElement;
@@ -506,13 +518,14 @@ describe('TicketsManager', () => {
             vi.mocked(assignTicketAction).mockResolvedValue(makeTicket({ id: 1, assigned_to_id: 5, assigned_to_name: 'Ana' }) as any);
             await renderManager();
 
-            await screen.findByRole('option', { name: 'Ana' });
-            const assignSelect = within(rowOf('TCK-1')).getAllByRole('combobox')[2];
-            fireEvent.change(assignSelect, { target: { value: '5' } });
+            await screen.findByText('TCK-1');
+            openRowAssign('TCK-1');
+            pickRowAssign('TCK-1', 'Ana');
 
             await waitFor(() => expect(assignTicketAction).toHaveBeenCalledWith(1, 5));
 
-            fireEvent.change(within(rowOf('TCK-1')).getAllByRole('combobox')[2], { target: { value: '' } });
+            openRowAssign('TCK-1');
+            pickRowAssign('TCK-1', 'Sin asignar');
 
             await waitFor(() => expect(assignTicketAction).toHaveBeenCalledWith(1, null));
         });
@@ -557,8 +570,9 @@ describe('TicketsManager', () => {
             vi.mocked(assignTicketAction).mockRejectedValue(new Error('500'));
             await renderManager();
 
-            await screen.findByRole('option', { name: 'Ana' });
-            fireEvent.change(within(rowOf('TCK-1')).getAllByRole('combobox')[2], { target: { value: '5' } });
+            await screen.findByText('TCK-1');
+            openRowAssign('TCK-1');
+            pickRowAssign('TCK-1', 'Ana');
 
             await waitFor(() => expect(assignTicketAction).toHaveBeenCalledWith(1, 5));
             expect(await screen.findByText('TCK-1')).toBeInTheDocument();
@@ -570,13 +584,14 @@ describe('TicketsManager', () => {
             );
             await renderManager();
 
-            expect(await screen.findByRole('option', { name: 'Externo' })).toBeInTheDocument();
+            await screen.findByText('TCK-1');
+            expect(within(rowOf('TCK-1')).getByRole('button', { name: 'Asignado a' })).toHaveTextContent('Externo');
         });
 
         it('muestra el avatar del asignado resolviendo rutas relativas contra S3', async () => {
             vi.mocked(listTicketsAction).mockResolvedValue(paginated([
-                makeTicket({ id: 1, assigned_to_avatar_url: 'avatars/ana.png' }),
-                makeTicket({ id: 2, assigned_to_avatar_url: 'https://cdn.test/luis.png' }),
+                makeTicket({ id: 1, assigned_to_id: 5, assigned_to_name: 'Ana', assigned_to_avatar_url: 'avatars/ana.png' }),
+                makeTicket({ id: 2, assigned_to_id: 6, assigned_to_name: 'Luis', assigned_to_avatar_url: 'https://cdn.test/luis.png' }),
             ]) as any);
             await renderManager();
 
@@ -620,8 +635,10 @@ describe('TicketsManager', () => {
             await waitFor(() =>
                 expect(screen.getByTestId('available-filters').textContent).toContain('assigned_to_id')
             );
-            expect(screen.getAllByRole('option', { name: 'Ana' }).length).toBeGreaterThan(0);
-            expect(screen.queryByRole('option', { name: 'Cliente' })).toBeNull();
+            openRowAssign('TCK-1');
+            expect(within(rowOf('TCK-1')).getByRole('option', { name: 'Ana' })).toBeInTheDocument();
+            expect(within(rowOf('TCK-1')).getByRole('option', { name: 'Super' })).toBeInTheDocument();
+            expect(within(rowOf('TCK-1')).queryByRole('option', { name: 'Cliente' })).toBeNull();
         });
     });
 

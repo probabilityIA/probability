@@ -97,12 +97,20 @@ describe('TicketsBoard', () => {
             expect(within(columnOf('Blocked')).getByText('0')).toBeInTheDocument();
         });
 
-        it('muestra "Sin tickets" solo en las columnas vacias', () => {
+        it('muestra "Sin tickets" solo en las columnas vacias, sin colapsarlas', () => {
             render(<TicketsBoard {...baseProps} tickets={[makeTicket({ id: 1, status: 'open' })]} />);
 
             expect(within(columnOf('To Do')).queryByText('Sin tickets')).toBeNull();
             expect(within(columnOf('Blocked')).getByText('Sin tickets')).toBeInTheDocument();
             expect(screen.getAllByText('Sin tickets')).toHaveLength(BOARD_COLUMNS.length - 1);
+        });
+
+        it('reparte el ancho disponible entre todas las columnas', () => {
+            render(<TicketsBoard {...baseProps} tickets={[makeTicket({ id: 1, status: 'open' })]} />);
+
+            BOARD_COLUMNS.forEach((column) => {
+                expect(columnOf(column.title).className).toContain('flex-1');
+            });
         });
 
         it('muestra el badge de estado solo en columnas que agrupan varios estados', () => {
@@ -140,8 +148,9 @@ describe('TicketsBoard', () => {
             );
 
             const card = cardOf('TCK-1');
-            expect(card.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/ana.png');
-            expect(within(card).getByText('Ana Lopez')).toBeInTheDocument();
+            const avatar = card.querySelector('img');
+            expect(avatar).toHaveAttribute('src', 'https://cdn.test/ana.png');
+            expect(avatar).toHaveAttribute('title', 'Ana Lopez');
         });
 
         it('muestra la inicial del asignado cuando no hay avatar', () => {
@@ -155,15 +164,15 @@ describe('TicketsBoard', () => {
 
             const card = cardOf('TCK-1');
             expect(card.querySelector('img')).toBeNull();
-            expect(within(card).getByText('A')).toBeInTheDocument();
+            expect(within(card).getByTitle('ana lopez')).toHaveTextContent('AL');
         });
 
-        it('muestra "Sin asignar" y un guion cuando el ticket no tiene responsable', () => {
+        it('muestra "Sin asignar" cuando el ticket no tiene responsable', () => {
             render(<TicketsBoard {...baseProps} tickets={[makeTicket({ id: 1 })]} />);
 
             const card = cardOf('TCK-1');
             expect(within(card).getByText('Sin asignar')).toBeInTheDocument();
-            expect(within(card).getByText('-')).toBeInTheDocument();
+            expect(card.querySelector('img')).toBeNull();
         });
 
         it('muestra el negocio, el id del negocio o "Interno" segun el ticket', () => {

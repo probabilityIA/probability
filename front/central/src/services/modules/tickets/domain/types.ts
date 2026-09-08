@@ -219,3 +219,29 @@ export const AREA_META: Record<TicketArea, { label: string; color: string; bg: s
     soporte:    { label: 'Soporte',    color: 'text-cyan-700 dark:text-cyan-200',     bg: 'bg-cyan-100 dark:bg-cyan-900/40' },
     desarrollo: { label: 'Desarrollo', color: 'text-purple-700 dark:text-purple-200', bg: 'bg-purple-100 dark:bg-purple-900/40' },
 };
+
+export const PRIORITY_ACCENT: Record<TicketPriority, string> = {
+    low:      'border-l-gray-400 dark:border-l-gray-500',
+    medium:   'border-l-blue-400',
+    high:     'border-l-amber-400',
+    critical: 'border-l-red-400',
+};
+
+export const PRIORITY_DOT: Record<TicketPriority, string> = {
+    low:      'text-gray-500 dark:text-gray-400',
+    medium:   'text-blue-500 dark:text-blue-400',
+    high:     'text-amber-500 dark:text-amber-400',
+    critical: 'text-red-500 dark:text-red-400',
+};
+
+export const TYPE_CHIP: Record<TicketType, string> = {
+    bug:         'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-500/15',
+    improvement: 'text-indigo-700 bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-500/20',
+    feature:     'text-emerald-700 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/15',
+    data:        'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-500/15',
+    integration: 'text-cyan-700 bg-cyan-100 dark:text-cyan-300 dark:bg-cyan-500/15',
+    support:     'text-sky-700 bg-sky-100 dark:text-sky-300 dark:bg-sky-500/15',
+    complaint:   'text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-500/15',
+    claim:       'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-500/15',
+    question:    'text-violet-700 bg-violet-100 dark:text-violet-300 dark:bg-violet-500/15',
+};

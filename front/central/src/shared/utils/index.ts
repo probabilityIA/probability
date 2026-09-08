@@ -1,6 +1,7 @@
 export * from './http-logger';
 export * from './apply-business-theme';
 export * from './sound';
+export * from './avatar-url';
 
 // Storage
 export { TokenStorage } from './token-storage';
