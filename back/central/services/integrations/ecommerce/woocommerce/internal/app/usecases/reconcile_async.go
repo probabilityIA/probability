@@ -22,6 +22,9 @@ type reconcileDetailItem struct {
 	Group        string `json:"group"`
 	MatchedBy    string `json:"matched_by,omitempty"`
 	MatchedValue string `json:"matched_value,omitempty"`
+	ParentRef    string `json:"parent_ref,omitempty"`
+	ParentLabel  string `json:"parent_label,omitempty"`
+	VariantLabel string `json:"variant_label,omitempty"`
 
 	CounterpartSKU  string `json:"counterpart_sku,omitempty"`
 	CounterpartName string `json:"counterpart_name,omitempty"`
@@ -97,6 +100,9 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 				Group:        group,
 				MatchedBy:    item.MatchedBy,
 				MatchedValue: item.MatchedValue,
+				ParentRef:    item.FamilyRef,
+				ParentLabel:  item.FamilyName,
+				VariantLabel: item.VariantLabel,
 			})
 		}
 	}

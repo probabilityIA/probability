@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+
 export interface Brief {
     sku: string;
     name: string;
@@ -86,6 +89,92 @@ export function ChannelFamilyList({ groups, onImport }: { groups: ChannelFamilyG
                 </div>
             ))}
             {groups.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {groups.length - 100} más...</div>}
+        </div>
+    );
+}
+
+export function SelectableFamilyList({ groups, selected, onToggleGroup, onToggleItem }: {
+    groups: ChannelFamilyGroup[];
+    selected: Set<string>;
+    onToggleGroup: (group: ChannelFamilyGroup, checked: boolean) => void;
+    onToggleItem: (sku: string) => void;
+}) {
+    const [expanded, setExpanded] = useState<Set<string>>(new Set());
+    if (groups.length === 0) return null;
+
+    const toggleExpanded = (key: string) => setExpanded((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        return next;
+    });
+
+    return (
+        <div className="mt-2 max-h-64 overflow-y-auto rounded-md bg-gray-50 dark:bg-gray-800/60 divide-y divide-gray-100 dark:divide-gray-700">
+            {groups.slice(0, 200).map((g) => {
+                const isFamily = g.items.length > 1;
+                const selectedCount = g.items.filter((i) => selected.has(i.sku)).length;
+                const allSelected = selectedCount === g.items.length;
+                const someSelected = selectedCount > 0 && !allSelected;
+                const isExpanded = expanded.has(g.key);
+                return (
+                    <div key={g.key}>
+                        <div className="flex items-center gap-2 px-2.5 py-2 text-[11px]">
+                            <input
+                                type="checkbox"
+                                checked={allSelected}
+                                ref={(el) => { if (el) el.indeterminate = someSelected; }}
+                                onChange={() => onToggleGroup(g, !allSelected)}
+                                className="h-3.5 w-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 flex-shrink-0"
+                            />
+                            {g.image_url ? (
+                                <img src={g.image_url} alt={g.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-200 dark:border-gray-700" />
+                            ) : (
+                                <span className="w-8 h-8 rounded-full flex-shrink-0 bg-gray-200 dark:bg-gray-700" />
+                            )}
+                            <div className="min-w-0 flex-1 cursor-pointer" onClick={() => onToggleGroup(g, !allSelected)}>
+                                <p className="text-gray-700 dark:text-gray-200 truncate font-medium flex items-center gap-1.5">
+                                    {g.name || '(sin nombre)'}
+                                    {isFamily && (
+                                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
+                                            Familia madre
+                                        </span>
+                                    )}
+                                </p>
+                                <p className="text-gray-400">
+                                    {isFamily ? `${selectedCount}/${g.items.length} variantes seleccionadas` : g.items[0]?.sku}
+                                </p>
+                            </div>
+                            {isFamily && (
+                                <button
+                                    type="button"
+                                    onClick={() => toggleExpanded(g.key)}
+                                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                                    title={isExpanded ? 'Ocultar variantes' : 'Ver variantes'}
+                                >
+                                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                </button>
+                            )}
+                        </div>
+                        {isFamily && isExpanded && (
+                            <div className="pl-8 pb-1.5 pr-2.5 space-y-1">
+                                {g.items.map((item) => (
+                                    <label key={item.sku} className="flex items-center gap-2 py-1 text-[11px] cursor-pointer hover:bg-violet-50/50 dark:hover:bg-violet-900/10 rounded px-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={selected.has(item.sku)}
+                                            onChange={() => onToggleItem(item.sku)}
+                                            className="h-3 w-3 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                                        />
+                                        <span className="text-gray-600 dark:text-gray-300 truncate flex-1">{item.variant_label || item.name}</span>
+                                        <span className="text-gray-400 font-mono flex-shrink-0">{item.sku}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+            {groups.length > 200 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {groups.length - 200} más...</div>}
         </div>
     );
 }
