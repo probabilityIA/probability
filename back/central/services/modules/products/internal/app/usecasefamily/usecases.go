@@ -16,18 +16,19 @@ func (uc *UseCaseFamily) CreateProductFamily(ctx context.Context, req *domain.Cr
 	}
 
 	family := &domain.ProductFamily{
-		BusinessID:  req.BusinessID,
-		Name:        req.Name,
-		Title:       req.Title,
-		Description: req.Description,
-		Slug:        req.Slug,
-		Category:    req.Category,
-		Brand:       req.Brand,
-		ImageURL:    req.ImageURL,
-		Status:      req.Status,
-		IsActive:    isActive,
-		VariantAxes: req.VariantAxes,
-		Metadata:    req.Metadata,
+		BusinessID:     req.BusinessID,
+		ParentFamilyID: req.ParentFamilyID,
+		Name:           req.Name,
+		Title:          req.Title,
+		Description:    req.Description,
+		Slug:           req.Slug,
+		Category:       req.Category,
+		Brand:          req.Brand,
+		ImageURL:       req.ImageURL,
+		Status:         req.Status,
+		IsActive:       isActive,
+		VariantAxes:    req.VariantAxes,
+		Metadata:       req.Metadata,
 	}
 
 	if err := uc.repo.CreateProductFamily(ctx, family); err != nil {
@@ -124,6 +125,11 @@ func (uc *UseCaseFamily) UpdateProductFamily(ctx context.Context, businessID uin
 	if req.Metadata != nil {
 		family.Metadata = req.Metadata
 	}
+	if req.ClearParent {
+		family.ParentFamilyID = nil
+	} else if req.ParentFamilyID != nil {
+		family.ParentFamilyID = req.ParentFamilyID
+	}
 
 	if err := uc.repo.UpdateProductFamily(ctx, family); err != nil {
 		return nil, fmt.Errorf("error updating product family: %w", err)
@@ -162,22 +168,23 @@ func mapProductFamilyToResponse(family *domain.ProductFamily) *domain.ProductFam
 	}
 
 	return &domain.ProductFamilyResponse{
-		ID:           family.ID,
-		BusinessID:   family.BusinessID,
-		Name:         family.Name,
-		Title:        family.Title,
-		Description:  family.Description,
-		Slug:         family.Slug,
-		Category:     family.Category,
-		Brand:        family.Brand,
-		ImageURL:     family.ImageURL,
-		Status:       family.Status,
-		IsActive:     family.IsActive,
-		VariantAxes:  family.VariantAxes,
-		Metadata:     family.Metadata,
-		VariantCount: family.VariantCount,
-		CreatedAt:    family.CreatedAt,
-		UpdatedAt:    family.UpdatedAt,
+		ID:             family.ID,
+		BusinessID:     family.BusinessID,
+		ParentFamilyID: family.ParentFamilyID,
+		Name:           family.Name,
+		Title:          family.Title,
+		Description:    family.Description,
+		Slug:           family.Slug,
+		Category:       family.Category,
+		Brand:          family.Brand,
+		ImageURL:       family.ImageURL,
+		Status:         family.Status,
+		IsActive:       family.IsActive,
+		VariantAxes:    family.VariantAxes,
+		Metadata:       family.Metadata,
+		VariantCount:   family.VariantCount,
+		CreatedAt:      family.CreatedAt,
+		UpdatedAt:      family.UpdatedAt,
 	}
 }
 

@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strconv"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
@@ -27,23 +30,37 @@ func New(database db.IDatabase, logger log.ILogger) domain.IProductRepository {
 
 func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, businessID uint) ([]domain.ProductForSync, error) {
 	var rows []struct {
-		ID             string
-		SKU            string
-		Barcode        string
-		ExternalID     string
-		Name           string
-		Description    string
-		Price          float64
-		StockQuantity  int
-		TrackInventory bool
-		ImageURL       string
+		ID                string
+		SKU               string
+		Barcode           string
+		ExternalID        string
+		Name              string
+		Description       string
+		Price             float64
+		StockQuantity     int
+		TrackInventory    bool
+		ImageURL          string
+		FamilyID          *uint
+		FamilyName        string
+		FamilyDescription string
+		FamilyImageURL    string
+		VariantLabel      string
+		VariantAttributes datatypes.JSON
 	}
 
 	err := r.db.Conn(ctx).
-		Table("products").
-		Select("id, sku, COALESCE(barcode, '') AS barcode, external_id, name, description, price, stock_quantity, track_inventory, image_url").
-		Where("business_id = ? AND deleted_at IS NULL AND is_active = ?", businessID, true).
-		Order("created_at ASC").
+		Table("products p").
+		Select(`p.id, p.sku, COALESCE(p.barcode, '') AS barcode, p.external_id, p.name, p.description,
+			p.price, p.stock_quantity, p.track_inventory, p.image_url,
+			COALESCE(mf.id, f.id) AS family_id,
+			COALESCE(mf.name, f.name, '') AS family_name,
+			COALESCE(mf.description, f.description, '') AS family_description,
+			COALESCE(NULLIF(mf.image_url, ''), NULLIF(f.image_url, ''), '') AS family_image_url,
+			COALESCE(p.variant_label, '') AS variant_label, p.variant_attributes`).
+		Joins("LEFT JOIN product_families f ON f.id = p.family_id AND f.deleted_at IS NULL").
+		Joins("LEFT JOIN product_families mf ON mf.id = f.parent_family_id AND mf.deleted_at IS NULL").
+		Where("p.business_id = ? AND p.deleted_at IS NULL AND p.is_active = ?", businessID, true).
+		Order("p.created_at ASC").
 		Scan(&rows).Error
 	if err != nil {
 		return nil, err
@@ -51,17 +68,31 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 
 	products := make([]domain.ProductForSync, 0, len(rows))
 	for _, row := range rows {
+		familyID := ""
+		if row.FamilyID != nil {
+			familyID = strconv.FormatUint(uint64(*row.FamilyID), 10)
+		}
+		var attrs map[string]string
+		if len(row.VariantAttributes) > 0 {
+			_ = json.Unmarshal(row.VariantAttributes, &attrs)
+		}
 		products = append(products, domain.ProductForSync{
-			ID:             row.ID,
-			SKU:            row.SKU,
-			Barcode:        row.Barcode,
-			ExternalID:     row.ExternalID,
-			Name:           row.Name,
-			Description:    row.Description,
-			Price:          row.Price,
-			StockQuantity:  row.StockQuantity,
-			TrackInventory: row.TrackInventory,
-			ImageURL:       row.ImageURL,
+			ID:                row.ID,
+			SKU:               row.SKU,
+			Barcode:           row.Barcode,
+			ExternalID:        row.ExternalID,
+			Name:              row.Name,
+			Description:       row.Description,
+			Price:             row.Price,
+			StockQuantity:     row.StockQuantity,
+			TrackInventory:    row.TrackInventory,
+			ImageURL:          row.ImageURL,
+			FamilyID:          familyID,
+			FamilyName:        row.FamilyName,
+			FamilyDescription: row.FamilyDescription,
+			FamilyImageURL:    row.FamilyImageURL,
+			VariantLabel:      row.VariantLabel,
+			VariantAttributes: attrs,
 		})
 	}
 	return products, nil

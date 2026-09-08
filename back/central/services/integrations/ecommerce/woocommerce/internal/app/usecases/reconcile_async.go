@@ -56,6 +56,10 @@ func (uc *wooCommerceUseCase) ReconcileProductsAsync(ctx context.Context, integr
 		return
 	}
 
+	uc.EmitReconcileSummary(ctx, businessID, integIDUint, correlationID, result)
+}
+
+func (uc *wooCommerceUseCase) EmitReconcileSummary(ctx context.Context, businessID, integIDUint uint, correlationID string, result *domain.ReconcileResult) {
 	counts := map[string]interface{}{
 		"correlation_id":      correlationID,
 		"matched":             result.Matched,

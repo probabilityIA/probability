@@ -41,6 +41,10 @@ func briefsToResponse(items []domain.ProductBrief) []gin.H {
 			"name":          b.Name,
 			"matched_by":    b.MatchedBy,
 			"matched_value": b.MatchedValue,
+			"family_ref":    b.FamilyRef,
+			"family_name":   b.FamilyName,
+			"variant_label": b.VariantLabel,
+			"image_url":     b.ImageURL,
 		})
 	}
 	return out
@@ -58,16 +62,27 @@ func (h *wooCommerceHandler) ReconcileProducts(c *gin.Context) {
 	}
 
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
-	correlationID := uuid.New().String()
+
+	result, err := h.useCase.ReconcileProducts(c.Request.Context(), integrationID, businessID)
+	if err != nil {
+		h.logger.Error(c.Request.Context()).Err(err).Str("integration_id", integrationID).Msg("Error al comparar el catalogo con WooCommerce")
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "No se pudo comparar el catalogo con WooCommerce"})
+		return
+	}
 
 	go func() {
-		h.useCase.ReconcileProductsAsync(context.Background(), integrationID, businessID, req.IntegrationID, correlationID)
+		correlationID := uuid.New().String()
+		h.useCase.EmitReconcileSummary(context.Background(), businessID, req.IntegrationID, correlationID, result)
 	}()
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"success":        true,
-		"correlation_id": correlationID,
-		"message":        "Comparacion de catalogo iniciada",
+	c.JSON(http.StatusOK, gin.H{
+		"success":                true,
+		"matched":                result.Matched,
+		"matched_not_associated": briefsToResponse(result.MatchedNotAssociated),
+		"only_in_probability":    briefsToResponse(result.OnlyInProbability),
+		"only_in_woocommerce":    briefsToResponse(result.OnlyInWoo),
+		"probability_no_sku":     result.ProbabilityNoSKU,
+		"woocommerce_no_sku":     result.WooNoSKU,
 	})
 }
 

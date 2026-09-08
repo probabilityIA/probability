@@ -6,11 +6,6 @@ import (
 	"gorm.io/datatypes"
 )
 
-//
-//	PRODUCT DTOs
-//
-
-// CreateProductRequest representa la solicitud para crear un producto
 type ProductProviderUpsertDTO struct {
 	BusinessID     uint
 	IntegrationID  uint
@@ -34,14 +29,12 @@ type ProductProviderUpsertDTO struct {
 }
 
 type CreateProductRequest struct {
-	// Identificadores
-	BusinessID uint    `json:"-"` // Set from JWT in handler, never from request body
+	BusinessID uint    `json:"-"`
 	SKU        string  `json:"sku" binding:"required,max=128"`
 	ExternalID string  `json:"external_id" binding:"omitempty,max=255"`
 	Barcode    *string `json:"barcode" binding:"omitempty,max=255"`
 	FamilyID   *uint   `json:"family_id" binding:"omitempty"`
 
-	// Información Básica
 	Name              string         `json:"name" binding:"required,max=255"`
 	Title             string         `json:"title" binding:"omitempty,max=500"`
 	Description       string         `json:"description" binding:"omitempty"`
@@ -50,27 +43,22 @@ type CreateProductRequest struct {
 	VariantLabel      string         `json:"variant_label" binding:"omitempty,max=255"`
 	VariantAttributes datatypes.JSON `json:"variant_attributes" binding:"omitempty"`
 
-	// Familia de producto (opcional)
 	Family *CreateProductFamilyRequest `json:"family" binding:"omitempty"`
 
-	// Pricing
 	Price          float64  `json:"price" binding:"omitempty,min=0"`
 	CompareAtPrice *float64 `json:"compare_at_price" binding:"omitempty,min=0"`
 	CostPrice      *float64 `json:"cost_price" binding:"omitempty,min=0"`
 	Currency       string   `json:"currency" binding:"omitempty,max=10"`
 
-	// Inventory
 	StockQuantity     int  `json:"stock_quantity" binding:"omitempty,min=0"`
 	TrackInventory    bool `json:"track_inventory"`
 	AllowBackorder    bool `json:"allow_backorder"`
 	LowStockThreshold *int `json:"low_stock_threshold" binding:"omitempty,min=0"`
 
-	// Media
 	ImageURL string         `json:"image_url" binding:"omitempty,max=500"`
 	Images   datatypes.JSON `json:"images" binding:"omitempty"`
 	VideoURL *string        `json:"video_url" binding:"omitempty,max=500"`
 
-	// Dimensiones y Peso
 	Weight        *float64 `json:"weight" binding:"omitempty,min=0"`
 	WeightUnit    string   `json:"weight_unit" binding:"omitempty,max=10"`
 	Length        *float64 `json:"length" binding:"omitempty,min=0"`
@@ -78,30 +66,24 @@ type CreateProductRequest struct {
 	Height        *float64 `json:"height" binding:"omitempty,min=0"`
 	DimensionUnit string   `json:"dimension_unit" binding:"omitempty,max=10"`
 
-	// Categorización
 	Category          string            `json:"category" binding:"omitempty,max=255"`
 	ChannelCategories map[string]string `json:"channel_categories" binding:"omitempty"`
 	Tags              datatypes.JSON    `json:"tags" binding:"omitempty"`
 	Brand             string            `json:"brand" binding:"omitempty,max=255"`
 
-	// Estado
 	Status     string `json:"status" binding:"omitempty,oneof=active draft archived"`
 	IsActive   bool   `json:"is_active"`
 	IsFeatured bool   `json:"is_featured"`
 
-	// Metadata
 	Metadata datatypes.JSON `json:"metadata" binding:"omitempty"`
 }
 
-// UpdateProductRequest representa la solicitud para actualizar un producto
 type UpdateProductRequest struct {
-	// Identificadores
 	SKU        *string `json:"sku" binding:"omitempty,max=128"`
 	ExternalID *string `json:"external_id" binding:"omitempty,max=255"`
 	Barcode    *string `json:"barcode" binding:"omitempty,max=255"`
 	FamilyID   *uint   `json:"family_id" binding:"omitempty"`
 
-	// Información Básica
 	Name              *string        `json:"name" binding:"omitempty,max=255"`
 	Title             *string        `json:"title" binding:"omitempty,max=500"`
 	Description       *string        `json:"description" binding:"omitempty"`
@@ -110,24 +92,20 @@ type UpdateProductRequest struct {
 	VariantLabel      *string        `json:"variant_label" binding:"omitempty,max=255"`
 	VariantAttributes datatypes.JSON `json:"variant_attributes" binding:"omitempty"`
 
-	// Pricing
 	Price          *float64 `json:"price" binding:"omitempty,min=0"`
 	CompareAtPrice *float64 `json:"compare_at_price" binding:"omitempty,min=0"`
 	CostPrice      *float64 `json:"cost_price" binding:"omitempty,min=0"`
 	Currency       *string  `json:"currency" binding:"omitempty,max=10"`
 
-	// Inventory
 	StockQuantity     *int  `json:"stock_quantity" binding:"omitempty,min=0"`
 	TrackInventory    *bool `json:"track_inventory"`
 	AllowBackorder    *bool `json:"allow_backorder"`
 	LowStockThreshold *int  `json:"low_stock_threshold" binding:"omitempty,min=0"`
 
-	// Media
 	ImageURL *string        `json:"image_url" binding:"omitempty,max=500"`
 	Images   datatypes.JSON `json:"images" binding:"omitempty"`
 	VideoURL *string        `json:"video_url" binding:"omitempty,max=500"`
 
-	// Dimensiones y Peso
 	Weight        *float64 `json:"weight" binding:"omitempty,min=0"`
 	WeightUnit    *string  `json:"weight_unit" binding:"omitempty,max=10"`
 	Length        *float64 `json:"length" binding:"omitempty,min=0"`
@@ -135,36 +113,30 @@ type UpdateProductRequest struct {
 	Height        *float64 `json:"height" binding:"omitempty,min=0"`
 	DimensionUnit *string  `json:"dimension_unit" binding:"omitempty,max=10"`
 
-	// Categorización
 	Category          *string           `json:"category" binding:"omitempty,max=255"`
 	ChannelCategories map[string]string `json:"channel_categories" binding:"omitempty"`
 	Tags              datatypes.JSON    `json:"tags" binding:"omitempty"`
 	Brand             *string           `json:"brand" binding:"omitempty,max=255"`
 
-	// Estado
 	Status     *string `json:"status" binding:"omitempty,oneof=active draft archived"`
 	IsActive   *bool   `json:"is_active"`
 	IsFeatured *bool   `json:"is_featured"`
 
-	// Metadata
 	Metadata datatypes.JSON `json:"metadata" binding:"omitempty"`
 }
 
-// ProductResponse representa la respuesta de un producto
 type ProductResponse struct {
 	ID        string     `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 
-	// Identificadores
 	BusinessID uint    `json:"business_id"`
 	SKU        string  `json:"sku"`
 	ExternalID string  `json:"external_id"`
 	Barcode    *string `json:"barcode,omitempty"`
 	FamilyID   *uint   `json:"family_id,omitempty"`
 
-	// Información Básica
 	Name              string         `json:"name"`
 	Title             string         `json:"title"`
 	Description       string         `json:"description"`
@@ -173,24 +145,20 @@ type ProductResponse struct {
 	VariantLabel      string         `json:"variant_label"`
 	VariantAttributes datatypes.JSON `json:"variant_attributes,omitempty"`
 
-	// Pricing
 	Price          float64  `json:"price"`
 	CompareAtPrice *float64 `json:"compare_at_price,omitempty"`
 	CostPrice      *float64 `json:"cost_price,omitempty"`
 	Currency       string   `json:"currency"`
 
-	// Inventory
 	StockQuantity     int  `json:"stock_quantity"`
 	TrackInventory    bool `json:"track_inventory"`
 	AllowBackorder    bool `json:"allow_backorder"`
 	LowStockThreshold *int `json:"low_stock_threshold,omitempty"`
 
-	// Media
 	ImageURL string         `json:"image_url"`
 	Images   datatypes.JSON `json:"images,omitempty"`
 	VideoURL *string        `json:"video_url,omitempty"`
 
-	// Dimensiones y Peso
 	Weight        *float64 `json:"weight,omitempty"`
 	WeightUnit    string   `json:"weight_unit"`
 	Length        *float64 `json:"length,omitempty"`
@@ -198,25 +166,20 @@ type ProductResponse struct {
 	Height        *float64 `json:"height,omitempty"`
 	DimensionUnit string   `json:"dimension_unit"`
 
-	// Categorización
 	Category          string            `json:"category"`
 	ChannelCategories map[string]string `json:"channel_categories,omitempty"`
 	Tags              datatypes.JSON    `json:"tags,omitempty"`
 	Brand             string            `json:"brand"`
 
-	// Estado
 	Status     string `json:"status"`
 	IsActive   bool   `json:"is_active"`
 	IsFeatured bool   `json:"is_featured"`
 
-	// Metadata
 	Metadata datatypes.JSON `json:"metadata,omitempty"`
 
-	// Familia de producto
 	Family *ProductFamilySummaryResponse `json:"family,omitempty"`
 }
 
-// ProductsListResponse representa la respuesta paginada de productos
 type ProductsListResponse struct {
 	Data       []ProductResponse `json:"data"`
 	Total      int64             `json:"total"`
@@ -224,10 +187,6 @@ type ProductsListResponse struct {
 	PageSize   int               `json:"page_size"`
 	TotalPages int               `json:"total_pages"`
 }
-
-//
-//	PRODUCT INTEGRATION DTOs
-//
 
 type AddProductIntegrationRequest struct {
 	IntegrationID     uint    `json:"integration_id" binding:"required"`
@@ -248,7 +207,6 @@ type RemoveProductIntegrationRequest struct {
 	IntegrationID uint `json:"integration_id" binding:"required"`
 }
 
-// ProductIntegrationResponse representa la respuesta de una integración asociada a un producto
 type ProductIntegrationResponse struct {
 	ID                uint      `json:"id"`
 	ProductID         string    `json:"product_id"`
@@ -263,89 +221,87 @@ type ProductIntegrationResponse struct {
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
-// ProductResponseWithIntegrations extiende ProductResponse con información de integraciones
 type ProductResponseWithIntegrations struct {
 	ProductResponse
 	Integrations []ProductIntegrationResponse `json:"integrations,omitempty"`
 }
 
-// CreateProductFamilyRequest representa un producto padre o familia de variantes.
 type CreateProductFamilyRequest struct {
-	Name        string         `json:"name" binding:"required,max=255"`
-	Title       string         `json:"title" binding:"omitempty,max=500"`
-	Description string         `json:"description" binding:"omitempty"`
-	Slug        string         `json:"slug" binding:"omitempty,max=255"`
-	Category    string         `json:"category" binding:"omitempty,max=255"`
-	Brand       string         `json:"brand" binding:"omitempty,max=255"`
-	ImageURL    string         `json:"image_url" binding:"omitempty,max=500"`
-	Status      string         `json:"status" binding:"omitempty,oneof=active draft archived"`
-	IsActive    *bool          `json:"is_active" binding:"omitempty"`
-	VariantAxes datatypes.JSON `json:"variant_axes" binding:"omitempty"`
-	Metadata    datatypes.JSON `json:"metadata" binding:"omitempty"`
+	Name           string         `json:"name" binding:"required,max=255"`
+	Title          string         `json:"title" binding:"omitempty,max=500"`
+	Description    string         `json:"description" binding:"omitempty"`
+	Slug           string         `json:"slug" binding:"omitempty,max=255"`
+	Category       string         `json:"category" binding:"omitempty,max=255"`
+	Brand          string         `json:"brand" binding:"omitempty,max=255"`
+	ImageURL       string         `json:"image_url" binding:"omitempty,max=500"`
+	Status         string         `json:"status" binding:"omitempty,oneof=active draft archived"`
+	IsActive       *bool          `json:"is_active" binding:"omitempty"`
+	ParentFamilyID *uint          `json:"parent_family_id" binding:"omitempty"`
+	VariantAxes    datatypes.JSON `json:"variant_axes" binding:"omitempty"`
+	Metadata       datatypes.JSON `json:"metadata" binding:"omitempty"`
 }
 
-// ProductFamilySummaryResponse resume la familia asociada a una variante.
 type ProductFamilySummaryResponse struct {
-	ID          uint           `json:"id"`
-	BusinessID  uint           `json:"business_id"`
-	Name        string         `json:"name"`
-	Title       string         `json:"title"`
-	Description string         `json:"description"`
-	Slug        string         `json:"slug"`
-	Category    string         `json:"category"`
-	Brand       string         `json:"brand"`
-	ImageURL    string         `json:"image_url"`
-	Status      string         `json:"status"`
-	IsActive    bool           `json:"is_active"`
-	VariantAxes datatypes.JSON `json:"variant_axes,omitempty"`
-	Metadata    datatypes.JSON `json:"metadata,omitempty"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID             uint           `json:"id"`
+	BusinessID     uint           `json:"business_id"`
+	Name           string         `json:"name"`
+	Title          string         `json:"title"`
+	Description    string         `json:"description"`
+	Slug           string         `json:"slug"`
+	Category       string         `json:"category"`
+	Brand          string         `json:"brand"`
+	ImageURL       string         `json:"image_url"`
+	Status         string         `json:"status"`
+	IsActive       bool           `json:"is_active"`
+	ParentFamilyID *uint          `json:"parent_family_id,omitempty"`
+	VariantAxes    datatypes.JSON `json:"variant_axes,omitempty"`
+	Metadata       datatypes.JSON `json:"metadata,omitempty"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
-// CreateProductFamilyStandaloneRequest representa la creación explícita de una familia.
 type CreateProductFamilyStandaloneRequest struct {
 	BusinessID uint `json:"-"`
 	CreateProductFamilyRequest
 }
 
-// UpdateProductFamilyRequest representa la actualización parcial de una familia.
 type UpdateProductFamilyRequest struct {
-	Name        *string        `json:"name" binding:"omitempty,max=255"`
-	Title       *string        `json:"title" binding:"omitempty,max=500"`
-	Description *string        `json:"description" binding:"omitempty"`
-	Slug        *string        `json:"slug" binding:"omitempty,max=255"`
-	Category    *string        `json:"category" binding:"omitempty,max=255"`
-	Brand       *string        `json:"brand" binding:"omitempty,max=255"`
-	ImageURL    *string        `json:"image_url" binding:"omitempty,max=500"`
-	Status      *string        `json:"status" binding:"omitempty,oneof=active draft archived"`
-	IsActive    *bool          `json:"is_active"`
-	VariantAxes datatypes.JSON `json:"variant_axes" binding:"omitempty"`
-	Metadata    datatypes.JSON `json:"metadata" binding:"omitempty"`
+	Name           *string        `json:"name" binding:"omitempty,max=255"`
+	Title          *string        `json:"title" binding:"omitempty,max=500"`
+	Description    *string        `json:"description" binding:"omitempty"`
+	Slug           *string        `json:"slug" binding:"omitempty,max=255"`
+	Category       *string        `json:"category" binding:"omitempty,max=255"`
+	Brand          *string        `json:"brand" binding:"omitempty,max=255"`
+	ImageURL       *string        `json:"image_url" binding:"omitempty,max=500"`
+	Status         *string        `json:"status" binding:"omitempty,oneof=active draft archived"`
+	IsActive       *bool          `json:"is_active"`
+	ParentFamilyID *uint          `json:"parent_family_id" binding:"omitempty"`
+	ClearParent    bool           `json:"clear_parent"`
+	VariantAxes    datatypes.JSON `json:"variant_axes" binding:"omitempty"`
+	Metadata       datatypes.JSON `json:"metadata" binding:"omitempty"`
 }
 
-// ProductFamilyResponse representa la respuesta detallada de una familia.
 type ProductFamilyResponse struct {
-	ID           uint              `json:"id"`
-	BusinessID   uint              `json:"business_id"`
-	Name         string            `json:"name"`
-	Title        string            `json:"title"`
-	Description  string            `json:"description"`
-	Slug         string            `json:"slug"`
-	Category     string            `json:"category"`
-	Brand        string            `json:"brand"`
-	ImageURL     string            `json:"image_url"`
-	Status       string            `json:"status"`
-	IsActive     bool              `json:"is_active"`
-	VariantAxes  datatypes.JSON    `json:"variant_axes,omitempty"`
-	Metadata     datatypes.JSON    `json:"metadata,omitempty"`
-	VariantCount int64             `json:"variant_count"`
-	Variants     []ProductResponse `json:"variants,omitempty"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
+	ID             uint              `json:"id"`
+	BusinessID     uint              `json:"business_id"`
+	Name           string            `json:"name"`
+	Title          string            `json:"title"`
+	Description    string            `json:"description"`
+	Slug           string            `json:"slug"`
+	Category       string            `json:"category"`
+	Brand          string            `json:"brand"`
+	ImageURL       string            `json:"image_url"`
+	Status         string            `json:"status"`
+	IsActive       bool              `json:"is_active"`
+	ParentFamilyID *uint             `json:"parent_family_id,omitempty"`
+	VariantAxes    datatypes.JSON    `json:"variant_axes,omitempty"`
+	Metadata       datatypes.JSON    `json:"metadata,omitempty"`
+	VariantCount   int64             `json:"variant_count"`
+	Variants       []ProductResponse `json:"variants,omitempty"`
+	CreatedAt      time.Time         `json:"created_at"`
+	UpdatedAt      time.Time         `json:"updated_at"`
 }
 
-// ProductFamiliesListResponse representa la respuesta paginada de familias.
 type ProductFamiliesListResponse struct {
 	Data       []ProductFamilyResponse `json:"data"`
 	Total      int64                   `json:"total"`

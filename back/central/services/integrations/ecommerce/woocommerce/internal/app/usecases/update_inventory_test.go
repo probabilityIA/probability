@@ -13,10 +13,11 @@ import (
 
 type fakeProductRepo struct {
 	domain.IProductRepository
-	GetProductIDByExternalRefFn func(ctx context.Context, integrationID uint, externalProductID, externalVariantID string) (string, error)
-	GetProductSKUByIDFn         func(ctx context.Context, productID string, businessID uint) (string, error)
-	GetExternalRefsFn           func(ctx context.Context, productID string, integrationID uint) (string, string, error)
-	ListProductsByBusinessFn    func(ctx context.Context, businessID uint) ([]domain.ProductForSync, error)
+	GetProductIDByExternalRefFn       func(ctx context.Context, integrationID uint, externalProductID, externalVariantID string) (string, error)
+	GetProductSKUByIDFn               func(ctx context.Context, productID string, businessID uint) (string, error)
+	GetExternalRefsFn                 func(ctx context.Context, productID string, integrationID uint) (string, string, error)
+	ListProductsByBusinessFn          func(ctx context.Context, businessID uint) ([]domain.ProductForSync, error)
+	UpsertProductIntegrationMappingFn func(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error
 }
 
 func (f *fakeProductRepo) ListProductsByBusiness(ctx context.Context, businessID uint) ([]domain.ProductForSync, error) {
@@ -31,6 +32,9 @@ func (f *fakeProductRepo) ListMappedItems(ctx context.Context, integrationID uin
 }
 
 func (f *fakeProductRepo) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error {
+	if f.UpsertProductIntegrationMappingFn != nil {
+		return f.UpsertProductIntegrationMappingFn(ctx, productID, businessID, integrationID, refs)
+	}
 	return nil
 }
 

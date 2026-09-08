@@ -3,6 +3,33 @@
 export interface Brief {
     sku: string;
     name: string;
+    family_ref?: string;
+    family_name?: string;
+    variant_label?: string;
+    image_url?: string;
+}
+
+export interface ChannelFamilyGroup {
+    key: string;
+    name: string;
+    image_url?: string;
+    items: Brief[];
+}
+
+export function groupByFamily(items: Brief[]): ChannelFamilyGroup[] {
+    const order: string[] = [];
+    const byKey = new Map<string, ChannelFamilyGroup>();
+    for (const item of items) {
+        const key = item.family_ref || `sku:${item.sku}`;
+        if (!byKey.has(key)) {
+            byKey.set(key, { key, name: item.family_name || item.name, image_url: item.image_url, items: [] });
+            order.push(key);
+        }
+        const group = byKey.get(key)!;
+        group.items.push(item);
+        if (!group.image_url && item.image_url) group.image_url = item.image_url;
+    }
+    return order.map(key => byKey.get(key)!);
 }
 
 export type SyncAction = 'created' | 'updated' | 'failed' | 'skipped';
@@ -29,6 +56,36 @@ export function ProductList({ items }: { items: Brief[] }) {
                 </div>
             ))}
             {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} más...</div>}
+        </div>
+    );
+}
+
+export function ChannelFamilyList({ groups, onImport }: { groups: ChannelFamilyGroup[]; onImport: (group: ChannelFamilyGroup) => void }) {
+    if (groups.length === 0) return null;
+    return (
+        <div className="mt-2 max-h-56 overflow-y-auto rounded-md bg-gray-50 dark:bg-gray-800/60 divide-y divide-gray-100 dark:divide-gray-700">
+            {groups.slice(0, 100).map((g) => (
+                <div key={g.key} className="flex items-center justify-between gap-2 px-2.5 py-2 text-[11px]">
+                    <div className="flex items-center gap-2 min-w-0">
+                        {g.image_url ? (
+                            <img src={g.image_url} alt={g.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-200 dark:border-gray-700" />
+                        ) : (
+                            <span className="w-8 h-8 rounded-full flex-shrink-0 bg-gray-200 dark:bg-gray-700" />
+                        )}
+                        <div className="min-w-0">
+                            <p className="text-gray-700 dark:text-gray-200 truncate font-medium">{g.name || '(sin nombre)'}</p>
+                            <p className="text-gray-400">{g.items.length} variante{g.items.length !== 1 ? 's' : ''}</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => onImport(g)}
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-blue-600 hover:bg-blue-700 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors flex-shrink-0"
+                    >
+                        Traer a Probability
+                    </button>
+                </div>
+            ))}
+            {groups.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {groups.length - 100} más...</div>}
         </div>
     );
 }

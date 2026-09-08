@@ -25,17 +25,44 @@ type CreateProductInput struct {
 	ImageURL      string
 }
 
+type VariableAttribute struct {
+	Name    string
+	Options []string
+}
+
+type CreateVariableProductInput struct {
+	Name        string
+	Description string
+	ImageURL    string
+	Attributes  []VariableAttribute
+}
+
+type CreateVariationInput struct {
+	SKU           string
+	Price         float64
+	StockQuantity int
+	ManageStock   bool
+	ImageURL      string
+	Attributes    map[string]string
+}
+
 type ProductForSync struct {
-	ID             string
-	SKU            string
-	Barcode        string
-	ExternalID     string
-	Name           string
-	Description    string
-	Price          float64
-	StockQuantity  int
-	TrackInventory bool
-	ImageURL       string
+	ID                string
+	SKU               string
+	Barcode           string
+	ExternalID        string
+	Name              string
+	Description       string
+	Price             float64
+	StockQuantity     int
+	TrackInventory    bool
+	ImageURL          string
+	FamilyID          string
+	FamilyName        string
+	FamilyDescription string
+	FamilyImageURL    string
+	VariantLabel      string
+	VariantAttributes map[string]string
 }
 
 type WooProduct struct {
@@ -89,6 +116,10 @@ type ProductBrief struct {
 	Name         string
 	MatchedBy    string
 	MatchedValue string
+	FamilyRef    string
+	FamilyName   string
+	VariantLabel string
+	ImageURL     string
 }
 
 type ReconcileResult struct {

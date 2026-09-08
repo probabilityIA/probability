@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ProductFamily, CreateProductFamilyDTO, UpdateProductFamilyDTO } from '../../domain/types';
-import { createProductFamilyAction, updateProductFamilyAction } from '../../infra/actions';
+import { ProductFamily, ProductFamilySummary, CreateProductFamilyDTO, UpdateProductFamilyDTO } from '../../domain/types';
+import { createProductFamilyAction, updateProductFamilyAction, getProductFamiliesAction } from '../../infra/actions';
 
 interface ProductFamilyFormProps {
     family?: ProductFamily;
@@ -27,9 +27,15 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
         status: 'active',
         is_active: true,
         variant_axes: '',
+        parent_family_id: '' as string | number,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [candidateParents, setCandidateParents] = useState<ProductFamilySummary[]>([]);
+    const [creatingParent, setCreatingParent] = useState(false);
+    const [newParentName, setNewParentName] = useState('');
+    const [creatingParentLoading, setCreatingParentLoading] = useState(false);
+    const [creatingParentError, setCreatingParentError] = useState<string | null>(null);
 
     useEffect(() => {
         if (family) {
@@ -43,11 +49,59 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
                 status: family.status || 'active',
                 is_active: family.is_active ?? true,
                 variant_axes: family.variant_axes ? JSON.stringify(family.variant_axes, null, 2) : '',
+                parent_family_id: family.parent_family_id || '',
             });
         }
     }, [family]);
 
+    useEffect(() => {
+        (async () => {
+            const res = await getProductFamiliesAction({ page: 1, page_size: 100, business_id: businessId });
+            if (res && res.data) {
+                setCandidateParents(res.data.filter((f: ProductFamilySummary) => f.id !== family?.id && !f.parent_family_id));
+            }
+        })();
+    }, [businessId, family?.id]);
+
     const set = (field: string, value: any) => setFormData(prev => ({ ...prev, [field]: value }));
+
+    const selectedParentPreview = formData.parent_family_id
+        ? candidateParents.find(f => f.id === Number(formData.parent_family_id))
+        : undefined;
+
+    const handleParentSelectChange = (value: string) => {
+        if (value === '__new__') {
+            setCreatingParent(true);
+            setNewParentName('');
+            setCreatingParentError(null);
+            return;
+        }
+        set('parent_family_id', value);
+    };
+
+    const handleCreateParent = async () => {
+        if (!newParentName.trim()) {
+            setCreatingParentError('El nombre es requerido');
+            return;
+        }
+        setCreatingParentLoading(true);
+        setCreatingParentError(null);
+        try {
+            const res: any = await createProductFamilyAction({ name: newParentName.trim(), status: 'active', is_active: true }, businessId);
+            if (res && res.success === false) {
+                setCreatingParentError(res.message || 'Error al crear la familia madre');
+                return;
+            }
+            const created = res.data;
+            setCandidateParents(prev => [...prev, created]);
+            set('parent_family_id', created.id);
+            setCreatingParent(false);
+        } catch (err: any) {
+            setCreatingParentError(err.message || 'Error inesperado');
+        } finally {
+            setCreatingParentLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,6 +125,8 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
 
         try {
             let res: any;
+            const parentFamilyId = formData.parent_family_id ? Number(formData.parent_family_id) : undefined;
+
             if (isEdit) {
                 const payload: UpdateProductFamilyDTO = {
                     name: formData.name || undefined,
@@ -82,6 +138,8 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
                     status: formData.status || undefined,
                     is_active: formData.is_active,
                     variant_axes: variantAxesParsed,
+                    parent_family_id: parentFamilyId,
+                    clear_parent: !parentFamilyId && !!family?.parent_family_id,
                 };
                 res = await updateProductFamilyAction(family!.id, payload, businessId);
             } else {
@@ -95,6 +153,7 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
                     status: formData.status || 'active',
                     is_active: formData.is_active,
                     variant_axes: variantAxesParsed,
+                    parent_family_id: parentFamilyId,
                 };
                 res = await createProductFamilyAction(payload, businessId);
             }
@@ -170,6 +229,70 @@ export default function ProductFamilyForm({ family, onSuccess, onCancel, busines
                             <option value="archived">Archivado</option>
                         </select>
                     </div>
+                </div>
+
+                <div className="p-3.5 rounded-lg border-2 border-purple-200 dark:border-purple-800 bg-purple-50/60 dark:bg-purple-900/10">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="text-base leading-none">&#128081;</span>
+                        <label className="text-xs font-bold text-purple-800 dark:text-purple-300">Agrupar bajo una familia madre (opcional)</label>
+                    </div>
+                    {creatingParent ? (
+                        <div className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    placeholder="Nombre de la nueva familia madre (ej: Camisas Selección Argentina)"
+                                    value={newParentName}
+                                    onChange={e => setNewParentName(e.target.value)}
+                                    className={inputClass}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleCreateParent}
+                                    disabled={creatingParentLoading}
+                                    className="px-4 py-2 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
+                                >
+                                    {creatingParentLoading ? 'Creando...' : 'Crear'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setCreatingParent(false); setCreatingParentError(null); }}
+                                    className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                            {creatingParentError && <p className="text-xs text-red-600">{creatingParentError}</p>}
+                        </div>
+                    ) : (
+                        <select value={formData.parent_family_id} onChange={e => handleParentSelectChange(e.target.value)} className={inputClass}>
+                            <option value="">No agrupar - esta familia es independiente</option>
+                            {candidateParents.map(f => (
+                                <option key={f.id} value={f.id}>{f.name}</option>
+                            ))}
+                            <option value="__new__">+ Crear nueva familia madre...</option>
+                        </select>
+                    )}
+                    {!creatingParent && (selectedParentPreview ? (
+                        <div className="flex items-center gap-2 mt-2 p-2 rounded-md bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800">
+                            {selectedParentPreview.image_url ? (
+                                <img src={selectedParentPreview.image_url} alt={selectedParentPreview.name} className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                                <span className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40" />
+                            )}
+                            <p className="text-xs text-slate-600 dark:text-slate-300">
+                                Esta familia se sincronizará como parte de <strong>{selectedParentPreview.name}</strong>: al enviarla a un
+                                canal de ventas (ej. WooCommerce), se fusiona con sus demás subfamilias en <strong>un solo producto</strong> con
+                                todas sus variantes.
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="text-xs text-slate-400 mt-1.5">
+                            Úsalo cuando el mismo producto tenga varias líneas separadas en Probability (ej: distintos colores de
+                            una camiseta creados como familias distintas) pero deban verse como un solo producto en el canal de venta.
+                        </p>
+                    ))}
                 </div>
 
                 <div>
