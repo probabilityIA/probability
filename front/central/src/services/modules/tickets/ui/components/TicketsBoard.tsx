@@ -48,7 +48,6 @@ export default function TicketsBoard({
     const [dragId, setDragId] = useState<number | null>(null);
     const [overKey, setOverKey] = useState<string | null>(null);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-    const [openedRails, setOpenedRails] = useState<Record<string, boolean>>({});
 
     const now = Date.now();
 
@@ -112,57 +111,17 @@ export default function TicketsBoard({
             <div className={`flex w-full items-stretch gap-2.5 overflow-x-auto pb-3 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
                 {grouped.map(({ column, items }) => {
                     const isOver = overKey === column.key;
-                    const collapsed = items.length === 0 && !isOver && !openedRails[column.key];
                     const dueSoon = items.filter((t) => isDueSoon(t, now)).length;
                     const showAll = !!expanded[column.key];
                     const visible = showAll ? items : items.slice(0, CARDS_PER_COLUMN);
                     const hidden = items.length - visible.length;
-
-                    if (collapsed) {
-                        return (
-                            <div
-                                key={column.key}
-                                role="button"
-                                tabIndex={0}
-                                title={'Columna vac\u00eda: ' + column.title}
-                                aria-label={'Columna vac\u00eda: ' + column.title}
-                                onClick={() => setOpenedRails((prev) => ({ ...prev, [column.key]: true }))}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpenedRails((prev) => ({ ...prev, [column.key]: true })); }}
-                                onDragOver={(e) => handleDragOver(e, column)}
-                                onDragLeave={(e) => handleDragLeave(e, column)}
-                                onDrop={(e) => handleDrop(e, column)}
-                                className={`w-9 flex-none cursor-pointer rounded-lg border transition-colors ${
-                                    column.key === 'blocked'
-                                        ? 'border-red-300/60 bg-red-50/40 dark:border-red-500/25 dark:bg-gray-900/60'
-                                        : 'border-gray-200 bg-gray-50 dark:border-gray-700/70 dark:bg-gray-900/60'
-                                }`}
-                            >
-                                <div className="flex min-h-[340px] flex-col items-center gap-2 py-2.5">
-                                    <span className={`rounded px-1.5 font-mono text-[10.5px] font-bold ${
-                                        column.key === 'blocked'
-                                            ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                                            : 'bg-gray-200 text-gray-500 dark:bg-white/10 dark:text-gray-400'
-                                    }`}>0</span>
-                                    <h3
-                                        className={`text-[11px] font-semibold uppercase tracking-wider ${
-                                            column.key === 'blocked' ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-                                        }`}
-                                        style={{ writingMode: 'vertical-rl' }}
-                                    >
-                                        {column.title}
-                                    </h3>
-                                </div>
-                            </div>
-                        );
-                    }
-
                     return (
                         <div
                             key={column.key}
                             onDragOver={(e) => handleDragOver(e, column)}
                             onDragLeave={(e) => handleDragLeave(e, column)}
                             onDrop={(e) => handleDrop(e, column)}
-                            className={`flex w-[296px] flex-none flex-col gap-2 rounded-lg border p-1 transition-colors ${
+                            className={`flex min-w-[264px] flex-1 basis-0 flex-col gap-2 rounded-lg border p-1 transition-colors ${
                                 isOver
                                     ? 'border-purple-400 bg-purple-50/60 dark:border-purple-500 dark:bg-purple-500/10'
                                     : 'border-transparent'

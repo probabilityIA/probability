@@ -97,24 +97,20 @@ describe('TicketsBoard', () => {
             expect(within(columnOf('Blocked')).getByText('0')).toBeInTheDocument();
         });
 
-        it('colapsa las columnas vacias a un riel con contador en cero', () => {
+        it('muestra "Sin tickets" solo en las columnas vacias, sin colapsarlas', () => {
             render(<TicketsBoard {...baseProps} tickets={[makeTicket({ id: 1, status: 'open' })]} />);
 
-            expect(screen.queryByText('Sin tickets')).toBeNull();
-            expect(columnOf('To Do')).not.toHaveAttribute('role', 'button');
-
-            const rail = columnOf('Blocked');
-            expect(rail).toHaveAttribute('role', 'button');
-            expect(within(rail).getByText('0')).toBeInTheDocument();
-            expect(screen.getAllByRole('button', { name: /Columna vac/ })).toHaveLength(BOARD_COLUMNS.length - 1);
+            expect(within(columnOf('To Do')).queryByText('Sin tickets')).toBeNull();
+            expect(within(columnOf('Blocked')).getByText('Sin tickets')).toBeInTheDocument();
+            expect(screen.getAllByText('Sin tickets')).toHaveLength(BOARD_COLUMNS.length - 1);
         });
 
-        it('expande una columna vacia al hacer click en su riel', () => {
+        it('reparte el ancho disponible entre todas las columnas', () => {
             render(<TicketsBoard {...baseProps} tickets={[makeTicket({ id: 1, status: 'open' })]} />);
 
-            fireEvent.click(columnOf('Blocked'));
-
-            expect(within(columnOf('Blocked')).getByText('Sin tickets')).toBeInTheDocument();
+            BOARD_COLUMNS.forEach((column) => {
+                expect(columnOf(column.title).className).toContain('flex-1');
+            });
         });
 
         it('muestra el badge de estado solo en columnas que agrupan varios estados', () => {
