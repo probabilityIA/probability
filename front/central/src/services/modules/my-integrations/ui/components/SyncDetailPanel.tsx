@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, Lock, LockOpen, Search, X } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Lock, LockOpen, Search, X } from 'lucide-react';
 import type { SyncRunKind } from '../../domain/types';
 import { fetchSyncRunItems } from '../../infra/repository/sync-run-items';
 import type { ProductApplyActions } from '../providers';
@@ -233,6 +233,8 @@ export function SyncDetailPanel({
                 matchedValue: item.matched_value,
                 parentRef: item.parent_ref,
                 parentLabel: item.parent_label,
+                groupRef: item.group_ref,
+                groupLabel: item.group_label,
                 variantLabel: item.variant_label,
             }));
             setRemoteItems(prev => (replace ? incoming : [...prev, ...incoming]));
@@ -333,31 +335,56 @@ export function SyncDetailPanel({
 
     const allVisibleSelected = selectableItems.length > 0 && selectableItems.every(item => selected.has(item.sku));
 
-    interface VisibleGroup { parentRef: string | null; parentLabel: string | null; items: (SyncDetailItem & { originalIndex: number })[] }
+    type VisibleItem = SyncDetailItem & { originalIndex: number };
+    interface SubGroup { groupRef: string | null; groupLabel: string | null; items: VisibleItem[] }
+    interface VisibleGroup { parentRef: string | null; parentLabel: string | null; items: VisibleItem[]; subGroups: SubGroup[] }
+
     const visibleGroups = useMemo(() => {
         const order: string[] = [];
         const byKey = new Map<string, VisibleGroup>();
         visible.forEach((item, originalIndex) => {
             const key = item.parentRef || `__single__:${item.sku}:${originalIndex}`;
             if (!byKey.has(key)) {
-                byKey.set(key, { parentRef: item.parentRef || null, parentLabel: item.parentLabel || null, items: [] });
+                byKey.set(key, { parentRef: item.parentRef || null, parentLabel: item.parentLabel || null, items: [], subGroups: [] });
                 order.push(key);
             }
             byKey.get(key)!.items.push({ ...item, originalIndex });
         });
-        return order.map(key => byKey.get(key)!);
+        const groups = order.map(key => byKey.get(key)!);
+        for (const group of groups) {
+            if (group.parentRef == null) continue;
+            const subOrder: string[] = [];
+            const bySubKey = new Map<string, SubGroup>();
+            for (const item of group.items) {
+                const subKey = item.groupRef || `__singlesub__:${item.sku}`;
+                if (!bySubKey.has(subKey)) {
+                    bySubKey.set(subKey, { groupRef: item.groupRef || null, groupLabel: item.groupLabel || null, items: [] });
+                    subOrder.push(subKey);
+                }
+                bySubKey.get(subKey)!.items.push(item);
+            }
+            group.subGroups = subOrder.map(k => bySubKey.get(k)!);
+        }
+        return groups;
     }, [visible]);
 
-    const toggleGroup = (group: VisibleGroup, checked: boolean) => {
+    const toggleItems = (items: VisibleItem[], checked: boolean) => {
         setSelected(prev => {
             const next = new Set(prev);
-            for (const item of group.items) {
+            for (const item of items) {
                 if (!selectable(item)) continue;
                 if (checked) next.add(item.sku); else next.delete(item.sku);
             }
             return next;
         });
     };
+
+    const [expandedSub, setExpandedSub] = useState<Set<string>>(new Set());
+    const toggleExpandedSub = (key: string) => setExpandedSub(prev => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        return next;
+    });
 
     const creaEnCanal = action?.key === 'createInChannel' || action?.key === 'createBothSides';
     const bloqueado = creaEnCanal && !creacionDesbloqueada;
@@ -478,7 +505,7 @@ export function SyncDetailPanel({
                     const groupAllSelected = groupSelectableItems.length > 0 && groupSelectedCount === groupSelectableItems.length;
                     const groupSomeSelected = groupSelectedCount > 0 && !groupAllSelected;
 
-                    const rows = group.items.map((item) => {
+                    const renderRow = (item: VisibleItem, showParentChip: boolean) => {
                         const style = GROUP_STYLES[item.group];
                         return (
                             <label
@@ -512,7 +539,7 @@ export function SyncDetailPanel({
                                 </span>
                                 {parent ? (
                                     <span className="flex min-w-0 flex-1 items-center gap-1">
-                                        {!isFamily && (
+                                        {showParentChip && (
                                             <span
                                                 title={`Variante de la publicaci\u00f3n ${item.parentLabel || item.parentRef} (${item.parentRef})`}
                                                 className={`flex-shrink-0 truncate rounded-full px-1.5 py-0.5 font-semibold ${parent.chip} max-w-[9rem]`}
@@ -537,9 +564,9 @@ export function SyncDetailPanel({
                                 )}
                             </label>
                         );
-                    });
+                    };
 
-                    if (!isFamily) return rows;
+                    if (!isFamily) return group.items.map((item) => renderRow(item, true));
 
                     return (
                         <div key={group.parentRef} className="mb-0.5">
@@ -549,11 +576,14 @@ export function SyncDetailPanel({
                                         type="checkbox"
                                         checked={groupAllSelected}
                                         ref={(el) => { if (el) el.indeterminate = groupSomeSelected; }}
-                                        onChange={() => toggleGroup(group, !groupAllSelected)}
+                                        onChange={() => toggleItems(groupSelectableItems, !groupAllSelected)}
                                         className="h-3 w-3 flex-shrink-0 accent-blue-600"
                                     />
                                 )}
                                 <span className={`-my-0.5 w-0.5 flex-shrink-0 self-stretch rounded-full ${parent!.bar}`} />
+                                <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[9.5px] font-bold uppercase text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                                    Familia madre
+                                </span>
                                 <span className={`truncate rounded-full px-1.5 py-0.5 font-bold ${parent!.chip}`}>
                                     {group.parentLabel || group.parentRef}
                                 </span>
@@ -561,7 +591,49 @@ export function SyncDetailPanel({
                                     {groupSelectedCount}/{group.items.length} variantes
                                 </span>
                             </label>
-                            <div className="pl-4">{rows}</div>
+                            <div className="pl-4">
+                                {group.subGroups.map((sub) => {
+                                    const subKey = sub.groupRef || `single:${sub.items[0]?.sku}`;
+                                    const isSubFamily = sub.groupRef != null && sub.items.length > 1;
+                                    if (!isSubFamily) return sub.items.map((item) => renderRow(item, false));
+
+                                    const subSelectable = sub.items.filter(selectable);
+                                    const subSelectedCount = subSelectable.filter(item => selected.has(item.sku)).length;
+                                    const subAllSelected = subSelectable.length > 0 && subSelectedCount === subSelectable.length;
+                                    const subSomeSelected = subSelectedCount > 0 && !subAllSelected;
+                                    const isExpanded = expandedSub.has(subKey);
+
+                                    return (
+                                        <div key={subKey} className="mb-0.5">
+                                            <div className="flex items-center gap-2 rounded-md px-1 py-1 text-[11px] hover:bg-white/70 dark:hover:bg-gray-800/40">
+                                                {subSelectable.length > 0 && (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={subAllSelected}
+                                                        ref={(el) => { if (el) el.indeterminate = subSomeSelected; }}
+                                                        onChange={() => toggleItems(subSelectable, !subAllSelected)}
+                                                        className="h-3 w-3 flex-shrink-0 accent-blue-600"
+                                                    />
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleExpandedSub(subKey)}
+                                                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left"
+                                                >
+                                                    <ChevronRight size={11} className={`flex-shrink-0 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                                    <span className="min-w-0 truncate font-semibold text-gray-700 dark:text-gray-200">
+                                                        {sub.groupLabel || sub.groupRef}
+                                                    </span>
+                                                    <span className="flex-shrink-0 text-[10.5px] font-semibold text-gray-400 dark:text-gray-500">
+                                                        {subSelectedCount}/{sub.items.length}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                            {isExpanded && <div className="pl-4">{sub.items.map((item) => renderRow(item, false))}</div>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     );
                 })}

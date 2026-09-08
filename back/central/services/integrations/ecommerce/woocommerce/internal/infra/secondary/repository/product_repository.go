@@ -44,6 +44,8 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 		FamilyName        string
 		FamilyDescription string
 		FamilyImageURL    string
+		SubfamilyID       *uint
+		SubfamilyName     string
 		VariantLabel      string
 		VariantAttributes datatypes.JSON
 	}
@@ -56,6 +58,8 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 			COALESCE(mf.name, f.name, '') AS family_name,
 			COALESCE(mf.description, f.description, '') AS family_description,
 			COALESCE(NULLIF(mf.image_url, ''), NULLIF(f.image_url, ''), '') AS family_image_url,
+			CASE WHEN mf.id IS NOT NULL THEN f.id END AS subfamily_id,
+			CASE WHEN mf.id IS NOT NULL THEN COALESCE(f.name, '') END AS subfamily_name,
 			COALESCE(p.variant_label, '') AS variant_label, p.variant_attributes`).
 		Joins("LEFT JOIN product_families f ON f.id = p.family_id AND f.deleted_at IS NULL").
 		Joins("LEFT JOIN product_families mf ON mf.id = f.parent_family_id AND mf.deleted_at IS NULL").
@@ -71,6 +75,10 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 		familyID := ""
 		if row.FamilyID != nil {
 			familyID = strconv.FormatUint(uint64(*row.FamilyID), 10)
+		}
+		subfamilyID := ""
+		if row.SubfamilyID != nil {
+			subfamilyID = strconv.FormatUint(uint64(*row.SubfamilyID), 10)
 		}
 		var attrs map[string]string
 		if len(row.VariantAttributes) > 0 {
@@ -91,6 +99,8 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 			FamilyName:        row.FamilyName,
 			FamilyDescription: row.FamilyDescription,
 			FamilyImageURL:    row.FamilyImageURL,
+			SubfamilyID:       subfamilyID,
+			SubfamilyName:     row.SubfamilyName,
 			VariantLabel:      row.VariantLabel,
 			VariantAttributes: attrs,
 		})

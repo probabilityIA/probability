@@ -191,6 +191,10 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 			brief.FamilyRef = "prob:" + p.FamilyID
 			brief.FamilyName = p.FamilyName
 			brief.VariantLabel = p.VariantLabel
+			if p.SubfamilyID != "" {
+				brief.SubfamilyRef = "prob:" + p.SubfamilyID
+				brief.SubfamilyName = p.SubfamilyName
+			}
 		}
 		result.OnlyInProbability = append(result.OnlyInProbability, brief)
 	}

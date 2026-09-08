@@ -61,6 +61,8 @@ type ProductForSync struct {
 	FamilyName        string
 	FamilyDescription string
 	FamilyImageURL    string
+	SubfamilyID       string
+	SubfamilyName     string
 	VariantLabel      string
 	VariantAttributes map[string]string
 }
@@ -112,14 +114,16 @@ func (w WooProduct) MatchItem() productmatch.Item {
 }
 
 type ProductBrief struct {
-	SKU          string
-	Name         string
-	MatchedBy    string
-	MatchedValue string
-	FamilyRef    string
-	FamilyName   string
-	VariantLabel string
-	ImageURL     string
+	SKU           string
+	Name          string
+	MatchedBy     string
+	MatchedValue  string
+	FamilyRef     string
+	FamilyName    string
+	SubfamilyRef  string
+	SubfamilyName string
+	VariantLabel  string
+	ImageURL      string
 }
 
 type ReconcileResult struct {

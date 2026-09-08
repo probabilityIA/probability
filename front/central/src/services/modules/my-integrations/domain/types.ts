@@ -33,6 +33,8 @@ export interface SyncRunDetail {
     matched_value?: string;
     parent_ref?: string;
     parent_label?: string;
+    group_ref?: string;
+    group_label?: string;
     variant_label?: string;
 }
 

@@ -15,6 +15,8 @@ type IntegrationSyncRunItem struct {
 
 	ParentRef    string `gorm:"column:parent_ref;size:64;index"`
 	ParentLabel  string `gorm:"column:parent_label;size:300"`
+	GroupRef     string `gorm:"column:group_ref;size:64;index"`
+	GroupLabel   string `gorm:"column:group_label;size:300"`
 	VariantLabel string `gorm:"column:variant_label;size:200"`
 
 	CounterpartSKU  string `gorm:"column:counterpart_sku;size:120"`
