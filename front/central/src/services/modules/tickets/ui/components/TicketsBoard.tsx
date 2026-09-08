@@ -122,10 +122,10 @@ export default function TicketsBoard({
                             onDragOver={(e) => handleDragOver(e, column)}
                             onDragLeave={(e) => handleDragLeave(e, column)}
                             onDrop={(e) => handleDrop(e, column)}
-                            className={`flex min-w-[264px] flex-1 basis-0 flex-col gap-2 rounded-lg border p-1 transition-colors ${
+                            className={`flex min-w-[264px] flex-1 basis-0 flex-col gap-2 rounded-lg border p-1.5 transition-colors ${
                                 isOver
                                     ? 'border-purple-400 bg-purple-50/60 dark:border-purple-500 dark:bg-purple-500/10'
-                                    : 'border-transparent'
+                                    : 'border-transparent dark:border-white/5 dark:bg-white/[0.02]'
                             }`}
                         >
                             <div className="flex items-center gap-2 px-1 py-0.5">
@@ -133,7 +133,7 @@ export default function TicketsBoard({
                                 <h3 className="text-[11.5px] font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-200">
                                     {column.title}
                                 </h3>
-                                <span className="rounded px-1.5 font-mono text-[10.5px] font-bold text-gray-500 bg-gray-200 dark:bg-white/10 dark:text-gray-400">
+                                <span className="rounded px-1.5 font-mono text-[10.5px] font-bold text-gray-500 bg-gray-200 dark:bg-white/10 dark:text-gray-300">
                                     {items.length}
                                 </span>
                                 <span className="flex-1"></span>
@@ -149,7 +149,7 @@ export default function TicketsBoard({
                                     <div className={`flex min-h-[340px] flex-1 items-center justify-center rounded-lg border border-dashed p-4 text-center text-[11.5px] text-gray-400 dark:text-gray-500 ${
                                         column.key === 'blocked'
                                             ? 'border-red-300/60 dark:border-red-500/25'
-                                            : 'border-gray-300 dark:border-gray-700'
+                                            : 'border-gray-300 dark:border-white/10'
                                     }`}>
                                         Sin tickets
                                     </div>
@@ -170,15 +170,15 @@ export default function TicketsBoard({
                                             onClick={() => onOpen(t)}
                                             className={`flex flex-col gap-1.5 rounded-lg border border-l-[3px] px-2.5 py-2.5 transition-all ${PRIORITY_ACCENT[t.priority]} ${
                                                 isDone
-                                                    ? 'border-gray-200 bg-gray-50 opacity-75 hover:opacity-100 dark:border-gray-700/60 dark:bg-gray-900/70'
-                                                    : 'border-gray-200 bg-white hover:border-purple-400 hover:shadow-sm dark:border-gray-700/70 dark:bg-gray-800/90 dark:hover:border-purple-500 dark:hover:bg-gray-800'
+                                                    ? 'border-gray-200 bg-gray-50 opacity-75 hover:opacity-100 dark:border-white/5 dark:bg-white/[0.04] dark:opacity-100 dark:hover:bg-white/[0.07]'
+                                                    : 'border-gray-200 bg-white hover:border-purple-400 hover:shadow-sm dark:border-white/10 dark:bg-gray-800 dark:shadow-[0_1px_2px_rgba(0,0,0,0.45)] dark:hover:border-purple-500/70 dark:hover:bg-gray-700/70'
                                             } ${canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
                                                 dragId === t.id ? 'opacity-40' : ''
                                             } ${isUpdating ? 'ring-2 ring-purple-400 animate-pulse' : ''}`}
                                             title={PRIORITY_META[t.priority].label + ' | ' + t.title}
                                         >
                                             <div className="flex items-center gap-1.5">
-                                                <span className="font-mono text-[10.5px] font-medium text-gray-500 dark:text-gray-400">{t.code}</span>
+                                                <span className="font-mono text-[10.5px] font-medium text-gray-500 dark:text-gray-400/90">{t.code}</span>
                                                 <TypeChip type={t.type} />
                                                 {column.statuses.length > 1 && <StatusChip status={t.status} />}
                                                 <span className="flex-1"></span>
@@ -186,12 +186,12 @@ export default function TicketsBoard({
                                             </div>
 
                                             <p className={`line-clamp-2 text-[13px] font-medium leading-[1.35] ${
-                                                isDone ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'
+                                                isDone ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-50'
                                             }`}>
                                                 {t.title}
                                             </p>
 
-                                            <div className="flex items-center gap-2.5 text-[11px] text-gray-500 dark:text-gray-400">
+                                            <div className="flex items-center gap-2.5 text-[11px] text-gray-500 dark:text-gray-300/80">
                                                 <span className="inline-flex items-center gap-1" title="Comentarios">
                                                     <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm3.75 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm3.75 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.76 9.76 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
@@ -207,13 +207,13 @@ export default function TicketsBoard({
                                                     </span>
                                                 )}
                                                 <span className="flex-1"></span>
-                                                <span className="max-w-[45%] truncate font-mono text-[10px]" title={channelLabel(t)}>
+                                                <span className="max-w-[45%] truncate font-mono text-[10px] text-gray-500 dark:text-gray-400/80" title={channelLabel(t)}>
                                                     {channelLabel(t)}
                                                 </span>
                                                 {assignee ? (
                                                     <UserAvatar name={assignee} avatarUrl={avatarUrl} size="xs" />
                                                 ) : (
-                                                    <span className="shrink-0 font-mono text-[10px] font-semibold text-red-500 dark:text-red-400">Sin asignar</span>
+                                                    <span className="shrink-0 rounded px-1.5 py-[1px] font-mono text-[10px] font-semibold text-gray-500 bg-gray-100 dark:bg-white/[0.07] dark:text-gray-400">Sin asignar</span>
                                                 )}
                                             </div>
                                         </div>
@@ -224,7 +224,7 @@ export default function TicketsBoard({
                                     <button
                                         type="button"
                                         onClick={() => setExpanded((prev) => ({ ...prev, [column.key]: true }))}
-                                        className="rounded-lg border border-dashed border-gray-300 py-1.5 text-[11.5px] font-medium text-gray-500 transition-colors hover:border-purple-400 hover:text-purple-600 dark:border-gray-700 dark:text-gray-400 dark:hover:border-purple-500 dark:hover:text-purple-300"
+                                        className="rounded-lg border border-dashed border-gray-300 py-1.5 text-[11.5px] font-medium text-gray-500 transition-colors hover:border-purple-400 hover:text-purple-600 dark:border-white/10 dark:text-gray-300 dark:hover:border-purple-500 dark:hover:text-purple-300"
                                     >
                                         {'Ver ' + hidden + ' m\u00e1s'}
                                     </button>

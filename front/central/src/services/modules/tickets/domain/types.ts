@@ -149,14 +149,14 @@ export interface PaginatedTickets {
 }
 
 export const STATUS_META: Record<TicketStatus, { label: string; color: string; bg: string; ring: string }> = {
-    open:           { label: 'Abierto',         color: 'text-blue-700 dark:text-blue-200',     bg: 'bg-blue-100 dark:bg-blue-900/40',     ring: 'ring-blue-300' },
-    in_review:      { label: 'En revisi\u00f3n',     color: 'text-amber-700 dark:text-amber-200',   bg: 'bg-amber-100 dark:bg-amber-900/40',   ring: 'ring-amber-300' },
-    in_development: { label: 'En desarrollo',   color: 'text-purple-700 dark:text-purple-200', bg: 'bg-purple-100 dark:bg-purple-900/40', ring: 'ring-purple-300' },
-    testing:        { label: 'Pruebas',         color: 'text-cyan-700 dark:text-cyan-200',     bg: 'bg-cyan-100 dark:bg-cyan-900/40',     ring: 'ring-cyan-300' },
-    blocked:        { label: 'Bloqueado',       color: 'text-red-700 dark:text-red-200',       bg: 'bg-red-100 dark:bg-red-900/40',       ring: 'ring-red-300' },
-    resolved:       { label: 'Resuelto',        color: 'text-emerald-700 dark:text-emerald-200', bg: 'bg-emerald-100 dark:bg-emerald-900/40', ring: 'ring-emerald-300' },
-    closed:         { label: 'Cerrado',         color: 'text-gray-700 dark:text-gray-200',     bg: 'bg-gray-200 dark:bg-gray-700',        ring: 'ring-gray-300' },
-    wont_fix:       { label: 'No se har\u00e1',      color: 'text-zinc-700 dark:text-zinc-200',     bg: 'bg-zinc-200 dark:bg-zinc-700',        ring: 'ring-zinc-300' },
+    open:           { label: 'Abierto',         color: 'text-blue-700 dark:text-blue-300',     bg: 'bg-blue-100 dark:bg-blue-500/15',     ring: 'ring-blue-300 dark:ring-blue-500/30' },
+    in_review:      { label: 'En revisi\u00f3n',     color: 'text-amber-700 dark:text-amber-300',   bg: 'bg-amber-100 dark:bg-amber-500/15',   ring: 'ring-amber-300 dark:ring-amber-500/30' },
+    in_development: { label: 'En desarrollo',   color: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-100 dark:bg-purple-500/20', ring: 'ring-purple-300 dark:ring-purple-500/30' },
+    testing:        { label: 'Pruebas',         color: 'text-cyan-700 dark:text-cyan-300',     bg: 'bg-cyan-100 dark:bg-cyan-500/15',     ring: 'ring-cyan-300 dark:ring-cyan-500/30' },
+    blocked:        { label: 'Bloqueado',       color: 'text-red-700 dark:text-red-300',       bg: 'bg-red-100 dark:bg-red-500/15',       ring: 'ring-red-300 dark:ring-red-500/30' },
+    resolved:       { label: 'Resuelto',        color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-100 dark:bg-emerald-500/15', ring: 'ring-emerald-300 dark:ring-emerald-500/30' },
+    closed:         { label: 'Cerrado',         color: 'text-gray-700 dark:text-gray-300',     bg: 'bg-gray-200 dark:bg-white/10',        ring: 'ring-gray-300 dark:ring-white/15' },
+    wont_fix:       { label: 'No se har\u00e1',      color: 'text-zinc-700 dark:text-zinc-300',     bg: 'bg-zinc-200 dark:bg-white/10',        ring: 'ring-zinc-300 dark:ring-white/15' },
 };
 
 export const PRIORITY_META: Record<TicketPriority, { label: string; color: string; bg: string }> = {
@@ -221,10 +221,10 @@ export const AREA_META: Record<TicketArea, { label: string; color: string; bg: s
 };
 
 export const PRIORITY_ACCENT: Record<TicketPriority, string> = {
-    low:      'border-l-gray-400 dark:border-l-gray-500',
-    medium:   'border-l-blue-400',
-    high:     'border-l-amber-400',
-    critical: 'border-l-red-400',
+    low:      'border-l-gray-400 dark:border-l-gray-600',
+    medium:   'border-l-blue-400 dark:border-l-blue-500',
+    high:     'border-l-amber-400 dark:border-l-amber-500',
+    critical: 'border-l-red-400 dark:border-l-red-500',
 };
 
 export const PRIORITY_DOT: Record<TicketPriority, string> = {
