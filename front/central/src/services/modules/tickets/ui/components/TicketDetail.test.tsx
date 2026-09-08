@@ -158,14 +158,14 @@ describe('TicketDetail', () => {
 
             expect(screen.getByText('TCK-55')).toBeInTheDocument();
             expect(screen.getByText('No carga el reporte')).toBeInTheDocument();
-            expect(screen.getByText('Creado por Carlos Ruiz')).toBeInTheDocument();
+            expect(screen.getByText(/Creado por/)).toHaveTextContent('Creado por Carlos Ruiz');
             expect(screen.getByText('Al abrir el reporte sale vacio')).toBeInTheDocument();
         });
 
         it('usa el id del autor cuando no llega su nombre', async () => {
             await setup({ ticket: { created_by_name: undefined } });
 
-            expect(screen.getByText('Creado por #9')).toBeInTheDocument();
+            expect(screen.getByText(/Creado por/)).toHaveTextContent('Creado por #9');
         });
 
         it('muestra los mensajes de vacio cuando no hay comentarios ni historial', async () => {
@@ -237,11 +237,11 @@ describe('TicketDetail', () => {
 
         it('muestra la categoria solo cuando el ticket la tiene', async () => {
             const { unmount } = await setup({ ticket: { category: 'facturacion' } });
-            expect(screen.getByText(/Categor\u00eda: facturacion/)).toBeInTheDocument();
+            expect(screen.getByText('facturacion')).toBeInTheDocument();
             unmount();
 
             await setup();
-            expect(screen.queryByText(/Categor\u00eda:/)).toBeNull();
+            expect(screen.queryByText('facturacion')).toBeNull();
         });
     });
 
@@ -377,7 +377,7 @@ describe('TicketDetail', () => {
             expect(screen.getByText('Suelta para adjuntar')).toBeInTheDocument();
 
             fireEvent.dragLeave(dropZone());
-            expect(screen.getByText('Arrastra un archivo aqu\u00ed')).toBeInTheDocument();
+            expect(dropZone()).toHaveTextContent('Arrastra un archivo aqu\u00ed o selecci\u00f3nalo');
         });
 
         it('elimina un adjunto tras confirmar', async () => {

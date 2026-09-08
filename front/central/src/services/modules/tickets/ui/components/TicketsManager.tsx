@@ -583,6 +583,7 @@ export default function TicketsManager() {
                         onOpen={openTicketDetail}
                         onMove={handleBoardMove}
                         getAvatarUrl={avatarUrlFor}
+                        sortBySla={sortBy === 'created_at'}
                     />
                 </div>
             ) : (

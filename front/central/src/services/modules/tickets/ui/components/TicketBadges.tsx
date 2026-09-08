@@ -1,6 +1,15 @@
 'use client';
 
-import { STATUS_META, PRIORITY_META, TYPE_META, TicketStatus, TicketPriority, TicketType } from '../../domain/types';
+import {
+    STATUS_META,
+    PRIORITY_META,
+    TYPE_META,
+    TYPE_CHIP,
+    PRIORITY_DOT,
+    TicketStatus,
+    TicketPriority,
+    TicketType,
+} from '../../domain/types';
 
 export function StatusBadge({ status }: { status: TicketStatus }) {
     const m = STATUS_META[status];
@@ -25,6 +34,37 @@ export function TypeBadge({ type }: { type: TicketType }) {
     return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
             <span className="font-mono text-[10px] opacity-70">{m.icon}</span>
+            {m.label}
+        </span>
+    );
+}
+
+export function TypeChip({ type }: { type: TicketType }) {
+    const m = TYPE_META[type];
+    return (
+        <span
+            title={m.label}
+            className={`inline-flex shrink-0 items-center rounded px-1.5 py-[2px] text-[9.5px] font-bold tracking-wide ${TYPE_CHIP[type]}`}
+        >
+            {m.icon}
+        </span>
+    );
+}
+
+export function StatusChip({ status }: { status: TicketStatus }) {
+    const m = STATUS_META[status];
+    return (
+        <span className={`inline-flex shrink-0 items-center rounded px-1.5 py-[2px] text-[9.5px] font-semibold ${m.bg} ${m.color}`}>
+            {m.label}
+        </span>
+    );
+}
+
+export function PriorityDot({ priority }: { priority: TicketPriority }) {
+    const m = PRIORITY_META[priority];
+    return (
+        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${PRIORITY_DOT[priority]}`}>
+            <span aria-hidden="true">{'\u25cf'}</span>
             {m.label}
         </span>
     );
