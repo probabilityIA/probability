@@ -432,6 +432,11 @@ describe('TicketForm - modulo y sprint', () => {
             start_date: '2026-09-10',
             end_date: '2026-09-24',
         }));
+        // Esperar a que el formulario de "nuevo sprint" se cierre: solo pasa
+        // despues de que la promesa de onCreateSprint resuelve y setSprintId
+        // corre. Enviar el ticket antes de eso es la carrera que hacia flakie
+        // este test (onCreateSprint ya fue llamado, pero sprintId aun vacio).
+        await waitFor(() => expect(screen.queryByPlaceholderText('Nombre del sprint')).not.toBeInTheDocument());
 
         submitForm();
         await waitFor(() => expect(onSubmit).toHaveBeenCalled());
