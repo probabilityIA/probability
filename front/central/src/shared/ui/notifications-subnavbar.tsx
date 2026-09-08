@@ -30,7 +30,7 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
         { href: '/notification-config', label: 'Configuraciones', icon: '🔔', enabled: true },
         { href: '/notification-channels', label: 'Canales', icon: '📡', enabled: isSuperAdmin },
         { href: '/notification-event-types', label: 'Tipos de Eventos', icon: '📋', enabled: isSuperAdmin },
-    ];
+    ].filter((item) => item.enabled);
 
     return (
         <div className="subnav-surface border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
@@ -38,25 +38,13 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-wrap">
                         {menuItems.map((item) => {
-                            if (!item.enabled) {
-                                return (
-                                    <span
-                                        key={item.href}
-                                        className="px-4 py-3 text-base font-medium whitespace-nowrap rounded-lg flex items-center gap-3 text-gray-400 dark:text-gray-500 dark:text-gray-400 cursor-not-allowed select-none"
-                                        title="Solo disponible para Super Admin"
-                                    >
-                                        <span>{item.icon}</span>
-                                        {item.label}
-                                    </span>
-                                );
-                            }
                             return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     className={`px-4 py-3 text-base font-medium whitespace-nowrap transition-all rounded-lg flex items-center gap-3 ${
                                         isActive(item.href)
-                                            ? 'bg-purple-200 dark:bg-purple-900/50 text-purple-900 dark:text-purple-200'
+                                            ? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
                                             : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:shadow-md hover:scale-105'
                                     }`}
                                 >

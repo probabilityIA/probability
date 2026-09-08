@@ -26,6 +26,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWhatsappPhoneNumberUnique(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateScheduledNotifications(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateWhatsappTemplateOrigin(ctx); err != nil {
+		return err
+	}
 	return r.migrateUserGoogleID(ctx)
 }
 

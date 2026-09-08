@@ -5,12 +5,15 @@ import { useToast } from "@/shared/providers/toast-provider";
 import { useOrderStatuses } from "@/services/modules/orderstatus/ui";
 import { RuleCard, LocalRule } from "./RuleCard";
 import { SyncConfigsDTO } from "../../domain/types";
-import { getConfigsAction, syncConfigsAction } from "../../infra/actions";
+import { getConfigsAction, syncConfigsAction, getNotificationTypesAction } from "../../infra/actions";
+import { ScheduledRulesSection } from "./ScheduledRulesSection";
 import type { IntegrationSimple } from "@/services/integrations/core/domain/types";
 
 interface IntegrationRulesFormProps {
   integration: IntegrationSimple;
   businessId: number;
+  integrations?: IntegrationSimple[];
+  onIntegrationChange?: (integration: IntegrationSimple) => void;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -22,6 +25,8 @@ function generateTempId(): string {
 export function IntegrationRulesForm({
   integration,
   businessId,
+  integrations,
+  onIntegrationChange,
   onSuccess,
   onCancel,
 }: IntegrationRulesFormProps) {
@@ -30,6 +35,21 @@ export function IntegrationRulesForm({
   const [loadingExisting, setLoadingExisting] = useState(true);
   const { showToast } = useToast();
   const { orderStatuses, loading: loadingOrderStatuses } = useOrderStatuses(true);
+  const [whatsappTypeId, setWhatsappTypeId] = useState(0);
+  const [activeTab, setActiveTab] = useState<"status" | "scheduled">("status");
+
+  useEffect(() => {
+    const loadTypes = async () => {
+      const result = await getNotificationTypesAction();
+      if (result.success && result.data) {
+        const whatsapp = result.data.find(
+          (type: { code: string; id: number }) => type.code === "whatsapp",
+        );
+        if (whatsapp) setWhatsappTypeId(whatsapp.id);
+      }
+    };
+    loadTypes();
+  }, []);
 
   useEffect(() => {
     const loadExisting = async () => {
@@ -173,13 +193,76 @@ export function IntegrationRulesForm({
             </span>
           </div>
         )}
-        <div>
-          <h3 className="font-medium text-gray-900 dark:text-white">{integration.name}</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{integration.category_name || integration.type}</p>
+        <div className="min-w-0 flex-1">
+          {integrations && integrations.length > 1 && onIntegrationChange ? (
+            <>
+              <label className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {"Integraci\u00f3n"}
+              </label>
+              <select
+                value={integration.id}
+                onChange={(e) => {
+                  const next = integrations.find((i) => i.id === Number(e.target.value));
+                  if (next) onIntegrationChange(next);
+                }}
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm font-medium text-gray-900 dark:text-white"
+              >
+                {integrations.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <h3 className="font-medium text-gray-900 dark:text-white">{integration.name}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{integration.category_name || integration.type}</p>
+            </>
+          )}
         </div>
       </div>
 
-      {loadingExisting ? (
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-600">
+        <button
+          type="button"
+          onClick={() => setActiveTab("status")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "status"
+              ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
+              : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+          }`}
+        >
+          {"Por estado de la orden"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("scheduled")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "scheduled"
+              ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
+              : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+          }`}
+        >
+          {"Programadas por segmento"}
+        </button>
+      </div>
+
+      {activeTab === "scheduled" ? (
+        <div className="pt-2">
+          <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            {"No dependen de un evento: salen solas a un grupo de clientes, por ejemplo a los que llevan m\u00e1s de 30 d\u00edas sin comprar."}
+          </p>
+          {whatsappTypeId > 0 ? (
+            <ScheduledRulesSection
+              businessId={businessId}
+              whatsappTypeId={whatsappTypeId}
+            />
+          ) : (
+            <p className="py-6 text-center text-sm text-gray-500">{"Cargando..."}</p>
+          )}
+        </div>
+      ) : loadingExisting ? (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando reglas...</div>
       ) : (
         <>
@@ -191,14 +274,15 @@ export function IntegrationRulesForm({
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-purple-600 dark:bg-purple-700">
-                  <tr className="border-b border-purple-700 dark:border-purple-800">
-                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-10">#</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[120px]">Canal</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[160px]">Evento</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left">Estados</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[70px]">Activo</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[50px]"></th>
+                <thead style={{ backgroundColor: "var(--color-primary)" }}>
+                  <tr>
+                    <th style={{ color: "var(--color-on-primary, white)" }} className="py-2 px-3 text-[10px] font-semibold uppercase text-center w-10">#</th>
+                    <th style={{ color: "var(--color-on-primary, white)" }} className="py-2 px-3 text-[10px] font-semibold uppercase text-left w-[120px]">Canal</th>
+                    <th style={{ color: "var(--color-on-primary, white)" }} className="py-2 px-3 text-[10px] font-semibold uppercase text-left w-[160px]">Evento</th>
+                    <th style={{ color: "var(--color-on-primary, white)" }} className="py-2 px-3 text-[10px] font-semibold uppercase text-left">Estados</th>
+                    <th style={{ color: "var(--color-on-primary, white)" }} className="py-2 px-3 text-[10px] font-semibold uppercase text-center w-[70px]">Activo</th>
+                    <th style={{ color: "var(--color-on-primary, white)" }} className="py-2 px-3 text-[10px] font-semibold uppercase text-center w-[50px]"></th>
+                    <th style={{ color: "var(--color-on-primary, white)" }} className="py-2 px-3 text-[10px] font-semibold uppercase text-center w-[50px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -209,6 +293,7 @@ export function IntegrationRulesForm({
                         rule={rule}
                         index={rules.filter((r, i) => i <= index && !r._deleted).length - 1}
                         orderStatuses={orderStatuses}
+                        businessId={businessId}
                         onChange={(updated) => handleRuleChange(index, updated)}
                         onDelete={() => handleRuleDelete(index)}
                       />
@@ -223,7 +308,7 @@ export function IntegrationRulesForm({
             <button
               type="button"
               onClick={handleAddRule}
-              className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+              className="p-2 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-colors"
               title="Agregar regla"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,6 +316,7 @@ export function IntegrationRulesForm({
               </svg>
             </button>
           </div>
+
         </>
       )}
 

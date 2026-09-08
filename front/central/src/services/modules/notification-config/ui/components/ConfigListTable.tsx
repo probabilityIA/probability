@@ -27,12 +27,13 @@ interface IntegrationGroup {
 
 interface ConfigListTableProps {
   onConfigure: (integration: IntegrationSimple) => void;
+  onGroupsLoaded?: (integrations: IntegrationSimple[]) => void;
   onCreate: () => void;
   refreshKey?: number;
   selectedBusinessId?: number;
 }
 
-export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selectedBusinessId }: ConfigListTableProps) {
+export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selectedBusinessId, onGroupsLoaded }: ConfigListTableProps) {
   const { showToast } = useToast();
   const { integrations, loading: loadingIntegrations } = useIntegrationsSimple(
     selectedBusinessId ? { businessId: selectedBusinessId } : undefined
@@ -97,6 +98,12 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
 
     return result.sort((a, b) => a.integration.name.localeCompare(b.integration.name));
   }, [configs, integrations, selectedBusinessId]);
+
+  useEffect(() => {
+    if (onGroupsLoaded) {
+      onGroupsLoaded(groups.map((g) => g.integration));
+    }
+  }, [groups, onGroupsLoaded]);
 
   // WhatsApp integration for testing
   const whatsAppIntegration = useMemo(

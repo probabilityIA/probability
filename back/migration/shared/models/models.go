@@ -183,6 +183,10 @@ type Client struct {
 	Dni        *string `gorm:"size:50;uniqueIndex:idx_business_client_dni,priority:2"`
 	UserID     *uint   `gorm:"index:idx_client_user_id"`
 
+	AcceptsMarketing   bool       `gorm:"not null;default:true;index"`
+	MarketingOptOutAt  *time.Time
+	MarketingOptOutVia string `gorm:"size:32"`
+
 	Business Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	User     *User    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }

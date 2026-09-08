@@ -109,6 +109,7 @@ type WABATemplatesSnapshot struct {
 type ITemplateAPI interface {
 	ListTemplates(ctx context.Context, wabaID, accessToken string) ([]TemplateDefinitionRemote, error)
 	CreateTemplate(ctx context.Context, wabaID, accessToken string, template TemplateDefinitionRemote) (string, error)
+	DeleteTemplate(ctx context.Context, wabaID, accessToken, name, metaTemplateID string) error
 	ListPhoneNumbers(ctx context.Context, wabaID, accessToken string) ([]WABAPhoneNumber, error)
 }
 

@@ -21,8 +21,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumeralert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerauthotp"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerscheduled"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumersubscriptionalert"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumertemplates"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerwalletalert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerwebhook"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache"
@@ -131,7 +133,11 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		return client.NewTemplatesClient(baseURL, logger)
 	}
 
-	templatesUseCase := usecasetemplates.New(credsCache, templatesCache, templatesAPIFactory, logger)
+	var templateStatusPublisher usecasetemplates.IStatusPublisher
+	if rabbit != nil {
+		templateStatusPublisher = queue.NewTemplateStatusPublisher(rabbit, logger)
+	}
+	templatesUseCase := usecasetemplates.New(credsCache, templatesCache, templatesAPIFactory, templateStatusPublisher, logger)
 	connectionUseCase := usecaseconnection.New(credsCache, templatesAPIFactory, logger)
 
 	phoneNumbersAPIFactory := func(baseURL string) ports.IPhoneNumbersAPI {
@@ -209,6 +215,20 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		go func() {
 			if err := aiResponseConsumer.Start(context.Background()); err != nil {
 				logger.Error().Err(err).Msg("Error starting AI response consumer")
+			}
+		}()
+
+		templateSubmitConsumer := consumertemplates.New(rabbit, templatesUseCase, logger)
+		go func() {
+			if err := templateSubmitConsumer.Start(context.Background()); err != nil {
+				logger.Error().Err(err).Msg("Error starting whatsapp template submit consumer")
+			}
+		}()
+
+		scheduledSendConsumer := consumerscheduled.New(rabbit, useCase, logger)
+		go func() {
+			if err := scheduledSendConsumer.Start(context.Background()); err != nil {
+				logger.Error().Err(err).Msg("Error starting scheduled send consumer")
 			}
 		}()
 	}
