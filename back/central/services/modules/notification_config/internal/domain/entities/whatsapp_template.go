@@ -40,10 +40,13 @@ const (
 	TemplateScopeOrderEvent = "order_event"
 	TemplateScopeScheduled  = "scheduled"
 	TemplateScopeInternal   = "internal"
+	TemplateScopeCampaign   = "campaign"
 )
 
 func IsAllowedScope(scope string) bool {
-	return scope == TemplateScopeOrderEvent || scope == TemplateScopeScheduled
+	return scope == TemplateScopeOrderEvent ||
+		scope == TemplateScopeScheduled ||
+		scope == TemplateScopeCampaign
 }
 
 type WhatsappTemplate struct {
@@ -101,6 +104,8 @@ var allowedVariableSources = map[string]string{
 	"customer.last_product":  "Ultimo producto comprado",
 	"customer.total_orders":  "Cantidad de pedidos",
 	"business.name":          "Nombre de la tienda",
+	"sender.name":            "Nombre de quien escribe",
+	"campaign.name":          "Nombre de la campana",
 }
 
 func IsAllowedVariableSource(source string) bool {

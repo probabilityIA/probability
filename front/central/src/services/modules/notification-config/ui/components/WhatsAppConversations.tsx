@@ -15,6 +15,7 @@ import type {
 
 interface WhatsAppConversationsProps {
   businessId?: number;
+  campaignId?: number;
 }
 
 // ─── Helpers ───────────────────────────────────────────
@@ -64,7 +65,7 @@ const statusIcon: Record<string, string> = {
 
 // ─── Component ─────────────────────────────────────────
 
-export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps) {
+export function WhatsAppConversations({ businessId, campaignId }: WhatsAppConversationsProps) {
   // Conversation list state
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -104,6 +105,7 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
         business_id: businessId ?? 0,
         state: stateFilter || undefined,
         phone: phoneSearch || undefined,
+        campaign_id: campaignId,
         page,
         page_size: pageSize,
       });
@@ -117,9 +119,9 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
     } finally {
       setListLoading(false);
     }
-  }, [businessId, stateFilter, phoneSearch, page]);
+  }, [businessId, campaignId, stateFilter, phoneSearch, page]);
 
-  useEffect(() => { setPage(1); }, [stateFilter, phoneSearch, businessId]);
+  useEffect(() => { setPage(1); }, [stateFilter, phoneSearch, businessId, campaignId]);
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 
   // ─── Fetch conversation detail ────────────────

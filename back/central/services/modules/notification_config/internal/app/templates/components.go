@@ -15,6 +15,8 @@ var sampleValues = map[string]string{
 	"customer.last_product":  "Camiseta blanca",
 	"customer.total_orders":  "3",
 	"business.name":          "Mi Tienda",
+	"sender.name":            "Isabel Rojas",
+	"campaign.name":          "Ruta 30",
 }
 
 func BuildMetaComponents(template *entities.WhatsappTemplate) []map[string]any {

@@ -20,6 +20,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerai"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumeralert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerauthotp"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumercampaign"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerscheduled"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment"
@@ -229,6 +230,13 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		go func() {
 			if err := scheduledSendConsumer.Start(context.Background()); err != nil {
 				logger.Error().Err(err).Msg("Error starting scheduled send consumer")
+			}
+		}()
+
+		campaignSendConsumer := consumercampaign.New(rabbit, useCase, logger)
+		go func() {
+			if err := campaignSendConsumer.Start(context.Background()); err != nil {
+				logger.Error().Err(err).Msg("Error starting campaign send consumer")
 			}
 		}()
 	}

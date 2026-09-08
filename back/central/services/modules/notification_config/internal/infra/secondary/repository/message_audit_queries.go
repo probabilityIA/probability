@@ -200,6 +200,17 @@ type conversationSummaryRow struct {
 	CreatedAt            time.Time
 }
 
+const campaignConversationFilter = `(
+	c.campaign_id = ?
+	OR EXISTS (
+		SELECT 1 FROM whatsapp_campaign_sends s
+		WHERE s.campaign_id = ?
+		  AND s.business_id = c.business_id
+		  AND s.deleted_at IS NULL
+		  AND regexp_replace(s.phone, '[^0-9]', '', 'g') = regexp_replace(c.phone_number, '[^0-9]', '', 'g')
+	)
+)`
+
 func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
 	baseQuery := q.db.Conn(ctx).
 		Table("whatsapp_conversations c").
@@ -229,6 +240,9 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 	if filter.Phone != nil && *filter.Phone != "" {
 		baseQuery = baseQuery.Where("c.phone_number ILIKE ?", fmt.Sprintf("%%%s%%", *filter.Phone))
 	}
+	if filter.CampaignID != nil && *filter.CampaignID > 0 {
+		baseQuery = baseQuery.Where(campaignConversationFilter, *filter.CampaignID, *filter.CampaignID)
+	}
 	if filter.DateFrom != nil && *filter.DateFrom != "" {
 		baseQuery = baseQuery.Where("c.created_at >= ?", *filter.DateFrom)
 	}
@@ -245,6 +259,9 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 	}
 	if filter.Phone != nil && *filter.Phone != "" {
 		countQuery = countQuery.Where("c.phone_number ILIKE ?", fmt.Sprintf("%%%s%%", *filter.Phone))
+	}
+	if filter.CampaignID != nil && *filter.CampaignID > 0 {
+		countQuery = countQuery.Where(campaignConversationFilter, *filter.CampaignID, *filter.CampaignID)
 	}
 	if filter.DateFrom != nil && *filter.DateFrom != "" {
 		countQuery = countQuery.Where("c.created_at >= ?", *filter.DateFrom)

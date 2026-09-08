@@ -5,14 +5,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app/campaigns"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app/scheduled"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app/templates"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/campaign"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/message_audit"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_event_type"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_type"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/scheduled_rule"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/whatsapp_template"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/campaign_result_consumer"
 	deliveryConsumer "github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/consumer"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/scheduled_result_consumer"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/template_result_consumer"
@@ -90,6 +93,26 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	)
 	scheduledHandler := scheduled_rule.New(scheduledUseCase, logger)
 
+	campaignRepo := repository.NewCampaignRepository(database, logger)
+	campaignSendRepo := repository.NewCampaignSendRepository(database, logger)
+	campaignAudience := repository.NewCampaignAudienceQuerier(database, logger)
+	campaignSender := repository.NewCampaignSenderQuerier(database, logger)
+
+	var campaignPublisher campaigns.ICampaignPublisher
+	if rabbitMQ != nil {
+		campaignPublisher = queue.NewCampaignSendPublisher(rabbitMQ, logger)
+	}
+	campaignsUseCase := campaigns.New(
+		campaignRepo,
+		campaignSendRepo,
+		campaignAudience,
+		campaignSender,
+		templateRepo,
+		campaignPublisher,
+		logger,
+	)
+	campaignHandler := campaign.New(campaignsUseCase, logger)
+
 	// 4. Registrar rutas HTTP
 	configHandler.RegisterRoutes(router)
 	typeHandler.RegisterRoutes(router)
@@ -97,6 +120,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	auditHandler.RegisterRoutes(router)
 	templateHandler.RegisterRoutes(router)
 	scheduledHandler.RegisterRoutes(router)
+	campaignHandler.RegisterRoutes(router)
 
 	// 5. Consumer de resultados de entrega (email, SMS futuro, etc.)
 	if rabbitMQ != nil {
@@ -138,6 +162,16 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 			}
 		}()
 
+		campaignResultConsumer := campaign_result_consumer.New(rabbitMQ, campaignsUseCase, logger)
+		go func() {
+			if err := campaignResultConsumer.Start(context.Background()); err != nil {
+				logger.Error(ctx).
+					Err(err).
+					Msg("Error al iniciar consumer de resultados de campanas")
+			}
+		}()
+
 		go worker.NewScheduler(scheduledUseCase, logger).Start(context.Background())
+		go worker.NewCampaignDispatcher(campaignsUseCase, logger).Start(context.Background())
 	}
 }

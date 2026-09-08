@@ -33,6 +33,7 @@ const (
 	WhatsappTemplateScopeOrderEvent = "order_event"
 	WhatsappTemplateScopeScheduled  = "scheduled"
 	WhatsappTemplateScopeInternal   = "internal"
+	WhatsappTemplateScopeCampaign   = "campaign"
 )
 
 type WhatsappTemplate struct {

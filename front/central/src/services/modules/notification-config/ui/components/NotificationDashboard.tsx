@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { SummaryStatsRow } from './SummaryStatsRow';
-import { ConfigListTable } from './ConfigListTable';
 import { MessageAudit } from './MessageAudit';
 import { WhatsAppConversations } from './WhatsAppConversations';
-import { IntegrationPicker } from './IntegrationPicker';
 import { IntegrationRulesForm } from './IntegrationRulesForm';
+import { CampaignsSection } from './CampaignsSection';
 import { Modal } from '@/shared/ui/modal';
 import {
   getConfigsAction,
@@ -15,7 +14,6 @@ import {
 } from '../../infra/actions';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNotificationBusiness } from '@/shared/contexts/notification-business-context';
-import type { IntegrationSimple } from '@/services/integrations/core/domain/types';
 
 interface Stats {
   integrationCount: number;
@@ -40,20 +38,14 @@ export function NotificationDashboard() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'audit' | 'conversations'>('audit');
-  const [ruleIntegrations, setRuleIntegrations] = useState<IntegrationSimple[] | null>(null);
+  const [activeTab, setActiveTab] = useState<'audit' | 'conversations' | 'campaigns'>('audit');
 
-  // Config flow: picker -> rules form
-  const [isPickerModalOpen, setIsPickerModalOpen] = useState(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
-  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationSimple | undefined>(undefined);
   const [configRefreshKey, setConfigRefreshKey] = useState(0);
 
   // Reset on business change
   useEffect(() => {
     setConfigRefreshKey((prev) => prev + 1);
-    setSelectedIntegration(undefined);
-    setIsPickerModalOpen(false);
     setIsRulesModalOpen(false);
   }, [selectedBusinessId]);
 
@@ -90,23 +82,8 @@ export function NotificationDashboard() {
     fetchStats();
   }, [fetchStats, configRefreshKey]);
 
-  // --- Config handlers ---
-  const handleCreateConfig = () => setIsPickerModalOpen(true);
-
-  const handlePickIntegration = (integration: IntegrationSimple) => {
-    setSelectedIntegration(integration);
-    setIsPickerModalOpen(false);
-    setIsRulesModalOpen(true);
-  };
-
-  const handleConfigureIntegration = (integration: IntegrationSimple) => {
-    setSelectedIntegration(integration);
-    setIsRulesModalOpen(true);
-  };
-
   const handleRulesSuccess = () => {
     setIsRulesModalOpen(false);
-    setSelectedIntegration(undefined);
     setConfigRefreshKey((prev) => prev + 1);
   };
 
@@ -139,6 +116,7 @@ export function NotificationDashboard() {
               {([
                 { key: 'audit' as const, label: 'Auditoria' },
                 { key: 'conversations' as const, label: 'Conversaciones' },
+                { key: 'campaigns' as const, label: 'Campañas' },
               ]).map((tab) => (
                 <button
                   key={tab.key}
@@ -156,21 +134,14 @@ export function NotificationDashboard() {
 
             <button
               type="button"
-              disabled={ruleIntegrations === null}
-              onClick={() => {
-                if (ruleIntegrations && ruleIntegrations.length > 0) {
-                  handleConfigureIntegration(ruleIntegrations[0]);
-                  return;
-                }
-                handleCreateConfig();
-              }}
+              onClick={() => setIsRulesModalOpen(true)}
               className="mb-2 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
               </svg>
-              {ruleIntegrations === null ? "Cargando..." : "Reglas"}
+              Reglas
             </button>
           </div>
 
@@ -182,44 +153,20 @@ export function NotificationDashboard() {
             <WhatsAppConversations businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
           )}
 
-          <div className="hidden">
-            <ConfigListTable
-              onConfigure={handleConfigureIntegration}
-              onCreate={handleCreateConfig}
-              refreshKey={configRefreshKey}
-              selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
-              onGroupsLoaded={setRuleIntegrations}
-            />
-          </div>
-
-          {/* --- Modals --- */}
-
-          {/* Integration Picker */}
-          <Modal
-            isOpen={isPickerModalOpen}
-            onClose={() => setIsPickerModalOpen(false)}
-            title="Seleccionar Integración"
-          >
-            <IntegrationPicker
-              businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
-              onSelect={handlePickIntegration}
-              onCancel={() => setIsPickerModalOpen(false)}
-            />
-          </Modal>
+          {activeTab === 'campaigns' && (
+            <CampaignsSection businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
+          )}
 
           {/* Integration Rules Form */}
           <Modal
             isOpen={isRulesModalOpen}
             onClose={() => setIsRulesModalOpen(false)}
-            title={`Reglas de Notificación — ${selectedIntegration?.name || ''}`}
+            title="Reglas de Notificación"
             size="4xl"
           >
-            {selectedIntegration && (
+            {isRulesModalOpen && (
               <IntegrationRulesForm
-                integration={selectedIntegration}
                 businessId={isSuperAdmin ? (selectedBusinessId ?? 0) : 0}
-                integrations={ruleIntegrations ?? undefined}
-                onIntegrationChange={setSelectedIntegration}
                 onSuccess={handleRulesSuccess}
                 onCancel={() => setIsRulesModalOpen(false)}
               />

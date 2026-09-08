@@ -64,3 +64,25 @@ func NewSegmentQuerier(database db.IDatabase, logger log.ILogger) ports.ISegment
 		logger: logger.WithModule("segment_querier"),
 	}
 }
+
+func NewCampaignRepository(database db.IDatabase, logger log.ILogger) ports.ICampaignRepository {
+	return &campaignRepository{
+		db:     database,
+		logger: logger.WithModule("campaign_repository"),
+	}
+}
+
+func NewCampaignSendRepository(database db.IDatabase, logger log.ILogger) ports.ICampaignSendRepository {
+	return &campaignSendRepository{
+		db:     database,
+		logger: logger.WithModule("campaign_send_repository"),
+	}
+}
+
+func NewCampaignAudienceQuerier(database db.IDatabase, logger log.ILogger) ports.ICampaignAudienceQuerier {
+	return newCampaignAudienceQuerier(database, logger)
+}
+
+func NewCampaignSenderQuerier(database db.IDatabase, logger log.ILogger) ports.ICampaignSenderQuerier {
+	return newCampaignSenderQuerier(database, logger)
+}

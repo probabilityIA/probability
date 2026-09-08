@@ -9,13 +9,13 @@ export type TemplateStatus =
 
 export type TemplateCategory = "MARKETING" | "UTILITY";
 
-export type TemplateScope = "order_event" | "scheduled";
+export type TemplateScope = "order_event" | "scheduled" | "campaign";
 
 export interface TemplateVariable {
-  position: number;
-  source: string;
-  label: string;
-  fallback: string;
+  Position: number;
+  Source: string;
+  Label: string;
+  Fallback: string;
 }
 
 export interface TemplateButton {

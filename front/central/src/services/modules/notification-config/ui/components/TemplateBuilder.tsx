@@ -5,13 +5,14 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/providers/toast-provider";
-import { CreateTemplateDTO, TemplateCategory } from "../../domain/scheduled-types";
+import { CreateTemplateDTO, TemplateCategory, TemplateScope } from "../../domain/scheduled-types";
 import { createTemplateAction } from "../../infra/actions/whatsapp-templates";
 import { WhatsAppBubblePreview } from "./WhatsAppBubblePreview";
 
 interface TemplateBuilderProps {
   businessId?: number;
   variableCatalog: Record<string, string>;
+  scope?: TemplateScope;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -31,6 +32,8 @@ const SAMPLE_VALUES: Record<string, string> = {
   "customer.last_product": "Camiseta blanca",
   "customer.total_orders": "3",
   "business.name": "Mi Tienda",
+  "sender.name": "Isabel Rojas",
+  "campaign.name": "Ruta 30",
 };
 
 const STARTERS: Array<{ label: string; body: string; sources: string[] }> = [
@@ -51,9 +54,32 @@ const STARTERS: Array<{ label: string; body: string; sources: string[] }> = [
   },
 ];
 
+const CAMPAIGN_STARTERS: Array<{ label: string; body: string; sources: string[] }> = [
+  {
+    label: "Ruta 30 - control DIAN",
+    body:
+      "Hola {{1}}, mucho gusto, soy {{2}} de Siigo. Estamos acompanando a las empresas frente a los controles de la DIAN a la facturacion electronica. Para orientarte, contame: como estas facturando hoy en tu negocio?",
+    sources: ["customer.first_name", "sender.name"],
+  },
+  {
+    label: "Ruta 30 - ahorro de tiempo",
+    body:
+      "Hola {{1}}, mucho gusto, soy {{2}}. Ayudo a empresas a reducir el tiempo que gastan en facturacion electronica, control de inventario y cobros usando Siigo. Hoy tenes esos procesos en una sola plataforma o usas varios sistemas?",
+    sources: ["customer.first_name", "sender.name"],
+  },
+  {
+    label: "Ruta 30 - validacion de sistema",
+    body:
+      "Hola {{1}}, mucho gusto, soy {{2}}. Estamos haciendo una campana de validacion para que las empresas no queden expuestas a los nuevos controles de la DIAN. Que sistema usas hoy para facturar en tu empresa?",
+    sources: ["customer.first_name", "sender.name"],
+  },
+];
+
 const SOURCE_ORDER = [
   "customer.first_name",
   "customer.full_name",
+  "sender.name",
+  "campaign.name",
   "customer.days_inactive",
   "customer.last_product",
   "customer.total_orders",
@@ -89,6 +115,7 @@ function slugify(value: string): string {
 export function TemplateBuilder({
   businessId,
   variableCatalog,
+  scope = "scheduled",
   onSuccess,
   onCancel,
 }: TemplateBuilderProps) {
@@ -171,7 +198,7 @@ export function TemplateBuilder({
     }
 
     const dto: CreateTemplateDTO = {
-      scope: "scheduled",
+      scope,
       name: templateName,
       language: "es",
       category,
@@ -207,7 +234,7 @@ export function TemplateBuilder({
           {"\u00bfNo sab\u00e9s por d\u00f3nde empezar? Arranc\u00e1 de un ejemplo:"}
         </p>
         <div className="flex flex-wrap gap-2">
-          {STARTERS.map((starter) => (
+          {(scope === "campaign" ? CAMPAIGN_STARTERS : STARTERS).map((starter) => (
             <button
               key={starter.label}
               type="button"

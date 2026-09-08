@@ -14,6 +14,7 @@ import { TemplatePreviewModal } from "./TemplatePreviewModal";
 export interface LocalRule {
   _tempId: string;
   id?: number;
+  integration_id: number;
   notification_type_id: number;
   notification_event_type_id: number;
   enabled: boolean;
