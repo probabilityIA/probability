@@ -2,10 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import TicketForm from './TicketForm';
 
-vi.mock('@/shared/ui', () => ({
-    Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-    Input: (props: any) => <input {...props} />,
-}));
+vi.mock('@/shared/ui', async () => {
+    const real = await import('@/shared/ui/user-select');
+    return {
+        Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+        Input: (props: any) => <input {...props} />,
+        UserSelect: real.UserSelect,
+        UserAvatar: real.UserAvatar,
+        UnassignedAvatar: real.UnassignedAvatar,
+    };
+});
 
 vi.mock('@/services/auth/business/ui/hooks/useBusinessesSimple', () => ({
     useBusinessesSimple: vi.fn(() => ({ businesses: [], loading: false, error: null })),
@@ -36,6 +42,11 @@ const pickFiles = (files: File[]) => {
 const dropZone = () => document.querySelector('label[for="ticket-create-file-input"]') as HTMLElement;
 
 const combos = () => screen.getAllByRole('combobox');
+
+const pickAssigned = (name: string | RegExp) => {
+    fireEvent.click(screen.getByRole('button', { name: 'Asignado a' }));
+    fireEvent.click(screen.getByRole('option', { name }));
+};
 
 const fillRequired = (title = '  Falla en checkout  ', description = '  No carga el pago  ') => {
     fireEvent.change(screen.getByPlaceholderText('Resumen breve'), { target: { value: title } });
@@ -128,13 +139,13 @@ describe('TicketForm', () => {
             const { onSubmit } = setup();
 
             fillRequired('Bug grave', 'Detalle del bug');
-            const [type, priority, area, source, modulo, assigned, sprint, business] = combos();
+            const [type, priority, area, source, modulo, sprint, business] = combos();
             fireEvent.change(type, { target: { value: 'bug' } });
             fireEvent.change(priority, { target: { value: 'critical' } });
             fireEvent.change(area, { target: { value: 'desarrollo' } });
             fireEvent.change(source, { target: { value: 'business' } });
             fireEvent.change(modulo, { target: { value: 'Env\u00edos' } });
-            fireEvent.change(assigned, { target: { value: '12' } });
+            pickAssigned(/Luis/);
             fireEvent.change(sprint, { target: { value: '3' } });
             expect(business).toBeInTheDocument();
             fireEvent.change(screen.getByPlaceholderText('Opcional: contexto adicional para el equipo'), { target: { value: '  contexto  ' } });
@@ -220,7 +231,7 @@ describe('TicketForm', () => {
             } as any);
             const { onSubmit } = setup();
 
-            const business = combos()[7];
+            const business = combos()[6];
             expect(screen.getByRole('option', { name: 'Demo' })).toBeInTheDocument();
             fireEvent.change(business, { target: { value: '31' } });
             fillRequired('Titulo', 'Descripcion');
@@ -235,7 +246,7 @@ describe('TicketForm', () => {
 
             expect(screen.queryByRole('option', { name: 'Interno (sin negocio)' })).toBeNull();
             expect(screen.queryByLabelText('Nota interna (solo super admins)')).toBeNull();
-            expect(combos()).toHaveLength(7);
+            expect(combos()).toHaveLength(6);
 
             fillRequired('Titulo', 'Descripcion');
             submitForm();
@@ -399,7 +410,7 @@ describe('TicketForm - modulo y sprint', () => {
 
     it('no ofrece crear sprint cuando no hay callback', () => {
         setup({ onCreateSprint: undefined });
-        const sprint = combos()[6];
+        const sprint = combos()[5];
         const opciones = Array.from(sprint.querySelectorAll('option')).map((o) => o.textContent);
         expect(opciones).not.toContain('+ Crear sprint...');
     });
@@ -409,7 +420,7 @@ describe('TicketForm - modulo y sprint', () => {
         const { onSubmit } = setup({ onCreateSprint });
 
         fillRequired('Con sprint', 'Descripcion');
-        fireEvent.change(combos()[6], { target: { value: '__new__' } });
+        fireEvent.change(combos()[5], { target: { value: '__new__' } });
         fireEvent.change(screen.getByPlaceholderText('Nombre del sprint'), { target: { value: 'Sprint 9' } });
         const fechas = document.querySelectorAll('input[type="date"]');
         fireEvent.change(fechas[1], { target: { value: '2026-09-10' } });
@@ -431,7 +442,7 @@ describe('TicketForm - modulo y sprint', () => {
         const onCreateSprint = vi.fn();
         setup({ onCreateSprint });
 
-        fireEvent.change(combos()[6], { target: { value: '__new__' } });
+        fireEvent.change(combos()[5], { target: { value: '__new__' } });
         fireEvent.change(screen.getByPlaceholderText('Nombre del sprint'), { target: { value: 'Malo' } });
         const fechas = document.querySelectorAll('input[type="date"]');
         fireEvent.change(fechas[1], { target: { value: '2026-09-24' } });

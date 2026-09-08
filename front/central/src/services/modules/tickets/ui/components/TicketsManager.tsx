@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Modal, DynamicFilters, FilterOption, ActiveFilter, TablePagination, TICKETS_TABS_SLOT_ID, TICKETS_ACTIONS_SLOT_ID, TICKETS_FILTERS_SLOT_ID } from '@/shared/ui';
+import { Modal, DynamicFilters, FilterOption, ActiveFilter, TablePagination, UserSelect, UserAvatar, TICKETS_TABS_SLOT_ID, TICKETS_ACTIONS_SLOT_ID, TICKETS_FILTERS_SLOT_ID } from '@/shared/ui';
+import { resolveAvatarUrl } from '@/shared/utils/avatar-url';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import {
     Ticket,
@@ -46,13 +47,6 @@ const SPRINTS_PAGE_SIZE = 100;
 
 const VIEW_STORAGE_KEY = 'tickets_view_mode';
 const BOARD_PAGE_SIZE = 100;
-const S3_BASE_URL = process.env.NEXT_PUBLIC_S3_BASE_URL || 'https://probability-media-assets.s3.us-east-1.amazonaws.com';
-
-const resolveAvatarUrl = (avatarUrl?: string) => {
-    if (!avatarUrl) return '';
-    return avatarUrl.startsWith('http') ? avatarUrl : `${S3_BASE_URL}/${avatarUrl.replace(/^\//, '')}`;
-};
-
 const TABLE_COLUMNS = [
     'C\u00f3digo',
     'T\u00edtulo',
@@ -326,10 +320,9 @@ export default function TicketsManager() {
         }
     };
 
-    const handleAssignChange = async (id: number, val: string) => {
+    const handleAssignChange = async (id: number, userId: number | null) => {
         setUpdatingId(id);
         try {
-            const userId = val === '' ? null : Number(val);
             const updated = await assignTicketAction(id, userId);
             updateLocalTicket(updated as Ticket);
         } catch (e) {
@@ -655,32 +648,19 @@ export default function TicketsManager() {
                                     </td>
                                     <td className={TD_CLASS} onClick={stop}>
                                         {isSuperAdmin ? (
-                                            <div className="flex items-center gap-2">
-                                                {fullAvatarUrl ? (
-                                                    <img src={fullAvatarUrl} alt="" className="h-6 w-6 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
-                                                ) : (
-                                                    <div className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                                                        {t.assigned_to_name ? t.assigned_to_name[0].toUpperCase() : '-'}
-                                                    </div>
-                                                )}
-                                                <select
-                                                    value={t.assigned_to_id ?? ''}
-                                                    disabled={isUpdating}
-                                                    onChange={(e) => handleAssignChange(t.id, e.target.value)}
-                                                    className="text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 max-w-[140px] disabled:opacity-60"
-                                                >
-                                                    <option value="">Sin asignar</option>
-                                                    {t.assigned_to_id && !users.some(u => u.id === t.assigned_to_id) && (
-                                                        <option value={t.assigned_to_id}>{t.assigned_to_name || `Usuario ${t.assigned_to_id}`}</option>
-                                                    )}
-                                                    {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                                </select>
-                                            </div>
+                                            <UserSelect
+                                                value={t.assigned_to_id ?? null}
+                                                options={users}
+                                                onChange={(userId) => handleAssignChange(t.id, userId)}
+                                                disabled={isUpdating}
+                                                fallbackName={t.assigned_to_name}
+                                                fallbackAvatarUrl={fullAvatarUrl}
+                                                className="max-w-[190px]"
+                                                buttonClassName="text-xs py-1"
+                                            />
                                         ) : (
                                             <div className="flex items-center gap-2">
-                                                {fullAvatarUrl && (
-                                                    <img src={fullAvatarUrl} alt="" className="h-6 w-6 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
-                                                )}
+                                                <UserAvatar name={t.assigned_to_name} avatarUrl={fullAvatarUrl} />
                                                 <span className="text-xs text-gray-700 dark:text-gray-300">{t.assigned_to_name || '-'}</span>
                                             </div>
                                         )}

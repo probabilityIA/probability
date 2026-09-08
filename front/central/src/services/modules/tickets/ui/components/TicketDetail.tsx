@@ -22,6 +22,7 @@ import {
     deleteTicketAction,
     assignTicketAction,
 } from '../../infra/actions';
+import { UserSelect } from '@/shared/ui';
 import { getUsersAction } from '@/services/auth/users/infra/actions';
 import { TypeChip, PriorityDot } from './TicketBadges';
 import { META_TONE, initials, slaMeta } from './ticket-meta';
@@ -53,7 +54,7 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
     const [uploadError, setUploadError] = useState('');
     const [dragOver, setDragOver] = useState(false);
     const [statusNote, setStatusNote] = useState('');
-    const [users, setUsers] = useState<{ id: number; name: string; email: string }[]>([]);
+    const [users, setUsers] = useState<{ id: number; name: string; email: string; avatar_url?: string }[]>([]);
     const [assigning, setAssigning] = useState(false);
     const [copied, setCopied] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
@@ -81,16 +82,15 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
         (async () => {
             try {
                 const r: any = await getUsersAction({ page: 1, page_size: 100 } as any);
-                const list = (r?.data || []) as Array<{ id: number; name: string; email: string; scope_code?: string; is_super_user?: boolean }>;
+                const list = (r?.data || []) as Array<{ id: number; name: string; email: string; avatar_url?: string; scope_code?: string; is_super_user?: boolean }>;
                 setUsers(list.filter((u) => !!u.name && (u.scope_code === 'platform' || u.is_super_user)));
             } catch {}
         })();
     }, [isSuperAdmin]);
 
-    const handleAssign = async (val: string) => {
+    const handleAssign = async (id: number | null) => {
         setAssigning(true);
         try {
-            const id = val === '' ? null : Number(val);
             await assignTicketAction(ticket.id, id);
             await refreshAll();
             onChanged();
@@ -416,17 +416,16 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
                     {isSuperAdmin && (
                         <div className="flex flex-col gap-[7px]">
                             <div className={SECTION}>Asignado a</div>
-                            <select
-                                value={ticket.assigned_to_id ?? ''}
-                                onChange={(e) => handleAssign(e.target.value)}
+                            <UserSelect
+                                value={ticket.assigned_to_id ?? null}
+                                options={users}
+                                onChange={handleAssign}
                                 disabled={assigning}
-                                className={`${CONTROL} text-[12.5px] font-medium ${ticket.assigned_to_id ? '' : 'text-red-500 dark:text-red-400'}`}
-                            >
-                                <option value="">Sin asignar</option>
-                                {users.map((u) => (
-                                    <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                                ))}
-                            </select>
+                                fallbackName={ticket.assigned_to_name}
+                                fallbackAvatarUrl={ticket.assigned_to_avatar_url}
+                                showEmail
+                                buttonClassName="py-2 text-[12.5px] font-medium"
+                            />
                         </div>
                     )}
 

@@ -4,16 +4,22 @@ import TicketsBacklog from './TicketsBacklog';
 import { Ticket } from '../../domain/types';
 import { Sprint } from '@/services/modules/sprints/domain/types';
 
-vi.mock('@/shared/ui', () => ({
-    Modal: ({ isOpen, title, onClose, children }: any) =>
-        isOpen ? (
-            <div data-testid="modal">
-                <h4>{title}</h4>
-                <button onClick={onClose}>modal-close</button>
-                {children}
-            </div>
-        ) : null,
-}));
+vi.mock('@/shared/ui', async () => {
+    const real = await import('@/shared/ui/user-select');
+    return {
+        Modal: ({ isOpen, title, onClose, children }: any) =>
+            isOpen ? (
+                <div data-testid="modal">
+                    <h4>{title}</h4>
+                    <button onClick={onClose}>modal-close</button>
+                    {children}
+                </div>
+            ) : null,
+        UserSelect: real.UserSelect,
+        UserAvatar: real.UserAvatar,
+        UnassignedAvatar: real.UnassignedAvatar,
+    };
+});
 
 vi.mock('../../infra/actions', () => ({
     listTicketsAction: vi.fn(),
@@ -345,13 +351,21 @@ describe('TicketsBacklog', () => {
             expect(onOpenTicket).toHaveBeenCalledWith(ticket);
         });
 
-        it('muestra el avatar cuando hay url y la inicial cuando no', async () => {
-            mockBuckets({ none: [makeTicket({ id: 1, assigned_to_name: 'bruno diaz' }), makeTicket({ id: 2 })] });
+        it('muestra el avatar del asignado, las iniciales sin url y el marcador de sin asignar', async () => {
+            mockBuckets({
+                none: [
+                    makeTicket({ id: 1, assigned_to_name: 'bruno diaz' }),
+                    makeTicket({ id: 2, assigned_to_name: 'carla ruiz' }),
+                    makeTicket({ id: 3 }),
+                ],
+            });
             setup({ getAvatarUrl: (t) => (t.id === 1 ? 'https://cdn.test/b.png' : '') });
 
             await screen.findByText('TCK-1');
             expect(rowOf('TCK-1').querySelector('img')).toHaveAttribute('src', 'https://cdn.test/b.png');
-            expect(within(rowOf('TCK-2')).getByText('-')).toBeInTheDocument();
+            expect(within(rowOf('TCK-2')).getByTitle('carla ruiz')).toHaveTextContent('CR');
+            expect(rowOf('TCK-3').querySelector('img')).toBeNull();
+            expect(within(rowOf('TCK-3')).getByTitle('Sin asignar')).toBeInTheDocument();
         });
 
         it('muestra el estado del ticket en la fila', async () => {

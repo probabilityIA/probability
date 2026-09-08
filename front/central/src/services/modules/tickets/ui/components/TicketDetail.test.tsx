@@ -3,9 +3,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import TicketDetail from './TicketDetail';
 import { Ticket, TicketAttachment, TicketComment, TicketHistoryEntry } from '../../domain/types';
 
-vi.mock('@/shared/ui', () => ({
-    Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-}));
+vi.mock('@/shared/ui', async () => {
+    const real = await import('@/shared/ui/user-select');
+    return {
+        Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+        UserSelect: real.UserSelect,
+        UserAvatar: real.UserAvatar,
+        UnassignedAvatar: real.UnassignedAvatar,
+    };
+});
 
 vi.mock('../../infra/actions', () => ({
     listCommentsAction: vi.fn(),
@@ -105,6 +111,8 @@ const uploadFiles = (files: File[]) => {
 };
 
 const dropZone = () => document.querySelector('label[for="ticket-file-input"]') as HTMLElement;
+
+const openAssign = () => fireEvent.click(screen.getByRole('button', { name: 'Asignado a' }));
 
 const setup = async (
     over: { ticket?: Partial<Ticket>; isSuperAdmin?: boolean } = {}
@@ -473,8 +481,11 @@ describe('TicketDetail', () => {
             } as any);
             await setup();
 
-            expect(await screen.findByRole('option', { name: 'Plataforma (p@test.com)' })).toBeInTheDocument();
-            expect(screen.getByRole('option', { name: 'Super (s@test.com)' })).toBeInTheDocument();
+            await waitFor(() => expect(getUsersAction).toHaveBeenCalled());
+            openAssign();
+
+            expect(await screen.findByRole('option', { name: /Plataforma/ })).toHaveTextContent('p@test.com');
+            expect(screen.getByRole('option', { name: /Super/ })).toHaveTextContent('s@test.com');
             expect(screen.queryByRole('option', { name: /Cliente/ })).toBeNull();
             expect(screen.queryByRole('option', { name: /sin@test.com/ })).toBeNull();
         });
@@ -485,8 +496,9 @@ describe('TicketDetail', () => {
             } as any);
             const { onChanged } = await setup();
 
-            await screen.findByRole('option', { name: 'Plataforma (p@test.com)' });
-            fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } });
+            await waitFor(() => expect(getUsersAction).toHaveBeenCalled());
+            openAssign();
+            fireEvent.click(await screen.findByRole('option', { name: /Plataforma/ }));
 
             await waitFor(() => expect(assignTicketAction).toHaveBeenCalledWith(55, 1));
             await waitFor(() => expect(onChanged).toHaveBeenCalled());
@@ -495,7 +507,8 @@ describe('TicketDetail', () => {
         it('desasigna el ticket cuando se elige la opcion vacia', async () => {
             await setup({ ticket: { assigned_to_id: 4 } });
 
-            fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } });
+            openAssign();
+            fireEvent.click(screen.getByRole('option', { name: 'Sin asignar' }));
 
             await waitFor(() => expect(assignTicketAction).toHaveBeenCalledWith(55, null));
         });
@@ -503,7 +516,7 @@ describe('TicketDetail', () => {
         it('oculta asignacion, escalado y borrado a un usuario que no es super admin', async () => {
             await setup({ isSuperAdmin: false });
 
-            expect(screen.queryByRole('combobox')).toBeNull();
+            expect(screen.queryByRole('button', { name: 'Asignado a' })).toBeNull();
             expect(screen.queryByRole('button', { name: 'Escalar a dev' })).toBeNull();
             expect(screen.queryByTitle('Eliminar ticket')).toBeNull();
             expect(getUsersAction).not.toHaveBeenCalled();

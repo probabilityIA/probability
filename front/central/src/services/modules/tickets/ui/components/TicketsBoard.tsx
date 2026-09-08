@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { Ticket, TicketStatus, PRIORITY_ACCENT, PRIORITY_META } from '../../domain/types';
+import { UserAvatar } from '@/shared/ui';
 import { StatusChip, TypeChip } from './TicketBadges';
-import { META_TONE, bySla, cardMeta, channelLabel, initials, isDueSoon } from './ticket-meta';
+import { META_TONE, bySla, cardMeta, channelLabel, isDueSoon } from './ticket-meta';
 
 export interface BoardColumn {
     key: string;
@@ -210,21 +211,7 @@ export default function TicketsBoard({
                                                     {channelLabel(t)}
                                                 </span>
                                                 {assignee ? (
-                                                    avatarUrl ? (
-                                                        <img
-                                                            src={avatarUrl}
-                                                            alt={assignee}
-                                                            title={assignee}
-                                                            className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-600"
-                                                        />
-                                                    ) : (
-                                                        <span
-                                                            title={assignee}
-                                                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500 text-[9px] font-bold text-white"
-                                                        >
-                                                            {initials(assignee)}
-                                                        </span>
-                                                    )
+                                                    <UserAvatar name={assignee} avatarUrl={avatarUrl} size="xs" />
                                                 ) : (
                                                     <span className="shrink-0 font-mono text-[10px] font-semibold text-red-500 dark:text-red-400">Sin asignar</span>
                                                 )}
