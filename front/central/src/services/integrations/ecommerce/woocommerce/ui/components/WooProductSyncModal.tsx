@@ -5,8 +5,8 @@ import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, Arro
 import { useSSE } from '@/shared/hooks/use-sse';
 import { ActionConfirmDialog } from '@/shared/ui/action-confirm-dialog';
 import { CONFIRM_TEXTS } from './sync-confirm-texts';
-import { ActionBadge, ProductList, SelectableProductList } from './sync-modal-parts';
-import type { Brief, SyncAction } from './sync-modal-parts';
+import { ActionBadge, ProductList, SelectableProductList, ChannelFamilyList, groupByFamily } from './sync-modal-parts';
+import type { Brief, SyncAction, ChannelFamilyGroup } from './sync-modal-parts';
 import { reconcileWooProductsAction, applyWooProductsAction, syncWooProductsAction, associateWooProductsAction } from '../../infra/actions';
 
 interface WooProductSyncModalProps {
@@ -116,11 +116,11 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         analyze();
     }, [isOpen, analyze]);
 
-    const runApply = async (dir: Direction) => {
+    const runApply = async (dir: Direction, skus?: string[]) => {
         setDirection(dir);
         setIsFullSync(false);
         setPhase('running');
-        setTotal(dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0));
+        setTotal(skus ? skus.length : dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0));
         setProcessed(0);
         setCreated(0);
         setSkipped(0);
@@ -128,7 +128,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         setFailed(0);
         setItems([]);
         correlationRef.current = null;
-        const res: any = await applyWooProductsAction(integrationId, dir, businessId ?? undefined);
+        const res: any = await applyWooProductsAction(integrationId, dir, businessId ?? undefined, skus);
         if (!res?.success || !res?.correlation_id) {
             setErrorMessage(res?.message || 'No se pudo iniciar la operación');
             setPhase('error');
@@ -178,6 +178,14 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         count: dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0),
         tone: dir === 'to_woo' ? 'danger' : 'warning',
         run: () => { void runApply(dir); },
+    });
+
+    const askImportFamily = (group: ChannelFamilyGroup) => ask({
+        ...CONFIRM_TEXTS.createInProbability,
+        title: `Traer "${group.name}" a Probability`,
+        count: group.items.length,
+        tone: 'warning',
+        run: () => { void runApply('to_probability', group.items.map(i => i.sku)); },
     });
 
     const askAssociate = (skus: string[]) => ask({
@@ -368,13 +376,13 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En WooCommerce hay {diff.onlyInWoo.length} producto{diff.onlyInWoo.length !== 1 ? 's' : ''} que no están en Probability</p>
-                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuración de bodegas.</p>
+                                                    <p className="text-[11px] text-gray-400 mt-0.5">Trae una familia puntual, o todo de una. Aplica tu configuración de bodegas.</p>
                                                 </div>
                                                 <button onClick={() => askApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
-                                                    <ArrowDownToLine size={14} /> Crear en Probability
+                                                    <ArrowDownToLine size={14} /> Traer todo
                                                 </button>
                                             </div>
-                                            <ProductList items={diff.onlyInWoo} />
+                                            <ChannelFamilyList groups={groupByFamily(diff.onlyInWoo)} onImport={askImportFamily} />
                                         </div>
                                     )}
                                 </>

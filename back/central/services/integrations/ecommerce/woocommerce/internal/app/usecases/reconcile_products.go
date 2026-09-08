@@ -176,7 +176,13 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 
 	for _, idx := range rc.outcome.OnlyInChannel {
 		w := rc.wooProducts[idx]
-		result.OnlyInWoo = append(result.OnlyInWoo, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
+		brief := domain.ProductBrief{SKU: w.SKU, Name: w.Name, ImageURL: w.ImageURL}
+		if len(w.VariantAttributes) > 0 && w.ParentID != "" {
+			brief.FamilyRef = "woo:" + w.ParentID
+			brief.FamilyName = nombreDeFamiliaWoo(w)
+			brief.VariantLabel = w.VariantLabel
+		}
+		result.OnlyInWoo = append(result.OnlyInWoo, brief)
 	}
 	for _, idx := range rc.outcome.OnlyInProbability {
 		p := rc.probProducts[idx]
@@ -243,6 +249,44 @@ func selectedSKUs(skus []string) map[string]bool {
 	return set
 }
 
+type wooFamilyGroup struct {
+	familyID string
+	members  []int
+}
+
+func attributeLabel(key string) string {
+	if key == "" {
+		return key
+	}
+	return strings.ToUpper(key[:1]) + key[1:]
+}
+
+func buildVariableAttributes(products []domain.ProductForSync, members []int) []domain.VariableAttribute {
+	order := make([]string, 0, 4)
+	seen := map[string]map[string]bool{}
+	values := map[string][]string{}
+	for _, idx := range members {
+		for key, value := range products[idx].VariantAttributes {
+			if value == "" {
+				continue
+			}
+			if _, ok := seen[key]; !ok {
+				seen[key] = map[string]bool{}
+				order = append(order, key)
+			}
+			if !seen[key][value] {
+				seen[key][value] = true
+				values[key] = append(values[key], value)
+			}
+		}
+	}
+	out := make([]domain.VariableAttribute, 0, len(order))
+	for _, key := range order {
+		out = append(out, domain.VariableAttribute{Name: attributeLabel(key), Options: values[key]})
+	}
+	return out
+}
+
 func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
@@ -253,6 +297,18 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 	matchedRefs := make(map[int]productmatch.ExternalRefs, len(rc.outcome.Pairs))
 	for _, pair := range rc.outcome.Pairs {
 		matchedRefs[pair.ProbabilityIndex] = wooRefs(rc.wooProducts[pair.ChannelIndex])
+	}
+
+	existingFamilyParent := func(familyID string) string {
+		for i, p := range rc.probProducts {
+			if p.FamilyID != familyID {
+				continue
+			}
+			if refs, ok := matchedRefs[i]; ok && refs.ProductID != "" {
+				return refs.ProductID
+			}
+		}
+		return ""
 	}
 
 	only := selectedSKUs(skus)
@@ -272,8 +328,16 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 		"total":          total,
 	})
 
-	created, updated, failed := 0, 0, 0
-	for n, idx := range targets {
+	created, updated, failed, processed := 0, 0, 0, 0
+	progress := func() {
+		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, processed, total, created, updated, failed)
+	}
+
+	standalone := make([]int, 0, len(targets))
+	families := make(map[string]*wooFamilyGroup)
+	familyOrder := make([]string, 0)
+
+	for _, idx := range targets {
 		p := rc.probProducts[idx]
 		if refs, ok := matchedRefs[idx]; ok && refs.ProductID != "" {
 			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
@@ -282,10 +346,85 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 			} else {
 				updated++
 			}
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
+			processed++
+			progress()
 			continue
 		}
 
+		if p.FamilyID == "" {
+			standalone = append(standalone, idx)
+			continue
+		}
+		g, ok := families[p.FamilyID]
+		if !ok {
+			g = &wooFamilyGroup{familyID: p.FamilyID}
+			families[p.FamilyID] = g
+			familyOrder = append(familyOrder, p.FamilyID)
+		}
+		g.members = append(g.members, idx)
+	}
+
+	for _, familyID := range familyOrder {
+		g := families[familyID]
+		if len(g.members) == 0 {
+			continue
+		}
+
+		parentID := existingFamilyParent(familyID)
+		if parentID == "" {
+			first := rc.probProducts[g.members[0]]
+			parentImageURL := first.FamilyImageURL
+			if parentImageURL == "" {
+				parentImageURL = first.ImageURL
+			}
+			newParentID, perr := uc.client.CreateVariableProduct(ctx, rc.storeURL, rc.ck, rc.cs, domain.CreateVariableProductInput{
+				Name:        first.FamilyName,
+				Description: first.FamilyDescription,
+				ImageURL:    fullImageURL(parentImageURL),
+				Attributes:  buildVariableAttributes(rc.probProducts, g.members),
+			})
+			if perr != nil {
+				uc.logger.Error(ctx).Err(perr).Str("family_id", familyID).Str("family_name", first.FamilyName).
+					Msg("Error al crear el producto variable (familia) en WooCommerce")
+				failed += len(g.members)
+				processed += len(g.members)
+				progress()
+				continue
+			}
+			parentID = newParentID
+		}
+
+		for _, idx := range g.members {
+			p := rc.probProducts[idx]
+			variationID, verr := uc.client.CreateProductVariation(ctx, rc.storeURL, rc.ck, rc.cs, parentID, domain.CreateVariationInput{
+				SKU:           p.SKU,
+				Price:         p.Price,
+				StockQuantity: p.StockQuantity,
+				ManageStock:   p.TrackInventory,
+				ImageURL:      fullImageURL(p.ImageURL),
+				Attributes:    p.VariantAttributes,
+			})
+			processed++
+			if verr != nil {
+				uc.logger.Error(ctx).Err(verr).Str("sku", p.SKU).Str("parent_id", parentID).Msg("Error al crear la variacion en WooCommerce")
+				failed++
+				progress()
+				continue
+			}
+			refs := productmatch.ExternalRefs{ProductID: parentID, VariantID: variationID, SKU: p.SKU, Barcode: p.Barcode}
+			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
+				uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Variacion creada en Woo pero fallo el mapeo")
+				failed++
+				progress()
+				continue
+			}
+			created++
+			progress()
+		}
+	}
+
+	for _, idx := range standalone {
+		p := rc.probProducts[idx]
 		newID, cerr := uc.client.CreateProduct(ctx, rc.storeURL, rc.ck, rc.cs, domain.CreateProductInput{
 			Name:          p.Name,
 			SKU:           p.SKU,
@@ -295,21 +434,22 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 			ManageStock:   p.TrackInventory,
 			ImageURL:      fullImageURL(p.ImageURL),
 		})
+		processed++
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en WooCommerce")
 			failed++
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
+			progress()
 			continue
 		}
 		refs := productmatch.ExternalRefs{ProductID: newID, SKU: p.SKU, Barcode: p.Barcode}
 		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
 			failed++
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
+			progress()
 			continue
 		}
 		created++
-		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
+		progress()
 	}
 
 	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.completed", map[string]interface{}{

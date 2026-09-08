@@ -6,20 +6,19 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
 
-// WooClientMock mock de domain.IWooCommerceClient para tests unitarios.
-// Cada método de la interfaz tiene su correspondiente campo Fn que permite
-// inyectar el comportamiento deseado en cada test.
 type WooClientMock struct {
-	TestConnectionFn     func(ctx context.Context, storeURL, consumerKey, consumerSecret string) error
-	GetOrdersFn          func(ctx context.Context, storeURL, consumerKey, consumerSecret string, params *domain.GetOrdersParams) (*domain.GetOrdersResult, [][]byte, error)
-	GetOrderFn           func(ctx context.Context, storeURL, consumerKey, consumerSecret string, orderID int64) (*domain.WooCommerceOrder, []byte, error)
-	CreateWebhookFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
-	ListWebhooksFn       func(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WebhookItem, error)
-	DeleteWebhookFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret, webhookID string) error
-	UpdateProductStockFn func(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
-	CreateProductFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateProductInput) (string, error)
-	GetProductsFn        func(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error)
-	GetProductsStockFn   func(ctx context.Context, storeURL, consumerKey, consumerSecret string, externalIDs []string) ([]domain.ChannelStock, error)
+	TestConnectionFn         func(ctx context.Context, storeURL, consumerKey, consumerSecret string) error
+	GetOrdersFn              func(ctx context.Context, storeURL, consumerKey, consumerSecret string, params *domain.GetOrdersParams) (*domain.GetOrdersResult, [][]byte, error)
+	GetOrderFn               func(ctx context.Context, storeURL, consumerKey, consumerSecret string, orderID int64) (*domain.WooCommerceOrder, []byte, error)
+	CreateWebhookFn          func(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
+	ListWebhooksFn           func(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WebhookItem, error)
+	DeleteWebhookFn          func(ctx context.Context, storeURL, consumerKey, consumerSecret, webhookID string) error
+	UpdateProductStockFn     func(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
+	CreateProductFn          func(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateProductInput) (string, error)
+	CreateVariableProductFn  func(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateVariableProductInput) (string, error)
+	CreateProductVariationFn func(ctx context.Context, storeURL, consumerKey, consumerSecret, parentID string, input domain.CreateVariationInput) (string, error)
+	GetProductsFn            func(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error)
+	GetProductsStockFn       func(ctx context.Context, storeURL, consumerKey, consumerSecret string, externalIDs []string) ([]domain.ChannelStock, error)
 }
 
 func (m *WooClientMock) GetProductsStock(ctx context.Context, storeURL, consumerKey, consumerSecret string, externalIDs []string) ([]domain.ChannelStock, error) {
@@ -57,7 +56,20 @@ func (m *WooClientMock) CreateProduct(ctx context.Context, storeURL, consumerKey
 	return "0", nil
 }
 
-// Verificar en tiempo de compilación que WooClientMock implementa la interfaz.
+func (m *WooClientMock) CreateVariableProduct(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateVariableProductInput) (string, error) {
+	if m.CreateVariableProductFn != nil {
+		return m.CreateVariableProductFn(ctx, storeURL, consumerKey, consumerSecret, input)
+	}
+	return "0", nil
+}
+
+func (m *WooClientMock) CreateProductVariation(ctx context.Context, storeURL, consumerKey, consumerSecret, parentID string, input domain.CreateVariationInput) (string, error) {
+	if m.CreateProductVariationFn != nil {
+		return m.CreateProductVariationFn(ctx, storeURL, consumerKey, consumerSecret, parentID, input)
+	}
+	return "0", nil
+}
+
 var _ domain.IWooCommerceClient = (*WooClientMock)(nil)
 
 func (m *WooClientMock) TestConnection(ctx context.Context, storeURL, consumerKey, consumerSecret string) error {

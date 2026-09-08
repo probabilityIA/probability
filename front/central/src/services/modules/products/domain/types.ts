@@ -1,6 +1,7 @@
 export interface ProductFamilySummary {
     id: number;
     business_id: number;
+    parent_family_id?: number;
     name: string;
     title?: string;
     description?: string;
@@ -19,6 +20,7 @@ export interface ProductFamilySummary {
 export interface ProductFamily {
     id: number;
     business_id: number;
+    parent_family_id?: number;
     name: string;
     title?: string;
     description?: string;
@@ -329,6 +331,7 @@ export interface GetFamiliesParams {
 
 export interface CreateProductFamilyDTO {
     name: string;
+    parent_family_id?: number;
     title?: string;
     description?: string;
     slug?: string;
@@ -344,6 +347,8 @@ export interface CreateProductFamilyDTO {
 
 export interface UpdateProductFamilyDTO {
     name?: string;
+    parent_family_id?: number;
+    clear_parent?: boolean;
     title?: string;
     description?: string;
     slug?: string;

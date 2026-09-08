@@ -23,6 +23,10 @@ type IWooCommerceClient interface {
 
 	CreateProduct(ctx context.Context, storeURL, consumerKey, consumerSecret string, input CreateProductInput) (string, error)
 
+	CreateVariableProduct(ctx context.Context, storeURL, consumerKey, consumerSecret string, input CreateVariableProductInput) (string, error)
+
+	CreateProductVariation(ctx context.Context, storeURL, consumerKey, consumerSecret, parentID string, input CreateVariationInput) (string, error)
+
 	GetProducts(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]WooProduct, error)
 
 	GetProductsStock(ctx context.Context, storeURL, consumerKey, consumerSecret string, externalIDs []string) ([]ChannelStock, error)

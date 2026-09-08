@@ -13,7 +13,8 @@ type ProductFamily struct {
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 
-	BusinessID uint
+	BusinessID     uint
+	ParentFamilyID *uint
 
 	Name         string
 	Title        string

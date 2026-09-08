@@ -40,6 +40,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
         const [showImportVariantsModal, setShowImportVariantsModal] = useState(false);
         const [expandedVariantId, setExpandedVariantId] = useState<string | null>(null);
         const [expandedGroupKey, setExpandedGroupKey] = useState<string | null>(null);
+        const [collapsedMegaFamilies, setCollapsedMegaFamilies] = useState<Set<number>>(new Set());
 
         useImperativeHandle(ref, () => ({ refresh: fetchFamilies }));
 
@@ -281,6 +282,38 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
             );
         };
 
+        const childrenByParent = new Map<number, ProductFamily[]>();
+        for (const f of families) {
+            if (f.parent_family_id) {
+                if (!childrenByParent.has(f.parent_family_id)) childrenByParent.set(f.parent_family_id, []);
+                childrenByParent.get(f.parent_family_id)!.push(f);
+            }
+        }
+        const nestedChildIds = new Set(
+            families.filter(f => f.parent_family_id && families.some(p => p.id === f.parent_family_id)).map(f => f.id)
+        );
+        type FamilyRow = { family: ProductFamily; isChild: boolean; isMegaParent: boolean; childCount: number; totalVariants: number; groupId: number };
+        const familyRows: FamilyRow[] = [];
+        for (const f of families) {
+            if (nestedChildIds.has(f.id)) continue;
+            const kids = childrenByParent.get(f.id) || [];
+            const isMegaParent = kids.length > 0;
+            const totalVariants = kids.reduce((sum, k) => sum + (k.variant_count || 0), 0);
+            familyRows.push({ family: f, isChild: false, isMegaParent, childCount: kids.length, totalVariants, groupId: f.id });
+            if (isMegaParent && !collapsedMegaFamilies.has(f.id)) {
+                for (const kid of kids) {
+                    familyRows.push({ family: kid, isChild: true, isMegaParent: false, childCount: 0, totalVariants: 0, groupId: f.id });
+                }
+            }
+        }
+        const toggleMegaFamily = (id: number) => {
+            setCollapsedMegaFamilies(prev => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id); else next.add(id);
+                return next;
+            });
+        };
+
         return (
             <>
                 <div className="relative rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-800">
@@ -326,23 +359,59 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                         </td>
                                     </tr>
                                 ) : (
-                                    families.map((family) => (
-                                        <tr key={family.id} className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-700 transition-colors">
+                                    familyRows.map(({ family, isChild, isMegaParent, childCount, totalVariants }, idx) => {
+                                        const isPartOfGroup = isChild || isMegaParent;
+                                        const isLastInGroup = isChild && (
+                                            idx === familyRows.length - 1 || !familyRows[idx + 1].isChild
+                                        );
+                                        return (
+                                        <tr
+                                            key={family.id}
+                                            className={`transition-colors ${isPartOfGroup ? 'bg-purple-50/50 dark:bg-purple-900/10 border-l-4 border-l-purple-300 dark:border-l-purple-700' : 'bg-white dark:bg-gray-800 border-l-4 border-l-transparent'} ${isLastInGroup ? 'border-b-2 border-b-purple-200 dark:border-b-purple-800' : 'border-b border-gray-100 dark:border-gray-700'} hover:bg-purple-100/60 dark:hover:bg-gray-700`}
+                                        >
                                             <td className="px-3 sm:px-6 py-4">
-                                                <div className="flex items-center">
+                                                <div className={`flex items-center ${isChild ? 'pl-6' : ''}`}>
+                                                    {isChild && (
+                                                        <span className="text-purple-300 dark:text-purple-600 mr-2 select-none font-bold">&#8627;</span>
+                                                    )}
+                                                    {isMegaParent && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleMegaFamily(family.id)}
+                                                            className="p-1 mr-1 text-purple-500 hover:text-purple-700 dark:hover:text-purple-300 rounded transition-colors"
+                                                            title={collapsedMegaFamilies.has(family.id) ? 'Ver subfamilias' : 'Ocultar subfamilias'}
+                                                        >
+                                                            {collapsedMegaFamilies.has(family.id) ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+                                                        </button>
+                                                    )}
                                                     {family.image_url ? (
-                                                        <img src={family.image_url} alt={family.name} className="h-10 w-10 rounded-full mr-3 object-cover" />
+                                                        <img src={family.image_url} alt={family.name} className={`h-10 w-10 rounded-full mr-3 object-cover ${isMegaParent ? 'ring-2 ring-purple-300 dark:ring-purple-600' : ''}`} />
                                                     ) : (
-                                                        <div className="h-10 w-10 rounded-full mr-3 bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                                        <div className={`h-10 w-10 rounded-full mr-3 bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 ${isMegaParent ? 'ring-2 ring-purple-300 dark:ring-purple-600' : ''}`}>
                                                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                                             </svg>
                                                         </div>
                                                     )}
                                                     <div className="min-w-0">
-                                                        <div className="text-sm font-medium text-gray-900 dark:text-white">{family.name}</div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-sm font-medium text-gray-900 dark:text-white">{family.name}</span>
+                                                            {isMegaParent && (
+                                                                <span
+                                                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-purple-600 text-white"
+                                                                    title="Estas subfamilias se agrupan como UN SOLO producto al sincronizar con un canal de ventas (ej. WooCommerce)"
+                                                                >
+                                                                    &#128081; Familia madre &middot; {childCount} {childCount === 1 ? 'subfamilia' : 'subfamilias'}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {family.title && family.title !== family.name && (
                                                             <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[220px]">{family.title}</div>
+                                                        )}
+                                                        {isMegaParent && (
+                                                            <div className="text-[11px] text-purple-500 dark:text-purple-400 mt-0.5">
+                                                                Se sincroniza como un solo producto variable ({totalVariants} variantes en total)
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
@@ -350,14 +419,23 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                             <td className="px-3 sm:px-6 py-4 hidden md:table-cell text-sm text-gray-900 dark:text-white">{family.category || '-'}</td>
                                             <td className="px-3 sm:px-6 py-4 hidden md:table-cell text-sm text-gray-900 dark:text-white">{family.brand || '-'}</td>
                                             <td className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">
-                                                <button
-                                                    onClick={() => handleOpenModal(family)}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/70 transition-colors"
-                                                    title="Ver variantes"
-                                                >
-                                                    {family.variant_count}
-                                                    <ChevronRightIcon className="w-3 h-3" />
-                                                </button>
+                                                {isMegaParent ? (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
+                                                        title="Suma de variantes de todas las subfamilias agrupadas"
+                                                    >
+                                                        {totalVariants} agrupadas
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleOpenModal(family)}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/70 transition-colors"
+                                                        title="Ver variantes"
+                                                    >
+                                                        {family.variant_count}
+                                                        <ChevronRightIcon className="w-3 h-3" />
+                                                    </button>
+                                                )}
                                             </td>
                                             <td className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">
                                                 <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${family.is_active
@@ -395,7 +473,8 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
