@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 import { NotificationTypeList } from '@/services/modules/notification-config/ui/components/NotificationTypeList';
 import { NotificationTypeForm } from '@/services/modules/notification-config/ui/components/NotificationTypeForm';
 import { Modal } from '@/shared/ui/modal';
 import type { NotificationType } from '@/services/modules/notification-config/domain/types';
 
 export default function NotificationChannelsPage() {
+  const { isSuperAdmin, isLoading } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<NotificationType | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -25,6 +27,20 @@ export default function NotificationChannelsPage() {
     setIsModalOpen(false);
     setRefreshKey((prev) => prev + 1);
   };
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {"Esta secci\u00f3n es un cat\u00e1logo de la plataforma y solo la administra Probability."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">

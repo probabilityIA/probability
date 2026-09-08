@@ -17,6 +17,7 @@ type IHandler interface {
 	RegisterRoutes(router *gin.RouterGroup)
 
 	SendTemplate(c *gin.Context)
+	PreviewTemplates(c *gin.Context)
 
 	SendManualReply(c *gin.Context)
 

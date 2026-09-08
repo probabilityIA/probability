@@ -40,7 +40,8 @@ export function NotificationDashboard() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'rules' | 'audit' | 'conversations'>('rules');
+  const [activeTab, setActiveTab] = useState<'audit' | 'conversations'>('audit');
+  const [ruleIntegrations, setRuleIntegrations] = useState<IntegrationSimple[] | null>(null);
 
   // Config flow: picker -> rules form
   const [isPickerModalOpen, setIsPickerModalOpen] = useState(false);
@@ -133,10 +134,9 @@ export function NotificationDashboard() {
           />
 
           {/* Tabs */}
-          <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-end justify-between border-b border-gray-200 dark:border-gray-700">
             <nav className="flex gap-6" aria-label="Tabs">
               {([
-                { key: 'rules' as const, label: 'Reglas' },
                 { key: 'audit' as const, label: 'Auditoria' },
                 { key: 'conversations' as const, label: 'Conversaciones' },
               ]).map((tab) => (
@@ -145,7 +145,7 @@ export function NotificationDashboard() {
                   onClick={() => setActiveTab(tab.key)}
                   className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400'
+                      ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
                   }`}
                 >
@@ -153,17 +153,26 @@ export function NotificationDashboard() {
                 </button>
               ))}
             </nav>
-          </div>
 
-          {/* Tab content */}
-          {activeTab === 'rules' && (
-            <ConfigListTable
-              onConfigure={handleConfigureIntegration}
-              onCreate={handleCreateConfig}
-              refreshKey={configRefreshKey}
-              selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
-            />
-          )}
+            <button
+              type="button"
+              disabled={ruleIntegrations === null}
+              onClick={() => {
+                if (ruleIntegrations && ruleIntegrations.length > 0) {
+                  handleConfigureIntegration(ruleIntegrations[0]);
+                  return;
+                }
+                handleCreateConfig();
+              }}
+              className="mb-2 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+              </svg>
+              {ruleIntegrations === null ? "Cargando..." : "Reglas"}
+            </button>
+          </div>
 
           {activeTab === 'audit' && (
             <MessageAudit businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
@@ -172,6 +181,16 @@ export function NotificationDashboard() {
           {activeTab === 'conversations' && (
             <WhatsAppConversations businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
           )}
+
+          <div className="hidden">
+            <ConfigListTable
+              onConfigure={handleConfigureIntegration}
+              onCreate={handleCreateConfig}
+              refreshKey={configRefreshKey}
+              selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
+              onGroupsLoaded={setRuleIntegrations}
+            />
+          </div>
 
           {/* --- Modals --- */}
 
@@ -193,12 +212,14 @@ export function NotificationDashboard() {
             isOpen={isRulesModalOpen}
             onClose={() => setIsRulesModalOpen(false)}
             title={`Reglas de Notificación — ${selectedIntegration?.name || ''}`}
-            size="5xl"
+            size="4xl"
           >
             {selectedIntegration && (
               <IntegrationRulesForm
                 integration={selectedIntegration}
                 businessId={isSuperAdmin ? (selectedBusinessId ?? 0) : 0}
+                integrations={ruleIntegrations ?? undefined}
+                onIntegrationChange={setSelectedIntegration}
                 onSuccess={handleRulesSuccess}
                 onCancel={() => setIsRulesModalOpen(false)}
               />

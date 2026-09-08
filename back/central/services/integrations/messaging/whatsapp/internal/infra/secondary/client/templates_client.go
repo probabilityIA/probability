@@ -176,3 +176,32 @@ func (c *templatesClient) CreateTemplate(ctx context.Context, wabaID, accessToke
 
 	return result.ID, nil
 }
+
+func (c *templatesClient) DeleteTemplate(ctx context.Context, wabaID, accessToken, name, metaTemplateID string) error {
+	if wabaID == "" {
+		return fmt.Errorf("waba_id no configurado")
+	}
+	if name == "" {
+		return fmt.Errorf("la plantilla necesita nombre para poder borrarse")
+	}
+
+	request := c.httpClient.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "Bearer "+accessToken).
+		SetQueryParam("name", name)
+
+	if metaTemplateID != "" {
+		request = request.SetQueryParam("hsm_id", metaTemplateID)
+	}
+
+	resp, err := request.Delete(fmt.Sprintf("%s/message_templates", wabaID))
+	if err != nil {
+		return fmt.Errorf("error borrando la plantilla %s en el WABA %s: %w", name, wabaID, err)
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return parseMetaGraphError(resp.String(), resp.StatusCode(), 0)
+	}
+
+	return nil
+}

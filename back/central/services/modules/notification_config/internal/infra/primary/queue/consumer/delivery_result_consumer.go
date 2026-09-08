@@ -15,6 +15,13 @@ func (c *DeliveryResultConsumer) Start(ctx context.Context) error {
 		Str("queue", rabbitmq.QueueNotificationDeliveryResults).
 		Msg("Iniciando consumer de delivery results")
 
+	if err := c.rabbitMQ.DeclareQueue(rabbitmq.QueueNotificationDeliveryResults, true); err != nil {
+		c.logger.Error(ctx).Err(err).
+			Str("queue", rabbitmq.QueueNotificationDeliveryResults).
+			Msg("Error declarando la cola de delivery results")
+		return err
+	}
+
 	return c.rabbitMQ.Consume(ctx, rabbitmq.QueueNotificationDeliveryResults, c.handleMessage)
 }
 
