@@ -186,7 +186,13 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 	}
 	for _, idx := range rc.outcome.OnlyInProbability {
 		p := rc.probProducts[idx]
-		result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
+		brief := domain.ProductBrief{SKU: p.SKU, Name: p.Name, ImageURL: p.ImageURL}
+		if p.FamilyID != "" {
+			brief.FamilyRef = "prob:" + p.FamilyID
+			brief.FamilyName = p.FamilyName
+			brief.VariantLabel = p.VariantLabel
+		}
+		result.OnlyInProbability = append(result.OnlyInProbability, brief)
 	}
 
 	result.TypoSuspects = detectTypoSuspects(rc, productmatch.TypoOptions{Authority: uc.inventoryAuthority(ctx, businessID)})

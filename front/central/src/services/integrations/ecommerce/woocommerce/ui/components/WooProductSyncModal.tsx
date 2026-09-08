@@ -5,7 +5,7 @@ import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, Arro
 import { useSSE } from '@/shared/hooks/use-sse';
 import { ActionConfirmDialog } from '@/shared/ui/action-confirm-dialog';
 import { CONFIRM_TEXTS } from './sync-confirm-texts';
-import { ActionBadge, ProductList, SelectableProductList, ChannelFamilyList, groupByFamily } from './sync-modal-parts';
+import { ActionBadge, SelectableProductList, SelectableFamilyList, ChannelFamilyList, groupByFamily } from './sync-modal-parts';
 import type { Brief, SyncAction, ChannelFamilyGroup } from './sync-modal-parts';
 import { reconcileWooProductsAction, applyWooProductsAction, syncWooProductsAction, associateWooProductsAction } from '../../infra/actions';
 
@@ -67,6 +67,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
     const [isFullSync, setIsFullSync] = useState(false);
     const [items, setItems] = useState<SyncItem[]>([]);
     const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [selectedToWoo, setSelectedToWoo] = useState<Set<string>>(new Set());
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [pending, setPending] = useState<PendingAction | null>(null);
@@ -83,10 +84,12 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             return;
         }
         setSelected(new Set());
+        const onlyInProbability: Brief[] = res.only_in_probability || [];
+        setSelectedToWoo(new Set(onlyInProbability.map((p: Brief) => p.sku)));
         setDiff({
             matched: Number(res.matched) || 0,
             matchedNotAssociated: res.matched_not_associated || [],
-            onlyInProbability: res.only_in_probability || [],
+            onlyInProbability,
             onlyInWoo: res.only_in_woocommerce || [],
             probabilityNoSku: Number(res.probability_no_sku) || 0,
             woocommerceNoSku: Number(res.woocommerce_no_sku) || 0,
@@ -108,6 +111,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             setIsFullSync(false);
             setItems([]);
             setSelected(new Set());
+            setSelectedToWoo(new Set());
             setErrorMessage(null);
             setPending(null);
             correlationRef.current = null;
@@ -173,12 +177,32 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         run: () => { void runFullSync(); },
     });
 
-    const askApply = (dir: Direction) => ask({
+    const askApply = (dir: Direction, skus?: string[]) => ask({
         ...(dir === 'to_woo' ? CONFIRM_TEXTS.createInWoo : CONFIRM_TEXTS.createInProbability),
-        count: dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0),
+        count: skus ? skus.length : dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0),
         tone: dir === 'to_woo' ? 'danger' : 'warning',
-        run: () => { void runApply(dir); },
+        run: () => { void runApply(dir, skus); },
     });
+
+    const toggleWooItem = (sku: string) => {
+        setSelectedToWoo((prev) => {
+            const next = new Set(prev);
+            if (next.has(sku)) next.delete(sku);
+            else next.add(sku);
+            return next;
+        });
+    };
+
+    const toggleWooGroup = (group: ChannelFamilyGroup, checked: boolean) => {
+        setSelectedToWoo((prev) => {
+            const next = new Set(prev);
+            for (const item of group.items) {
+                if (checked) next.add(item.sku);
+                else next.delete(item.sku);
+            }
+            return next;
+        });
+    };
 
     const askImportFamily = (group: ChannelFamilyGroup) => ask({
         ...CONFIRM_TEXTS.createInProbability,
@@ -361,13 +385,25 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no están en WooCommerce</p>
-                                                    <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en tu tienda WooCommerce (con imagen si tienen).</p>
+                                                    <p className="text-[11px] text-gray-400 mt-0.5">Las familias con madre se crean como un solo producto variable en Woo, con todas sus variantes. Desmarca lo que no quieras subir.</p>
                                                 </div>
-                                                <button onClick={() => askApply('to_woo')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
-                                                    <ArrowUpFromLine size={14} /> Crear en WooCommerce
+                                            </div>
+                                            <SelectableFamilyList
+                                                groups={groupByFamily(diff.onlyInProbability)}
+                                                selected={selectedToWoo}
+                                                onToggleGroup={toggleWooGroup}
+                                                onToggleItem={toggleWooItem}
+                                            />
+                                            <div className="mt-2 flex items-center justify-between">
+                                                <span className="text-[11px] text-gray-400">{selectedToWoo.size} de {diff.onlyInProbability.length} seleccionado{selectedToWoo.size !== 1 ? 's' : ''}</span>
+                                                <button
+                                                    onClick={() => askApply('to_woo', Array.from(selectedToWoo))}
+                                                    disabled={selectedToWoo.size === 0}
+                                                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    <ArrowUpFromLine size={14} /> Crear seleccionados en WooCommerce
                                                 </button>
                                             </div>
-                                            <ProductList items={diff.onlyInProbability} />
                                         </div>
                                     )}
 
