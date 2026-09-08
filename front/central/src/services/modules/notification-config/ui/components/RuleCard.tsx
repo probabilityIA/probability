@@ -9,10 +9,12 @@ import {
   getNotificationTypesAction,
   getNotificationEventTypesAction,
 } from "../../infra/actions";
+import { TemplatePreviewModal } from "./TemplatePreviewModal";
 
 export interface LocalRule {
   _tempId: string;
   id?: number;
+  integration_id: number;
   notification_type_id: number;
   notification_event_type_id: number;
   enabled: boolean;
@@ -33,6 +35,7 @@ interface RuleCardProps {
   rule: LocalRule;
   index: number;
   orderStatuses: OrderStatusOption[];
+  businessId?: number;
   onChange: (updated: LocalRule) => void;
   onDelete: () => void;
 }
@@ -51,11 +54,12 @@ const CHANNEL_BADGE: Record<string, string> = {
   sse: "bg-purple-100 text-purple-700",
 };
 
-export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: RuleCardProps) {
+export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onDelete }: RuleCardProps) {
   const [notificationTypes, setNotificationTypes] = useState<NotificationType[]>([]);
   const [eventTypes, setEventTypes] = useState<NotificationEventType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const isNew = !rule.id;
 
@@ -163,7 +167,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
                 const eventTypeId = parseInt(e.target.value) || 0;
                 onChange({ ...rule, notification_event_type_id: eventTypeId, order_status_ids: [] });
               }}
-              className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-purple-500 focus:border-purple-500 dark:focus:ring-purple-400 dark:focus:border-purple-400"
+              className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
               disabled={loadingEvents}
             >
               <option value="0">Seleccionar...</option>
@@ -241,6 +245,22 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
       </td>
 
       <td className="py-3 px-3 text-center">
+        {selectedEvent?.event_code && channelCode === "whatsapp" ? (
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(true)}
+            className="p-1.5 rounded-md bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-colors"
+            title="Ver la plantilla que se envia"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
+        ) : null}
+      </td>
+
+      <td className="py-3 px-3 text-center">
         <button
           type="button"
           onClick={onDelete}
@@ -252,6 +272,16 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
           </svg>
         </button>
       </td>
+
+      {previewOpen && selectedEvent?.event_code && (
+        <TemplatePreviewModal
+          isOpen={previewOpen}
+          eventCode={selectedEvent.event_code}
+          eventName={eventName}
+          businessId={businessId}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </tr>
   );
 }

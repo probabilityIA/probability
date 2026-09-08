@@ -29,3 +29,60 @@ func NewNotificationEventTypeRepository(database db.IDatabase, logger log.ILogge
 		logger: logger.WithModule("notification_event_type_repository"),
 	}
 }
+
+func NewWhatsappTemplateRepository(database db.IDatabase, logger log.ILogger) ports.ITemplateRepository {
+	return &whatsappTemplateRepository{
+		db:     database,
+		logger: logger.WithModule("whatsapp_template_repository"),
+	}
+}
+
+func NewScheduledRuleRepository(database db.IDatabase, logger log.ILogger) ports.IScheduledRuleRepository {
+	return &scheduledRuleRepository{
+		db:     database,
+		logger: logger.WithModule("scheduled_rule_repository"),
+	}
+}
+
+func NewScheduledRunRepository(database db.IDatabase, logger log.ILogger) ports.IScheduledRunRepository {
+	return &scheduledRunRepository{
+		db:     database,
+		logger: logger.WithModule("scheduled_run_repository"),
+	}
+}
+
+func NewScheduledSendRepository(database db.IDatabase, logger log.ILogger) ports.IScheduledSendRepository {
+	return &scheduledSendRepository{
+		db:     database,
+		logger: logger.WithModule("scheduled_send_repository"),
+	}
+}
+
+func NewSegmentQuerier(database db.IDatabase, logger log.ILogger) ports.ISegmentQuerier {
+	return &segmentQuerier{
+		db:     database,
+		logger: logger.WithModule("segment_querier"),
+	}
+}
+
+func NewCampaignRepository(database db.IDatabase, logger log.ILogger) ports.ICampaignRepository {
+	return &campaignRepository{
+		db:     database,
+		logger: logger.WithModule("campaign_repository"),
+	}
+}
+
+func NewCampaignSendRepository(database db.IDatabase, logger log.ILogger) ports.ICampaignSendRepository {
+	return &campaignSendRepository{
+		db:     database,
+		logger: logger.WithModule("campaign_send_repository"),
+	}
+}
+
+func NewCampaignAudienceQuerier(database db.IDatabase, logger log.ILogger) ports.ICampaignAudienceQuerier {
+	return newCampaignAudienceQuerier(database, logger)
+}
+
+func NewCampaignSenderQuerier(database db.IDatabase, logger log.ILogger) ports.ICampaignSenderQuerier {
+	return newCampaignSenderQuerier(database, logger)
+}

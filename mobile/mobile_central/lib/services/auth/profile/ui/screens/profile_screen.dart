@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../../core/security/biometric_auth.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_tokens.dart';
 import '../../../../../shared/utils/formatters.dart';
@@ -121,6 +122,8 @@ class ProfileScreen extends StatelessWidget {
                   onTap: () => showChangePasswordSheet(context),
                 ),
                 const Divider(height: 1),
+                const _BiometricRow(),
+                const Divider(height: 1),
                 _ActionRow(
                   icon: Icons.logout_rounded,
                   label: 'Cerrar sesi\u00f3n',
@@ -181,6 +184,90 @@ class _ActionRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BiometricRow extends StatefulWidget {
+  const _BiometricRow();
+
+  @override
+  State<_BiometricRow> createState() => _BiometricRowState();
+}
+
+class _BiometricRowState extends State<_BiometricRow> {
+  BiometricStatus? _status;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+  }
+
+  Future<void> _check() async {
+    final s = await context.read<LoginProvider>().biometricStatus();
+    if (!mounted) return;
+    setState(() => _status = s);
+  }
+
+  String get _subtitle {
+    switch (_status) {
+      case BiometricStatus.noHardware:
+        return 'Este dispositivo no tiene lector de huella';
+      case BiometricStatus.notEnrolled:
+        return 'Registra una huella en los ajustes del tel\u00e9fono';
+      case BiometricStatus.unavailable:
+        return 'No disponible en este dispositivo';
+      default:
+        return 'Pide tu huella al abrir la app';
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    final login = context.read<LoginProvider>();
+    setState(() => _busy = true);
+    var message = '';
+    if (value) {
+      final ok = await login.enableBiometric();
+      message = ok
+          ? 'Ingreso con huella activado'
+          : 'No se pudo activar el ingreso con huella';
+    } else {
+      await login.disableBiometric();
+      message = 'Ingreso con huella desactivado';
+    }
+    if (!mounted) return;
+    setState(() => _busy = false);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = context.watch<LoginProvider>().biometricEnabled;
+    final usable = _status == BiometricStatus.available;
+
+    return ListTile(
+      leading: const Icon(Icons.fingerprint_rounded, size: 20),
+      title: Text(
+        'Ingresar con huella',
+        style: Theme.of(context).textTheme.titleSmall,
+      ),
+      subtitle: Text(
+        _subtitle,
+        style: Theme.of(context).textTheme.labelSmall,
+      ),
+      trailing: _busy
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Switch(
+              value: enabled,
+              onChanged: usable ? _toggle : null,
+            ),
     );
   }
 }

@@ -94,6 +94,21 @@ func (u *usecase) HandleStatusUpdate(ctx context.Context, wabaID, name, language
 		Str("status", status).
 		Msg("estado de plantilla actualizado desde el webhook")
 
+	if u.statusPublisher != nil {
+		if err := u.statusPublisher.PublishTemplateStatus(ctx, CustomTemplateResult{
+			WABAID:   wabaID,
+			Name:     name,
+			Language: language,
+			Status:   status,
+			Reason:   reason,
+		}); err != nil {
+			u.log.Warn(ctx).Err(err).
+				Str("waba_id", wabaID).
+				Str("template", name).
+				Msg("no se pudo publicar el estado de la plantilla para persistirlo")
+		}
+	}
+
 	return nil
 }
 

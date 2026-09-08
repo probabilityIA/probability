@@ -25,6 +25,7 @@ func ConversationListRequestToDomain(req *request.ListConversations, businessID 
 		BusinessID: businessID,
 		State:      req.State,
 		Phone:      req.Phone,
+		CampaignID: req.CampaignID,
 		DateFrom:   req.DateFrom,
 		DateTo:     req.DateTo,
 		Page:       req.Page,

@@ -24,6 +24,7 @@ type ListConversations struct {
 	BusinessID uint    `form:"business_id"`
 	State      *string `form:"state"`
 	Phone      *string `form:"phone"`
+	CampaignID *uint   `form:"campaign_id"`
 	DateFrom   *string `form:"date_from"`
 	DateTo     *string `form:"date_to"`
 	Page       int     `form:"page"`

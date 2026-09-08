@@ -25,6 +25,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		whatsapp.GET("/embedded-signup/config", middleware.JWT(), h.GetEmbeddedSignupConfig)
 		whatsapp.POST("/embedded-signup", middleware.JWT(), h.CompleteEmbeddedSignup)
 		whatsapp.GET("/templates/status", middleware.JWT(), h.GetTemplatesStatus)
+		whatsapp.GET("/templates/preview", middleware.JWT(), h.PreviewTemplates)
 		whatsapp.POST("/templates/provision", middleware.JWT(), h.ProvisionTemplates)
 
 		whatsapp.GET("/webhook", h.VerifyWebhook)

@@ -207,3 +207,17 @@ const (
 const (
 	QueueNotificationDeliveryResults = "notification.delivery.results"
 )
+
+const (
+	QueueWhatsAppTemplateSubmitRequests = "whatsapp.templates.submit.requests"
+
+	QueueWhatsAppTemplateSubmitResults = "whatsapp.templates.submit.results"
+
+	QueueScheduledNotificationSends = "notification.scheduled.sends"
+
+	QueueScheduledNotificationResults = "notification.scheduled.results"
+
+	QueueCampaignSends = "notification.campaign.sends"
+
+	QueueCampaignResults = "notification.campaign.results"
+)

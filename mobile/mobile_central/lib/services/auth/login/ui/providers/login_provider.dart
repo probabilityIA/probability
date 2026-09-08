@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../../../../../core/errors/error_parser.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../core/security/biometric_auth.dart';
 import '../../../../../core/storage/token_storage.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
@@ -11,11 +12,14 @@ class LoginProvider extends ChangeNotifier {
   LoginProvider({
     required TokenStorage tokenStorage,
     required ApiClient apiClient,
+    BiometricAuth? biometricAuth,
   })  : _tokenStorage = tokenStorage,
-        _apiClient = apiClient;
+        _apiClient = apiClient,
+        _biometric = biometricAuth ?? BiometricAuth();
 
   final TokenStorage _tokenStorage;
   final ApiClient _apiClient;
+  final BiometricAuth _biometric;
 
   bool _isLoading = false;
   String? _error;
@@ -31,6 +35,43 @@ class LoginProvider extends ChangeNotifier {
   List<BusinessInfo> get businesses => _businesses;
   UserRolesPermissionsResponse? get rolesPermissions => _rolesPermissions;
   bool get isLoggedIn => _user != null;
+
+  bool _biometricEnabled = false;
+  bool _locked = false;
+
+  bool get biometricEnabled => _biometricEnabled;
+  bool get isLocked => _locked;
+
+  Future<bool> biometricAvailable() => _biometric.isAvailable();
+
+  Future<BiometricStatus> biometricStatus() => _biometric.status();
+
+  Future<bool> enableBiometric() async {
+    if (!await _biometric.isAvailable()) return false;
+    final ok = await _biometric.authenticate(
+      'Confirma tu identidad para activar el ingreso con huella',
+    );
+    if (!ok) return false;
+    await _tokenStorage.setBiometricEnabled(true);
+    _biometricEnabled = true;
+    notifyListeners();
+    return true;
+  }
+
+  Future<void> disableBiometric() async {
+    await _tokenStorage.setBiometricEnabled(false);
+    _biometricEnabled = false;
+    notifyListeners();
+  }
+
+  Future<bool> unlockWithBiometric() async {
+    final ok = await _biometric.authenticate('Ingresa a Probability');
+    if (!ok) return false;
+    _locked = false;
+    notifyListeners();
+    await _loadSessionFromStorage();
+    return true;
+  }
 
   String? get businessName =>
       _rolesPermissions?.businessName ??
@@ -145,7 +186,22 @@ class LoginProvider extends ChangeNotifier {
     if (token == null) return;
 
     _apiClient.setToken(token);
+    _biometricEnabled = await _tokenStorage.isBiometricEnabled();
 
+    if (_biometricEnabled && await _biometric.isAvailable()) {
+      _locked = true;
+      notifyListeners();
+      return;
+    }
+
+    if (_biometricEnabled) {
+      await _tokenStorage.setBiometricEnabled(false);
+      _biometricEnabled = false;
+    }
+    await _loadSessionFromStorage();
+  }
+
+  Future<void> _loadSessionFromStorage() async {
     try {
       _rolesPermissions = await _useCases.getRolesPermissions();
       _isSuperAdmin = _rolesPermissions?.isSuper ?? false;
@@ -187,6 +243,8 @@ class LoginProvider extends ChangeNotifier {
     _businesses = [];
     _rolesPermissions = null;
     _error = null;
+    _biometricEnabled = false;
+    _locked = false;
     notifyListeners();
   }
 

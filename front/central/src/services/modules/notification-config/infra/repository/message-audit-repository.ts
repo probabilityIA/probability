@@ -70,6 +70,7 @@ export class MessageAuditApiRepository {
         params.append("business_id", filter.business_id.toString());
         if (filter.state) params.append("state", filter.state);
         if (filter.phone) params.append("phone", filter.phone);
+        if (filter.campaign_id) params.append("campaign_id", filter.campaign_id.toString());
         if (filter.date_from) params.append("date_from", filter.date_from);
         if (filter.date_to) params.append("date_to", filter.date_to);
         if (filter.page) params.append("page", filter.page.toString());

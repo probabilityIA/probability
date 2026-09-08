@@ -7,6 +7,7 @@ import 'core/storage/token_storage.dart';
 import 'services/auth/actions/ui/providers/action_provider.dart';
 import 'services/auth/business/ui/providers/business_provider.dart';
 import 'services/auth/login/ui/providers/login_provider.dart';
+import 'services/auth/login/ui/screens/lock_screen.dart';
 import 'services/auth/permissions/ui/providers/permission_provider.dart';
 import 'services/auth/resources/ui/providers/resource_provider.dart';
 import 'services/auth/roles/ui/providers/role_provider.dart';
@@ -233,6 +234,11 @@ class _ProbabilityAppState extends State<ProbabilityApp> {
             themeMode: ThemeMode.system,
             routerConfig: _appRouter.router,
             debugShowCheckedModeBanner: false,
+            builder: (context, child) {
+              final locked = context.watch<LoginProvider>().isLocked;
+              if (locked) return const LockScreen();
+              return child ?? const SizedBox.shrink();
+            },
           );
         },
       ),

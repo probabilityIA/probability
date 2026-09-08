@@ -30,10 +30,42 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    await context.read<LoginProvider>().login(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+    final login = context.read<LoginProvider>();
+    final ok = await login.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    if (!ok || !mounted) return;
+    if (login.biometricEnabled) return;
+    if (!await login.biometricAvailable()) return;
+    if (!mounted) return;
+    await _offerBiometric();
+  }
+
+  Future<void> _offerBiometric() async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.fingerprint_rounded, size: 34),
+        title: const Text('\u00bfEntrar con huella la pr\u00f3xima vez?'),
+        content: const Text(
+          'Te evita escribir la contrase\u00f1a cada vez que abres la app. '
+          'Puedes desactivarlo cuando quieras desde tu perfil.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Activar'),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true || !mounted) return;
+    await context.read<LoginProvider>().enableBiometric();
   }
 
   @override

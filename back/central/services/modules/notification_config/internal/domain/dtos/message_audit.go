@@ -49,6 +49,7 @@ type ConversationListFilterDTO struct {
 	DateTo     *string
 	State      *string
 	Phone      *string
+	CampaignID *uint
 	Page       int
 	PageSize   int
 }

@@ -6,8 +6,6 @@ import {
   listConversationsAction,
   getConversationMessagesAction,
   sendManualReplyAction,
-  pauseAIAction,
-  resumeAIAction,
 } from '../../infra/actions';
 import type {
   ConversationSummary,
@@ -17,6 +15,7 @@ import type {
 
 interface WhatsAppConversationsProps {
   businessId?: number;
+  campaignId?: number;
 }
 
 // ─── Helpers ───────────────────────────────────────────
@@ -66,7 +65,7 @@ const statusIcon: Record<string, string> = {
 
 // ─── Component ─────────────────────────────────────────
 
-export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps) {
+export function WhatsAppConversations({ businessId, campaignId }: WhatsAppConversationsProps) {
   // Conversation list state
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -92,10 +91,6 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
-  // AI control state — true = AI is active (human cannot write)
-  const [aiPaused, setAiPaused] = useState(false);
-  const [aiToggling, setAiToggling] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Ref para tracking de conversación activa sin reconectar el SSE
@@ -110,6 +105,7 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
         business_id: businessId ?? 0,
         state: stateFilter || undefined,
         phone: phoneSearch || undefined,
+        campaign_id: campaignId,
         page,
         page_size: pageSize,
       });
@@ -123,9 +119,9 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
     } finally {
       setListLoading(false);
     }
-  }, [businessId, stateFilter, phoneSearch, page]);
+  }, [businessId, campaignId, stateFilter, phoneSearch, page]);
 
-  useEffect(() => { setPage(1); }, [stateFilter, phoneSearch, businessId]);
+  useEffect(() => { setPage(1); }, [stateFilter, phoneSearch, businessId, campaignId]);
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 
   // ─── Fetch conversation detail ────────────────
@@ -152,11 +148,9 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
     }
   }, [detail]);
 
-  // Reset composer and AI state when switching conversations
   useEffect(() => {
     setReplyText('');
     setSendError(null);
-    setAiPaused(false); // assume AI is active until user toggles
   }, [selectedId]);
 
   // Ventana activa: el cliente escribió en las últimas 24h
@@ -168,25 +162,6 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
     const diffHours = (Date.now() - new Date(lastInbound.created_at).getTime()) / 3600000;
     return diffHours < 24;
   })();
-
-  // ─── AI toggle ────────────────
-  const handleToggleAI = useCallback(async () => {
-    if (!selectedId || !detail || aiToggling) return;
-    setAiToggling(true);
-    const phone = detail.phone_number;
-    const biz = businessId ?? 0;
-
-    if (aiPaused) {
-      // Resume: reactivate AI
-      const res = await resumeAIAction(selectedId, phone, biz);
-      if (res.success) setAiPaused(false);
-    } else {
-      // Pause: human takes control
-      const res = await pauseAIAction(selectedId, phone, biz);
-      if (res.success) setAiPaused(true);
-    }
-    setAiToggling(false);
-  }, [selectedId, detail, businessId, aiPaused, aiToggling]);
 
   // ─── Send manual reply ────────────────
   const handleSend = useCallback(async () => {
@@ -522,28 +497,6 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] text-gray-400 dark:text-gray-500">{detail.messages.length} msg</span>
-                      {!isSystemAlert && (
-                        <button
-                          onClick={handleToggleAI}
-                          disabled={aiToggling}
-                          title={aiPaused ? 'Reactivar IA' : 'Pausar IA y tomar control'}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors disabled:opacity-50 ${
-                            aiPaused
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300'
-                          }`}
-                        >
-                          {aiToggling ? (
-                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                            </svg>
-                          ) : (
-                            <span>{aiPaused ? '🔴' : '🟢'}</span>
-                          )}
-                          <span>IA {aiPaused ? 'Pausada' : 'Activa'}</span>
-                        </button>
-                      )}
                     </div>
                   </div>
                 );
@@ -616,26 +569,11 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                       🔔 Este es un aviso automático del sistema, no admite respuesta.
                     </p>
                   </div>
-                ) : !aiPaused ? (
-                  /* AI is active — show blocked state */
-                  <div className="flex flex-col items-center justify-center py-2 gap-1">
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                      La IA está respondiendo. Pausa la IA para escribir manualmente.
-                    </p>
-                    <button
-                      onClick={handleToggleAI}
-                      disabled={aiToggling}
-                      className="px-3 py-1 text-[11px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors disabled:opacity-50"
-                    >
-                      {aiToggling ? 'Pausando...' : '🔴 Pausar IA y escribir'}
-                    </button>
-                  </div>
                 ) : (
-                  /* AI paused — composer active */
                   <>
                     {!isWindowActive && (
-                      <p className="text-[10px] text-amber-500 dark:text-amber-400 mb-1 text-center">
-                        ⚠ El cliente no ha respondido en 24h — Meta puede rechazar el mensaje
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-1 text-center">
+                        {"\u26a0 La ventana de 24h est\u00e1 cerrada: el cliente no ha escrito. Meta solo permite enviarle una plantilla aprobada."}
                       </p>
                     )}
                     {sendError && (

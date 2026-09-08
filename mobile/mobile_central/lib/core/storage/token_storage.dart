@@ -4,6 +4,7 @@ class TokenStorage {
   static const _tokenKey = 'session_token';
   static const _userKey = 'user_data';
   static const _sessionKey = 'session_data';
+  static const _biometricKey = 'biometric_enabled';
 
   final FlutterSecureStorage _storage;
 
@@ -32,6 +33,14 @@ class TokenStorage {
 
   Future<String?> getSessionData() async {
     return _storage.read(key: _sessionKey);
+  }
+
+  Future<void> setBiometricEnabled(bool enabled) async {
+    await _storage.write(key: _biometricKey, value: enabled ? '1' : '0');
+  }
+
+  Future<bool> isBiometricEnabled() async {
+    return await _storage.read(key: _biometricKey) == '1';
   }
 
   Future<void> clearAll() async {

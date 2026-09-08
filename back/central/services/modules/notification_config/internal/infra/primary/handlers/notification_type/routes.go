@@ -5,15 +5,15 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
-// RegisterRoutes registra todas las rutas HTTP del módulo NotificationType
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	types := router.Group("/notification-types")
 	types.Use(middleware.JWT())
 	{
-		types.POST("", h.Create)
 		types.GET("", h.List)
 		types.GET("/:id", h.GetByID)
-		types.PUT("/:id", h.Update)
-		types.DELETE("/:id", h.Delete)
+
+		types.POST("", middleware.RequireSuperAdmin(), h.Create)
+		types.PUT("/:id", middleware.RequireSuperAdmin(), h.Update)
+		types.DELETE("/:id", middleware.RequireSuperAdmin(), h.Delete)
 	}
 }

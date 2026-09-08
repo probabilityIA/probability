@@ -1,7 +1,7 @@
 name: mobile_central
 description: "Probability Central - Mobile App"
 publish_to: 'none'
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.10.7
@@ -14,6 +14,7 @@ dependencies:
   provider: ^6.1.1
   flutter_secure_storage: ^9.0.0
   go_router: ^14.0.0
+  local_auth: ^3.0.2
 
 dev_dependencies:
   flutter_test:
