@@ -65,7 +65,7 @@ func (c *Client) CreateCreditNote(ctx context.Context, req *dtos.CreateCreditNot
 	body.Document.ID = documentID
 	body.Date = time.Now().Format("2006-01-02")
 	body.Invoice = req.InvoiceExternalID
-	body.Customer.Identification = req.CustomerDNI
+	body.Customer.Identification = sanitizeSiigoIdentification(req.CustomerDNI)
 	body.Items = []creditNoteItem{
 		{
 			Code:        "NC",

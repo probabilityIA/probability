@@ -14,6 +14,8 @@ import (
 // CreateCustomer crea un cliente en Siigo
 // Endpoint: POST /v1/customers
 func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credentials, req *dtos.CreateCustomerRequest) (*dtos.CustomerResult, error) {
+	req.Identification = sanitizeSiigoIdentification(req.Identification)
+
 	c.log.Info(ctx).
 		Str("identification", req.Identification).
 		Str("name", req.Name).

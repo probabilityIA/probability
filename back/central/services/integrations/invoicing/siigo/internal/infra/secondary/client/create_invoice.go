@@ -12,6 +12,8 @@ import (
 func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error) {
 	result := &dtos.CreateInvoiceResult{}
 
+	req.Customer.DNI = sanitizeSiigoIdentification(req.Customer.DNI)
+
 	c.log.Info(ctx).
 		Str("order_id", req.OrderID).
 		Str("customer_dni", req.Customer.DNI).

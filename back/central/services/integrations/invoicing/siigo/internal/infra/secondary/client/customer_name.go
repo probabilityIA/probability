@@ -74,3 +74,17 @@ func normalizeSiigoPersonType(raw string) string {
 	}
 	return "Person"
 }
+
+// sanitizeSiigoIdentification deja solo digitos: Siigo rechaza con
+// invalid_format cualquier identification (id_type "13", cedula) que traiga
+// puntos, guiones o espacios, y el dato de origen (orden manual o canal)
+// no siempre llega limpio.
+func sanitizeSiigoIdentification(raw string) string {
+	var b strings.Builder
+	for _, r := range raw {
+		if r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
