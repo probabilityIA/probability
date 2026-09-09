@@ -10,6 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // New inicializa todos los proveedores de mensajería y los registra en integrationCore.
@@ -23,10 +24,11 @@ func New(
 	redisClient redisclient.IRedis,
 	integrationCore core.IIntegrationCore,
 	emailService email.IEmailService,
+	s3 storage.IS3Service,
 	router *gin.RouterGroup,
 ) {
 	// WhatsApp (type_id=2) — cache-first, DB-async via RabbitMQ
-	whatsappBundle := whatsapp.New(config, logger, rabbitMQ, redisClient)
+	whatsappBundle := whatsapp.New(config, logger, rabbitMQ, redisClient, s3)
 	integrationCore.RegisterIntegration(core.IntegrationTypeWhatsApp, whatsappBundle)
 
 	// Registrar rutas HTTP de WhatsApp (webhook sin JWT, send-template con JWT)

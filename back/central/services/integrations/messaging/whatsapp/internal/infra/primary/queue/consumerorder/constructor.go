@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasemessaging"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -15,20 +16,23 @@ type IConsumer interface {
 
 // consumer contiene las dependencias del consumer
 type consumer struct {
-	queue   rabbitmq.IQueue
-	useCase usecasemessaging.IUseCase
-	log     log.ILogger
+	queue    rabbitmq.IQueue
+	useCase  usecasemessaging.IUseCase
+	mapImage ports.IMapImageGenerator
+	log      log.ILogger
 }
 
 // New crea una nueva instancia del consumer de órdenes
 func New(
 	queue rabbitmq.IQueue,
 	useCase usecasemessaging.IUseCase,
+	mapImage ports.IMapImageGenerator,
 	logger log.ILogger,
 ) IConsumer {
 	return &consumer{
-		queue:   queue,
-		useCase: useCase,
-		log:     logger,
+		queue:    queue,
+		useCase:  useCase,
+		mapImage: mapImage,
+		log:      logger,
 	}
 }

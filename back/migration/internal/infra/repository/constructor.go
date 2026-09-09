@@ -38,7 +38,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateUserGoogleID(ctx); err != nil {
 		return err
 	}
-	return r.migrateCatalogoRename(ctx)
+	if err := r.migrateCatalogoRename(ctx); err != nil {
+		return err
+	}
+	return r.migrateConfirmacionConMapa(ctx)
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {

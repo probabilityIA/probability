@@ -22,6 +22,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerauthotp"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumercampaign"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/mapimage"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerscheduled"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumersubscriptionalert"
@@ -35,6 +36,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 type IWhatsAppBundle interface {
@@ -82,7 +84,7 @@ type bundle struct {
 	credsCache       cache.ICredentialsCacheMutable
 }
 
-func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisClient redisclient.IRedis) core.IIntegrationContract {
+func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisClient redisclient.IRedis, s3 storage.IS3Service) core.IIntegrationContract {
 	logger = logger.WithModule("whatsapp")
 
 	convCache, credsCache, templatesCache := cache.New(redisClient, logger)
@@ -165,9 +167,11 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		webhookConsumer := consumerwebhook.New(rabbit, useCase, templatesUseCase, logger)
 		webhookConsumer.Start(context.Background())
 
+		mapGenerator := mapimage.New(config, s3, logger)
 		orderConsumer := consumerorder.New(
 			rabbit,
 			useCase,
+			mapGenerator,
 			logger,
 		)
 

@@ -19,7 +19,19 @@ func (u *usecases) SendTemplate(
 	orderNumber string,
 	businessID uint,
 ) (string, error) {
-	return u.sendTemplate(ctx, templateName, phoneNumber, variables, orderNumber, businessID, false)
+	return u.sendTemplate(ctx, templateName, phoneNumber, variables, "", orderNumber, businessID, false)
+}
+
+func (u *usecases) SendTemplateWithHeaderImage(
+	ctx context.Context,
+	templateName string,
+	phoneNumber string,
+	variables map[string]string,
+	headerImageURL string,
+	orderNumber string,
+	businessID uint,
+) (string, error) {
+	return u.sendTemplate(ctx, templateName, phoneNumber, variables, headerImageURL, orderNumber, businessID, false)
 }
 
 func (u *usecases) SendPlatformTemplate(
@@ -30,7 +42,7 @@ func (u *usecases) SendPlatformTemplate(
 	orderNumber string,
 	businessID uint,
 ) (string, error) {
-	return u.sendTemplate(ctx, templateName, phoneNumber, variables, orderNumber, businessID, true)
+	return u.sendTemplate(ctx, templateName, phoneNumber, variables, "", orderNumber, businessID, true)
 }
 
 func (u *usecases) sendTemplate(
@@ -38,6 +50,7 @@ func (u *usecases) sendTemplate(
 	templateName string,
 	phoneNumber string,
 	variables map[string]string,
+	headerImageURL string,
 	orderNumber string,
 	businessID uint,
 	forcePlatformNumber bool,
@@ -86,7 +99,7 @@ func (u *usecases) sendTemplate(
 		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
 	}
 
-	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, templateDef)
+	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, headerImageURL, templateDef)
 
 	conversation, err := u.getOrCreateConversation(ctx, phoneNumber, orderNumber, businessID)
 	if err != nil {
@@ -215,7 +228,7 @@ func (u *usecases) SendTemplateWithConversation(
 		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
 	}
 
-	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, templateDef)
+	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, "", templateDef)
 
 	waClient := u.whatsApp
 	if whatsappConfig.WhatsAppURL != "" && u.clientFactory != nil {
@@ -251,9 +264,19 @@ func (u *usecases) buildTemplateMessage(
 	templateName string,
 	phoneNumber string,
 	variables map[string]string,
+	headerImageURL string,
 	templateDef entities.TemplateDefinition,
 ) entities.TemplateMessage {
 	components := []entities.TemplateComponent{}
+
+	if templateDef.HeaderImage && headerImageURL != "" {
+		components = append(components, entities.TemplateComponent{
+			Type: "header",
+			Parameters: []entities.TemplateParameter{
+				{Type: "image", ImageLink: headerImageURL},
+			},
+		})
+	}
 
 	if len(templateDef.Variables) > 0 {
 		bodyParams := []entities.TemplateParameter{}

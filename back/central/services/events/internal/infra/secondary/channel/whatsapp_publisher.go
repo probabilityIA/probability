@@ -37,8 +37,12 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 	}
 }
 
+const EventCodeOrderCreatedWithMap = "order.created_with_map"
+
 func eventCodeToTemplateName(eventCode string, isCOD bool, codAmountIsFinal bool) string {
 	switch eventCode {
+	case EventCodeOrderCreatedWithMap:
+		return "confirmacion_pedido_contraentrega_mapa"
 	case "order.shipped":
 		if isCOD {
 			return "pedido_en_reparto_cod"
@@ -78,6 +82,7 @@ func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event ent
 		"total_amount", "cod_total", "cod_carrier_fee", "is_cod", "currency", "platform",
 		"items_summary", "shipping_address", "shipping_street", "shipping_city", "shipping_state",
 		"business_name", "payment_method_id", "payment_method_name", "tracking_number", "carrier",
+		"shipping_lat", "shipping_lng",
 	}
 	for _, field := range dataFields {
 		if val, ok := event.Data[field]; ok && val != nil && val != "" {

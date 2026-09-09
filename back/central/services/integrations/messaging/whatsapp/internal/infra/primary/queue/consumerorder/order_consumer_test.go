@@ -81,6 +81,7 @@ func TestFallbackATotalAmountSinCodTotal(t *testing.T) {
 func TestVariablesCoincidenConPlantillasAprobadas(t *testing.T) {
 	templates := []string{
 		"confirmacion_pedido_contraentrega",
+		"confirmacion_pedido_contraentrega_mapa",
 		"confirmacion_pedido",
 		"guia_envio_generada_cod",
 		"pedido_en_reparto_cod",
@@ -105,5 +106,35 @@ func TestVariablesCoincidenConPlantillasAprobadas(t *testing.T) {
 				t.Errorf("validacion fallida: %v", err)
 			}
 		})
+	}
+}
+
+func TestRequiereMapaSoloParaLasPlantillasConMapa(t *testing.T) {
+	casos := map[string]bool{
+		"confirmacion_pedido_contraentrega_mapa": true,
+		"confirmacion_pedido_contraentrega":      false,
+		"confirmacion_pedido":                    false,
+		"pedido_entregado_cod":                   false,
+	}
+
+	for plantilla, esperado := range casos {
+		if requiereMapa(plantilla) != esperado {
+			t.Errorf("requiereMapa(%q) = %v, se esperaba %v", plantilla, !esperado, esperado)
+		}
+	}
+}
+
+func TestPlantillaConMapaDeclaraEncabezadoDeImagen(t *testing.T) {
+	def, ok := entities.GetTemplateDefinition("confirmacion_pedido_contraentrega_mapa")
+	if !ok {
+		t.Fatal("la plantilla con mapa no esta en el catalogo")
+	}
+	if !def.HeaderImage {
+		t.Error("la plantilla con mapa debe declarar HeaderImage, si no el mapa nunca se adjunta")
+	}
+	base, _ := entities.GetTemplateDefinition("confirmacion_pedido_contraentrega")
+	if len(def.Variables) != len(base.Variables) {
+		t.Errorf("la variante tiene %d variables y la original %d: el fallback sin mapa fallaria",
+			len(def.Variables), len(base.Variables))
 	}
 }

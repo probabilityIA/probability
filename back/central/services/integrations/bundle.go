@@ -36,7 +36,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// REGISTRO DE INTEGRACIONES
 
 	// Messaging: todos los proveedores de mensajería (sin DB — cache-first, DB-async)
-	messaging.New(config, logger, rabbitMQ, redisClient, integrationCore, emailService, router)
+	messaging.New(config, logger, rabbitMQ, redisClient, integrationCore, emailService, s3, router)
 
 	// E-commerce: todos los proveedores de e-commerce
 	ecommerce.New(router, logger, config, rabbitMQ, db, integrationCore)

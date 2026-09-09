@@ -671,6 +671,7 @@ func TestBuildTemplateMessage_ConVariables(t *testing.T) {
 		"pedido_confirmado_v2",
 		"+573001234567",
 		map[string]string{"1": "ORD-999"},
+		"",
 		templateDef,
 	)
 
@@ -713,7 +714,7 @@ func TestBuildTemplateMessage_SinVariables(t *testing.T) {
 		Variables: []string{}, // sin variables
 	}
 
-	msg := uc.buildTemplateMessage("handoff_asesor", "+573001234567", map[string]string{}, templateDef)
+	msg := uc.buildTemplateMessage("handoff_asesor", "+573001234567", map[string]string{}, "", templateDef)
 
 	if len(msg.Template.Components) != 0 {
 		t.Errorf("Components tiene %d elementos, quería 0 (sin variables)", len(msg.Template.Components))

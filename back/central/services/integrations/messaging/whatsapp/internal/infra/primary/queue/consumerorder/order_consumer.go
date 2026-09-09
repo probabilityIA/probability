@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder/request"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -66,14 +67,27 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		businessID = *event.BusinessID
 	}
 
-	messageID, err := c.useCase.SendTemplate(
-		context.Background(),
-		templateName,
-		event.CustomerPhone,
-		variables,
-		event.OrderNumber,
-		businessID,
-	)
+	ctx := context.Background()
+
+	var messageID string
+	var err error
+
+	if requiereMapa(templateName) {
+		mapaURL, mapErr := c.mapaDeLaDireccion(ctx, event)
+		if mapErr != nil {
+			c.log.Warn().
+				Err(mapErr).
+				Str("order_number", event.OrderNumber).
+				Msg("No se pudo generar el mapa de la direccion, se envia la plantilla sin mapa")
+			templateName = "confirmacion_pedido_contraentrega"
+			variables = buildVariables(templateName, event)
+			messageID, err = c.useCase.SendTemplate(ctx, templateName, event.CustomerPhone, variables, event.OrderNumber, businessID)
+		} else {
+			messageID, err = c.useCase.SendTemplateWithHeaderImage(ctx, templateName, event.CustomerPhone, variables, mapaURL, event.OrderNumber, businessID)
+		}
+	} else {
+		messageID, err = c.useCase.SendTemplate(ctx, templateName, event.CustomerPhone, variables, event.OrderNumber, businessID)
+	}
 
 	if err != nil {
 		if whaErrors.IsNonRetryable(err) {
@@ -222,4 +236,19 @@ func formatTotalAmount(amount float64, _ string) string {
 		formatted += string(c)
 	}
 	return "$" + formatted
+}
+
+
+func requiereMapa(templateName string) bool {
+	return strings.HasSuffix(templateName, "_mapa")
+}
+
+func (c *consumer) mapaDeLaDireccion(ctx context.Context, event request.OrderConfirmationEvent) (string, error) {
+	if c.mapImage == nil || !c.mapImage.IsConfigured() {
+		return "", ports.ErrMapImageNotConfigured
+	}
+	if event.ShippingLat == nil || event.ShippingLng == nil {
+		return "", fmt.Errorf("la orden %s no tiene coordenadas de entrega", event.OrderNumber)
+	}
+	return c.mapImage.BuildAddressMap(ctx, *event.ShippingLat, *event.ShippingLng, event.OrderNumber)
 }
