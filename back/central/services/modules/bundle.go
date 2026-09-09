@@ -112,7 +112,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "inventory"))
 	drivers.New(router, database)
 	vehicles.New(router, database)
-	routes.New(router, database)
+	routes.New(router, database, logger, environment)
 	geozones.New(router, database, logger, redisClient, rabbitMQ)
 	storefront.New(router, database, logger, rabbitMQ, environment, s3)
 	publicsite.New(router, database, logger, environment, payBundle, s3)

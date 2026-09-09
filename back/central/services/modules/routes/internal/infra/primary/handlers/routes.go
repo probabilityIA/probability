@@ -28,5 +28,6 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		routes.DELETE("/:id/stops/:stopId", h.DeleteStop)
 		routes.POST("/:id/stops/:stopId/status", h.UpdateStopStatus)
 		routes.PUT("/:id/stops/reorder", h.ReorderStops)
+		routes.POST("/:id/optimize", h.OptimizeRoute)
 	}
 }

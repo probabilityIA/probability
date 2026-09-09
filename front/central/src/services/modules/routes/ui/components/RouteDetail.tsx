@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeftIcon, PlayIcon, CheckCircleIcon, XCircleIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PlayIcon, CheckCircleIcon, XCircleIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { RouteDetail as RouteDetailType, RouteStopInfo } from '../../domain/types';
 import {
     getRouteByIdAction,
     startRouteAction,
     completeRouteAction,
+    optimizeRouteAction,
     updateStopStatusAction,
 } from '../../infra/actions';
 import { Alert, Spinner, Button } from '@/shared/ui';
@@ -54,6 +55,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [optimizeResult, setOptimizeResult] = useState<{ antesKm: number | null; antesMin: number | null; despuesKm: number; despuesMin: number; sinCoords: number } | null>(null);
     const [failureStopId, setFailureStopId] = useState<number | null>(null);
     const [failureReason, setFailureReason] = useState('');
 
@@ -83,6 +85,29 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             onRefreshList?.();
         } catch (err: any) {
             setError(getActionError(err, 'Error al iniciar la ruta'));
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleOptimizeRoute = async () => {
+        setActionLoading('optimize');
+        setError(null);
+        try {
+            const antesKm = route?.total_distance_km ?? null;
+            const antesMin = route?.total_duration_min ?? null;
+            const resultado = await optimizeRouteAction(routeId, businessId);
+            await fetchRoute();
+            onRefreshList?.();
+            setOptimizeResult({
+                antesKm,
+                antesMin,
+                despuesKm: resultado.total_distance_km,
+                despuesMin: resultado.total_duration_min,
+                sinCoords: resultado.stops_sin_coords,
+            });
+        } catch (err: any) {
+            setError(getActionError(err, 'No se pudo optimizar la ruta'));
         } finally {
             setActionLoading(null);
         }
@@ -217,6 +242,17 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {route.status === 'planned' && route.stops.length > 1 && (
+                            <Button
+                                variant="secondary"
+                                onClick={handleOptimizeRoute}
+                                disabled={actionLoading === 'optimize'}
+                                title="Reordena las paradas por la ruta mas corta"
+                            >
+                                <SparklesIcon className="w-4 h-4 mr-1" />
+                                {actionLoading === 'optimize' ? 'Optimizando...' : 'Optimizar ruta'}
+                            </Button>
+                        )}
                         {route.status === 'planned' && (
                             <Button
                                 variant="primary"
@@ -239,6 +275,42 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                         )}
                     </div>
                 </div>
+
+                {optimizeResult && (
+                    <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                                    Ruta optimizada
+                                </p>
+                                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
+                                    {optimizeResult.despuesKm.toFixed(1)} km y {optimizeResult.despuesMin} min estimados
+                                    {optimizeResult.antesKm !== null && optimizeResult.antesKm > optimizeResult.despuesKm && (
+                                        <> {'\u2014'} antes {optimizeResult.antesKm.toFixed(1)} km
+                                        {optimizeResult.antesMin !== null && <> y {optimizeResult.antesMin} min</>}
+                                        {', '}ahorras {(optimizeResult.antesKm - optimizeResult.despuesKm).toFixed(1)} km
+                                        {optimizeResult.antesMin !== null && <> y {optimizeResult.antesMin - optimizeResult.despuesMin} min</>}
+                                        </>
+                                    )}
+                                </p>
+                                {optimizeResult.sinCoords > 0 && (
+                                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                                        {optimizeResult.sinCoords} parada{optimizeResult.sinCoords > 1 ? 's' : ''} sin
+                                        coordenadas qued{optimizeResult.sinCoords > 1 ? 'aron' : 'o'} al final, sin optimizar.
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setOptimizeResult(null)}
+                                className="text-emerald-700 hover:text-emerald-900 dark:text-emerald-400"
+                                aria-label="Cerrar"
+                            >
+                                <XCircleIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Progress bar */}
                 <div className="mt-4">

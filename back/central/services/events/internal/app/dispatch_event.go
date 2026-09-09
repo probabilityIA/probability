@@ -19,6 +19,9 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 
 	// Lookup configs en Redis cache
 	configs, err := d.configCache.GetActiveConfigsByIntegrationAndTrigger(ctx, event.IntegrationID, event.Type)
+	if err == nil {
+		configs = d.applyVariants(ctx, event, configs)
+	}
 	if err != nil {
 		d.logger.Warn(ctx).
 			Err(err).
@@ -174,4 +177,43 @@ func (d *EventDispatcher) validateConditions(event entities.Event, config entiti
 func isOrderConfirmation(config entities.CachedNotificationConfig) bool {
 	return config.NotificationTypeID == dtos.NotificationTypeWhatsApp &&
 		config.EventCode == dtos.EventCodeOrderCreated
+}
+
+
+var eventVariants = map[string]string{
+	dtos.EventCodeOrderCreated: "order.created_with_map",
+}
+
+// applyVariants agrega las configs de la variante del evento y, si la variante
+// esta activa para un canal, descarta la config base de ese mismo canal: el
+// negocio elige una plantilla u otra, nunca las dos.
+func (d *EventDispatcher) applyVariants(ctx context.Context, event entities.Event, configs []entities.CachedNotificationConfig) []entities.CachedNotificationConfig {
+	variantCode, tieneVariante := eventVariants[event.Type]
+	if !tieneVariante {
+		return configs
+	}
+
+	variantes, err := d.configCache.GetActiveConfigsByIntegrationAndTrigger(ctx, event.IntegrationID, variantCode)
+	if err != nil || len(variantes) == 0 {
+		return configs
+	}
+
+	canalesConVariante := make(map[uint]bool, len(variantes))
+	for _, v := range variantes {
+		canalesConVariante[v.NotificationTypeID] = true
+	}
+
+	resultado := make([]entities.CachedNotificationConfig, 0, len(configs)+len(variantes))
+	for _, c := range configs {
+		if canalesConVariante[c.NotificationTypeID] {
+			d.logger.Info(ctx).
+				Uint("config_id", c.ID).
+				Str("variante", variantCode).
+				Msg("La variante del evento esta activa, se omite la config base de ese canal")
+			continue
+		}
+		resultado = append(resultado, c)
+	}
+
+	return append(resultado, variantes...)
 }

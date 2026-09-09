@@ -20,6 +20,7 @@ type IHandlers interface {
 	DeleteStop(c *gin.Context)
 	UpdateStopStatus(c *gin.Context)
 	ReorderStops(c *gin.Context)
+	OptimizeRoute(c *gin.Context)
 	ListAvailableDrivers(c *gin.Context)
 	ListAvailableVehicles(c *gin.Context)
 	ListAssignableOrders(c *gin.Context)

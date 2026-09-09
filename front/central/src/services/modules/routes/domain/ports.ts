@@ -14,6 +14,7 @@ import {
     DriverOption,
     VehicleOption,
     AssignableOrder,
+    OptimizeRouteResult,
 } from './types';
 
 export interface IRouteRepository {
@@ -34,6 +35,7 @@ export interface IRouteRepository {
     deleteStop(routeId: number, stopId: number, businessId?: number): Promise<DeleteRouteResponse>;
     updateStopStatus(routeId: number, stopId: number, data: UpdateStopStatusDTO, businessId?: number): Promise<RouteStopInfo>;
     reorderStops(routeId: number, data: ReorderStopsDTO, businessId?: number): Promise<RouteDetail>;
+    optimizeRoute(routeId: number, businessId?: number): Promise<OptimizeRouteResult>;
 
     // Form options
     getAvailableDrivers(businessId?: number): Promise<DriverOption[]>;

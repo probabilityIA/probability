@@ -10,6 +10,7 @@ type TemplateParameter struct {
 	Type          string
 	ParameterName string
 	Text          string
+	ImageLink     string
 }
 
 // TemplateComponent representa un componente del template

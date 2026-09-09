@@ -16,6 +16,7 @@ import {
     DriverOption,
     VehicleOption,
     AssignableOrder,
+    OptimizeRouteResult,
 } from '../../domain/types';
 
 export class RouteApiRepository implements IRouteRepository {
@@ -114,6 +115,12 @@ export class RouteApiRepository implements IRouteRepository {
 
     async completeRoute(id: number, businessId?: number): Promise<RouteDetail> {
         return this.fetch<RouteDetail>(this.withBusinessId(`/routes/${id}/complete`, businessId), {
+            method: 'POST',
+        });
+    }
+
+    async optimizeRoute(id: number, businessId?: number): Promise<OptimizeRouteResult> {
+        return this.fetch<OptimizeRouteResult>(this.withBusinessId(`/routes/${id}/optimize`, businessId), {
             method: 'POST',
         });
     }

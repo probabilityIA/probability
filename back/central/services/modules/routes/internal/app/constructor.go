@@ -21,15 +21,17 @@ type IUseCase interface {
 	DeleteStop(ctx context.Context, businessID, routeID, stopID uint) error
 	UpdateStopStatus(ctx context.Context, dto dtos.UpdateStopStatusDTO) error
 	ReorderStops(ctx context.Context, dto dtos.ReorderStopsDTO) error
+	OptimizeRoute(ctx context.Context, dto dtos.OptimizeRouteDTO) (*dtos.OptimizeRouteResult, error)
 	ListDriversForBusiness(ctx context.Context, businessID uint) ([]dtos.DriverOption, error)
 	ListVehiclesForBusiness(ctx context.Context, businessID uint) ([]dtos.VehicleOption, error)
 	ListAssignableOrders(ctx context.Context, businessID uint) ([]dtos.AssignableOrder, error)
 }
 
 type UseCase struct {
-	repo ports.IRepository
+	repo      ports.IRepository
+	optimizer ports.IRouteOptimizer
 }
 
-func New(repo ports.IRepository) IUseCase {
-	return &UseCase{repo: repo}
+func New(repo ports.IRepository, optimizer ports.IRouteOptimizer) IUseCase {
+	return &UseCase{repo: repo, optimizer: optimizer}
 }

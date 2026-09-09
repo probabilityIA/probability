@@ -21,11 +21,15 @@ func MapDomainToRequest(d entities.TemplateMessage) any {
 	for _, comp := range d.Template.Components {
 		var parameters []request.Parameter
 		for _, param := range comp.Parameters {
-			parameters = append(parameters, request.Parameter{
+			mapped := request.Parameter{
 				Type:          param.Type,
 				ParameterName: param.ParameterName,
 				Text:          param.Text,
-			})
+			}
+			if param.ImageLink != "" {
+				mapped.Image = &request.Media{Link: param.ImageLink}
+			}
+			parameters = append(parameters, mapped)
 		}
 		components = append(components, request.Component{
 			Type:       comp.Type,

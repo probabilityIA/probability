@@ -12,6 +12,7 @@ type TemplateDefinition struct {
 	Language     string
 	Variables    []string
 	HasButtons   bool
+	HeaderImage  bool
 	ButtonLabels []string
 	Description  string
 	Body         string
@@ -35,6 +36,25 @@ var Templates = map[string]TemplateDefinition{
 		HasButtons:   true,
 		ButtonLabels: []string{"Confirmar pedido", "No confirmar"},
 		Description:  "Confirmacion de pedido con direccion desglosada, metodo de pago y valor a recaudar",
+	},
+	"confirmacion_pedido_contraentrega_mapa": {
+		Name:     "confirmacion_pedido_contraentrega_mapa",
+		Language: "es",
+		Variables: []string{
+			"nombre",
+			"tienda",
+			"numero_orden",
+			"direccion",
+			"ciudad",
+			"departamento",
+			"productos",
+			"metodo_pago",
+			"valor_recaudar",
+		},
+		HasButtons:   true,
+		HeaderImage:  true,
+		ButtonLabels: []string{"Confirmar pedido", "No confirmar"},
+		Description:  "Confirmacion contra entrega con mapa de la direccion en el encabezado, para que el cliente valide su ubicacion antes de generar la guia",
 	},
 	"confirmacion_pedido_contraentrega_sin_valor": {
 		Name:     "confirmacion_pedido_contraentrega_sin_valor",

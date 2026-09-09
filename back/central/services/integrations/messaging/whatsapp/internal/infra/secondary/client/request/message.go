@@ -6,10 +6,15 @@ type Language struct {
 }
 
 // Parameter representa un parámetro del template
+type Media struct {
+	Link string `json:"link"`
+}
+
 type Parameter struct {
 	Type          string `json:"type"`
-	ParameterName string `json:"parameter_name"`
-	Text          string `json:"text"`
+	ParameterName string `json:"parameter_name,omitempty"`
+	Text          string `json:"text,omitempty"`
+	Image         *Media `json:"image,omitempty"`
 }
 
 // Component representa un componente del template

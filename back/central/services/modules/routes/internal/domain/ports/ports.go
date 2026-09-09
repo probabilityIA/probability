@@ -7,6 +7,11 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/routes/internal/domain/entities"
 )
 
+type IRouteOptimizer interface {
+	Optimize(ctx context.Context, origin dtos.GeoPoint, stops []dtos.GeoPoint) (dtos.OptimizedRoute, error)
+	IsConfigured() bool
+}
+
 type IRepository interface {
 	// Route CRUD
 	CreateRoute(ctx context.Context, route *entities.Route, stops []entities.RouteStop) (*entities.Route, error)

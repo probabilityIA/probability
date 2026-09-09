@@ -18,7 +18,17 @@ func newRoutesUseCase(repo *mocks.RepositoryMock) IUseCase {
 	if repo == nil {
 		repo = &mocks.RepositoryMock{}
 	}
-	return New(repo)
+	return New(repo, &mocks.OptimizerMock{})
+}
+
+func newRoutesUseCaseCon(repo *mocks.RepositoryMock, optimizer *mocks.OptimizerMock) IUseCase {
+	if repo == nil {
+		repo = &mocks.RepositoryMock{}
+	}
+	if optimizer == nil {
+		optimizer = &mocks.OptimizerMock{}
+	}
+	return New(repo, optimizer)
 }
 
 func uintPtr(v uint) *uint      { return &v }

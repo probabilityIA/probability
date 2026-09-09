@@ -14,6 +14,7 @@ type IUseCase interface {
 	SendMessage(ctx context.Context, req dtos.SendMessageRequest) (string, error)
 
 	SendTemplate(ctx context.Context, templateName, phoneNumber string, variables map[string]string, orderNumber string, businessID uint) (string, error)
+	SendTemplateWithHeaderImage(ctx context.Context, templateName, phoneNumber string, variables map[string]string, headerImageURL string, orderNumber string, businessID uint) (string, error)
 	SendCustomTemplate(ctx context.Context, templateName, language, phoneNumber string, parameters []string, businessID uint) (string, error)
 	SendPlatformTemplate(ctx context.Context, templateName, phoneNumber string, variables map[string]string, orderNumber string, businessID uint) (string, error)
 	SendTemplateWithConversation(ctx context.Context, templateName, phoneNumber string, variables map[string]string, conversationID string) (string, error)
