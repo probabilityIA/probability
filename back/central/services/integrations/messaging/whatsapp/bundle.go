@@ -152,6 +152,13 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 
 	numbersUseCase := usecasenumbers.New(credsCache, phoneNumbersAPIFactory, logger)
 
+	numbersUseCase.SetProfileAPI(func(baseURL string) ports.IBusinessProfileAPI {
+		if baseURL == "" {
+			baseURL = whatsappURL
+		}
+		return client.NewBusinessProfileClient(baseURL, logger)
+	})
+
 	embeddedSignupAPIFactory := func(baseURL string) ports.IEmbeddedSignupAPI {
 		if baseURL == "" {
 			baseURL = whatsappURL

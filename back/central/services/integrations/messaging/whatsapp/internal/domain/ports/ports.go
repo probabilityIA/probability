@@ -137,6 +137,32 @@ type IPhoneNumbersAPI interface {
 	GetPhoneNumber(ctx context.Context, phoneNumberID, accessToken string) (*WABAPhoneNumber, error)
 }
 
+type WhatsAppBusinessProfile struct {
+	About             string
+	Address           string
+	Description       string
+	Email             string
+	ProfilePictureURL string
+	Websites          []string
+	Vertical          string
+}
+
+type WhatsAppBusinessProfileUpdate struct {
+	About                *string
+	Address              *string
+	Description          *string
+	Email                *string
+	Vertical             *string
+	Websites             *[]string
+	ProfilePictureHandle *string
+}
+
+type IBusinessProfileAPI interface {
+	GetProfile(ctx context.Context, phoneNumberID, accessToken string) (*WhatsAppBusinessProfile, error)
+	UpdateProfile(ctx context.Context, phoneNumberID, accessToken string, perfil WhatsAppBusinessProfileUpdate) error
+	UploadProfilePhoto(ctx context.Context, appID, accessToken, contentType string, data []byte) (string, error)
+}
+
 type TemplateDefinitionRemote struct {
 	ID              string
 	Name            string

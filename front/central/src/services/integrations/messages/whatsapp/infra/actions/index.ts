@@ -11,6 +11,8 @@ import {
     WhatsAppEmbeddedSignupPayload,
     WhatsAppEmbeddedSignupResponse,
     WhatsAppNumberResponse,
+    WhatsAppBusinessProfileResponse,
+    WhatsAppBusinessProfileValues,
     WhatsAppProvisionResponse,
     WhatsAppTemplatesResponse,
 } from '../../domain/types';
@@ -78,6 +80,33 @@ const numberAction = async (
 
 export const getWhatsAppNumberStateAction = async (businessId?: number, token?: string | null) =>
     numberAction((useCases) => useCases.getNumberState(businessId), token);
+
+const profileAction = async (
+    run: (useCases: WhatsAppUseCases) => Promise<WhatsAppBusinessProfileResponse>,
+    token?: string | null
+): Promise<WhatsAppBusinessProfileResponse> => {
+    try {
+        const useCases = await getUseCases(token);
+        return await run(useCases);
+    } catch (error: any) {
+        return { success: false, message: error?.message || 'Error con el perfil de WhatsApp' };
+    }
+};
+
+export const getWhatsAppBusinessProfileAction = async (businessId?: number, token?: string | null) =>
+    profileAction((useCases) => useCases.getBusinessProfile(businessId), token);
+
+export const updateWhatsAppBusinessProfileAction = async (
+    values: WhatsAppBusinessProfileValues,
+    businessId?: number,
+    token?: string | null
+) => profileAction((useCases) => useCases.updateBusinessProfile(values, businessId), token);
+
+export const updateWhatsAppBusinessProfilePhotoAction = async (
+    file: File,
+    businessId?: number,
+    token?: string | null
+) => profileAction((useCases) => useCases.updateBusinessProfilePhoto(file, businessId), token);
 
 export const addWhatsAppNumberAction = async (
     values: WhatsAppAddNumberValues,

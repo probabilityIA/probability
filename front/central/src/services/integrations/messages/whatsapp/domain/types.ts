@@ -132,3 +132,28 @@ export interface WhatsAppEmbeddedSignupPayload {
     waba_id: string;
     phone_number_id: string;
 }
+
+export interface WhatsAppBusinessProfile {
+    about: string;
+    address: string;
+    description: string;
+    email: string;
+    profile_picture_url: string;
+    websites: string[] | null;
+    vertical: string;
+}
+
+export interface WhatsAppBusinessProfileResponse {
+    success: boolean;
+    message?: string;
+    data?: WhatsAppBusinessProfile;
+}
+
+export interface WhatsAppBusinessProfileValues {
+    about?: string;
+    address?: string;
+    description?: string;
+    email?: string;
+    vertical?: string;
+    websites?: string[];
+}

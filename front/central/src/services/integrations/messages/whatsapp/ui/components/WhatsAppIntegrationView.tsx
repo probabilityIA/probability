@@ -9,6 +9,7 @@ import WhatsAppConnectionForm from './WhatsAppConnectionForm';
 import WhatsAppEmbeddedSignup from './WhatsAppEmbeddedSignup';
 import WhatsAppNumberWizard from './WhatsAppNumberWizard';
 import WhatsAppTemplatesPanel from './WhatsAppTemplatesPanel';
+import { WhatsAppProfilePanel } from './WhatsAppProfilePanel';
 
 interface WhatsAppIntegrationViewProps {
     integration: {
@@ -336,6 +337,11 @@ export default function WhatsAppIntegrationView({
                             )}
                         </div>
                     </Card>
+
+                    <WhatsAppProfilePanel
+                        businessId={integration.business_id ?? undefined}
+                        enabled={usesOwnNumber}
+                    />
 
                     {(onUpdateConfig || onTestConnection) && (
                         <Card

@@ -6,6 +6,8 @@ import {
     WhatsAppEmbeddedSignupPayload,
     WhatsAppEmbeddedSignupResponse,
     WhatsAppNumberResponse,
+    WhatsAppBusinessProfileResponse,
+    WhatsAppBusinessProfileValues,
     WhatsAppProvisionResponse,
     WhatsAppTemplatesResponse,
 } from './types';
@@ -15,6 +17,9 @@ export interface IWhatsAppRepository {
     provisionTemplates(businessId?: number): Promise<WhatsAppProvisionResponse>;
     saveConnection(values: WhatsAppConnectionValues, businessId?: number): Promise<WhatsAppConnectionResponse>;
     getNumberState(businessId?: number): Promise<WhatsAppNumberResponse>;
+    getBusinessProfile(businessId?: number): Promise<WhatsAppBusinessProfileResponse>;
+    updateBusinessProfile(values: WhatsAppBusinessProfileValues, businessId?: number): Promise<WhatsAppBusinessProfileResponse>;
+    updateBusinessProfilePhoto(file: File, businessId?: number): Promise<WhatsAppBusinessProfileResponse>;
     addNumber(values: WhatsAppAddNumberValues, businessId?: number): Promise<WhatsAppNumberResponse>;
     requestNumberCode(method: string, businessId?: number): Promise<WhatsAppNumberResponse>;
     verifyNumberCode(code: string, businessId?: number): Promise<WhatsAppNumberResponse>;

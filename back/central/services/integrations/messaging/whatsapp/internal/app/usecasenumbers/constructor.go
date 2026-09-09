@@ -44,20 +44,27 @@ type IUseCase interface {
 	RequestCode(ctx context.Context, businessID uint, method string) (*NumberState, error)
 	VerifyCode(ctx context.Context, businessID uint, code string) (*NumberState, error)
 	Register(ctx context.Context, businessID uint) (*NumberState, error)
+	GetProfile(ctx context.Context, businessID uint) (*BusinessProfile, error)
+	UpdateProfile(ctx context.Context, businessID uint, input BusinessProfileInput) (*BusinessProfile, error)
+	UpdateProfilePhoto(ctx context.Context, businessID uint, contentType string, data []byte) (*BusinessProfile, error)
 }
 
 type IUseCaseMutable interface {
 	IUseCase
 	SetResolver(resolver ports.IPlatformCredentialsGetter)
+	SetProfileAPI(factory ProfileAPIFactory)
 }
 
 type APIFactory func(baseURL string) ports.IPhoneNumbersAPI
+
+type ProfileAPIFactory func(baseURL string) ports.IBusinessProfileAPI
 
 type usecase struct {
 	credentialsCache ports.ICredentialsCache
 	apiFactory       APIFactory
 	log              log.ILogger
 	resolver         ports.IPlatformCredentialsGetter
+	profileFactory   ProfileAPIFactory
 }
 
 func New(credentialsCache ports.ICredentialsCache, apiFactory APIFactory, logger log.ILogger) IUseCaseMutable {
@@ -70,4 +77,8 @@ func New(credentialsCache ports.ICredentialsCache, apiFactory APIFactory, logger
 
 func (u *usecase) SetResolver(resolver ports.IPlatformCredentialsGetter) {
 	u.resolver = resolver
+}
+
+func (u *usecase) SetProfileAPI(factory ProfileAPIFactory) {
+	u.profileFactory = factory
 }

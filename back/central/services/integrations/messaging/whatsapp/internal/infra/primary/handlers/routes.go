@@ -17,6 +17,9 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		whatsapp.PUT("/connection", middleware.JWT(), h.SaveConnection)
 
 		whatsapp.GET("/numbers", middleware.JWT(), h.GetNumberState)
+		whatsapp.GET("/profile", middleware.JWT(), h.GetBusinessProfile)
+		whatsapp.PUT("/profile", middleware.JWT(), h.UpdateBusinessProfile)
+		whatsapp.POST("/profile/photo", middleware.JWT(), h.UpdateBusinessProfilePhoto)
 		whatsapp.POST("/numbers", middleware.JWT(), h.AddNumber)
 		whatsapp.POST("/numbers/code", middleware.JWT(), h.RequestNumberCode)
 		whatsapp.POST("/numbers/verify", middleware.JWT(), h.VerifyNumberCode)

@@ -7,6 +7,8 @@ import {
     WhatsAppEmbeddedSignupPayload,
     WhatsAppEmbeddedSignupResponse,
     WhatsAppNumberResponse,
+    WhatsAppBusinessProfileResponse,
+    WhatsAppBusinessProfileValues,
     WhatsAppProvisionResponse,
     WhatsAppTemplatesResponse,
 } from '../domain/types';
@@ -31,6 +33,24 @@ export class WhatsAppUseCases {
 
     async getNumberState(businessId?: number): Promise<WhatsAppNumberResponse> {
         return this.repository.getNumberState(businessId);
+    }
+
+    async getBusinessProfile(businessId?: number): Promise<WhatsAppBusinessProfileResponse> {
+        return this.repository.getBusinessProfile(businessId);
+    }
+
+    async updateBusinessProfile(
+        values: WhatsAppBusinessProfileValues,
+        businessId?: number
+    ): Promise<WhatsAppBusinessProfileResponse> {
+        return this.repository.updateBusinessProfile(values, businessId);
+    }
+
+    async updateBusinessProfilePhoto(
+        file: File,
+        businessId?: number
+    ): Promise<WhatsAppBusinessProfileResponse> {
+        return this.repository.updateBusinessProfilePhoto(file, businessId);
     }
 
     async addNumber(values: WhatsAppAddNumberValues, businessId?: number): Promise<WhatsAppNumberResponse> {

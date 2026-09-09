@@ -8,6 +8,8 @@ import {
     WhatsAppEmbeddedSignupPayload,
     WhatsAppEmbeddedSignupResponse,
     WhatsAppNumberResponse,
+    WhatsAppBusinessProfileResponse,
+    WhatsAppBusinessProfileValues,
     WhatsAppProvisionResponse,
     WhatsAppTemplatesResponse,
 } from '../../domain/types';
@@ -83,6 +85,51 @@ export class WhatsAppApiRepository implements IWhatsAppRepository {
 
     async getNumberState(businessId?: number): Promise<WhatsAppNumberResponse> {
         return this.request<WhatsAppNumberResponse>(`/integrations/whatsapp/numbers${this.query(businessId)}`);
+    }
+
+    async getBusinessProfile(businessId?: number): Promise<WhatsAppBusinessProfileResponse> {
+        return this.request<WhatsAppBusinessProfileResponse>(
+            `/integrations/whatsapp/profile${this.query(businessId)}`
+        );
+    }
+
+    async updateBusinessProfile(
+        values: WhatsAppBusinessProfileValues,
+        businessId?: number
+    ): Promise<WhatsAppBusinessProfileResponse> {
+        return this.request<WhatsAppBusinessProfileResponse>(
+            `/integrations/whatsapp/profile${this.query(businessId)}`,
+            { method: 'PUT', body: JSON.stringify(values) }
+        );
+    }
+
+    async updateBusinessProfilePhoto(
+        file: File,
+        businessId?: number
+    ): Promise<WhatsAppBusinessProfileResponse> {
+        const form = new FormData();
+        form.append('photo', file);
+
+        const response = await fetch(
+            `${this.baseUrl}/integrations/whatsapp/profile/photo${this.query(businessId)}`,
+            {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+                },
+                body: form,
+                cache: 'no-store',
+            }
+        );
+
+        const body = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(body?.error || body?.message || 'No se pudo actualizar la foto');
+        }
+
+        return body as WhatsAppBusinessProfileResponse;
     }
 
     async addNumber(values: WhatsAppAddNumberValues, businessId?: number): Promise<WhatsAppNumberResponse> {
