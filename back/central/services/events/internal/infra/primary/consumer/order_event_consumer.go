@@ -47,6 +47,8 @@ type orderSnapshot struct {
 	ShippingStreet      string   `json:"shipping_street,omitempty"`
 	ShippingCity        string   `json:"shipping_city,omitempty"`
 	ShippingState       string   `json:"shipping_state,omitempty"`
+	ShippingLat         *float64 `json:"shipping_lat,omitempty"`
+	ShippingLng         *float64 `json:"shipping_lng,omitempty"`
 	PaymentMethodID     uint     `json:"payment_method_id,omitempty"`
 	PaymentMethodName   string   `json:"payment_method_name,omitempty"`
 	TrackingNumber      string   `json:"tracking_number,omitempty"`
@@ -129,6 +131,10 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		data["shipping_street"] = msg.Order.ShippingStreet
 		data["shipping_city"] = msg.Order.ShippingCity
 		data["shipping_state"] = msg.Order.ShippingState
+		if msg.Order.ShippingLat != nil && msg.Order.ShippingLng != nil {
+			data["shipping_lat"] = *msg.Order.ShippingLat
+			data["shipping_lng"] = *msg.Order.ShippingLng
+		}
 		data["payment_method_id"] = msg.Order.PaymentMethodID
 		data["payment_method_name"] = msg.Order.PaymentMethodName
 		data["tracking_number"] = msg.Order.TrackingNumber
