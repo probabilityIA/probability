@@ -35,6 +35,10 @@ func candidatesForEvent(eventCode string) []templateCandidate {
 			{"confirmacion_pedido_contraentrega", "Contra entrega con valor a recaudar ya definido"},
 			{"confirmacion_pedido_contraentrega_sin_valor", "Contra entrega cuando el flete todavia no se conoce"},
 		}
+	case "order.created_with_map":
+		return []templateCandidate{
+			{"confirmacion_pedido_contraentrega_mapa", "Contra entrega, con mapa de la direccion en el encabezado"},
+		}
 	case "order.shipped":
 		return []templateCandidate{
 			{"pedido_en_reparto", "Pedido pagado por adelantado"},

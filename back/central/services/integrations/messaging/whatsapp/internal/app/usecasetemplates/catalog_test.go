@@ -91,3 +91,34 @@ func TestComponentsForCreateReconstruyeAutenticacion(t *testing.T) {
 		t.Fatal("el botón OTP no lleva url")
 	}
 }
+
+func TestCandidatesForEventCubreTodosLosEventosDelCatalogo(t *testing.T) {
+	eventos := []string{
+		"order.created",
+		"order.created_with_map",
+		"order.shipped",
+		"order.delivered",
+		"order.canceled",
+		"shipment.guide_generated",
+		"wallet.low_balance",
+	}
+
+	for _, evento := range eventos {
+		if len(candidatesForEvent(evento)) == 0 {
+			t.Errorf("el evento %q no tiene plantillas candidatas: la vista previa saldria vacia", evento)
+		}
+	}
+}
+
+func TestCandidatesForEventConMapaApuntaALaPlantillaCorrecta(t *testing.T) {
+	candidatos := candidatesForEvent("order.created_with_map")
+	if len(candidatos) != 1 {
+		t.Fatalf("se esperaba 1 candidato, hay %d", len(candidatos))
+	}
+	if candidatos[0].name != "confirmacion_pedido_contraentrega_mapa" {
+		t.Errorf("apunta a %q", candidatos[0].name)
+	}
+	if candidatos[0].condition == "" {
+		t.Error("el candidato debe explicar cuando aplica, es lo que lee el usuario en la UI")
+	}
+}
