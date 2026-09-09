@@ -10,6 +10,7 @@ import {
   getNotificationEventTypesAction,
 } from "../../infra/actions";
 import { TemplatePreviewModal } from "./TemplatePreviewModal";
+import { StatusMultiSelect } from "./StatusMultiSelect";
 
 export interface LocalRule {
   _tempId: string;
@@ -198,34 +199,11 @@ export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onD
             {isNew ? "Selecciona evento" : "Sin estados"}
           </span>
         ) : filteredStatuses.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {filteredStatuses.map((status) => {
-              const isChecked = rule.order_status_ids.includes(status.id);
-              const statusColor = status.color || "#9CA3AF";
-              return (
-                <button
-                  key={status.id}
-                  type="button"
-                  onClick={() => {
-
-                    const newIds = isChecked ? [] : [status.id];
-                    onChange({ ...rule, order_status_ids: newIds });
-                  }}
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer ${
-                    isChecked ? "border-blue-300 bg-blue-50 text-blue-700" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50"
-                  }`}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
-                  {status.name}
-                  {isChecked && (
-                    <svg className="w-2.5 h-2.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <StatusMultiSelect
+            options={filteredStatuses}
+            selected={rule.order_status_ids}
+            onChange={(ids) => onChange({ ...rule, order_status_ids: ids })}
+          />
         ) : (
           <span className="text-[10px] text-gray-400 italic">Sin filtro de estado</span>
         )}
