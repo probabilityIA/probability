@@ -209,7 +209,7 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint, manual bool
 		Subtotal:     invoice.Subtotal,
 		Tax:          invoice.Tax,
 		Discount:     invoice.Discount,
-		ShippingCost: invoice.ShippingCost,
+		ShippingCost: dtos.InvoiceShippingCost(order),
 		Currency:     invoice.Currency,
 		OrderID:      invoice.OrderID,
 		OrderNumber:  order.OrderNumber,
