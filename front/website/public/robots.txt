@@ -2,5 +2,11 @@ User-agent: *
 Allow: /website/
 Disallow: /website/admin
 Disallow: /website/api
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-code
+Disallow: /verify-email
+Disallow: /verify-demo
 
 Sitemap: https://www.probabilityia.com.co/website/sitemap.xml

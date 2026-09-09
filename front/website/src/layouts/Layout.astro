@@ -4,20 +4,23 @@ import '../styles/global.css';
 interface Props {
 	title?: string;
 	description?: string;
+	path?: string;
 }
 
-const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', description = 'Reduce devoluciones, aumenta ganancias. Crece con inteligencia artificial.' } = Astro.props;
+const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', description = 'Reduce devoluciones, aumenta ganancias. Crece con inteligencia artificial.', path = '/' } = Astro.props;
+
+const canonicalUrl = `https://www.probabilityia.com.co/website${path === '/' ? '/' : path}`;
 ---
 
 <!doctype html>
 <html lang="es">
 	<head>
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-84XRXZKPSW" is:inline></script>
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-PR13PJFXXF" is:inline></script>
 		<script is:inline>
 			window.dataLayer = window.dataLayer || [];
 			function gtag(){dataLayer.push(arguments);}
 			gtag('js', new Date());
-			gtag('config', 'G-84XRXZKPSW');
+			gtag('config', 'G-PR13PJFXXF');
 
 			document.addEventListener('click', function (e) {
 				var el = e.target && e.target.closest ? e.target.closest('a, button') : null;
@@ -53,26 +56,21 @@ const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', 
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 
-		<!-- Open Graph Tags -->
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content="/website/logo-icon.png" />
 		<meta property="og:type" content="website" />
-		<meta property="og:url" content="https://www.probabilityia.com.co/website/" />
+		<meta property="og:url" content={canonicalUrl} />
 		<meta property="og:locale" content="es_CO" />
 
-		<!-- Twitter Cards -->
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 
-		<!-- Canonical Tag -->
-		<link rel="canonical" href="https://www.probabilityia.com.co/website/" />
+		<link rel="canonical" href={canonicalUrl} />
 
-		<!-- Google Site Verification -->
 		<meta name="google-site-verification" content="C3FRHHDTWfflH6zJG9q7jSERzmKj8ImcTO69cF7qMH4" />
 
-		<!-- JSON-LD Schema - Organization -->
 		<script type="application/ld+json">
 		{
 			"@context": "https://schema.org",
@@ -101,7 +99,6 @@ const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', 
 		}
 		</script>
 
-		<!-- JSON-LD Schema - SoftwareApplication -->
 		<script type="application/ld+json">
 		{
 			"@context": "https://schema.org",
@@ -116,12 +113,6 @@ const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', 
 				"price": "Contactar",
 				"priceCurrency": "COP",
 				"availability": "https://schema.org/InStock"
-			},
-			"aggregateRating": {
-				"@type": "AggregateRating",
-				"ratingValue": "4.8",
-				"ratingCount": "120",
-				"reviewCount": "120"
 			}
 		}
 		</script>

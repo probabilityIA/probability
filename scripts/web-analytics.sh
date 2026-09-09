@@ -17,7 +17,7 @@
 set -euo pipefail
 
 SA="${ANALYTICS_SA:-probability-analytics@probabilityia.iam.gserviceaccount.com}"
-PROPERTY="${GA4_PROPERTY_ID:-553391903}"
+PROPERTY="${GA4_PROPERTY_ID:-548369470}"
 SITE="${GSC_SITE_URL:-sc-domain:probabilityia.com.co}"
 DAYS="${2:-28}"
 
@@ -59,22 +59,30 @@ resolve_property() {
 ga_report() {
   local dimension="$1" metrics="$2" limit="${3:-20}"
   need_token; resolve_property
+  local metrics_json first_metric
+  metrics_json=$(echo "$metrics" | tr ',' '\n' | jq -R -s -c 'split("\n") | map(select(length>0)) | map({name: .})')
+  first_metric=$(echo "$metrics" | cut -d, -f1)
   curl -s -X POST \
     "https://analyticsdata.googleapis.com/v1beta/properties/${PROPERTY}:runReport" \
     -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
     -d "{\"dateRanges\":[{\"startDate\":\"${DAYS}daysAgo\",\"endDate\":\"today\"}],
          \"dimensions\":[{\"name\":\"${dimension}\"}],
-         \"metrics\":[$(echo "$metrics" | tr ',' '\n' | sed 's/.*/{"name":"&"}/' | paste -sd,)],
+         \"metrics\":${metrics_json},
          \"limit\":${limit},
-         \"orderBys\":[{\"desc\":true,\"metric\":{\"metricName\":\"$(echo "$metrics" | cut -d, -f1)\"}}]}"
+         \"orderBys\":[{\"desc\":true,\"metric\":{\"metricName\":\"${first_metric}\"}}]}"
 }
 
 gsc_report() {
   local dimension="$1" limit="${2:-20}"
   need_token
   local start end
-  start=$(date -u -d "${DAYS} days ago" +%F)
-  end=$(date -u +%F)
+  if date -u -d "${DAYS} days ago" +%F >/dev/null 2>&1; then
+    start=$(date -u -d "${DAYS} days ago" +%F)
+    end=$(date -u +%F)
+  else
+    start=$(date -u -v-"${DAYS}"d +%F)
+    end=$(date -u +%F)
+  fi
   curl -s -X POST \
     "https://searchconsole.googleapis.com/webmasters/v3/sites/$(printf %s "$SITE" | jq -sRr @uri)/searchAnalytics/query" \
     -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
