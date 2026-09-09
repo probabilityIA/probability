@@ -74,7 +74,7 @@ func BuildCreateJournalRequest(req *dtos.CreateJournalRequest) request.SiigoJour
 
 		if item.CustomerDNI != "" {
 			journalItem.Customer = &request.SiigoJournalCustomer{
-				Identification: item.CustomerDNI,
+				Identification: sanitizeSiigoIdentification(item.CustomerDNI),
 			}
 		}
 
