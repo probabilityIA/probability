@@ -52,7 +52,6 @@ func (r *Repository) CreateUser(ctx context.Context, user *entities.NewUser) (ui
 		return 0, fmt.Errorf("error hasheando password: %w", err)
 	}
 
-	// Business scope ID = 2
 	scopeID := uint(2)
 	model := &models.User{
 		Name:     user.Name,

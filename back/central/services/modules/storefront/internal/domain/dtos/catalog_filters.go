@@ -1,14 +1,13 @@
 package dtos
 
-// CatalogFilters contains filters for product catalog listing
 type CatalogFilters struct {
 	Search   string
 	Category string
+	FamilyID *uint
 	Page     int
 	PageSize int
 }
 
-// Offset calculates the offset for pagination
 func (f CatalogFilters) Offset() int {
 	if f.Page < 1 {
 		f.Page = 1
@@ -16,7 +15,6 @@ func (f CatalogFilters) Offset() int {
 	return (f.Page - 1) * f.PageSize
 }
 
-// Normalize applies default values
 func (f *CatalogFilters) Normalize() {
 	if f.Page < 1 {
 		f.Page = 1

@@ -10,6 +10,7 @@ export interface StorefrontProduct {
     images?: string[];
     sku: string;
     stock_quantity: number;
+    track_inventory: boolean;
     category: string;
     brand: string;
     is_featured: boolean;
@@ -51,13 +52,48 @@ export interface CreateStorefrontOrderDTO {
     };
 }
 
-export interface RegisterDTO {
+export interface StorefrontClient {
+    id: number;
+    name: string;
+    email: string | null;
+    phone: string;
+    dni: string | null;
+}
+
+export interface CreateClientDTO {
     name: string;
     email: string;
-    password: string;
+    password?: string;
     phone?: string;
     dni?: string;
-    business_code: string;
+}
+
+export interface CreateClientResult {
+    client: StorefrontClient;
+    temp_password?: string;
+}
+
+export interface StorefrontFamily {
+    id: number;
+    name: string;
+    parent_family_id: number | null;
+}
+
+export interface CatalogLayout {
+    columns: number;
+    rows: number;
+}
+
+export interface CatalogBanner {
+    enabled: boolean;
+    image_url: string;
+}
+
+export interface CatalogFiltersResult {
+    categories: string[];
+    families: StorefrontFamily[];
+    layout: CatalogLayout;
+    banner: CatalogBanner;
 }
 
 export interface PaginatedResponse<T> {

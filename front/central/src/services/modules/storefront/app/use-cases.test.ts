@@ -5,14 +5,12 @@ import {
     StorefrontProduct,
     StorefrontOrder,
     StorefrontOrderItem,
+    StorefrontClient,
     CreateStorefrontOrderDTO,
-    RegisterDTO,
+    CreateClientDTO,
+    CreateClientResult,
     PaginatedResponse,
 } from '../domain/types';
-
-// -----------------------------------------------------------------
-// Helpers: datos de prueba reutilizables
-// -----------------------------------------------------------------
 
 const makeProduct = (overrides: Partial<StorefrontProduct> = {}): StorefrontProduct => ({
     id: 'prod-001',
@@ -24,6 +22,7 @@ const makeProduct = (overrides: Partial<StorefrontProduct> = {}): StorefrontProd
     image_url: 'https://example.com/camiseta.png',
     sku: 'CAM-001',
     stock_quantity: 50,
+    track_inventory: true,
     category: 'Ropa',
     brand: 'MarcaX',
     is_featured: true,
@@ -50,6 +49,15 @@ const makeOrder = (overrides: Partial<StorefrontOrder> = {}): StorefrontOrder =>
     ...overrides,
 });
 
+const makeClient = (overrides: Partial<StorefrontClient> = {}): StorefrontClient => ({
+    id: 1,
+    name: 'Juan Perez',
+    email: 'juan@test.com',
+    phone: '3001234567',
+    dni: null,
+    ...overrides,
+});
+
 const paginatedProducts: PaginatedResponse<StorefrontProduct> = {
     data: [makeProduct()],
     total: 1,
@@ -66,9 +74,13 @@ const paginatedOrders: PaginatedResponse<StorefrontOrder> = {
     total_pages: 1,
 };
 
-// -----------------------------------------------------------------
-// Mock del repositorio
-// -----------------------------------------------------------------
+const paginatedClients: PaginatedResponse<StorefrontClient> = {
+    data: [makeClient()],
+    total: 1,
+    page: 1,
+    page_size: 20,
+    total_pages: 1,
+};
 
 function createMockRepository(): IStorefrontRepository {
     return {
@@ -77,13 +89,10 @@ function createMockRepository(): IStorefrontRepository {
         createOrder: vi.fn(),
         getOrders: vi.fn(),
         getOrder: vi.fn(),
-        register: vi.fn(),
+        createClient: vi.fn(),
+        getClients: vi.fn(),
     } as unknown as IStorefrontRepository;
 }
-
-// -----------------------------------------------------------------
-// Suite principal
-// -----------------------------------------------------------------
 
 describe('StorefrontUseCases', () => {
     let repo: ReturnType<typeof createMockRepository>;
@@ -94,9 +103,6 @@ describe('StorefrontUseCases', () => {
         useCases = new StorefrontUseCases(repo as unknown as IStorefrontRepository);
     });
 
-    // ---------------------------------------------------------------
-    // getCatalog
-    // ---------------------------------------------------------------
     describe('getCatalog', () => {
         it('debería retornar el catálogo paginado de productos cuando el repositorio tiene éxito', async () => {
             vi.mocked(repo.getCatalog).mockResolvedValue(paginatedProducts);
@@ -131,9 +137,6 @@ describe('StorefrontUseCases', () => {
         });
     });
 
-    // ---------------------------------------------------------------
-    // getProduct
-    // ---------------------------------------------------------------
     describe('getProduct', () => {
         it('debería retornar un producto por su ID', async () => {
             const product = makeProduct();
@@ -162,9 +165,6 @@ describe('StorefrontUseCases', () => {
         });
     });
 
-    // ---------------------------------------------------------------
-    // createOrder
-    // ---------------------------------------------------------------
     describe('createOrder', () => {
         const dto: CreateStorefrontOrderDTO = {
             items: [{ product_id: 'prod-001', quantity: 2 }],
@@ -198,9 +198,6 @@ describe('StorefrontUseCases', () => {
         });
     });
 
-    // ---------------------------------------------------------------
-    // getOrders
-    // ---------------------------------------------------------------
     describe('getOrders', () => {
         it('debería retornar la lista paginada de órdenes cuando el repositorio tiene éxito', async () => {
             vi.mocked(repo.getOrders).mockResolvedValue(paginatedOrders);
@@ -227,9 +224,6 @@ describe('StorefrontUseCases', () => {
         });
     });
 
-    // ---------------------------------------------------------------
-    // getOrder
-    // ---------------------------------------------------------------
     describe('getOrder', () => {
         it('debería retornar una orden por su ID', async () => {
             const order = makeOrder();
@@ -258,48 +252,54 @@ describe('StorefrontUseCases', () => {
         });
     });
 
-    // ---------------------------------------------------------------
-    // register
-    // ---------------------------------------------------------------
-    describe('register', () => {
-        const dto: RegisterDTO = {
+    describe('createClient', () => {
+        const dto: CreateClientDTO = {
             name: 'Juan Perez',
             email: 'juan@test.com',
-            password: 'securePassword123',
             phone: '3001234567',
-            business_code: 'tienda-prueba',
         };
 
-        it('debería registrar un usuario y retornar la respuesta del repositorio', async () => {
-            const response = { message: 'Usuario registrado exitosamente' };
-            vi.mocked(repo.register).mockResolvedValue(response);
+        it('debería crear un cliente y devolver la contrasena temporal generada', async () => {
+            const response: CreateClientResult = { client: makeClient(), temp_password: 'aB3xY9zK1' };
+            vi.mocked(repo.createClient).mockResolvedValue(response);
 
-            const result = await useCases.register(dto);
+            const result = await useCases.createClient(dto);
 
             expect(result).toEqual(response);
-            expect(repo.register).toHaveBeenCalledOnce();
-            expect(repo.register).toHaveBeenCalledWith(dto);
+            expect(repo.createClient).toHaveBeenCalledOnce();
+            expect(repo.createClient).toHaveBeenCalledWith(dto, undefined);
         });
 
-        it('debería registrar un usuario con solo los campos obligatorios', async () => {
-            const minimalDto: RegisterDTO = {
-                name: 'Ana',
-                email: 'ana@test.com',
-                password: 'pass123',
-                business_code: 'tienda-prueba',
-            };
-            const response = { message: 'Usuario registrado exitosamente' };
-            vi.mocked(repo.register).mockResolvedValue(response);
+        it('debería pasar el businessId cuando se proporciona', async () => {
+            const response: CreateClientResult = { client: makeClient() };
+            vi.mocked(repo.createClient).mockResolvedValue(response);
 
-            await useCases.register(minimalDto);
+            await useCases.createClient(dto, 5);
 
-            expect(repo.register).toHaveBeenCalledWith(minimalDto);
+            expect(repo.createClient).toHaveBeenCalledWith(dto, 5);
         });
 
-        it('debería propagar el error cuando el registro falla', async () => {
-            vi.mocked(repo.register).mockRejectedValue(new Error('Email ya registrado'));
+        it('debería propagar el error cuando el email ya existe', async () => {
+            vi.mocked(repo.createClient).mockRejectedValue(new Error('Email ya registrado'));
 
-            await expect(useCases.register(dto)).rejects.toThrow('Email ya registrado');
+            await expect(useCases.createClient(dto)).rejects.toThrow('Email ya registrado');
+        });
+    });
+
+    describe('getClients', () => {
+        it('debería retornar la lista paginada de clientes', async () => {
+            vi.mocked(repo.getClients).mockResolvedValue(paginatedClients);
+
+            const result = await useCases.getClients({ page: 1, page_size: 20 });
+
+            expect(result).toEqual(paginatedClients);
+            expect(repo.getClients).toHaveBeenCalledWith({ page: 1, page_size: 20 });
+        });
+
+        it('debería propagar el error cuando la consulta falla', async () => {
+            vi.mocked(repo.getClients).mockRejectedValue(new Error('Servicio no disponible'));
+
+            await expect(useCases.getClients()).rejects.toThrow('Servicio no disponible');
         });
     });
 });

@@ -33,7 +33,10 @@ export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
     const canViewWebsiteConfig = isSuperAdmin || permissions?.role_name === 'Administrador';
 
     const menuItems = canViewWebsiteConfig
-        ? [{ href: '/website-config', label: 'Mi Sitio Web', icon: '🌐' }]
+        ? [
+            { href: '/storefront/catalogo', label: 'Catalogo', icon: '🛒' },
+            { href: '/website-config', label: 'Mi Sitio Web', icon: '🌐' },
+        ]
         : [];
 
     return (

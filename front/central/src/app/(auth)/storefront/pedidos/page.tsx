@@ -35,10 +35,10 @@ export default async function PedidosPage({ searchParams }: PageProps) {
                 <div className="text-center py-12">
                     <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">No tienes pedidos aun</p>
                     <Link
-                        href="/storefront/nuevo-pedido"
+                        href="/storefront/catalogo"
                         className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
-                        Crear primer pedido
+                        Ir al catalogo
                     </Link>
                 </div>
             ) : (

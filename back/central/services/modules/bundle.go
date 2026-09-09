@@ -112,7 +112,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	vehicles.New(router, database)
 	routes.New(router, database)
 	geozones.New(router, database, logger, redisClient, rabbitMQ)
-	storefront.New(router, database, logger, rabbitMQ, environment)
+	storefront.New(router, database, logger, rabbitMQ, environment, s3)
 	publicsite.New(router, database, logger, environment, payBundle, s3)
 
 	marketingleads.New(router, database, logger, nil)

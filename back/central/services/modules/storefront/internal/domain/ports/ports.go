@@ -7,20 +7,17 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/storefront/internal/domain/entities"
 )
 
-// IRepository defines the storefront repository interface
 type IRepository interface {
-	// Catalog
 	ListActiveProducts(ctx context.Context, businessID uint, filters dtos.CatalogFilters) ([]entities.StorefrontProduct, int64, error)
 	GetProductByID(ctx context.Context, businessID uint, productID string) (*entities.StorefrontProduct, error)
+	GetCatalogFilters(ctx context.Context, businessID uint) (entities.StorefrontFilters, error)
 
-	// Orders
 	ListOrdersByUserID(ctx context.Context, businessID, userID uint, page, pageSize int) ([]entities.StorefrontOrder, int64, error)
 	GetOrderByIDAndUserID(ctx context.Context, orderID string, businessID, userID uint) (*entities.StorefrontOrder, error)
 
-	// Client
 	GetClientByUserID(ctx context.Context, businessID, userID uint) (*entities.StorefrontClient, error)
+	ListClientsByBusiness(ctx context.Context, businessID uint, page, pageSize int) ([]entities.StorefrontClient, int64, error)
 
-	// Registration
 	GetBusinessByCode(ctx context.Context, code string) (*entities.StorefrontBusiness, error)
 	CreateUser(ctx context.Context, user *entities.NewUser) (uint, error)
 	CreateBusinessStaff(ctx context.Context, userID, businessID, roleID uint) error
@@ -33,17 +30,17 @@ type IRepository interface {
 	GetClientByBusinessAndEmail(ctx context.Context, businessID uint, email string) (*entities.StorefrontClient, error)
 	LinkClientUser(ctx context.Context, clientID, userID uint) error
 
-	// Validation
 	GetRoleLevelByUserAndBusiness(ctx context.Context, userID, businessID uint) (int, error)
 
-	// Integration
 	GetPlatformIntegrationID(ctx context.Context, businessID uint) (uint, error)
 
-	// Integration gate — checks if an integration is active (or missing = backward compat)
 	IsIntegrationActiveOrMissing(ctx context.Context, businessID uint, integrationTypeID uint) (bool, error)
+	GetCatalogLayout(ctx context.Context, businessID, integrationTypeID uint) (entities.StorefrontCatalogLayout, error)
+	UpdateCatalogLayout(ctx context.Context, businessID, integrationTypeID, requesterUserID uint, layout entities.StorefrontCatalogLayout) error
+	GetCatalogBanner(ctx context.Context, businessID, integrationTypeID uint) (entities.StorefrontBanner, error)
+	UpdateCatalogBanner(ctx context.Context, businessID, integrationTypeID, requesterUserID uint, banner entities.StorefrontBanner) error
 }
 
-// IStorefrontPublisher publishes storefront orders to RabbitMQ
 type IStorefrontPublisher interface {
 	PublishOrder(ctx context.Context, order []byte) error
 }

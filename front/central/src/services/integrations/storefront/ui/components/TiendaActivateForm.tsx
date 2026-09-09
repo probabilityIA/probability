@@ -9,13 +9,13 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { getActionError } from '@/shared/utils/action-result';
 
-interface TiendaActivateFormProps {
+interface CatalogoActivateFormProps {
     integrationType: IntegrationType;
     onSuccess: () => void;
     onBack: () => void;
 }
 
-export function TiendaActivateForm({ integrationType, onSuccess, onBack }: TiendaActivateFormProps) {
+export function CatalogoActivateForm({ integrationType, onSuccess, onBack }: CatalogoActivateFormProps) {
     const { isSuperAdmin } = usePermissions();
     const { businesses, loading: loadingBusinesses } = useBusinessesSimple();
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
@@ -32,7 +32,7 @@ export function TiendaActivateForm({ integrationType, onSuccess, onBack }: Tiend
 
         try {
             const result = await createIntegrationAction({
-                name: 'Tienda',
+                name: 'Catalogo',
                 code: 'tienda',
                 integration_type_id: integrationType.id,
                 category: integrationType.category?.code || integrationType.integration_category?.code || 'storefront',
@@ -46,10 +46,10 @@ export function TiendaActivateForm({ integrationType, onSuccess, onBack }: Tiend
             if (result.success) {
                 onSuccess();
             } else {
-                setError(result.message || 'Error al activar Tienda');
+                setError(result.message || 'Error al activar Catalogo');
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al activar Tienda'));
+            setError(getActionError(err, 'Error al activar Catalogo'));
         } finally {
             setLoading(false);
         }
@@ -61,10 +61,10 @@ export function TiendaActivateForm({ integrationType, onSuccess, onBack }: Tiend
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
                     <ShoppingBagIcon className="w-8 h-8 text-emerald-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activar Tienda</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activar Catalogo</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-2">
-                    Habilita la tienda con login para los clientes de tu negocio.
-                    Los clientes podrán registrarse, ver el catálogo y hacer pedidos.
+                    Habilita el catalogo con login para los clientes de tu negocio.
+                    Tu creas el acceso de cada cliente desde Catalogo, seccion Clientes; ellos solo inician sesion, ven el catalogo y hacen pedidos limitados al stock disponible.
                 </p>
             </div>
 
@@ -113,7 +113,7 @@ export function TiendaActivateForm({ integrationType, onSuccess, onBack }: Tiend
                     loading={loading}
                     className="flex-1"
                 >
-                    Activar Tienda
+                    Activar Catalogo
                 </Button>
             </div>
         </div>

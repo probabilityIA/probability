@@ -42,7 +42,7 @@ var DisplayNames = map[ModuleCode]string{
 	ModuleInvoicing:     "Facturacion",
 	ModuleDelivery:      "Ultima Milla",
 	ModuleCustomers:     "Clientes",
-	ModuleStorefront:    "Tienda",
+	ModuleStorefront:    "Catalogo",
 	ModuleWallet:        "Billetera",
 	ModuleAnnouncements: "Anuncios",
 	ModuleTickets:       "Tickets",
@@ -50,9 +50,6 @@ var DisplayNames = map[ModuleCode]string{
 	ModuleNotifications: "Notificaciones",
 }
 
-// RestrictedByDefault son modulos ocultos para todos los negocios sin
-// importar su plan (incluso sin ningun plan asignado). Solo se habilitan
-// otorgando un override puntual al negocio.
 var RestrictedByDefault = []ModuleCode{
 	ModuleStorefront,
 	ModuleTickets,

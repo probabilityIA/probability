@@ -27,6 +27,12 @@ func (h *Handlers) ListCatalog(c *gin.Context) {
 		Page:     page,
 		PageSize: pageSize,
 	}
+	if familyIDParam := c.Query("family_id"); familyIDParam != "" {
+		if id, err := strconv.ParseUint(familyIDParam, 10, 64); err == nil && id > 0 {
+			familyID := uint(id)
+			filters.FamilyID = &familyID
+		}
+	}
 
 	products, total, err := h.uc.ListCatalog(c.Request.Context(), businessID, filters)
 	if err != nil {

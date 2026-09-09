@@ -27,6 +27,17 @@ func (r *Repository) ListActiveProducts(ctx context.Context, businessID uint, fi
 		query = query.Where("category = ?", filters.Category)
 	}
 
+	if filters.FamilyID != nil {
+		var childIDs []uint
+		if err := r.db.Conn(ctx).Model(&models.ProductFamily{}).
+			Where("parent_family_id = ?", *filters.FamilyID).
+			Pluck("id", &childIDs).Error; err != nil {
+			return nil, 0, err
+		}
+		familyIDs := append(childIDs, *filters.FamilyID)
+		query = query.Where("family_id IN ?", familyIDs)
+	}
+
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -34,7 +45,7 @@ func (r *Repository) ListActiveProducts(ctx context.Context, businessID uint, fi
 	if err := query.
 		Offset(filters.Offset()).
 		Limit(filters.PageSize).
-		Order("name ASC").
+		Order("(track_inventory AND stock_quantity <= 0) ASC, name ASC").
 		Find(&products).Error; err != nil {
 		return nil, 0, err
 	}

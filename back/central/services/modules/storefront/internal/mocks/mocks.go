@@ -28,7 +28,8 @@ type RepositoryMock struct {
 	ListOrdersByUserIDFn    func(ctx context.Context, businessID, userID uint, page, pageSize int) ([]entities.StorefrontOrder, int64, error)
 	GetOrderByIDAndUserIDFn func(ctx context.Context, orderID string, businessID, userID uint) (*entities.StorefrontOrder, error)
 
-	GetClientByUserIDFn func(ctx context.Context, businessID, userID uint) (*entities.StorefrontClient, error)
+	GetClientByUserIDFn     func(ctx context.Context, businessID, userID uint) (*entities.StorefrontClient, error)
+	ListClientsByBusinessFn func(ctx context.Context, businessID uint, page, pageSize int) ([]entities.StorefrontClient, int64, error)
 
 	GetBusinessByCodeFn           func(ctx context.Context, code string) (*entities.StorefrontBusiness, error)
 	CreateUserFn                  func(ctx context.Context, user *entities.NewUser) (uint, error)
@@ -41,6 +42,12 @@ type RepositoryMock struct {
 	StaffExistsFn                 func(ctx context.Context, userID, businessID uint) (bool, error)
 	GetClientByBusinessAndEmailFn func(ctx context.Context, businessID uint, email string) (*entities.StorefrontClient, error)
 	LinkClientUserFn              func(ctx context.Context, clientID, userID uint) error
+
+	GetCatalogFiltersFn   func(ctx context.Context, businessID uint) (entities.StorefrontFilters, error)
+	GetCatalogLayoutFn    func(ctx context.Context, businessID, integrationTypeID uint) (entities.StorefrontCatalogLayout, error)
+	UpdateCatalogLayoutFn func(ctx context.Context, businessID, integrationTypeID, requesterUserID uint, layout entities.StorefrontCatalogLayout) error
+	GetCatalogBannerFn    func(ctx context.Context, businessID, integrationTypeID uint) (entities.StorefrontBanner, error)
+	UpdateCatalogBannerFn func(ctx context.Context, businessID, integrationTypeID, requesterUserID uint, banner entities.StorefrontBanner) error
 
 	GetRoleLevelByUserAndBusinessFn func(ctx context.Context, userID, businessID uint) (int, error)
 	GetPlatformIntegrationIDFn      func(ctx context.Context, businessID uint) (uint, error)
@@ -90,6 +97,13 @@ func (m *RepositoryMock) GetClientByUserID(ctx context.Context, businessID, user
 		return m.GetClientByUserIDFn(ctx, businessID, userID)
 	}
 	return &entities.StorefrontClient{ID: 1, BusinessID: businessID, UserID: &userID, Name: "Ana"}, nil
+}
+
+func (m *RepositoryMock) ListClientsByBusiness(ctx context.Context, businessID uint, page, pageSize int) ([]entities.StorefrontClient, int64, error) {
+	if m.ListClientsByBusinessFn != nil {
+		return m.ListClientsByBusinessFn(ctx, businessID, page, pageSize)
+	}
+	return nil, 0, nil
 }
 
 func (m *RepositoryMock) GetBusinessByCode(ctx context.Context, code string) (*entities.StorefrontBusiness, error) {
@@ -169,6 +183,41 @@ func (m *RepositoryMock) LinkClientUser(ctx context.Context, clientID, userID ui
 	m.LinkCalls = append(m.LinkCalls, LinkCall{clientID, userID})
 	if m.LinkClientUserFn != nil {
 		return m.LinkClientUserFn(ctx, clientID, userID)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) GetCatalogFilters(ctx context.Context, businessID uint) (entities.StorefrontFilters, error) {
+	if m.GetCatalogFiltersFn != nil {
+		return m.GetCatalogFiltersFn(ctx, businessID)
+	}
+	return entities.StorefrontFilters{}, nil
+}
+
+func (m *RepositoryMock) GetCatalogLayout(ctx context.Context, businessID, integrationTypeID uint) (entities.StorefrontCatalogLayout, error) {
+	if m.GetCatalogLayoutFn != nil {
+		return m.GetCatalogLayoutFn(ctx, businessID, integrationTypeID)
+	}
+	return entities.StorefrontCatalogLayout{Columns: 4, Rows: 3}, nil
+}
+
+func (m *RepositoryMock) UpdateCatalogLayout(ctx context.Context, businessID, integrationTypeID, requesterUserID uint, layout entities.StorefrontCatalogLayout) error {
+	if m.UpdateCatalogLayoutFn != nil {
+		return m.UpdateCatalogLayoutFn(ctx, businessID, integrationTypeID, requesterUserID, layout)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) GetCatalogBanner(ctx context.Context, businessID, integrationTypeID uint) (entities.StorefrontBanner, error) {
+	if m.GetCatalogBannerFn != nil {
+		return m.GetCatalogBannerFn(ctx, businessID, integrationTypeID)
+	}
+	return entities.StorefrontBanner{}, nil
+}
+
+func (m *RepositoryMock) UpdateCatalogBanner(ctx context.Context, businessID, integrationTypeID, requesterUserID uint, banner entities.StorefrontBanner) error {
+	if m.UpdateCatalogBannerFn != nil {
+		return m.UpdateCatalogBannerFn(ctx, businessID, integrationTypeID, requesterUserID, banner)
 	}
 	return nil
 }

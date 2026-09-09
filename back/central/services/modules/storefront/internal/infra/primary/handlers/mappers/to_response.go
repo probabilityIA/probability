@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/storefront/internal/infra/primary/handlers/request"
 )
 
-// RequestToCreateOrderDTO maps a create order request to the domain DTO
 func RequestToCreateOrderDTO(req *request.CreateOrderRequest) *dtos.StorefrontCreateOrderDTO {
 	dto := &dtos.StorefrontCreateOrderDTO{
 		Notes: req.Notes,
@@ -36,7 +35,16 @@ func RequestToCreateOrderDTO(req *request.CreateOrderRequest) *dtos.StorefrontCr
 	return dto
 }
 
-// RequestToRegisterDTO maps a register request to the domain DTO
+func RequestToCreateClientDTO(req *request.CreateClientRequest) *dtos.CreateClientDTO {
+	return &dtos.CreateClientDTO{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+		Phone:    req.Phone,
+		Dni:      req.Dni,
+	}
+}
+
 func RequestToRegisterDTO(req *request.RegisterRequest) *dtos.RegisterDTO {
 	return &dtos.RegisterDTO{
 		Name:         req.Name,

@@ -10,22 +10,13 @@ import (
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-// New inicializa el modulo de storefront
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue, environment env.IConfig) {
-	// 1. Init Repository
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue, environment env.IConfig, s3 storage.IS3Service) {
 	repo := repository.New(database)
-
-	// 2. Init Publisher
 	publisher := queue.NewStorefrontPublisher(rabbitMQ, logger)
-
-	// 3. Init Use Cases
 	uc := app.New(repo, logger, publisher)
-
-	// 4. Init Handlers
-	h := handlers.New(uc, logger, environment)
-
-	// 5. Register Routes
+	h := handlers.New(uc, logger, environment, s3)
 	h.RegisterRoutes(router)
 }
