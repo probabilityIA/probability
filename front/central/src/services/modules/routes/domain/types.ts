@@ -184,3 +184,12 @@ export interface AssignableOrder {
     item_count: number;
     created_at: string;
 }
+
+export interface OptimizeRouteResult {
+    message: string;
+    stop_ids: number[];
+    total_distance_km: number;
+    total_duration_min: number;
+    stops_optimized: number;
+    stops_sin_coords: number;
+}

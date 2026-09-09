@@ -76,6 +76,14 @@ export const startRouteAction = async (id: number, businessId?: number) => {
     }
 };
 
+export const optimizeRouteAction = async (id: number, businessId?: number) => {
+    try {
+        return await (await getUseCases()).optimizeRoute(id, businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
 export const completeRouteAction = async (id: number, businessId?: number) => {
     try {
         return await (await getUseCases()).completeRoute(id, businessId);

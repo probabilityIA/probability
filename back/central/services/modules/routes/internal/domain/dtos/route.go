@@ -135,3 +135,27 @@ type AssignableOrder struct {
 	ItemCount     int
 	CreatedAt     time.Time
 }
+
+type GeoPoint struct {
+	Lat float64
+	Lng float64
+}
+
+type OptimizedRoute struct {
+	Order       []int
+	DistanceKm  float64
+	DurationMin int
+}
+
+type OptimizeRouteDTO struct {
+	RouteID    uint
+	BusinessID uint
+}
+
+type OptimizeRouteResult struct {
+	StopIDs         []uint
+	DistanceKm      float64
+	DurationMin     int
+	StopsOptimized  int
+	StopsSinCoords  int
+}

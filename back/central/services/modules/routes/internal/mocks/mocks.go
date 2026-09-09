@@ -272,3 +272,24 @@ func (m *RepositoryMock) ClearOrderDriverInfo(ctx context.Context, orderID strin
 	}
 	return nil
 }
+
+type OptimizerMock struct {
+	OptimizeFn     func(ctx context.Context, origin dtos.GeoPoint, stops []dtos.GeoPoint) (dtos.OptimizedRoute, error)
+	IsConfiguredFn func() bool
+}
+
+var _ ports.IRouteOptimizer = (*OptimizerMock)(nil)
+
+func (m *OptimizerMock) Optimize(ctx context.Context, origin dtos.GeoPoint, stops []dtos.GeoPoint) (dtos.OptimizedRoute, error) {
+	if m.OptimizeFn != nil {
+		return m.OptimizeFn(ctx, origin, stops)
+	}
+	return dtos.OptimizedRoute{}, nil
+}
+
+func (m *OptimizerMock) IsConfigured() bool {
+	if m.IsConfiguredFn != nil {
+		return m.IsConfiguredFn()
+	}
+	return true
+}

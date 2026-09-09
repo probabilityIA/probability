@@ -38,6 +38,10 @@ export class RouteUseCases {
         return this.repository.startRoute(id, businessId);
     }
 
+    async optimizeRoute(id: number, businessId?: number) {
+        return this.repository.optimizeRoute(id, businessId);
+    }
+
     async completeRoute(id: number, businessId?: number) {
         return this.repository.completeRoute(id, businessId);
     }
