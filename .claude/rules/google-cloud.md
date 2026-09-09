@@ -66,9 +66,10 @@ verificacion de Search Console. Son dos fuentes distintas:
   impresiones, CTR, posicion).
 - **GA4**: clics DENTRO de la web (paginas vistas, origen del trafico, eventos).
 
-Hoy GA4 solo mide automaticamente enlaces salientes y descargas. **Los clics en
-botones internos (demo, WhatsApp, planes) no se estan registrando**: hace falta
-`gtag('event', ...)` en cada CTA.
+Ademas de lo que GA4 mide solo (enlaces salientes, descargas), el layout tiene
+un listener global de clics que manda `click_whatsapp`, `click_demo`,
+`click_login`, `click_registro`, `click_telefono`, `click_correo`,
+`click_externo` y `click_enlace` con `link_url`, `link_text` y `page_path`.
 
 Para consultarlas por CLI/script hace falta habilitar
 `analyticsdata.googleapis.com` y `searchconsole.googleapis.com`, y ademas
@@ -213,12 +214,22 @@ si tiene (`accessBindings`), ver mas abajo.
 
 | Que | Valor |
 |---|---|
-| Propiedad GA4 de la web | `553391903` ("Probability Web"), measurement ID `G-84XRXZKPSW` |
+| Propiedad GA4 de la web | `548369470` ("Probability - Website"), measurement ID `G-PR13PJFXXF` |
 | Sitio en Search Console | `sc-domain:probabilityia.com.co` |
 | Identidad que lee | `probability-analytics@probabilityia.iam.gserviceaccount.com` |
 
-La propiedad `491299983` (`probability-app-6de7c`) la creo Firebase sola, no
-tiene ningun flujo de datos y **siempre devuelve vacio**. No confundirlas.
+Esta es la propiedad real, con el historico de trafico del sitio desde antes de
+que existiera este script. El 2026-09-09 una sesion anterior la reemplazo por
+una propiedad nueva y vacia (`553391903`, `G-84XRXZKPSW`) porque la cuenta de la
+empresa no tenia acceso a la original — la original es de la cuenta personal de
+quien administra el sitio (`dansancam2004@gmail.com`), no de un tercero externo.
+El mismo dia se revirtio: en vez de abandonar el historico, se invito a
+`probabilitysas@gmail.com` (Administrador) y a la cuenta de servicio (Lector)
+DENTRO de la propiedad original, y el codigo volvio a `G-PR13PJFXXF`.
+
+Las propiedades `491299983` (`probability-app-6de7c`, la creo Firebase sola,
+sin flujo de datos) y `553391903` (la que se creo por error el 2026-09-09)
+**siempre devuelven vacio o casi vacio**. No confundirlas con la real.
 
 ### Autenticacion: impersonacion, no llaves
 
