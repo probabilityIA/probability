@@ -417,9 +417,20 @@ const OrderRow = memo(({
                             Pendiente
                         </span>
                     )}
-                    {order.is_confirmed === true && order.novelty && (
-                        <span className="text-[10px] font-medium text-orange-600 leading-tight" title={order.novelty}>
-                            Novedad encontrada
+                    {order.novelty && (
+                        <span
+                            className={`text-[10px] font-medium leading-tight ${
+                                order.novelty.toLowerCase().includes("cambio de direccion") ||
+                                order.novelty.toLowerCase().includes("cambio de direcci\u00f3n")
+                                    ? "text-red-600 dark:text-red-400"
+                                    : "text-orange-600 dark:text-orange-400"
+                            }`}
+                            title={order.novelty}
+                        >
+                            {order.novelty.toLowerCase().includes("cambio de direccion") ||
+                            order.novelty.toLowerCase().includes("cambio de direcci\u00f3n")
+                                ? "Solicita cambio de direcci\u00f3n"
+                                : "Novedad encontrada"}
                         </span>
                     )}
                 </div>

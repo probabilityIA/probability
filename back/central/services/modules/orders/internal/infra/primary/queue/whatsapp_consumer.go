@@ -265,17 +265,16 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 		return err
 	}
 
-	// Construir texto de novedad según tipo
 	var noveltyText string
 	switch event.NoveltyType {
 	case "change_address":
-		noveltyText = fmt.Sprintf("Solicitud de cambio de dirección vía WhatsApp (Teléfono: %s)", event.PhoneNumber)
+		noveltyText = fmt.Sprintf("El cliente solicita cambio de direccion via WhatsApp (Telefono: %s). La direccion NO se cambia sola: verificar con el cliente antes de generar la guia", event.PhoneNumber)
 	case "change_products":
-		noveltyText = fmt.Sprintf("Solicitud de cambio de productos vía WhatsApp (Teléfono: %s)", event.PhoneNumber)
+		noveltyText = fmt.Sprintf("El cliente solicita cambio de productos via WhatsApp (Telefono: %s)", event.PhoneNumber)
 	case "change_payment":
-		noveltyText = fmt.Sprintf("Solicitud de cambio de método de pago vía WhatsApp (Teléfono: %s)", event.PhoneNumber)
+		noveltyText = fmt.Sprintf("El cliente solicita cambio de medio de pago via WhatsApp (Telefono: %s)", event.PhoneNumber)
 	default:
-		noveltyText = fmt.Sprintf("Novedad vía WhatsApp: %s (Teléfono: %s)", event.NoveltyType, event.PhoneNumber)
+		noveltyText = fmt.Sprintf("Novedad via WhatsApp: %s (Telefono: %s)", event.NoveltyType, event.PhoneNumber)
 	}
 
 	// Si ya existe novedad previa, concatenar
@@ -285,7 +284,9 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 
 	order.Novelty = &noveltyText
 
-	// Guardar cambios
+	noConfirmada := false
+	order.IsConfirmed = &noConfirmada
+
 	if err := c.repository.UpdateOrder(context.Background(), order); err != nil {
 		c.log.Error().
 			Err(err).
