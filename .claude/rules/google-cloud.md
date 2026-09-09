@@ -77,6 +77,46 @@ GA4 en Administrar > Gestion de accesos, Search Console en Configuracion >
 Usuarios y permisos. Sin esa invitacion la API responde 403 aunque el permiso de
 GCP este bien.
 
+## Google Maps - geocodificacion
+
+Desde 2026-09-09 la geocodificacion corre con keys del proyecto `probabilityia`,
+no con la cuenta personal de nadie. Facturacion vinculada:
+`01D184-410BBB-DA9172`.
+
+APIs habilitadas: `geocoding-backend`, `places-backend`, `maps-backend`.
+
+Hay **dos keys**, ambas restringidas por IP y limitadas a Geocoding y Places:
+
+| Key | Restringida a | Para |
+|---|---|---|
+| `Probability Backend - Geocoding` | `3.224.189.33` (EC2 de produccion) | produccion |
+| `Probability Dev - Geocoding` | IP publica del equipo local | desarrollo |
+
+**Las keys NO van en el repo.** Estan en `~/.config/probability/maps-keys.txt`
+(chmod 600) y en el `.env` de cada entorno, que esta gitignored.
+
+La key **solo la usa el backend**. El navegador nunca la ve: el front llama a
+`/api/v1/geocode` y el backend consulta a Google
+(`cmd/internal/routes/geocode.go`). Si algun dia una pantalla necesita el mapa
+JavaScript, esa key es OTRA, restringida por dominio HTTP, nunca la del backend.
+
+La key de desarrollo esta atada a la IP de casa: **cuando cambie el proveedor de
+internet, deja de funcionar** y responde `REQUEST_DENIED` diciendo desde que IP
+llego el request. Se actualiza con:
+
+```bash
+gcloud services api-keys update <KEY_ID> --allowed-ips="<IP_NUEVA>"
+gcloud services api-keys list --format="table(displayName,uid)"
+```
+
+**Prohibido repartir el trafico entre la cuenta de la empresa y una personal
+para duplicar el tramo gratuito.** Lo prohiben los terminos de Maps Platform, es
+trivial de detectar (misma IP, mismo dominio, mismo perfil de pagos) y el
+castigo es la suspension de las dos cuentas, lo que deja produccion sin
+geocodificar. El tramo gratis es de 10.000 llamadas al mes; el excedente son
+~5 USD por cada 1.000. El ahorro real esta en cachear por direccion normalizada,
+no en abrir cuentas.
+
 ## Lo que NO tiene CLI
 
 - Agregar o quitar usuarios en Search Console: solo consola web.
