@@ -109,6 +109,19 @@ gcloud services api-keys update <KEY_ID> --allowed-ips="<IP_NUEVA>"
 gcloud services api-keys list --format="table(displayName,uid)"
 ```
 
+**Cuota diaria: 500 llamadas** en `geocoding-backend` y otras 500 en
+`places-backend` (el endpoint de busqueda de direcciones usa Places Text
+Search). Existe para que un bucle en el codigo no genere una factura sorpresa,
+no porque el volumen real este cerca. Si un dia la operacion legitima la choca,
+se sube; el sintoma es `OVER_QUERY_LIMIT`.
+
+```bash
+gcloud alpha services quota update --service=geocoding-backend.googleapis.com \
+  --consumer=projects/901639821821 \
+  --metric=geocoding-backend.googleapis.com/billable_default \
+  --unit="1/d/{project}" --value=<N> --force
+```
+
 **Prohibido repartir el trafico entre la cuenta de la empresa y una personal
 para duplicar el tramo gratuito.** Lo prohiben los terminos de Maps Platform, es
 trivial de detectar (misma IP, mismo dominio, mismo perfil de pagos) y el
