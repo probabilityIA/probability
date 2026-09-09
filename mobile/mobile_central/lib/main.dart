@@ -1,5 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'core/network/api_client.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/token_storage.dart';
@@ -30,6 +32,8 @@ import 'services/modules/dashboard/ui/providers/dashboard_provider.dart';
 import 'services/modules/pay/ui/providers/pay_provider.dart';
 import 'services/modules/wallet/ui/providers/wallet_provider.dart';
 import 'services/modules/notification_config/ui/providers/notification_config_provider.dart';
+import 'services/modules/push/app/push_service.dart';
+import 'services/modules/push/infra/repository/push_repository.dart';
 import 'services/modules/storefront/ui/providers/storefront_provider.dart';
 import 'services/modules/publicsite/ui/providers/publicsite_provider.dart';
 import 'services/modules/website_config/ui/providers/website_config_provider.dart';
@@ -46,9 +50,18 @@ import 'shared/theme/app_theme.dart';
 import 'shared/widgets/splash_screen.dart';
 import 'shared/utils/image_memory.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ImageMemory.applyLowEndBudget();
+
+  final firebaseOptions = DefaultFirebaseOptions.currentPlatform;
+  if (firebaseOptions != null) {
+    try {
+      await Firebase.initializeApp(options: firebaseOptions);
+    } catch (e) {
+      debugPrint('firebase: no se pudo inicializar: $e');
+    }
+  }
 
   final tokenStorage = TokenStorage();
   final apiClient = ApiClient();
@@ -58,20 +71,25 @@ void main() {
     apiClient: apiClient,
   );
 
+  final pushService = PushService(PushApiRepository(apiClient));
+
   runApp(ProbabilityApp(
     apiClient: apiClient,
     loginProvider: loginProvider,
+    pushService: pushService,
   ));
 }
 
 class ProbabilityApp extends StatefulWidget {
   final ApiClient apiClient;
   final LoginProvider loginProvider;
+  final PushService pushService;
 
   const ProbabilityApp({
     super.key,
     required this.apiClient,
     required this.loginProvider,
+    required this.pushService,
   });
 
   @override
@@ -83,14 +101,38 @@ class _ProbabilityAppState extends State<ProbabilityApp> {
 
   bool _sessionReady = false;
   bool _introDone = false;
+  bool _pushRegistered = false;
 
   @override
   void initState() {
     super.initState();
     _appRouter = AppRouter(loginProvider: widget.loginProvider);
+    widget.loginProvider.addListener(_syncPushRegistration);
     widget.loginProvider.restoreSession().whenComplete(() {
       if (mounted) setState(() => _sessionReady = true);
+      _syncPushRegistration();
     });
+  }
+
+  @override
+  void dispose() {
+    widget.loginProvider.removeListener(_syncPushRegistration);
+    super.dispose();
+  }
+
+  void _syncPushRegistration() {
+    final loggedIn = widget.loginProvider.isLoggedIn;
+    if (loggedIn == _pushRegistered) return;
+    _pushRegistered = loggedIn;
+
+    if (loggedIn) {
+      final businesses = widget.loginProvider.businesses;
+      widget.pushService.registerAfterLogin(
+        businessId: businesses.length == 1 ? businesses.first.id : null,
+      );
+    } else {
+      widget.pushService.unregister();
+    }
   }
 
   bool get _showSplash => !_introDone || !_sessionReady;

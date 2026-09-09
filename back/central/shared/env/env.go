@@ -199,6 +199,10 @@ type Config struct {
 	GoogleOAuthClientSecret string `env:"GOOGLE_OAUTH_CLIENT_SECRET"`
 	GoogleOAuthRedirectURI  string `env:"GOOGLE_OAUTH_REDIRECT_URI"`
 
+	FCMProjectID       string `env:"FCM_PROJECT_ID"`
+	FCMCredentialsFile string `env:"FCM_CREDENTIALS_FILE"`
+	FCMCredentialsJSON string `env:"FCM_CREDENTIALS_JSON"`
+
 	BedrockAccessKey string `env:"BEDROCK_ACCESS_KEY"`
 	BedrockSecretKey string `env:"BEDROCK_SECRET_KEY"`
 	BedrockRegion    string `env:"BEDROCK_REGION"`

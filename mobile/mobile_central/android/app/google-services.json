@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "176535439905",
+    "project_id": "probability-app-6de7c",
+    "storage_bucket": "probability-app-6de7c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176535439905:android:7910eb3f5acb3acc12f160",
+        "android_client_info": {
+          "package_name": "com.Probability"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKgJr8slND26i3EMKz44EWRYGUdN7Uufc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

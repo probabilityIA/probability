@@ -93,6 +93,18 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 					Msg("Evento ruteado a Email")
 			}
 
+		case dtos.NotificationTypePush:
+			if err := d.channelPublisher.PublishToPush(ctx, event, config); err != nil {
+				d.logger.Error(ctx).
+					Err(err).
+					Uint("config_id", config.ID).
+					Msg("Error publicando a Push")
+			} else {
+				d.logger.Info(ctx).
+					Uint("config_id", config.ID).
+					Msg("Evento ruteado a Push")
+			}
+
 		default:
 			d.logger.Warn(ctx).
 				Uint("notification_type_id", config.NotificationTypeID).

@@ -221,3 +221,7 @@ const (
 
 	QueueCampaignResults = "notification.campaign.results"
 )
+
+const (
+	QueuePushNotificationRequests = "notification.push.requests"
+)
