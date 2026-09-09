@@ -12,12 +12,36 @@ const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', 
 <!doctype html>
 <html lang="es">
 	<head>
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-PR13PJFXXF" is:inline></script>
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-84XRXZKPSW" is:inline></script>
 		<script is:inline>
 			window.dataLayer = window.dataLayer || [];
 			function gtag(){dataLayer.push(arguments);}
 			gtag('js', new Date());
-			gtag('config', 'G-PR13PJFXXF');
+			gtag('config', 'G-84XRXZKPSW');
+
+			document.addEventListener('click', function (e) {
+				var el = e.target && e.target.closest ? e.target.closest('a, button') : null;
+				if (!el) return;
+
+				var href = el.getAttribute('href') || '';
+				var text = (el.innerText || el.textContent || '').trim().slice(0, 100);
+				var name = 'click_boton';
+
+				if (href.indexOf('wa.me') !== -1 || href.indexOf('whatsapp') !== -1) name = 'click_whatsapp';
+				else if (href.indexOf('meet.brevo.com') !== -1) name = 'click_demo';
+				else if (href.indexOf('/login') !== -1) name = 'click_login';
+				else if (href.indexOf('/registrate') !== -1) name = 'click_registro';
+				else if (href.indexOf('tel:') === 0) name = 'click_telefono';
+				else if (href.indexOf('mailto:') === 0) name = 'click_correo';
+				else if (href.indexOf('http') === 0 && href.indexOf(location.hostname) === -1) name = 'click_externo';
+				else if (el.tagName === 'A' && href) name = 'click_enlace';
+
+				gtag('event', name, {
+					link_url: href,
+					link_text: text,
+					page_path: location.pathname
+				});
+			}, true);
 		</script>
 		<base href="/website/" />
 		<meta charset="UTF-8" />

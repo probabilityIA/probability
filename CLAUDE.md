@@ -47,6 +47,23 @@ WordPress + WooCommerce en Docker para probar la integracion (conexion, sync, we
 Carpeta `/wordpress` (volumenes nombrados, no toca prod). Levantar: `cd wordpress && ./setup.sh`.
 Tienda en `http://localhost:8088`, wp-admin admin/admin. Detalles: `wordpress/README.md`.
 
+## Google Cloud y analitica de la web
+
+`gcloud` esta instalado en `~/google-cloud-sdk`, con la configuracion
+`probability` (cuenta `probabilitysas@gmail.com`, proyecto `probabilityia`).
+Funciona como los perfiles de AWS: `--configuration=probability`.
+
+La analitica del sitio publico se consulta desde la terminal con
+`./scripts/web-analytics.sh` (`pages`, `sources`, `events`, `queries`, `clicks`).
+Son dos fuentes distintas: **GA4** mide clics DENTRO de la web y **Search
+Console** los clics que llegan DESDE Google.
+
+Nada de esto usa llaves JSON: es impersonacion de la cuenta de servicio
+`probability-analytics@probabilityia.iam.gserviceaccount.com`.
+**El login de usuario NO sirve para Analytics**, Google lo bloquea.
+
+Detalles, IDs y los tropiezos ya resueltos: `.claude/rules/google-cloud.md`.
+
 ## Git - NUNCA hacer push sin permiso explicito
 
 **PROHIBIDO hacer push automaticamente.** Siempre esperar autorizacion explicita del usuario.
