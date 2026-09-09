@@ -51,9 +51,21 @@ pregunta es "cuantas plantillas hay" o "manda un mensaje", es Graph API.
    (`integration:platform_creds:2`), poblado desde BD. Las variables `META_*` de
    `back/central/.env` son copias de conveniencia para consultar a mano y pueden
    quedar desactualizadas. Nunca hacer que el backend las lea.
-6. Toda llamada a Graph API con el system user puede requerir
-   `appsecret_proof = HMAC-SHA256(token, app_secret).hex()`. Sin proof varios
-   endpoints fallan con `(#100) Missing Permission`.
+6. **Hoy la app tiene `require_app_secret = false`**, verificado con
+   `devtools_app` accion `security`. Por eso las llamadas con el token del
+   system user funcionan **sin** `appsecret_proof`. Si alguien enciende ese
+   interruptor en la configuracion de la app, toda llamada pasa a requerir
+   `appsecret_proof = HMAC-SHA256(token, app_secret).hex()`.
+
+   El `app_secret` que guardaba produccion tenia 18 caracteres (invalido);
+   se corrigio el 2026-09-09 con el real de 32. Si vuelve a fallar un proof,
+   lo primero es medir la longitud: un app secret de Meta tiene 32 hex.
+
+7. **Credenciales para trabajar desde local: `.env.ai`** (gitignored). Tiene
+   `META_ADMIN_TOKEN`, `META_APP_SECRET`, `META_APP_ID`, `META_WABA_PROD`,
+   `META_PHONE_NUMBER_ID_PROD`, `META_PHONE_NUMBER_TEST` y `META_VERIFY_TOKEN`,
+   copiados de `integration:platform_creds:2`, que sigue siendo la fuente de
+   verdad. Con eso se consulta la Graph API sin rodear por SSM.
 
 ## Contexto conocido
 
