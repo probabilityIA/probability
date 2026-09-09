@@ -20,6 +20,17 @@ func (r *Repository) migratePushNotifications(ctx context.Context) error {
 		return fmt.Errorf("automigrate device_tokens: %w", err)
 	}
 
+	for _, table := range []string{"notification_types", "notification_event_types"} {
+		if err := db.Exec(`
+SELECT setval(
+  pg_get_serial_sequence(?, 'id'),
+  GREATEST(COALESCE((SELECT MAX(id) FROM `+table+`), 1), 1)
+)
+`, table).Error; err != nil {
+			return fmt.Errorf("resync secuencia de %s: %w", table, err)
+		}
+	}
+
 	if err := db.Exec(`
 INSERT INTO notification_types (created_at, updated_at, name, code, description, icon, is_active)
 VALUES (NOW(), NOW(), 'Push', 'push', 'Notificaciones push a la aplicacion movil', 'bell', true)

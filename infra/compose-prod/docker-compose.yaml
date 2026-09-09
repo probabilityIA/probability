@@ -100,6 +100,10 @@ x-back-central: &back-central
     GOOGLE_OAUTH_CLIENT_ID:     "${GOOGLE_OAUTH_CLIENT_ID}"
     GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
     GOOGLE_OAUTH_REDIRECT_URI:  "${GOOGLE_OAUTH_REDIRECT_URI:-https://www.probabilityia.com.co/api/v1/auth/google/callback}"
+    # Firebase Cloud Messaging (push a la app movil)
+    FCM_PROJECT_ID:       "${FCM_PROJECT_ID:-}"
+    FCM_CREDENTIALS_FILE: "${FCM_CREDENTIALS_FILE:-}"
+    FCM_CREDENTIALS_JSON: "${FCM_CREDENTIALS_JSON:-}"
     # Amazon Bedrock (AI)
     BEDROCK_ACCESS_KEY: "${BEDROCK_ACCESS_KEY}"
     BEDROCK_SECRET_KEY: "${BEDROCK_SECRET_KEY}"
@@ -115,6 +119,7 @@ x-back-central: &back-central
   restart: unless-stopped
   volumes:
     - /home/ubuntu/probability/logs/back-central:/app/log
+    - /home/ubuntu/probability/secrets/fcm-sender.json:/app/secrets/fcm-sender.json:ro
   healthcheck:
     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
     interval: 30s
