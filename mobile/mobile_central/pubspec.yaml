@@ -1,7 +1,7 @@
 name: mobile_central
 description: "Probability Central - Mobile App"
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.1+5
 
 environment:
   sdk: ^3.10.7
