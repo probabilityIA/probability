@@ -130,6 +130,23 @@ geocodificar. El tramo gratis es de 10.000 llamadas al mes; el excedente son
 ~5 USD por cada 1.000. El ahorro real esta en cachear por direccion normalizada,
 no en abrir cuentas.
 
+## Firebase / notificaciones push
+
+Proyecto `probability-app-6de7c` (el de Firebase, distinto de `probabilityia`).
+Apps registradas: Android `com.Probability`, iOS `com.probabilityia.mobileCentral`.
+
+FCM es gratis y sin limite; no consume el tramo gratuito de nada.
+
+Cuenta de servicio que envia: `probability-fcm-sender@probability-app-6de7c.iam.gserviceaccount.com`,
+con `roles/firebasecloudmessaging.admin` y nada mas. Su llave JSON esta en
+`~/.config/probability/fcm-sender.json` (chmod 600) y **nunca en el repo**. Aca
+la llave si se justifica: el EC2 no tiene gcloud y el envio es desatendido.
+
+Ojo con el rol: `roles/firebasemessaging.admin` **no existe** y la API lo rechaza
+con `INVALID_ARGUMENT`. El bueno es `roles/firebasecloudmessaging.admin`.
+
+Detalle del modulo: `back/central/services/modules/push/README.md`.
+
 ## Lo que NO tiene CLI
 
 - Agregar o quitar usuarios en Search Console: solo consola web.

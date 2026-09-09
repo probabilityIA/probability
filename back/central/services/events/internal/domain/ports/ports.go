@@ -28,6 +28,7 @@ type INotificationConfigCache interface {
 type IChannelPublisher interface {
 	PublishToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error
 	PublishToEmail(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error
+	PublishToPush(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error
 }
 
 // IEventDispatcher define el puerto para el dispatcher de eventos (capa de aplicación)
