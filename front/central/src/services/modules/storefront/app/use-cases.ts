@@ -1,11 +1,27 @@
 import { IStorefrontRepository } from '../domain/ports';
-import { CreateStorefrontOrderDTO, RegisterDTO } from '../domain/types';
+import { CreateStorefrontOrderDTO, CreateClientDTO, CatalogLayout } from '../domain/types';
 
 export class StorefrontUseCases {
     constructor(private repository: IStorefrontRepository) {}
 
-    async getCatalog(params?: { page?: number; page_size?: number; search?: string; category?: string; business_id?: number }) {
+    async getCatalog(params?: { page?: number; page_size?: number; search?: string; category?: string; family_id?: number; business_id?: number }) {
         return this.repository.getCatalog(params);
+    }
+
+    async getCatalogFilters(businessId?: number) {
+        return this.repository.getCatalogFilters(businessId);
+    }
+
+    async updateCatalogLayout(layout: CatalogLayout, businessId?: number) {
+        return this.repository.updateCatalogLayout(layout, businessId);
+    }
+
+    async updateCatalogBanner(enabled: boolean, businessId?: number) {
+        return this.repository.updateCatalogBanner(enabled, businessId);
+    }
+
+    async uploadCatalogBannerImage(formData: FormData, businessId?: number) {
+        return this.repository.uploadCatalogBannerImage(formData, businessId);
     }
 
     async getProduct(id: string, businessId?: number) {
@@ -24,7 +40,11 @@ export class StorefrontUseCases {
         return this.repository.getOrder(id, businessId);
     }
 
-    async register(data: RegisterDTO) {
-        return this.repository.register(data);
+    async createClient(data: CreateClientDTO, businessId?: number) {
+        return this.repository.createClient(data, businessId);
+    }
+
+    async getClients(params?: { page?: number; page_size?: number; business_id?: number }) {
+        return this.repository.getClients(params);
     }
 }

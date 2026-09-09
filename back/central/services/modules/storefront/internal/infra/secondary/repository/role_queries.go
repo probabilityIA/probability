@@ -29,7 +29,7 @@ func (r *Repository) GetRoleLevelByUserAndBusiness(ctx context.Context, userID, 
 	err := r.db.Conn(ctx).
 		Table("business_staff bs").
 		Select("r.level").
-		Joins("INNER JOIN roles r ON r.id = bs.role_id").
+		Joins("INNER JOIN role r ON r.id = bs.role_id").
 		Where("bs.user_id = ? AND bs.business_id = ? AND bs.deleted_at IS NULL AND r.deleted_at IS NULL", userID, businessID).
 		Limit(1).
 		Scan(&result).Error

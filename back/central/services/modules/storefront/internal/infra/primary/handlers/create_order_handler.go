@@ -48,6 +48,10 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
+		if errors.Is(err, domainerrors.ErrInsufficientStock) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
 		if errors.Is(err, domainerrors.ErrIntegrationNotFound) {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 			return

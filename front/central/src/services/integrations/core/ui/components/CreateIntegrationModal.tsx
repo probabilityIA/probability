@@ -33,7 +33,7 @@ import { JumpsellerConnectTabs } from '@/services/integrations/ecommerce/jumpsel
 import { TikTokConfigForm } from '@/services/integrations/ecommerce/tiktok/ui';
 import { MercadoLibreOAuthForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { BoldConfigForm } from '@/services/integrations/pay/bold/ui/components';
-import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
+import { CatalogoActivateForm } from '@/services/integrations/storefront/ui';
 import { TiendaWebActivateForm } from '@/services/integrations/website/ui';
 import { ModuleActivateForm } from '@/services/integrations/internal/ui';
 import { getActionError } from '@/shared/utils/action-result';
@@ -411,7 +411,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                 );
 
             case INTEGRATION_TYPE_IDS.TIENDA:
-                return <TiendaActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
+                return <CatalogoActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
 
             case INTEGRATION_TYPE_IDS.TIENDA_WEB:
                 return <TiendaWebActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;

@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-// ProductToEntity maps a GORM product model to a storefront product entity
 func ProductToEntity(m *models.Product) *entities.StorefrontProduct {
 	return &entities.StorefrontProduct{
 		ID:               m.ID,
@@ -19,6 +18,7 @@ func ProductToEntity(m *models.Product) *entities.StorefrontProduct {
 		Images:           m.Images,
 		SKU:              m.SKU,
 		StockQuantity:    m.StockQuantity,
+		TrackInventory:   m.TrackInventory,
 		Category:         m.Category,
 		Brand:            m.Brand,
 		Status:           m.Status,
@@ -27,7 +27,6 @@ func ProductToEntity(m *models.Product) *entities.StorefrontProduct {
 	}
 }
 
-// ProductsToEntities maps a slice of GORM product models to entities
 func ProductsToEntities(products []models.Product) []entities.StorefrontProduct {
 	result := make([]entities.StorefrontProduct, len(products))
 	for i := range products {
@@ -36,7 +35,6 @@ func ProductsToEntities(products []models.Product) []entities.StorefrontProduct 
 	return result
 }
 
-// OrderToEntity maps a GORM order model to a storefront order entity
 func OrderToEntity(m *models.Order) *entities.StorefrontOrder {
 	order := &entities.StorefrontOrder{
 		ID:          m.ID,
@@ -70,7 +68,6 @@ func OrderToEntity(m *models.Order) *entities.StorefrontOrder {
 	return order
 }
 
-// OrdersToEntities maps a slice of GORM order models to entities
 func OrdersToEntities(orders []models.Order) []entities.StorefrontOrder {
 	result := make([]entities.StorefrontOrder, len(orders))
 	for i := range orders {

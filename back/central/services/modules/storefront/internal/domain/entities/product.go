@@ -2,7 +2,6 @@ package entities
 
 import "time"
 
-// StorefrontProduct represents a product visible to storefront customers
 type StorefrontProduct struct {
 	ID               string
 	Name             string
@@ -15,6 +14,7 @@ type StorefrontProduct struct {
 	Images           []byte
 	SKU              string
 	StockQuantity    int
+	TrackInventory   bool
 	Category         string
 	Brand            string
 	Status           string

@@ -3,8 +3,13 @@ import { IStorefrontRepository } from '../../domain/ports';
 import {
     StorefrontProduct,
     StorefrontOrder,
+    StorefrontClient,
+    CatalogFiltersResult,
+    CatalogLayout,
+    CatalogBanner,
     CreateStorefrontOrderDTO,
-    RegisterDTO,
+    CreateClientDTO,
+    CreateClientResult,
     PaginatedResponse,
 } from '../../domain/types';
 
@@ -40,7 +45,7 @@ export class StorefrontApiRepository implements IStorefrontRepository {
         return data;
     }
 
-    async getCatalog(params?: { page?: number; page_size?: number; search?: string; category?: string; business_id?: number }): Promise<PaginatedResponse<StorefrontProduct>> {
+    async getCatalog(params?: { page?: number; page_size?: number; search?: string; category?: string; family_id?: number; business_id?: number }): Promise<PaginatedResponse<StorefrontProduct>> {
         const searchParams = new URLSearchParams();
         if (params) {
             Object.entries(params).forEach(([key, value]) => {
@@ -48,6 +53,41 @@ export class StorefrontApiRepository implements IStorefrontRepository {
             });
         }
         return this.fetch<PaginatedResponse<StorefrontProduct>>(`/storefront/catalog?${searchParams.toString()}`);
+    }
+
+    async getCatalogFilters(businessId?: number): Promise<CatalogFiltersResult> {
+        const params = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<CatalogFiltersResult>(`/storefront/catalog/filters${params}`);
+    }
+
+    async updateCatalogLayout(layout: CatalogLayout, businessId?: number): Promise<CatalogLayout> {
+        const params = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<CatalogLayout>(`/storefront/catalog/layout${params}`, {
+            method: 'PUT',
+            body: JSON.stringify(layout),
+        });
+    }
+
+    async updateCatalogBanner(enabled: boolean, businessId?: number): Promise<CatalogBanner> {
+        const params = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<CatalogBanner>(`/storefront/catalog/banner${params}`, {
+            method: 'PUT',
+            body: JSON.stringify({ enabled }),
+        });
+    }
+
+    async uploadCatalogBannerImage(formData: FormData, businessId?: number): Promise<CatalogBanner> {
+        const url = `${this.baseUrl}/storefront/catalog/banner/image${businessId ? `?business_id=${businessId}` : ''}`;
+        const headers: Record<string, string> = { Accept: 'application/json' };
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        const res = await fetch(url, { method: 'POST', headers, body: formData });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.message || data.error || 'Error al subir la imagen');
+        }
+        return data;
     }
 
     async getProduct(id: string, businessId?: number): Promise<StorefrontProduct> {
@@ -78,10 +118,21 @@ export class StorefrontApiRepository implements IStorefrontRepository {
         return this.fetch<StorefrontOrder>(`/storefront/orders/${id}${params}`);
     }
 
-    async register(data: RegisterDTO): Promise<{ message: string }> {
-        return this.fetch<{ message: string }>('/storefront/register', {
+    async createClient(data: CreateClientDTO, businessId?: number): Promise<CreateClientResult> {
+        const params = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<CreateClientResult>(`/storefront/clients${params}`, {
             method: 'POST',
             body: JSON.stringify(data),
         });
+    }
+
+    async getClients(params?: { page?: number; page_size?: number; business_id?: number }): Promise<PaginatedResponse<StorefrontClient>> {
+        const searchParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) searchParams.append(key, String(value));
+            });
+        }
+        return this.fetch<PaginatedResponse<StorefrontClient>>(`/storefront/clients?${searchParams.toString()}`);
     }
 }

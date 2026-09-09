@@ -426,6 +426,75 @@ func TestCreateOrder_ProductoInexistente_NoPublica(t *testing.T) {
 	assert.Empty(t, pub.Published)
 }
 
+func TestCreateOrder_CantidadSuperaElStock_Rechaza(t *testing.T) {
+	pub := &mocks.PublisherMock{}
+	repo := &mocks.RepositoryMock{
+		GetProductByIDFn: func(ctx context.Context, businessID uint, productID string) (*entities.StorefrontProduct, error) {
+			return &entities.StorefrontProduct{ID: productID, Name: "Camisa", TrackInventory: true, StockQuantity: 1}, nil
+		},
+	}
+
+	err := newStorefrontUseCase(repo, pub).CreateOrder(context.Background(), 26, 42,
+		&dtos.StorefrontCreateOrderDTO{Items: []dtos.StorefrontOrderItemDTO{{ProductID: "P-1", Quantity: 5}}})
+
+	assert.ErrorIs(t, err, domainerrors.ErrInsufficientStock,
+		"no se debe poder pedir mas unidades de las que hay en stock")
+	assert.Empty(t, pub.Published)
+}
+
+func TestCreateOrder_CantidadIgualAlStock_Permite(t *testing.T) {
+	pub := &mocks.PublisherMock{}
+	repo := &mocks.RepositoryMock{
+		GetProductByIDFn: func(ctx context.Context, businessID uint, productID string) (*entities.StorefrontProduct, error) {
+			return &entities.StorefrontProduct{ID: productID, Name: "Camisa", TrackInventory: true, StockQuantity: 5}, nil
+		},
+	}
+
+	err := newStorefrontUseCase(repo, pub).CreateOrder(context.Background(), 26, 42,
+		&dtos.StorefrontCreateOrderDTO{Items: []dtos.StorefrontOrderItemDTO{{ProductID: "P-1", Quantity: 5}}})
+
+	require.NoError(t, err)
+	assert.Len(t, pub.Published, 1)
+}
+
+func TestCreateOrder_SinTrackInventory_IgnoraElStock(t *testing.T) {
+	pub := &mocks.PublisherMock{}
+	repo := &mocks.RepositoryMock{
+		GetProductByIDFn: func(ctx context.Context, businessID uint, productID string) (*entities.StorefrontProduct, error) {
+			return &entities.StorefrontProduct{ID: productID, TrackInventory: false, StockQuantity: 0}, nil
+		},
+	}
+
+	err := newStorefrontUseCase(repo, pub).CreateOrder(context.Background(), 26, 42,
+		&dtos.StorefrontCreateOrderDTO{Items: []dtos.StorefrontOrderItemDTO{{ProductID: "P-1", Quantity: 100}}})
+
+	require.NoError(t, err, "un producto sin control de inventario no debe bloquear el pedido")
+	assert.Len(t, pub.Published, 1)
+}
+
+func TestCreateOrder_UnItemSinStockEntreVarios_RechazaTodo(t *testing.T) {
+	pub := &mocks.PublisherMock{}
+	repo := &mocks.RepositoryMock{
+		GetProductByIDFn: func(ctx context.Context, businessID uint, productID string) (*entities.StorefrontProduct, error) {
+			if productID == "P-2" {
+				return &entities.StorefrontProduct{ID: productID, TrackInventory: true, StockQuantity: 1}, nil
+			}
+			return &entities.StorefrontProduct{ID: productID, TrackInventory: true, StockQuantity: 100}, nil
+		},
+	}
+
+	err := newStorefrontUseCase(repo, pub).CreateOrder(context.Background(), 26, 42,
+		&dtos.StorefrontCreateOrderDTO{
+			Items: []dtos.StorefrontOrderItemDTO{
+				{ProductID: "P-1", Quantity: 2},
+				{ProductID: "P-2", Quantity: 10},
+			},
+		})
+
+	assert.ErrorIs(t, err, domainerrors.ErrInsufficientStock)
+	assert.Empty(t, pub.Published, "no se publica una orden parcialmente disponible")
+}
+
 func TestCreateOrder_ElProductoSeBuscaEnElNegocioDelUsuario(t *testing.T) {
 	var vistoNegocio uint
 	pub := &mocks.PublisherMock{}
@@ -608,6 +677,143 @@ func TestCreateOrder_FallaLaPublicacion_SePropaga(t *testing.T) {
 
 	assert.ErrorIs(t, err, pubErr,
 		"si la cola no acepta la orden el cliente debe enterarse, no quedar creyendo que compro")
+}
+
+func repoAdminNivel1() *mocks.RepositoryMock {
+	return &mocks.RepositoryMock{
+		GetRoleLevelByUserAndBusinessFn: func(ctx context.Context, userID, businessID uint) (int, error) {
+			return 1, nil
+		},
+	}
+}
+
+func dtoClienteValido() *dtos.CreateClientDTO {
+	return &dtos.CreateClientDTO{Name: "Ana", Email: "ana@x.com", Phone: "3001234567"}
+}
+
+func TestCreateClient_TiendaApagada_Rechaza(t *testing.T) {
+	err := newStorefrontUseCase(repoTiendaApagada(), nil)
+	_, _, e := err.CreateClient(context.Background(), 26, 7, dtoClienteValido())
+	assert.ErrorIs(t, e, domainerrors.ErrStorefrontNotActive)
+}
+
+func TestCreateClient_RolClienteFinal_Rechaza(t *testing.T) {
+	repo := &mocks.RepositoryMock{
+		GetRoleLevelByUserAndBusinessFn: func(ctx context.Context, userID, businessID uint) (int, error) {
+			return 5, nil
+		},
+	}
+
+	_, _, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 42, dtoClienteValido())
+
+	assert.ErrorIs(t, err, domainerrors.ErrRoleNotAllowed,
+		"un cliente final no puede crear otros clientes")
+	assert.Empty(t, repo.CreatedUsers)
+}
+
+func TestCreateClient_AdminYOperador_Permitido(t *testing.T) {
+	for _, level := range []int{1, 2} {
+		repo := &mocks.RepositoryMock{
+			GetRoleLevelByUserAndBusinessFn: func(ctx context.Context, userID, businessID uint) (int, error) {
+				return level, nil
+			},
+		}
+
+		client, _, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 7, dtoClienteValido())
+
+		require.NoError(t, err, "nivel=%d", level)
+		require.NotNil(t, client)
+	}
+}
+
+func TestCreateClient_EmailYaExiste_Rechaza(t *testing.T) {
+	repo := repoAdminNivel1()
+	repo.UserExistsByEmailFn = func(ctx context.Context, email string) (bool, error) { return true, nil }
+
+	_, _, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 7, dtoClienteValido())
+
+	assert.ErrorIs(t, err, domainerrors.ErrEmailAlreadyExists)
+	assert.Empty(t, repo.CreatedUsers)
+}
+
+func TestCreateClient_SinPassword_GeneraUnaTemporal(t *testing.T) {
+	repo := repoAdminNivel1()
+
+	_, tempPassword, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 7, dtoClienteValido())
+
+	require.NoError(t, err)
+	assert.NotEmpty(t, tempPassword)
+	require.Len(t, repo.CreatedUsers, 1)
+	assert.Equal(t, tempPassword, repo.CreatedUsers[0].Password)
+}
+
+func TestCreateClient_ConPassword_NoDevuelveNiGeneraOtra(t *testing.T) {
+	repo := repoAdminNivel1()
+	dto := dtoClienteValido()
+	dto.Password = "secreta123"
+
+	_, tempPassword, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 7, dto)
+
+	require.NoError(t, err)
+	assert.Empty(t, tempPassword, "si el negocio define la contrasena, no se debe exponer de vuelta")
+	require.Len(t, repo.CreatedUsers, 1)
+	assert.Equal(t, "secreta123", repo.CreatedUsers[0].Password)
+}
+
+func TestCreateClient_CreaStaffConRolClienteFinal(t *testing.T) {
+	repo := repoAdminNivel1()
+	repo.GetClienteFinalRoleIDFn = func(ctx context.Context) (uint, error) { return 9, nil }
+
+	_, _, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 7, dtoClienteValido())
+
+	require.NoError(t, err)
+	require.Len(t, repo.StaffCalls, 1)
+	assert.Equal(t, uint(26), repo.StaffCalls[0].BusinessID)
+	assert.Equal(t, uint(9), repo.StaffCalls[0].RoleID,
+		"un cliente creado por el negocio solo puede quedar como cliente_final")
+}
+
+func TestCreateClient_SinRolClienteFinal_Rechaza(t *testing.T) {
+	repo := repoAdminNivel1()
+	repo.GetClienteFinalRoleIDFn = func(ctx context.Context) (uint, error) { return 0, stderrors.New("no existe") }
+
+	_, _, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 7, dtoClienteValido())
+
+	assert.ErrorIs(t, err, domainerrors.ErrRoleNotFound)
+}
+
+func TestCreateClient_QuedaAsociadoAlNegocioDelAdmin(t *testing.T) {
+	repo := repoAdminNivel1()
+
+	client, _, err := newStorefrontUseCase(repo, nil).CreateClient(context.Background(), 26, 7, dtoClienteValido())
+
+	require.NoError(t, err)
+	require.Len(t, repo.CreatedClients, 1)
+	assert.Equal(t, uint(26), repo.CreatedClients[0].BusinessID)
+	assert.Equal(t, "Ana", repo.CreatedClients[0].Name)
+	assert.Equal(t, client.BusinessID, repo.CreatedClients[0].BusinessID)
+}
+
+func TestListClients_TiendaApagada_Rechaza(t *testing.T) {
+	_, _, err := newStorefrontUseCase(repoTiendaApagada(), nil).ListClients(context.Background(), 26, 1, 20)
+	assert.ErrorIs(t, err, domainerrors.ErrStorefrontNotActive)
+}
+
+func TestListClients_FiltraPorNegocio(t *testing.T) {
+	var visto uint
+	repo := &mocks.RepositoryMock{
+		ListClientsByBusinessFn: func(ctx context.Context, businessID uint, page, pageSize int) ([]entities.StorefrontClient, int64, error) {
+			visto = businessID
+			return []entities.StorefrontClient{{ID: 1, BusinessID: businessID}}, 1, nil
+		},
+	}
+
+	got, total, err := newStorefrontUseCase(repo, nil).ListClients(context.Background(), 26, 1, 20)
+
+	require.NoError(t, err)
+	assert.Equal(t, uint(26), visto)
+	assert.Len(t, got, 1)
+	assert.Equal(t, int64(1), total)
 }
 
 func TestRegister_NegocioInexistente_Rechaza(t *testing.T) {

@@ -3,27 +3,32 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { TokenStorage } from '@/shared/config';
-import { ShoppingBagIcon, ClipboardDocumentListIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ShoppingBagIcon, ClipboardDocumentListIcon, ArrowRightOnRectangleIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 
 export function StorefrontNav() {
     const pathname = usePathname();
     const router = useRouter();
+    const { permissions } = usePermissions();
 
     const handleLogout = () => {
         TokenStorage.clearSession();
         router.push('/login');
     };
 
+    const isClienteFinal = permissions?.role_name === 'cliente_final';
+
     const links = [
         { href: '/storefront/catalogo', label: 'Catalogo', icon: ShoppingBagIcon },
         { href: '/storefront/pedidos', label: 'Mis Pedidos', icon: ClipboardDocumentListIcon },
+        ...(isClienteFinal ? [] : [{ href: '/storefront/clientes', label: 'Clientes', icon: UsersIcon }]),
     ];
 
     return (
         <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 <Link href="/storefront/catalogo" className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                    Tienda
+                    Catalogo
                 </Link>
 
                 <div className="flex items-center gap-6">

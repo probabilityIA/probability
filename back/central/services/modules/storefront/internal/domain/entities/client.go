@@ -1,6 +1,5 @@
 package entities
 
-// StorefrontClient represents a client linked to a storefront user
 type StorefrontClient struct {
 	ID         uint
 	BusinessID uint
@@ -11,7 +10,6 @@ type StorefrontClient struct {
 	Dni        *string
 }
 
-// NewUser represents user data for registration
 type NewUser struct {
 	Name     string
 	Email    string
@@ -19,7 +17,6 @@ type NewUser struct {
 	Phone    string
 }
 
-// StorefrontBusiness represents minimal business info for registration
 type StorefrontBusiness struct {
 	ID   uint
 	Name string

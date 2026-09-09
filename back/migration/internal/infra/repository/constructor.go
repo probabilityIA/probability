@@ -35,7 +35,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWhatsappCampaigns(ctx); err != nil {
 		return err
 	}
-	return r.migrateUserGoogleID(ctx)
+	if err := r.migrateUserGoogleID(ctx); err != nil {
+		return err
+	}
+	return r.migrateCatalogoRename(ctx)
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {
@@ -280,9 +283,6 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 		return err
 	}
 	if err := r.migrateSubscriptionCourtesyUntil(ctx); err != nil {
-		return err
-	}
-	if err := r.migrateSubscriptionAutoPayment(ctx); err != nil {
 		return err
 	}
 	return r.seedCommercialProspects(ctx)

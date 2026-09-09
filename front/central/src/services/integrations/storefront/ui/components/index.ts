@@ -1,1 +1,1 @@
-export { TiendaActivateForm } from './TiendaActivateForm';
+export { CatalogoActivateForm } from './TiendaActivateForm';

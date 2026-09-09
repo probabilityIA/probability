@@ -1,1 +1,1 @@
-export { TiendaActivateForm } from './components';
+export { CatalogoActivateForm } from './components';

@@ -23,26 +23,22 @@ func (uc *UseCase) CreateOrder(ctx context.Context, businessID, userID uint, dto
 		return domainerrors.ErrNoItems
 	}
 
-	// Validate quantities
 	for _, item := range dto.Items {
 		if item.Quantity < 1 {
 			return domainerrors.ErrInvalidQuantity
 		}
 	}
 
-	// Get client data for the authenticated user
 	client, err := uc.repo.GetClientByUserID(ctx, businessID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to get client: %w", err)
 	}
 
-	// Get platform integration_id for this business
 	integrationID, err := uc.repo.GetPlatformIntegrationID(ctx, businessID)
 	if err != nil {
 		return fmt.Errorf("failed to get platform integration: %w", err)
 	}
 
-	// Look up product details and build order items
 	var totalAmount float64
 	orderItems := make([]map[string]interface{}, 0, len(dto.Items))
 
@@ -50,6 +46,11 @@ func (uc *UseCase) CreateOrder(ctx context.Context, businessID, userID uint, dto
 		product, err := uc.repo.GetProductByID(ctx, businessID, item.ProductID)
 		if err != nil {
 			return fmt.Errorf("product %s not found: %w", item.ProductID, err)
+		}
+
+		if product.TrackInventory && item.Quantity > product.StockQuantity {
+			return fmt.Errorf("%w: %s (disponible: %d, solicitado: %d)",
+				domainerrors.ErrInsufficientStock, product.Name, product.StockQuantity, item.Quantity)
 		}
 
 		itemTotal := product.Price * float64(item.Quantity)
@@ -67,7 +68,6 @@ func (uc *UseCase) CreateOrder(ctx context.Context, businessID, userID uint, dto
 		})
 	}
 
-	// Build addresses
 	var addresses []map[string]interface{}
 	if dto.Address != nil {
 		addresses = append(addresses, map[string]interface{}{
@@ -85,7 +85,6 @@ func (uc *UseCase) CreateOrder(ctx context.Context, businessID, userID uint, dto
 		})
 	}
 
-	// Generate unique external_id and order_number
 	now := time.Now()
 	externalID := fmt.Sprintf("sf-%d", now.UnixNano())
 	orderNumber := fmt.Sprintf("SF-%d", now.UnixNano()%1000000)
@@ -95,7 +94,6 @@ func (uc *UseCase) CreateOrder(ctx context.Context, businessID, userID uint, dto
 		customerEmail = *client.Email
 	}
 
-	// Build the canonical order DTO (same format all ecommerce integrations use)
 	canonicalOrder := map[string]interface{}{
 		"business_id":      businessID,
 		"integration_id":   integrationID,

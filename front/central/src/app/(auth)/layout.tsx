@@ -25,7 +25,7 @@ export default function AuthLayout({
   const [showBusinessSelector] = useState(false);
 
   const isLoginPage = pathname === '/login';
-  const isPublicPage = isLoginPage || pathname === '/storefront/registro' || pathname === '/verify-email' || pathname === '/verify-demo' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-code' || pathname === '/auth/google/callback' || pathname === '/registro-demo';
+  const isPublicPage = isLoginPage || pathname === '/verify-email' || pathname === '/verify-demo' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-code' || pathname === '/auth/google/callback' || pathname === '/registro-demo';
 
   useEffect(() => {
     if (isShopifyEmbedded && isShopifyLoading) {
