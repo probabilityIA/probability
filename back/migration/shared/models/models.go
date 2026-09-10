@@ -183,6 +183,10 @@ type Client struct {
 	Dni        *string `gorm:"size:50;uniqueIndex:idx_business_client_dni,priority:2"`
 	UserID     *uint   `gorm:"index:idx_client_user_id"`
 
+	Address *string `gorm:"size:255"`
+	City    *string `gorm:"size:120"`
+	Notes   *string `gorm:"size:1000"`
+
 	AcceptsMarketing   bool       `gorm:"not null;default:true;index"`
 	MarketingOptOutAt  *time.Time
 	MarketingOptOutVia string `gorm:"size:32"`

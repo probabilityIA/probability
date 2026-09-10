@@ -38,6 +38,9 @@ func (h *Handlers) UpdateClient(c *gin.Context) {
 		Email:      req.Email,
 		Phone:      req.Phone,
 		Dni:        req.Dni,
+		Address:    req.Address,
+		City:       req.City,
+		Notes:      req.Notes,
 	}
 
 	client, err := h.uc.UpdateClient(c.Request.Context(), dto)

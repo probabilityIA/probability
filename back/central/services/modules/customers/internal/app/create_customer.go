@@ -9,7 +9,6 @@ import (
 )
 
 func (uc *UseCase) CreateClient(ctx context.Context, dto dtos.CreateClientDTO) (*entities.Client, error) {
-	// Verificar email duplicado
 	if dto.Email != nil && *dto.Email != "" {
 		exists, err := uc.repo.ExistsByEmail(ctx, dto.BusinessID, *dto.Email, nil)
 		if err != nil {
@@ -20,7 +19,6 @@ func (uc *UseCase) CreateClient(ctx context.Context, dto dtos.CreateClientDTO) (
 		}
 	}
 
-	// Verificar DNI duplicado
 	if dto.Dni != nil && *dto.Dni != "" {
 		exists, err := uc.repo.ExistsByDni(ctx, dto.BusinessID, *dto.Dni, nil)
 		if err != nil {
@@ -31,7 +29,6 @@ func (uc *UseCase) CreateClient(ctx context.Context, dto dtos.CreateClientDTO) (
 		}
 	}
 
-	// Normalizar: si email es puntero a string vacío, guardar como nil
 	email := dto.Email
 	if email != nil && *email == "" {
 		email = nil
@@ -43,6 +40,9 @@ func (uc *UseCase) CreateClient(ctx context.Context, dto dtos.CreateClientDTO) (
 		Email:      email,
 		Phone:      dto.Phone,
 		Dni:        dto.Dni,
+		Address:    dto.Address,
+		City:       dto.City,
+		Notes:      dto.Notes,
 	}
 
 	return uc.repo.Create(ctx, client)

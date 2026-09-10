@@ -11,6 +11,7 @@ type IHandlers interface {
 	ListClients(c *gin.Context)
 	GetClient(c *gin.Context)
 	CreateClient(c *gin.Context)
+	UploadBulkClients(c *gin.Context)
 	UpdateClient(c *gin.Context)
 	DeleteClient(c *gin.Context)
 	GetCustomerSummary(c *gin.Context)

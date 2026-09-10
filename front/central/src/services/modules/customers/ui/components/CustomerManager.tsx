@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import { CustomerInfo } from '../../domain/types';
 import CustomerList from './CustomerList';
 import CustomerForm from './CustomerForm';
@@ -10,6 +10,7 @@ import CustomerSummaryTab from './CustomerSummaryTab';
 import CustomerAddressesTab from './CustomerAddressesTab';
 import CustomerProductsTab from './CustomerProductsTab';
 import CustomerOrderItemsTab from './CustomerOrderItemsTab';
+import MassCustomerUploadModal from './MassCustomerUploadModal';
 import { Button, SuperAdminBusinessSelector } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
@@ -32,6 +33,7 @@ export default function CustomerManager({ selectedBusinessId = null, onBusinessC
     const [modalMode, setModalMode] = useState<ModalMode>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerInfo | null>(null);
     const [refreshList, setRefreshList] = useState<(() => void) | null>(null);
+    const [showBulkUpload, setShowBulkUpload] = useState(false);
 
     const openCreate = () => {
         setSelectedCustomer(null);
@@ -122,13 +124,22 @@ export default function CustomerManager({ selectedBusinessId = null, onBusinessC
                         />
                     )}
                     {isSuperAdmin && !requiresBusinessSelection && (
-                        <button
-                            onClick={openCreate}
-                            className="inline-flex items-center justify-center px-6 py-3 font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
-                        >
-                            <PlusIcon className="w-4 h-4 mr-2" />
-                            Nuevo cliente
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setShowBulkUpload(true)}
+                                className="inline-flex items-center justify-center px-4 py-3 font-semibold rounded-lg border border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                            >
+                                <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
+                                Carga masiva
+                            </button>
+                            <button
+                                onClick={openCreate}
+                                className="inline-flex items-center justify-center px-6 py-3 font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                            >
+                                <PlusIcon className="w-4 h-4 mr-2" />
+                                Nuevo cliente
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -155,7 +166,7 @@ export default function CustomerManager({ selectedBusinessId = null, onBusinessC
 
             {(modalMode === 'create' || modalMode === 'edit') && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {modalMode === 'create' ? 'Nuevo cliente' : 'Editar cliente'}
@@ -218,6 +229,13 @@ export default function CustomerManager({ selectedBusinessId = null, onBusinessC
             {modalMode === 'addresses' && renderHistoryModal('addresses')}
             {modalMode === 'products' && renderHistoryModal('products')}
             {modalMode === 'orders' && renderHistoryModal('orders')}
+
+            <MassCustomerUploadModal
+                isOpen={showBulkUpload}
+                onClose={() => setShowBulkUpload(false)}
+                onUploadComplete={() => refreshList?.()}
+                selectedBusinessId={businessId}
+            />
         </div>
     );
 }

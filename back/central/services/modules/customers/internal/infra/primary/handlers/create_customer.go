@@ -30,6 +30,9 @@ func (h *Handlers) CreateClient(c *gin.Context) {
 		Email:      req.Email,
 		Phone:      req.Phone,
 		Dni:        req.Dni,
+		Address:    req.Address,
+		City:       req.City,
+		Notes:      req.Notes,
 	}
 
 	client, err := h.uc.CreateClient(c.Request.Context(), dto)

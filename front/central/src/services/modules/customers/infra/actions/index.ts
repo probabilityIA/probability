@@ -1,9 +1,10 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { getAuthToken } from '@/shared/utils/server-auth';
 import { CustomerApiRepository } from '../repository/api-repository';
 import { CustomerUseCases } from '../../app/use-cases';
-import { GetCustomersParams, PaginationParams, CreateCustomerDTO, UpdateCustomerDTO } from '../../domain/types';
+import { GetCustomersParams, PaginationParams, CreateCustomerDTO, UpdateCustomerDTO, BulkCustomerResult } from '../../domain/types';
 
 async function getUseCases() {
     const cookieStore = await cookies();
@@ -82,4 +83,54 @@ export const getCustomerOrderItemsAction = async (customerId: number, params?: P
     } catch (error: any) {
         throw new Error(error.message);
     }
+};
+
+export const uploadBulkCustomersAction = async (file: File, businessId?: number) => {
+    try {
+        const token = await getAuthToken();
+        const { env } = await import('@/shared/config/env');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const url = businessId
+            ? `${env.API_BASE_URL}/customers/upload-bulk?business_id=${businessId}`
+            : `${env.API_BASE_URL}/customers/upload-bulk`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+            cache: 'no-store',
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            return {
+                success: true,
+                data: result.data as BulkCustomerResult,
+            };
+        }
+        return {
+            success: false,
+            message: result.message || 'Error al procesar el archivo',
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.message || 'Error al cargar el archivo',
+        };
+    }
+};
+
+export const downloadCustomerTemplateAction = async () => {
+    const headers = ['nombre', 'apellido', 'cedula', 'correo', 'telefono', 'direccion', 'ciudad', 'notas'];
+    const exampleRows = [
+        ['Juan', 'Perez', '1234567890', 'juan@example.com', '3001234567', 'Calle 1 # 2-3', 'Bogota', 'Cliente frecuente'],
+        ['Maria', 'Gomez', '0987654321', 'maria@example.com', '3007654321', '', '', ''],
+    ];
+    return { success: true, data: { headers, exampleRows } };
 };

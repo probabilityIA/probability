@@ -27,6 +27,9 @@ func (r *Repository) Create(ctx context.Context, client *entities.Client) (*enti
 		Email:      client.Email,
 		Phone:      client.Phone,
 		Dni:        client.Dni,
+		Address:    client.Address,
+		City:       client.City,
+		Notes:      client.Notes,
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -127,6 +130,9 @@ func (r *Repository) Update(ctx context.Context, client *entities.Client) (*enti
 		Email:      client.Email,
 		Phone:      client.Phone,
 		Dni:        client.Dni,
+		Address:    client.Address,
+		City:       client.City,
+		Notes:      client.Notes,
 	}
 
 	if err := r.db.Conn(ctx).Save(model).Error; err != nil {
@@ -230,6 +236,9 @@ func modelToEntity(m *models.Client) *entities.Client {
 		Email:      m.Email,
 		Phone:      m.Phone,
 		Dni:        m.Dni,
+		Address:    m.Address,
+		City:       m.City,
+		Notes:      m.Notes,
 		CreatedAt:  m.CreatedAt,
 		UpdatedAt:  m.UpdatedAt,
 	}

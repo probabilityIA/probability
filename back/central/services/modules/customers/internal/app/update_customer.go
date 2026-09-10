@@ -9,15 +9,12 @@ import (
 )
 
 func (uc *UseCase) UpdateClient(ctx context.Context, dto dtos.UpdateClientDTO) (*entities.Client, error) {
-	// Verificar que existe
 	existing, err := uc.repo.GetByID(ctx, dto.BusinessID, dto.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Verificar email duplicado (excluyendo el propio cliente)
 	if dto.Email != nil && *dto.Email != "" {
-		// Solo verificar si el email cambió
 		existingEmail := ""
 		if existing.Email != nil {
 			existingEmail = *existing.Email
@@ -33,7 +30,6 @@ func (uc *UseCase) UpdateClient(ctx context.Context, dto dtos.UpdateClientDTO) (
 		}
 	}
 
-	// Verificar DNI duplicado (excluyendo el propio cliente)
 	if dto.Dni != nil && *dto.Dni != "" {
 		existingDni := existing.Dni
 		if existingDni == nil || *existingDni != *dto.Dni {
@@ -47,7 +43,6 @@ func (uc *UseCase) UpdateClient(ctx context.Context, dto dtos.UpdateClientDTO) (
 		}
 	}
 
-	// Normalizar: si email es puntero a string vacío, guardar como nil
 	email := dto.Email
 	if email != nil && *email == "" {
 		email = nil
@@ -57,6 +52,9 @@ func (uc *UseCase) UpdateClient(ctx context.Context, dto dtos.UpdateClientDTO) (
 	existing.Email = email
 	existing.Phone = dto.Phone
 	existing.Dni = dto.Dni
+	existing.Address = dto.Address
+	existing.City = dto.City
+	existing.Notes = dto.Notes
 
 	return uc.repo.Update(ctx, existing)
 }

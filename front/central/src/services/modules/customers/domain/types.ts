@@ -5,6 +5,9 @@ export interface CustomerInfo {
     email: string | null;
     phone: string;
     dni: string | null;
+    address: string | null;
+    city: string | null;
+    notes: string | null;
     total_orders: number;
     created_at: string;
     updated_at: string;
@@ -86,6 +89,9 @@ export interface CreateCustomerDTO {
     email?: string;
     phone?: string;
     dni?: string | null;
+    address?: string | null;
+    city?: string | null;
+    notes?: string | null;
 }
 
 export interface UpdateCustomerDTO {
@@ -93,6 +99,23 @@ export interface UpdateCustomerDTO {
     email?: string;
     phone?: string;
     dni?: string | null;
+    address?: string | null;
+    city?: string | null;
+    notes?: string | null;
+}
+
+export interface BulkCustomerRowResult {
+    row: number;
+    name: string;
+    success: boolean;
+    error?: string;
+}
+
+export interface BulkCustomerResult {
+    total_rows: number;
+    success_count: number;
+    failed_count: number;
+    results: BulkCustomerRowResult[];
 }
 
 export interface GetCustomersParams {

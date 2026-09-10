@@ -23,6 +23,10 @@ const makeCustomer = (id: number, name: string) => ({
     email: `${name.toLowerCase().replace(/\s/g, '.')}@test.com`,
     phone: '+573001234567',
     dni: `100000000${id}`,
+    address: null,
+    city: null,
+    notes: null,
+    total_orders: 0,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
 });

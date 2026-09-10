@@ -11,6 +11,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		customers.GET("", middleware.JWT(), h.ListClients)
 		customers.GET("/:id", middleware.JWT(), h.GetClient)
 		customers.POST("", middleware.JWT(), h.CreateClient)
+		customers.POST("/upload-bulk", middleware.JWT(), h.UploadBulkClients)
 		customers.PUT("/:id", middleware.JWT(), h.UpdateClient)
 		customers.DELETE("/:id", middleware.JWT(), h.DeleteClient)
 

@@ -13,6 +13,9 @@ type ClientResponse struct {
 	Email       *string   `json:"email"`
 	Phone       string    `json:"phone"`
 	Dni         *string   `json:"dni"`
+	Address     *string   `json:"address"`
+	City        *string   `json:"city"`
+	Notes       *string   `json:"notes"`
 	TotalOrders int64     `json:"total_orders"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -25,6 +28,9 @@ type ClientDetailResponse struct {
 	Email       *string    `json:"email"`
 	Phone       string     `json:"phone"`
 	Dni         *string    `json:"dni"`
+	Address     *string    `json:"address"`
+	City        *string    `json:"city"`
+	Notes       *string    `json:"notes"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
 	OrderCount  int64      `json:"order_count"`
@@ -40,6 +46,9 @@ func FromEntity(c *entities.Client) ClientResponse {
 		Email:       c.Email,
 		Phone:       c.Phone,
 		Dni:         c.Dni,
+		Address:     c.Address,
+		City:        c.City,
+		Notes:       c.Notes,
 		TotalOrders: c.OrderCount,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
@@ -54,6 +63,9 @@ func DetailFromEntity(c *entities.Client) ClientDetailResponse {
 		Email:       c.Email,
 		Phone:       c.Phone,
 		Dni:         c.Dni,
+		Address:     c.Address,
+		City:        c.City,
+		Notes:       c.Notes,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 		OrderCount:  c.OrderCount,
@@ -68,4 +80,18 @@ type ClientsListResponse struct {
 	Page       int              `json:"page"`
 	PageSize   int              `json:"page_size"`
 	TotalPages int              `json:"total_pages"`
+}
+
+type BulkClientRowResponse struct {
+	Row     int    `json:"row"`
+	Name    string `json:"name"`
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}
+
+type BulkClientResultResponse struct {
+	TotalRows    int                     `json:"total_rows"`
+	SuccessCount int                     `json:"success_count"`
+	FailedCount  int                     `json:"failed_count"`
+	Results      []BulkClientRowResponse `json:"results"`
 }

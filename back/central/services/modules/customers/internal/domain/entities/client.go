@@ -9,6 +9,9 @@ type Client struct {
 	Email      *string
 	Phone      string
 	Dni        *string
+	Address    *string
+	City       *string
+	Notes      *string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 

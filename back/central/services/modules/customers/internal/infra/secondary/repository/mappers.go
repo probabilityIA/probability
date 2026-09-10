@@ -172,6 +172,9 @@ func mapClientToEntity(m *models.Client) *entities.Client {
 		Email:      m.Email,
 		Phone:      m.Phone,
 		Dni:        m.Dni,
+		Address:    m.Address,
+		City:       m.City,
+		Notes:      m.Notes,
 		CreatedAt:  m.CreatedAt,
 		UpdatedAt:  m.UpdatedAt,
 	}
