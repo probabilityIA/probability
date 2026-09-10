@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -211,65 +212,48 @@ const campaignConversationFilter = `(
 	)
 )`
 
-func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
-	baseQuery := q.db.Conn(ctx).
-		Table("whatsapp_conversations c").
-		Select(`c.id, c.phone_number, c.order_number, c.conversation_type, c.business_id, c.current_state, c.created_at,
-			COALESCE(agg.message_count, 0) AS message_count,
-			COALESCE(agg.last_activity, c.updated_at) AS last_activity,
-			COALESCE(latest.content, '') AS last_message_content,
-			COALESCE(latest.direction, '') AS last_message_direction,
-			COALESCE(latest.status, '') AS last_message_status`).
-		Joins(`LEFT JOIN (
-			SELECT conversation_id, COUNT(*) AS message_count, MAX(created_at) AS last_activity
-			FROM whatsapp_message_logs
-			GROUP BY conversation_id
-		) agg ON agg.conversation_id = c.id`).
-		Joins(`LEFT JOIN LATERAL (
-			SELECT content, direction, status
-			FROM whatsapp_message_logs
-			WHERE conversation_id = c.id
-			ORDER BY created_at DESC
-			LIMIT 1
-		) latest ON true`).
-		Where("c.business_id = ?", filter.BusinessID)
+const phoneKeyExpr = `regexp_replace(phone_number, '[^0-9]', '', 'g')`
+
+func conversationFilters(filter dtos.ConversationListFilterDTO) (string, []any) {
+	clauses := []string{"c.business_id = ?"}
+	args := []any{filter.BusinessID}
 
 	if filter.State != nil && *filter.State != "" {
-		baseQuery = baseQuery.Where("c.current_state = ?", *filter.State)
+		clauses = append(clauses, "c.current_state = ?")
+		args = append(args, *filter.State)
 	}
 	if filter.Phone != nil && *filter.Phone != "" {
-		baseQuery = baseQuery.Where("c.phone_number ILIKE ?", fmt.Sprintf("%%%s%%", *filter.Phone))
+		clauses = append(clauses, "c.phone_number ILIKE ?")
+		args = append(args, fmt.Sprintf("%%%s%%", *filter.Phone))
 	}
 	if filter.CampaignID != nil && *filter.CampaignID > 0 {
-		baseQuery = baseQuery.Where(campaignConversationFilter, *filter.CampaignID, *filter.CampaignID)
+		clauses = append(clauses, campaignConversationFilter)
+		args = append(args, *filter.CampaignID, *filter.CampaignID)
 	}
 	if filter.DateFrom != nil && *filter.DateFrom != "" {
-		baseQuery = baseQuery.Where("c.created_at >= ?", *filter.DateFrom)
+		clauses = append(clauses, "c.created_at >= ?")
+		args = append(args, *filter.DateFrom)
 	}
 	if filter.DateTo != nil && *filter.DateTo != "" {
-		baseQuery = baseQuery.Where("c.created_at < ?::date + interval '1 day'", *filter.DateTo)
+		clauses = append(clauses, "c.created_at < ?::date + interval '1 day'")
+		args = append(args, *filter.DateTo)
 	}
+
+	return strings.Join(clauses, " AND "), args
+}
+
+func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
+	where, args := conversationFilters(filter)
 
 	var total int64
-	countQuery := q.db.Conn(ctx).
-		Table("whatsapp_conversations c").
-		Where("c.business_id = ?", filter.BusinessID)
-	if filter.State != nil && *filter.State != "" {
-		countQuery = countQuery.Where("c.current_state = ?", *filter.State)
-	}
-	if filter.Phone != nil && *filter.Phone != "" {
-		countQuery = countQuery.Where("c.phone_number ILIKE ?", fmt.Sprintf("%%%s%%", *filter.Phone))
-	}
-	if filter.CampaignID != nil && *filter.CampaignID > 0 {
-		countQuery = countQuery.Where(campaignConversationFilter, *filter.CampaignID, *filter.CampaignID)
-	}
-	if filter.DateFrom != nil && *filter.DateFrom != "" {
-		countQuery = countQuery.Where("c.created_at >= ?", *filter.DateFrom)
-	}
-	if filter.DateTo != nil && *filter.DateTo != "" {
-		countQuery = countQuery.Where("c.created_at < ?::date + interval '1 day'", *filter.DateTo)
-	}
-	if err := countQuery.Count(&total).Error; err != nil {
+	countSQL := fmt.Sprintf(`
+		SELECT COUNT(*) FROM (
+			SELECT DISTINCT regexp_replace(c.phone_number, '[^0-9]', '', 'g') AS phone_key
+			FROM whatsapp_conversations c
+			WHERE %s
+		) t`, where)
+
+	if err := q.db.Conn(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
 		q.logger.Error().Err(err).Msg("Error counting conversations")
 		return nil, 0, err
 	}
@@ -281,13 +265,48 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 	offset := (filter.Page - 1) * filter.PageSize
 	var rows []conversationSummaryRow
 
-	err := baseQuery.
-		Order("last_activity DESC").
-		Offset(offset).
-		Limit(filter.PageSize).
-		Find(&rows).Error
+	listSQL := fmt.Sprintf(`
+		WITH conv AS (
+			SELECT c.id, c.phone_number, c.order_number, c.conversation_type,
+			       c.business_id, c.current_state, c.created_at, c.updated_at,
+			       %s AS phone_key
+			FROM whatsapp_conversations c
+			WHERE %s
+		),
+		claves AS (SELECT DISTINCT phone_key FROM conv)
+		SELECT ultima.id, ultima.phone_number, ultima.order_number, ultima.conversation_type,
+		       ultima.business_id, ultima.current_state, primera.created_at,
+		       COALESCE(agg.message_count, 0) AS message_count,
+		       COALESCE(agg.last_activity, ultima.updated_at) AS last_activity,
+		       COALESCE(reciente.content, '') AS last_message_content,
+		       COALESCE(reciente.direction, '') AS last_message_direction,
+		       COALESCE(reciente.status, '') AS last_message_status
+		FROM claves k
+		JOIN LATERAL (
+			SELECT * FROM conv WHERE conv.phone_key = k.phone_key
+			ORDER BY conv.created_at DESC LIMIT 1
+		) ultima ON true
+		JOIN LATERAL (
+			SELECT conv.created_at FROM conv WHERE conv.phone_key = k.phone_key
+			ORDER BY conv.created_at ASC LIMIT 1
+		) primera ON true
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS message_count, MAX(ml.created_at) AS last_activity
+			FROM whatsapp_message_logs ml
+			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
+		) agg ON true
+		LEFT JOIN LATERAL (
+			SELECT ml.content, ml.direction, ml.status
+			FROM whatsapp_message_logs ml
+			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
+			ORDER BY ml.created_at DESC LIMIT 1
+		) reciente ON true
+		ORDER BY last_activity DESC
+		OFFSET ? LIMIT ?`, phoneKeyExpr, where)
 
-	if err != nil {
+	listArgs := append(append([]any{}, args...), offset, filter.PageSize)
+
+	if err := q.db.Conn(ctx).Raw(listSQL, listArgs...).Scan(&rows).Error; err != nil {
 		q.logger.Error().Err(err).Msg("Error listing conversations")
 		return nil, 0, err
 	}
@@ -353,7 +372,12 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 	err = q.db.Conn(ctx).
 		Table("whatsapp_message_logs").
 		Select("id, direction, message_id, template_name, content, status, delivered_at, read_at, created_at").
-		Where("conversation_id = ?", convID).
+		Where(fmt.Sprintf(`conversation_id IN (
+			SELECT id FROM whatsapp_conversations
+			WHERE business_id = ? AND %s = (
+				SELECT %s FROM whatsapp_conversations WHERE id = ?
+			)
+		)`, phoneKeyExpr, phoneKeyExpr), businessID, convID).
 		Order("created_at ASC").
 		Find(&rows).Error
 	if err != nil {
