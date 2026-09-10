@@ -13,6 +13,7 @@ import (
 
 type businessProfileClient struct {
 	httpClient *httpclient.Client
+	baseURL    string
 	logger     log.ILogger
 }
 
@@ -31,6 +32,7 @@ func NewBusinessProfileClient(baseURL string, logger log.ILogger) ports.IBusines
 
 	return &businessProfileClient{
 		httpClient: client,
+		baseURL:    baseURL,
 		logger:     logger.WithModule("whatsapp-business-profile-client"),
 	}
 }
@@ -180,7 +182,7 @@ func (c *businessProfileClient) UploadProfilePhoto(ctx context.Context, appID, a
 		SetHeader("Content-Type", contentType).
 		SetBody(data).
 		SetResult(&subida).
-		Post(sesion.ID)
+		Post(fmt.Sprintf("%s/%s", c.baseURL, sesion.ID))
 	if err != nil {
 		return "", fmt.Errorf("error subiendo la imagen: %w", err)
 	}
