@@ -35,7 +35,7 @@ const carriers = [
 ];
 ---
 
-<section class="relative w-full overflow-x-clip bg-white pt-10 sm:pt-14 md:pt-16 pb-4 sm:pb-6">
+<section id="carriers-section" class="carriers-section relative w-full overflow-x-clip bg-white pt-10 sm:pt-14 md:pt-16 pb-10 sm:pb-16 md:pb-20">
   <style>
     @keyframes floatY {
       0%,
@@ -139,7 +139,6 @@ const carriers = [
       stroke-linecap: round;
       stroke-dasharray: 3 16;
       animation: laserFlow linear infinite, laserFade ease-in-out infinite;
-      filter: drop-shadow(0 0 3px currentColor) drop-shadow(0 0 8px currentColor);
     }
 
     .laser-route.reverse {
@@ -156,7 +155,10 @@ const carriers = [
       stroke-dasharray: 1400;
       stroke-dashoffset: 1400;
       animation: routeDraw 6s ease-in-out infinite;
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5)) drop-shadow(0 0 12px rgba(139, 92, 246, 0.3));
+    }
+
+    .carriers-section.is-paused * {
+      animation-play-state: paused !important;
     }
 
     .pin-ring {
@@ -261,15 +263,6 @@ const carriers = [
         style="color:#A855F7; animation-duration: 3.8s, 5s;"
       />
 
-      <path class="laser-route-base" d="M895,410 L790,410 L790,570 L900,570" />
-      <path
-        class="laser-route"
-        d="M895,410 L790,410 L790,570 L900,570"
-        stroke="#C4B5FD"
-        stroke-width="2"
-        style="color:#C4B5FD; animation-duration: 4.4s, 4.6s;"
-      />
-
       <path class="laser-route-base" d="M430,470 L520,470 L520,590" />
       <path
         class="laser-route reverse"
@@ -286,33 +279,6 @@ const carriers = [
         stroke="#A78BFA"
         stroke-width="2"
         style="color:#A78BFA; animation-duration: 3.5s, 4.3s;"
-      />
-
-      <path class="laser-route-base" d="M480,220 L480,340 L610,340" />
-      <path
-        class="laser-route reverse"
-        d="M480,220 L480,340 L610,340"
-        stroke="#C4B5FD"
-        stroke-width="1.5"
-        style="color:#C4B5FD; animation-duration: 3s, 3.9s;"
-      />
-
-      <path class="laser-route-base" d="M850,650 L720,650 L720,480" />
-      <path
-        class="laser-route"
-        d="M850,650 L720,650 L720,480"
-        stroke="#8B5CF6"
-        stroke-width="2"
-        style="color:#8B5CF6; animation-duration: 4.1s, 4.9s;"
-      />
-
-      <path class="laser-route-base" d="M900,150 L820,150 L820,60" />
-      <path
-        class="laser-route reverse"
-        d="M900,150 L820,150 L820,60"
-        stroke="#7C3AED"
-        stroke-width="1.5"
-        style="color:#7C3AED; animation-duration: 2.6s, 3.4s;"
       />
     </svg>
   </div>
@@ -396,3 +362,16 @@ const carriers = [
     </div>
   </div>
 </section>
+
+<script>
+  const carriersSection = document.getElementById('carriers-section');
+  if (carriersSection && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        carriersSection.classList.toggle('is-paused', !entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+    observer.observe(carriersSection);
+  }
+</script>
