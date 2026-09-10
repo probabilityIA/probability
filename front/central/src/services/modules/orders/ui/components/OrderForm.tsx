@@ -496,6 +496,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 setCityError(!formData.shipping_city?.trim());
                 throw new Error('La direcci\u00f3n de env\u00edo (calle, ciudad y departamento) es obligatoria');
             }
+            if (!citySelected) {
+                setCityError(true);
+                throw new Error('Selecciona la ciudad y el departamento de la lista, no lo escribas libre: hay ciudades con el mismo nombre en distintos departamentos');
+            }
 
             const parts = [formData.shipping_street || ''];
             if (house.trim()) parts.push(house.trim());

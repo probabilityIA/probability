@@ -72,10 +72,15 @@ func (r *Repository) ResolveShipmentGeozone(ctx context.Context, shipmentID uint
 		text_city AS (
 		    SELECT g.id AS gid
 		    FROM ord, geozones g
+		    LEFT JOIN geozones gs ON gs.id = g.parent_id AND gs.type = 'state'
 		    WHERE ord.city_norm <> ''
 		      AND g.deleted_at IS NULL AND g.type = 'city'
 		      AND (g.business_id = 0 OR g.business_id = ?)
 		      AND REGEXP_REPLACE(unaccent(lower(g.name)), '\s*[,\(]{0,1}\s*d\.{0,1}\s*c\.{0,1}\s*\){0,1}\s*$', '', 'g') = ord.city_norm
+		    ORDER BY CASE
+		        WHEN ord.state_norm <> '' AND gs.id IS NOT NULL
+		             AND REGEXP_REPLACE(unaccent(lower(gs.name)), '\s*[,\(]{0,1}\s*d\.{0,1}\s*c\.{0,1}\s*\){0,1}\s*$', '', 'g') = ord.state_norm
+		        THEN 0 ELSE 1 END
 		    LIMIT 1
 		),
 		text_state AS (
