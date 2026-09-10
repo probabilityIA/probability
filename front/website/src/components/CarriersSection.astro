@@ -47,25 +47,6 @@ const carriers = [
       }
     }
 
-    @keyframes glowBreath {
-      0%,
-      100% {
-        opacity: 0.4;
-      }
-      50% {
-        opacity: 0.8;
-      }
-    }
-
-    @keyframes gridDrift {
-      from {
-        background-position: 0 0, 0 0, 0 0;
-      }
-      to {
-        background-position: 64px 64px, 64px 64px, 90px 90px;
-      }
-    }
-
     @keyframes routeDraw {
       0% {
         stroke-dashoffset: 1400;
@@ -100,16 +81,6 @@ const carriers = [
       }
     }
 
-    @keyframes laserFade {
-      0%,
-      100% {
-        opacity: 0.25;
-      }
-      50% {
-        opacity: 0.7;
-      }
-    }
-
     @media (prefers-reduced-motion: reduce) {
       * {
         animation: none !important;
@@ -125,7 +96,6 @@ const carriers = [
         repeating-linear-gradient(45deg, rgba(139, 92, 246, 0.08) 0 1px, transparent 1px 90px);
       transform: perspective(700px) rotateX(58deg) scale(1.7);
       transform-origin: 50% 100%;
-      animation: gridDrift 14s linear infinite;
     }
 
     .map-fade {
@@ -138,11 +108,12 @@ const carriers = [
       fill: none;
       stroke-linecap: round;
       stroke-dasharray: 3 16;
-      animation: laserFlow linear infinite, laserFade ease-in-out infinite;
+      opacity: 0.5;
+      animation: laserFlow linear infinite;
     }
 
     .laser-route.reverse {
-      animation-name: laserFlowReverse, laserFade;
+      animation-name: laserFlowReverse;
     }
 
     .laser-route-base {
@@ -168,7 +139,7 @@ const carriers = [
     }
 
     .carriers-glow {
-      animation: glowBreath 7s ease-in-out infinite;
+      opacity: 0.6;
     }
 
     .carriers-box-float {
@@ -251,7 +222,7 @@ const carriers = [
         d="M440,40 L440,170 L570,170 L570,330"
         stroke="#8B5CF6"
         stroke-width="2"
-        style="color:#8B5CF6; animation-duration: 3.2s, 4s;"
+        style="color:#8B5CF6; animation-duration: 3.2s;"
       />
 
       <path class="laser-route-base" d="M470,660 L630,660 L630,530 L770,530" />
@@ -260,7 +231,7 @@ const carriers = [
         d="M470,660 L630,660 L630,530 L770,530"
         stroke="#A855F7"
         stroke-width="2"
-        style="color:#A855F7; animation-duration: 3.8s, 5s;"
+        style="color:#A855F7; animation-duration: 3.8s;"
       />
 
       <path class="laser-route-base" d="M430,470 L520,470 L520,590" />
@@ -269,7 +240,7 @@ const carriers = [
         d="M430,470 L520,470 L520,590"
         stroke="#7C3AED"
         stroke-width="1.5"
-        style="color:#7C3AED; animation-duration: 2.8s, 3.6s;"
+        style="color:#7C3AED; animation-duration: 2.8s;"
       />
 
       <path class="laser-route-base" d="M600,20 L600,120 L690,120 L690,250" />
@@ -278,7 +249,7 @@ const carriers = [
         d="M600,20 L600,120 L690,120 L690,250"
         stroke="#A78BFA"
         stroke-width="2"
-        style="color:#A78BFA; animation-duration: 3.5s, 4.3s;"
+        style="color:#A78BFA; animation-duration: 3.5s;"
       />
     </svg>
   </div>

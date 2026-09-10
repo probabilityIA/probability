@@ -1,7 +1,15 @@
 ---
+const MEDIA_BASE = 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/login';
+
+const headlines = [
+  { plain: 'Predice y elimina', highlight: 'devoluciones', suffix: 'antes de que sucedan', clip: 'login-hero-hq1' },
+  { plain: 'Predice y reduce', highlight: 'cancelaciones', suffix: 'antes de que ocurran', clip: 'login-hero-hq2' },
+  { plain: 'Predice y evita', highlight: 'pérdidas', suffix: 'antes de que aparezcan', clip: 'login-hero-hq3' },
+  { plain: 'Predice y previene', highlight: 'reclamos', suffix: 'antes de que escalen', clip: 'login-hero-hq4' },
+];
 ---
 
-<section class="relative w-full min-h-[85vh] lg:min-h-[620px] overflow-hidden bg-[#FBFAFE] py-16 sm:py-20 md:py-24 flex items-center">
+<section id="hero-section" class="hero-section relative isolate w-full min-h-[85vh] lg:min-h-[620px] overflow-hidden bg-[#0A0A0F] py-16 sm:py-20 md:py-24 flex items-center">
   <style>
     @keyframes pulseDot {
       0%,
@@ -15,35 +23,14 @@
       }
     }
 
-    @keyframes glowBreath {
-      0%,
-      100% {
-        opacity: 0.45;
-      }
-      50% {
-        opacity: 0.85;
-      }
-    }
-
     @media (prefers-reduced-motion: reduce) {
       * {
         animation: none !important;
       }
     }
 
-    .hero-grid {
-      background-image: radial-gradient(rgba(139, 92, 246, 0.12) 1px, transparent 1px);
-      background-size: 26px 26px;
-      mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 40%, transparent 100%);
-      -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 40%, transparent 100%);
-    }
-
-    .glow-blob-purple {
-      animation: glowBreath 6s ease-in-out infinite;
-    }
-
-    .glow-blob-violet {
-      animation: glowBreath 7s ease-in-out infinite 1s;
+    .hero-section.is-paused .pulse-dot {
+      animation-play-state: paused !important;
     }
 
     .pulse-dot {
@@ -51,13 +38,120 @@
     }
 
     .gradient-text {
-      background: linear-gradient(115deg, #a855f7, #7c3aed);
+      background: linear-gradient(115deg, #c4b5fd, #a855f7);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       color: transparent;
     }
+
+    .hero-video {
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+
+    .hero-video.is-active {
+      opacity: 1;
+    }
+
+    .hero-headline {
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    .hero-headline.is-swapping {
+      opacity: 0;
+      transform: translateY(10px);
+    }
   </style>
+
+  {headlines.map((h, i) => (
+    <video
+      data-hero-video
+      class="hero-video absolute inset-0 w-full h-full -z-10"
+      poster={`${MEDIA_BASE}/${h.clip}-poster.jpg`}
+      muted
+      loop
+      playsinline
+      preload={i === 0 ? 'auto' : 'none'}
+      aria-hidden="true"
+    >
+      <source src={`${MEDIA_BASE}/${h.clip}.webm`} type="video/webm" />
+      <source src={`${MEDIA_BASE}/${h.clip}.mp4`} type="video/mp4" />
+    </video>
+  ))}
+  <div
+    class="absolute inset-0 -z-10"
+    style="background: radial-gradient(ellipse 75% 65% at 50% 45%, rgba(10,10,15,0.8) 0%, rgba(10,10,15,0.72) 45%, rgba(10,10,15,0.5) 75%, rgba(10,10,15,0.68) 100%);"
+  ></div>
+
+  <div class="relative z-10 w-full px-4 sm:px-6 lg:px-12">
+    <div class="max-w-[720px] mx-auto text-center">
+      <div
+        class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full px-3 sm:px-4 py-2 mb-6 sm:mb-8"
+      >
+        <span class="pulse-dot w-2 h-2 rounded-full bg-[#A78BFA] shadow-[0_0_8px_#A78BFA]"></span>
+        <span class="text-[12.5px] font-bold tracking-[0.06em] text-white/80 uppercase">
+          Potenciado por IA
+        </span>
+      </div>
+
+      <h1
+        id="hero-headline"
+        class="hero-headline font-space-grotesk font-bold text-4xl sm:text-5xl md:text-6xl lg:text-[58px] leading-[1.05] -tracking-[0.02em] text-white mb-5 sm:mb-6 text-balance"
+      >
+        <span data-plain>Predice y elimina</span>
+        <span class="gradient-text" data-highlight>devoluciones</span>
+        <span data-suffix>antes de que sucedan</span>
+      </h1>
+
+      <p
+        class="text-base sm:text-lg md:text-xl text-white/70 leading-[1.55] mb-8 sm:mb-[34px] max-w-[560px] mx-auto"
+      >
+        Probability IA analiza cada pedido en tiempo real para anticipar el
+        riesgo de devolución y optimizar tus envíos. Menos pérdidas, más
+        margen.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3 sm:gap-[14px] mb-10 sm:mb-[46px] justify-center">
+        <a
+          href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos"
+          class="inline-flex items-center justify-center px-6 sm:px-[26px] py-3 sm:py-[15px] font-bold text-sm sm:text-[15.5px] text-white rounded-[13px] bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] shadow-[0_16px_34px_-12px_rgba(124,58,237,0.7)] hover:shadow-[0_20px_40px_-8px_rgba(124,58,237,0.8)] hover:-translate-y-0.5 transition-all"
+        >
+          Solicitar demo gratis
+        </a>
+        <a
+          href="/contacto"
+          class="inline-flex items-center justify-center px-6 sm:px-[26px] py-3 sm:py-[15px] font-bold text-sm sm:text-[15.5px] text-white rounded-[13px] bg-white/10 backdrop-blur-sm border border-white/20 hover:border-[#A78BFA] hover:bg-white/15 transition-all"
+        >
+          Contáctanos
+        </a>
+      </div>
+
+      <div class="flex gap-[30px] sm:gap-[46px] items-end flex-wrap justify-center">
+        <div>
+          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-emerald-400">
+            ↓<span data-count="28">28</span>%
+          </div>
+          <div class="text-[13px] text-white/60 mt-1">menos devoluciones</div>
+        </div>
+        <div class="w-px h-[38px] bg-white/20"></div>
+        <div>
+          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-white">
+            <span data-count="93">93</span>%
+          </div>
+          <div class="text-[13px] text-white/60 mt-1">precisión del modelo</div>
+        </div>
+        <div class="w-px h-[38px] bg-white/20"></div>
+        <div>
+          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-white">
+            1.2M
+          </div>
+          <div class="text-[13px] text-white/60 mt-1">pedidos/mes</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script define:vars={{ dummy: true }}>
     (function () {
@@ -90,79 +184,88 @@
     })();
   </script>
 
-  <div class="hero-grid absolute inset-0 z-0"></div>
+  <script define:vars={{ headlines }}>
+    const heroSection = document.getElementById('hero-section');
+    const videos = Array.from(document.querySelectorAll('[data-hero-video]'));
 
-  <div
-    class="glow-blob-purple absolute -top-[120px] -right-[80px] w-[560px] h-[560px] rounded-full bg-gradient-to-br from-purple-400/25 to-transparent blur-[60px] -z-10"
-  ></div>
-  <div
-    class="glow-blob-violet absolute -bottom-[160px] -left-[100px] w-[480px] h-[480px] rounded-full bg-gradient-to-br from-purple-300/20 to-transparent blur-[60px] -z-10"
-  ></div>
+    function playVideo(video) {
+      if (!(video instanceof HTMLVideoElement)) return;
+      if (video.preload === 'none') video.preload = 'auto';
+      if (!video.currentSrc) video.load();
+      const p = video.play();
+      if (p && typeof p.catch === 'function') p.catch(() => undefined);
+    }
 
-  <div class="relative z-10 w-full px-4 sm:px-6 lg:px-12">
-    <div class="max-w-[720px] mx-auto text-center">
-      <div
-        class="inline-flex items-center gap-2 bg-white border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-6 sm:mb-8 shadow-[0_8px_24px_-12px_rgba(124,58,237,0.4)]"
-      >
-        <span class="pulse-dot w-2 h-2 rounded-full bg-[#8B5CF6] shadow-[0_0_8px_#8B5CF6]"></span>
-        <span class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase">
-          Potenciado por IA
-        </span>
-      </div>
+    function pauseVideo(video) {
+      if (video instanceof HTMLVideoElement) video.pause();
+    }
 
-      <h1
-        class="font-space-grotesk font-bold text-4xl sm:text-5xl md:text-6xl lg:text-[58px] leading-[1.05] -tracking-[0.02em] text-[#181225] mb-5 sm:mb-6 text-balance"
-      >
-        Predice y elimina
-        <span class="gradient-text">devoluciones</span>
-        antes de que sucedan
-      </h1>
+    let sectionVisible = true;
+    let rotationStarted = false;
+    let index = 0;
 
-      <p
-        class="text-base sm:text-lg md:text-xl text-[#5B5470] leading-[1.55] mb-8 sm:mb-[34px] max-w-[560px] mx-auto"
-      >
-        Probability IA analiza cada pedido en tiempo real para anticipar el
-        riesgo de devolución y optimizar tus envíos. Menos pérdidas, más
-        margen.
-      </p>
+    function ensureRotationStarted() {
+      if (rotationStarted) return;
+      const headline = document.getElementById('hero-headline');
+      const plainEl = headline?.querySelector('[data-plain]');
+      const highlightEl = headline?.querySelector('[data-highlight]');
+      const suffixEl = headline?.querySelector('[data-suffix]');
+      if (!headline || !plainEl || !highlightEl || !suffixEl || videos.length === 0) return;
 
-      <div class="flex flex-col sm:flex-row gap-3 sm:gap-[14px] mb-10 sm:mb-[46px] justify-center">
-        <a
-          href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos"
-          class="inline-flex items-center justify-center px-6 sm:px-[26px] py-3 sm:py-[15px] font-bold text-sm sm:text-[15.5px] text-white rounded-[13px] bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] shadow-[0_16px_34px_-12px_rgba(124,58,237,0.7)] hover:shadow-[0_20px_40px_-8px_rgba(124,58,237,0.8)] hover:-translate-y-0.5 transition-all"
-        >
-          Solicitar demo gratis
-        </a>
-        <a
-          href="/contacto"
-          class="inline-flex items-center justify-center px-6 sm:px-[26px] py-3 sm:py-[15px] font-bold text-sm sm:text-[15.5px] text-[#3A2E5C] rounded-[13px] bg-white border border-[#E2DCF1] hover:border-[#8B5CF6] hover:text-[#7C3AED] transition-all"
-        >
-          Contáctanos
-        </a>
-      </div>
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
 
-      <div class="flex gap-[30px] sm:gap-[46px] items-end flex-wrap justify-center">
-        <div>
-          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-emerald-600">
-            ↓<span data-count="28">28</span>%
-          </div>
-          <div class="text-[13px] text-[#6B6480] mt-1">menos devoluciones</div>
-        </div>
-        <div class="w-px h-[38px] bg-[#E4DFF0]"></div>
-        <div>
-          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-[#181225]">
-            <span data-count="93">93</span>%
-          </div>
-          <div class="text-[13px] text-[#6B6480] mt-1">precisión del modelo</div>
-        </div>
-        <div class="w-px h-[38px] bg-[#E4DFF0]"></div>
-        <div>
-          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-[#181225]">
-            1.2M
-          </div>
-          <div class="text-[13px] text-[#6B6480] mt-1">pedidos/mes</div>
-        </div>
-      </div>
-    </div>
-  </div>
+      rotationStarted = true;
+      videos[0].classList.add('is-active');
+      if (sectionVisible) playVideo(videos[0]);
+
+      window.setInterval(() => {
+        if (!sectionVisible) return;
+
+        const prevIndex = index;
+        index = (index + 1) % headlines.length;
+        headline.classList.add('is-swapping');
+
+        const nextVideo = videos[index];
+        if (nextVideo) {
+          nextVideo.currentTime = 0;
+          playVideo(nextVideo);
+          nextVideo.classList.add('is-active');
+        }
+        const prevVideo = videos[prevIndex];
+
+        window.setTimeout(() => {
+          const next = headlines[index];
+          plainEl.textContent = next.plain;
+          highlightEl.textContent = next.highlight;
+          suffixEl.textContent = next.suffix;
+          headline.classList.remove('is-swapping');
+          if (prevVideo) {
+            prevVideo.classList.remove('is-active');
+            window.setTimeout(() => pauseVideo(prevVideo), 900);
+          }
+        }, 450);
+      }, 4200);
+    }
+
+    if (heroSection && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          sectionVisible = entry.isIntersecting;
+          heroSection.classList.toggle('is-paused', !sectionVisible);
+          if (sectionVisible) {
+            const active = videos.find((v) => v.classList.contains('is-active')) || videos[0];
+            if (active) playVideo(active);
+            ensureRotationStarted();
+          } else {
+            videos.forEach(pauseVideo);
+          }
+        },
+        { threshold: 0 }
+      );
+      observer.observe(heroSection);
+    } else {
+      ensureRotationStarted();
+    }
+  </script>
 </section>
