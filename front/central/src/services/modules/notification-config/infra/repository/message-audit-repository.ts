@@ -119,7 +119,7 @@ export class MessageAuditApiRepository {
         text: string
     ): Promise<string> {
         const response = await fetch(
-            `${this.baseUrl}/whatsapp/conversations/${conversationId}/reply`,
+            `${this.baseUrl}/integrations/whatsapp/conversations/${conversationId}/reply`,
             {
                 method: "POST",
                 headers: {
@@ -132,7 +132,7 @@ export class MessageAuditApiRepository {
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.message || "Failed to send reply");
+            throw new Error(error.details || error.message || error.error || "No se pudo enviar el mensaje");
         }
 
         const data = await response.json();
@@ -141,7 +141,7 @@ export class MessageAuditApiRepository {
 
     async pauseAI(conversationId: string, phoneNumber: string, businessId: number): Promise<void> {
         const response = await fetch(
-            `${this.baseUrl}/whatsapp/conversations/${conversationId}/pause-ai`,
+            `${this.baseUrl}/integrations/whatsapp/conversations/${conversationId}/pause-ai`,
             {
                 method: "POST",
                 headers: {
@@ -154,13 +154,13 @@ export class MessageAuditApiRepository {
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.message || "Failed to pause AI");
+            throw new Error(error.details || error.message || error.error || "No se pudo pausar la IA");
         }
     }
 
     async resumeAI(conversationId: string, phoneNumber: string, businessId: number): Promise<void> {
         const response = await fetch(
-            `${this.baseUrl}/whatsapp/conversations/${conversationId}/resume-ai`,
+            `${this.baseUrl}/integrations/whatsapp/conversations/${conversationId}/resume-ai`,
             {
                 method: "POST",
                 headers: {
@@ -173,7 +173,7 @@ export class MessageAuditApiRepository {
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.message || "Failed to resume AI");
+            throw new Error(error.details || error.message || error.error || "No se pudo reanudar la IA");
         }
     }
 }
