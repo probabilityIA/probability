@@ -797,25 +797,36 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-300">
                                                 <MapPin className="h-4 w-4 text-slate-400" /> Direcci&oacute;n de entrega
                                             </h3>
-                                            {order.shipping_geo_confidence && (
-                                                <span
-                                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                                                    style={
-                                                        order.shipping_geo_confidence === 'high'
-                                                            ? { backgroundColor: '#dcfce7', color: '#166534' }
+                                            <div className="flex flex-wrap items-center justify-end gap-1">
+                                                {order.shipping_address_source === 'manual' && (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                        style={{ backgroundColor: '#fef3c7', color: '#92400e' }}
+                                                        title={'La direcci\u00f3n se escribi\u00f3 a mano, sin elegir una sugerencia de Google Maps'}
+                                                    >
+                                                        {'Direcci\u00f3n sin Google'}
+                                                    </span>
+                                                )}
+                                                {order.shipping_geo_confidence && (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                        style={
+                                                            order.shipping_geo_confidence === 'high'
+                                                                ? { backgroundColor: '#dcfce7', color: '#166534' }
+                                                                : order.shipping_geo_confidence === 'medium'
+                                                                    ? { backgroundColor: '#fef9c3', color: '#854d0e' }
+                                                                    : { backgroundColor: '#fee2e2', color: '#991b1b' }
+                                                        }
+                                                        title={'Confianza del geocode de la direcci\u00f3n'}
+                                                    >
+                                                        {order.shipping_geo_confidence === 'high'
+                                                            ? 'Direcci\u00f3n confiable'
                                                             : order.shipping_geo_confidence === 'medium'
-                                                                ? { backgroundColor: '#fef9c3', color: '#854d0e' }
-                                                                : { backgroundColor: '#fee2e2', color: '#991b1b' }
-                                                    }
-                                                    title={'Confianza del geocode de la direcci\u00f3n'}
-                                                >
-                                                    {order.shipping_geo_confidence === 'high'
-                                                        ? 'Direcci\u00f3n confiable'
-                                                        : order.shipping_geo_confidence === 'medium'
-                                                            ? 'Verificar direcci\u00f3n'
-                                                            : 'Direcci\u00f3n dudosa'}
-                                                </span>
-                                            )}
+                                                                ? 'Verificar direcci\u00f3n'
+                                                                : 'Direcci\u00f3n dudosa'}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         {loadingDetails ? (
                                             <div className="py-4 text-center text-xs text-slate-400">Cargando...</div>
