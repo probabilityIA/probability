@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -63,6 +66,7 @@ type AddressSearchResult struct {
 	State         string  `json:"state"`
 	Neighbourhood string  `json:"neighbourhood"`
 	Postcode      string  `json:"postcode"`
+	DistanceKm    float64 `json:"distance_km,omitempty"`
 }
 
 func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
@@ -170,6 +174,49 @@ type placesSearchResult struct {
 	} `json:"geometry"`
 }
 
+const officeMaxDistanceKm = 30.0
+
+func normalizeForMatch(text string) string {
+	replacer := strings.NewReplacer(
+		"\u00e1", "a", "\u00e9", "e", "\u00ed", "i", "\u00f3", "o", "\u00fa", "u", "\u00fc", "u", "\u00f1", "n",
+		"\u00c1", "a", "\u00c9", "e", "\u00cd", "i", "\u00d3", "o", "\u00da", "u", "\u00dc", "u", "\u00d1", "n",
+		" ", "", ".", "", "-", "", "_", "",
+	)
+	return replacer.Replace(strings.ToLower(text))
+}
+
+var cityCenterCache sync.Map
+
+func cityCenter(city, state, apiKey string) (float64, float64, bool) {
+	key := strings.ToLower(strings.TrimSpace(city) + "|" + strings.TrimSpace(state))
+	if cached, ok := cityCenterCache.Load(key); ok {
+		point := cached.([2]float64)
+		return point[0], point[1], point[0] != 0 || point[1] != 0
+	}
+
+	query := city
+	if state != "" {
+		query += ", " + state
+	}
+	lat, lng, ok := googleGeocode(query+", Colombia", apiKey, "")
+	if !ok {
+		cityCenterCache.Store(key, [2]float64{0, 0})
+		return 0, 0, false
+	}
+	cityCenterCache.Store(key, [2]float64{lat, lng})
+	return lat, lng, true
+}
+
+func distanceKm(lat1, lng1, lat2, lng2 float64) float64 {
+	const earthRadiusKm = 6371.0
+	toRad := func(deg float64) float64 { return deg * math.Pi / 180 }
+	dLat := toRad(lat2 - lat1)
+	dLng := toRad(lng2 - lng1)
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(toRad(lat1))*math.Cos(toRad(lat2))*math.Sin(dLng/2)*math.Sin(dLng/2)
+	return earthRadiusKm * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+}
+
 func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		query := c.Query("query")
@@ -184,11 +231,24 @@ func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 			return
 		}
 
+		city := strings.TrimSpace(c.Query("city"))
+		state := strings.TrimSpace(c.Query("state"))
+		carrier := normalizeForMatch(c.Query("carrier"))
+
+		var centerLat, centerLng float64
+		hasCenter := false
+		if city != "" {
+			centerLat, centerLng, hasCenter = cityCenter(city, state, apiKey)
+		}
+
 		placesURL := fmt.Sprintf(
 			"https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&key=%s&language=es",
 			url.QueryEscape(query),
 			apiKey,
 		)
+		if hasCenter {
+			placesURL += fmt.Sprintf("&location=%f,%f&radius=%d", centerLat, centerLng, int(officeMaxDistanceKm*1000))
+		}
 
 		resp, err := http.Get(placesURL)
 		if err != nil {
@@ -221,11 +281,31 @@ func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 
 		results := make([]AddressSearchResult, 0, len(pResp.Results))
 		for _, res := range pResp.Results {
-			results = append(results, AddressSearchResult{
+			item := AddressSearchResult{
 				DisplayName: fmt.Sprintf("%s (%s)", res.Name, res.FormattedAddress),
 				PlaceID:     res.PlaceID,
 				Lat:         res.Geometry.Location.Lat,
 				Lon:         res.Geometry.Location.Lng,
+			}
+
+			if carrier != "" && !strings.Contains(normalizeForMatch(res.Name), carrier) {
+				continue
+			}
+
+			if hasCenter {
+				km := distanceKm(centerLat, centerLng, item.Lat, item.Lon)
+				if km > officeMaxDistanceKm {
+					continue
+				}
+				item.DistanceKm = math.Round(km*10) / 10
+			}
+
+			results = append(results, item)
+		}
+
+		if hasCenter {
+			sort.Slice(results, func(i, j int) bool {
+				return results[i].DistanceKm < results[j].DistanceKm
 			})
 		}
 

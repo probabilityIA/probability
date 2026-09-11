@@ -566,9 +566,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 throw new Error('Selecciona la ciudad y el departamento de la lista, no lo escribas libre: hay ciudades con el mismo nombre en distintos departamentos');
             }
 
-            if (deliveryType === 'office' && !officeCarrier) {
+            if (deliveryType === 'office' && !officeCarrier && !formData.shipping_street?.trim()) {
                 setOfficeError(true);
-                throw new Error('Elige la oficina de la transportadora donde el cliente va a recoger');
+                throw new Error('Elige la oficina de la transportadora, o escribe su direccion si no aparece en la lista');
             }
 
             const complement = deliveryType === 'office'
@@ -1036,6 +1036,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 {showOfficePicker && (
                                     <CarrierOfficeSelector
                                         city={formData.shipping_city}
+                                        state={formData.shipping_state}
                                         onClose={() => setShowOfficePicker(false)}
                                         onSelectAddress={(address, carrierId, coords) => {
                                             setFormData(prev => ({ ...prev, shipping_street: address }));

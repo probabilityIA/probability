@@ -8,10 +8,12 @@ interface OfficeResult {
     place_id: string;
     lat: number;
     lon: number;
+    distance_km?: number;
 }
 
 interface CarrierOfficeSelectorProps {
     city: string;
+    state?: string;
     onSelectAddress: (address: string, carrierId: string, coords?: { lat: number; lon: number }) => void;
     onClose: () => void;
 }
@@ -24,12 +26,13 @@ const CARRIERS = [
     { id: 'tcc', name: 'TCC' }
 ];
 
-export function CarrierOfficeSelector({ city, onSelectAddress, onClose }: CarrierOfficeSelectorProps) {
+export function CarrierOfficeSelector({ city, state = '', onSelectAddress, onClose }: CarrierOfficeSelectorProps) {
     const [selectedCarrier, setSelectedCarrier] = useState<string>(CARRIERS[0].id);
     const [results, setResults] = useState<OfficeResult[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const [subSearch, setSubSearch] = useState<string>(''); // Nueva búsqueda interna
+    const [subSearch, setSubSearch] = useState<string>('');
+    const cleanCityLabel = city.split('(')[0].trim();
 
     const fetchOffices = async () => {
         if (!city) {
@@ -44,8 +47,10 @@ export function CarrierOfficeSelector({ city, onSelectAddress, onClose }: Carrie
             // Quitamos lo que esté en paréntesis de la ciudad if it looks like "Bogota (Bogota)"
             const cleanCity = city.split('(')[0].trim();
             const query = encodeURIComponent(`Oficina ${carrierName} ${subSearch} ${cleanCity} Colombia`);
-            
-            const response = await fetch(`${env.API_BASE_URL}/places-search?query=${query}`);
+            const params = new URLSearchParams({ query: decodeURIComponent(query), city: cleanCity, carrier: carrierName });
+            if (state) params.set('state', state);
+
+            const response = await fetch(`${env.API_BASE_URL}/places-search?${params.toString()}`);
             if (!response.ok) throw new Error('Error al buscar oficinas');
             
             const data = await response.json();
@@ -67,7 +72,7 @@ export function CarrierOfficeSelector({ city, onSelectAddress, onClose }: Carrie
             fetchOffices();
         }, 500);
         return () => clearTimeout(timeoutId);
-    }, [selectedCarrier, city, subSearch]);
+    }, [selectedCarrier, city, state, subSearch]);
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 mt-2">
@@ -148,6 +153,11 @@ export function CarrierOfficeSelector({ city, onSelectAddress, onClose }: Carrie
                                     <div>
                                         <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-snug">
                                             {r.display_name.split('(')[0].trim()}
+                                            {typeof r.distance_km === 'number' && r.distance_km >= 1 && (
+                                                <span className="ml-1.5 font-normal text-[10px] text-amber-600 dark:text-amber-400">
+                                                    a {r.distance_km} km del centro de {cleanCityLabel}
+                                                </span>
+                                            )}
                                         </p>
                                         {r.display_name.includes('(') && (
                                             <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
