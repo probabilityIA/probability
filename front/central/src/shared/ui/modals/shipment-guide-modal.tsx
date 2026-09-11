@@ -806,7 +806,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 originLastName: "Apellido",
                 originPhone: "Teléfono",
                 originEmail: "Email",
-                destCrossStreet: "Calle",
+                destCrossStreet: "Complemento",
                 destReference: "Edificio/Interior/Apto",
                 destSuburb: "Barrio",
                 destCompany: "Empresa",
@@ -1182,7 +1182,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
                                                     {order.shipping_delivery_type === 'office'
                                                         ? 'La oficina se cambia con el buscador de abajo. '
-                                                        : 'La ' + 'dirección' + ' del cliente se cambia en la orden, no aqui. '}
+                                                        : 'La direcci\u00f3n del cliente se cambia en la orden, no aqu\u00ed. '}
                                                     {onEditOrder ? (
                                                         <button
                                                             type="button"
@@ -1746,8 +1746,20 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
 
                                         <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">{'Direcci\u00f3n'}</p>
+                                        <Input
+                                            compact
+                                            label="Calle *"
+                                            value={step1Data?.destAddress || step1Form.getValues("destAddress") || ""}
+                                            readOnly
+                                            className="cursor-not-allowed opacity-90"
+                                        />
+                                        <p className="mt-1 mb-1.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                                            {order
+                                                ? 'La calle viene de la orden y se cambia en la orden, no aqu\u00ed.'
+                                                : 'La calle se cambia en el paso 1.'}
+                                        </p>
                                         <div className="grid grid-cols-3 gap-1.5">
-                                            <Input compact label="Calle *" {...step3Form.register("destCrossStreet")} error={step3Form.formState.errors.destCrossStreet?.message} placeholder="calle 75 sur n 42-97" />
+                                            <Input compact label="Complemento *" {...step3Form.register("destCrossStreet")} error={step3Form.formState.errors.destCrossStreet?.message} placeholder="Torre, conjunto o entre calles" />
                                             <Input compact label="Edificio/Apto" {...step3Form.register("destReference")} error={step3Form.formState.errors.destReference?.message} placeholder="casa #" />
                                             <Input compact label="Barrio" {...step3Form.register("destSuburb")} error={step3Form.formState.errors.destSuburb?.message} placeholder="Nombre barrio" />
                                         </div>
