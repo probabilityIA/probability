@@ -1,5 +1,11 @@
 ---
 import ExpandedTabs from './ExpandedTabs';
+
+interface Props {
+	transparentOnTop?: boolean;
+}
+
+const { transparentOnTop = false } = Astro.props;
 ---
 
 <style>
@@ -20,16 +26,68 @@ import ExpandedTabs from './ExpandedTabs';
 			display: flex;
 		}
 	}
+
+	.site-header {
+		background-color: #fff;
+		border-bottom-color: rgb(229 231 235);
+	}
+
+	.site-header.is-transparent-top {
+		background-color: transparent;
+		border-bottom-color: transparent;
+		transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+	}
+
+	.site-header.is-transparent-top.is-scrolled {
+		background-color: #fff;
+		border-bottom-color: rgb(229 231 235);
+		box-shadow: 0 1px 12px -6px rgba(0, 0, 0, 0.15);
+	}
+
+	.header-logo {
+		transition: filter 0.3s ease;
+	}
+
+	.site-header.is-transparent-top:not(.is-scrolled) .header-logo {
+		filter: brightness(0) invert(1);
+	}
+
+	.header-register {
+		transition: color 0.3s ease, border-color 0.3s ease;
+	}
+
+	.site-header.is-transparent-top:not(.is-scrolled) .header-register {
+		color: #fff;
+		border-color: rgba(255, 255, 255, 0.4);
+	}
+
+	.site-header.is-transparent-top:not(.is-scrolled) .header-register:hover {
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+
+	.header-menu-icon {
+		transition: color 0.3s ease;
+	}
+
+	.site-header.is-transparent-top:not(.is-scrolled) .header-menu-icon {
+		color: #fff;
+	}
+
+	.site-header.is-transparent-top {
+		position: fixed;
+		left: 0;
+		right: 0;
+	}
 </style>
 
-<header class="bg-white sticky top-0 z-50 border-b border-gray-200">
+<header id="site-header" class={`site-header ${transparentOnTop ? '' : 'sticky'} top-0 z-50 border-b ${transparentOnTop ? 'is-transparent-top' : ''}`}>
 	<nav class="mx-auto px-4 sm:px-6 md:px-10 lg:px-20 py-4 sm:py-5 flex items-center justify-between h-auto sm:h-20">
 		<!-- Logo -->
 		<a href="/website/" class="flex items-center gap-3 cursor-pointer group flex-shrink-0">
 			<img
 				src="https://www.probabilityia.com.co/_next/image?url=%2Flogo2recortado.png&w=1200&q=75"
 				alt="probabilityIA logo"
-				class="h-10 sm:h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+				class="header-logo h-10 sm:h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
 			/>
 		</a>
 
@@ -54,14 +112,14 @@ import ExpandedTabs from './ExpandedTabs';
 			</a>
 			<a
 				href="/website/registrate"
-				class="border border-gray-300 text-gray-900 px-4 lg:px-5 py-2 rounded-lg font-medium transition-colors hover:bg-gray-50 text-xs lg:text-sm"
+				class="header-register border border-gray-300 text-gray-900 px-4 lg:px-5 py-2 rounded-lg font-medium transition-colors hover:bg-gray-50 text-xs lg:text-sm"
 			>
 				Registrate
 			</a>
 		</div>
 
 		<!-- Mobile Menu Button -->
-		<button class="mobile-menu-toggle md:hidden flex items-center gap-2 text-gray-600 hover:text-[#8B5CF6]" id="mobile-menu-btn">
+		<button class="header-menu-icon mobile-menu-toggle md:hidden flex items-center gap-2 text-gray-600 hover:text-[#8B5CF6]" id="mobile-menu-btn">
 			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
 			</svg>
@@ -134,5 +192,15 @@ import ExpandedTabs from './ExpandedTabs';
 				mobileMenu.classList.add('hidden');
 			});
 		});
+	}
+
+	const siteHeader = document.getElementById('site-header');
+	if (siteHeader) {
+		const SCROLL_THRESHOLD = 40;
+		const updateHeaderState = () => {
+			siteHeader.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
+		};
+		updateHeaderState();
+		window.addEventListener('scroll', updateHeaderState, { passive: true });
 	}
 </script>

@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import HeroSection from '../components/HeroSection.astro';
+import CarriersSection from '../components/CarriersSection.astro';
+import InvoicingSection from '../components/InvoicingSection.astro';
 import BannerPromo from '../components/BannerPromo.astro';
 import DiagnosticoSection from '../components/DiagnosticoSection.astro';
 import IntegrationsSection from '../components/IntegrationsSection.astro';
@@ -329,7 +331,7 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 </style>
 
 <Layout title={title} description={description} path="/">
-	<Header />
+	<Header transparentOnTop />
 	<div class="whatsapp-float">
 		<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20me%20interesa%20conocer%20más%20sobre%20tu%20plataforma" class="whatsapp-btn" title="Contactanos por WhatsApp">
 			<img src="https://static.vecteezy.com/system/resources/previews/021/495/946/non_2x/whatsapp-logo-icon-free-png.png" alt="WhatsApp" class="w-9 sm:w-12 h-9 sm:h-12"/>
@@ -337,6 +339,8 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 	</div>
 	<main>
 		<HeroSection />
+		<CarriersSection />
+		<InvoicingSection />
 
 		<DiagnosticoSection />
 		<BannerPromo />

@@ -1,0 +1,134 @@
+---
+const billers = [
+  {
+    name: 'Siigo',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1771738597_siigo.png',
+  },
+  {
+    name: 'Softpymes',
+    src: 'https://soporte.softpymes.com.co/hubfs/SPT1%20(1).png',
+  },
+];
+---
+
+<section id="invoicing-section" class="invoicing-section relative w-full overflow-x-clip bg-[#FAF9FD] py-14 sm:py-20 md:py-24">
+  <style>
+    @keyframes invoiceFloat {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .invoicing-section * {
+        animation: none !important;
+      }
+    }
+
+    .invoicing-mock {
+      animation: invoiceFloat 6s ease-in-out infinite;
+    }
+
+    .invoicing-section.is-paused * {
+      animation-play-state: paused !important;
+    }
+
+    .biller-tile {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .biller-tile:hover {
+      transform: translateY(-3px);
+      border-color: rgba(196, 181, 253, 0.6);
+      box-shadow: 0 14px 26px -14px rgba(196, 181, 253, 0.5);
+    }
+  </style>
+
+  <div class="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
+    <div class="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
+      <div class="w-full lg:w-[620px] lg:shrink-0 text-center lg:text-left">
+        <div
+          class="inline-flex items-center gap-2 bg-[#F6F3FD] border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-5"
+        >
+          <span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+          <span class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase">
+            Facturación automática
+          </span>
+        </div>
+
+        <h2
+          class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[52px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-6 text-balance"
+        >
+          Facturas y sincronizas
+          <span class="text-[#7C3AED]">tu inventario</span>
+          sin digitar dos veces
+        </h2>
+
+        <ul class="flex flex-col gap-3 items-center lg:items-start mb-7">
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Generas la factura electrónica automáticamente por cada venta
+          </li>
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Sincronizas tu inventario en tiempo real, sin doble digitación
+          </li>
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Compatible con tu facturador, sin curva de aprendizaje
+          </li>
+        </ul>
+
+        <div class="flex items-center justify-center lg:justify-start gap-3">
+          {billers.map((b) => (
+            <div
+              class="biller-tile flex items-center justify-center bg-white border border-[#EFEAFB] rounded-xl h-16 w-32 px-4 shadow-[0_6px_16px_-10px_rgba(124,58,237,0.3)]"
+              title={b.name}
+            >
+              <img src={b.src} alt={b.name} class="max-w-full max-h-full object-contain" loading="lazy" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="w-full lg:w-[720px] flex justify-center">
+        <div class="invoicing-mock relative w-full max-w-[660px]">
+          <div class="rounded-2xl border border-[#EFEAFB] shadow-[0_30px_60px_-30px_rgba(124,58,237,0.35)] overflow-hidden bg-white">
+            <img
+              src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/invoicing-list.png"
+              alt="Panel de facturas generadas automáticamente en Probability"
+              class="w-full h-auto object-contain"
+              loading="lazy"
+            />
+          </div>
+
+          <div class="absolute -bottom-10 -right-6 sm:-right-10 w-[62%] rounded-xl border border-[#EFEAFB] shadow-[0_20px_40px_-18px_rgba(124,58,237,0.4)] overflow-hidden bg-white">
+            <img
+              src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/invoicing-detail.png"
+              alt="Detalle de factura electrónica con estado DIAN e items sincronizados"
+              class="w-full h-auto object-contain"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const invoicingSection = document.getElementById('invoicing-section');
+    if (invoicingSection && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          invoicingSection.classList.toggle('is-paused', !entry.isIntersecting);
+        },
+        { threshold: 0 }
+      );
+      observer.observe(invoicingSection);
+    }
+  </script>
+</section>

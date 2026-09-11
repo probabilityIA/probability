@@ -1,0 +1,348 @@
+---
+const carriers = [
+  {
+    name: 'Coordinadora',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_coordinadora.png',
+  },
+  {
+    name: 'Servientrega',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_servientrega.png',
+  },
+  {
+    name: 'Interrapidisimo',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_inerapidisimo.png',
+  },
+  {
+    name: 'Envia',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_envia.png',
+  },
+  {
+    name: 'Deprisa',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_deprisa.png',
+  },
+  {
+    name: 'Pibox',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_pibox.png',
+  },
+  {
+    name: 'Mensajeros Urbanos',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_mensajerosUrbanos.png',
+  },
+  {
+    name: 'TCC',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_TCC.png',
+  },
+];
+---
+
+<section id="carriers-section" class="carriers-section relative w-full overflow-x-clip bg-white pt-10 sm:pt-14 md:pt-16 pb-10 sm:pb-16 md:pb-20">
+  <style>
+    @keyframes floatY {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-14px);
+      }
+    }
+
+    @keyframes routeDraw {
+      0% {
+        stroke-dashoffset: 1400;
+      }
+      55%,
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes pinPulse {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(2.4);
+        opacity: 0;
+      }
+    }
+
+    @keyframes laserFlow {
+      to {
+        stroke-dashoffset: -240;
+      }
+    }
+
+    @keyframes laserFlowReverse {
+      to {
+        stroke-dashoffset: 240;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+      }
+    }
+
+    .map-grid {
+      position: absolute;
+      inset: -20% -10%;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(139, 92, 246, 0.16) 0 1px, transparent 1px 64px),
+        repeating-linear-gradient(90deg, rgba(139, 92, 246, 0.16) 0 1px, transparent 1px 64px),
+        repeating-linear-gradient(45deg, rgba(139, 92, 246, 0.08) 0 1px, transparent 1px 90px);
+      transform: perspective(700px) rotateX(58deg) scale(1.7);
+      transform-origin: 50% 100%;
+    }
+
+    .map-fade {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 55% 45%, transparent 0%, #ffffff 78%);
+    }
+
+    .laser-route {
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 3 16;
+      opacity: 0.5;
+      animation: laserFlow linear infinite;
+    }
+
+    .laser-route.reverse {
+      animation-name: laserFlowReverse;
+    }
+
+    .laser-route-base {
+      fill: none;
+      stroke: rgba(139, 92, 246, 0.12);
+      stroke-width: 1.5;
+    }
+
+    .route-path {
+      stroke-dasharray: 1400;
+      stroke-dashoffset: 1400;
+      animation: routeDraw 6s ease-in-out infinite;
+    }
+
+    .carriers-section.is-paused * {
+      animation-play-state: paused !important;
+    }
+
+    .pin-ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pinPulse 2.2s ease-out infinite;
+    }
+
+    .carriers-glow {
+      opacity: 0.6;
+    }
+
+    .carriers-box-float {
+      animation: floatY 7s ease-in-out infinite;
+    }
+
+
+    .carrier-tile {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .carrier-tile:hover {
+      transform: translateY(-3px);
+      border-color: rgba(196, 181, 253, 0.6);
+      box-shadow: 0 14px 26px -14px rgba(196, 181, 253, 0.5);
+    }
+
+    .carriers-box-stage {
+      --box-size: clamp(380px, 56vw, 1280px);
+      width: var(--box-size);
+      height: var(--box-size);
+      margin-top: calc(var(--box-size) * -0.155);
+      margin-bottom: calc(var(--box-size) * -0.155);
+    }
+
+    @media (min-width: 1024px) {
+      .carriers-box-stage {
+        position: absolute;
+        top: 50%;
+        right: calc(var(--box-size) * -0.42);
+        margin-top: calc(var(--box-size) * -0.5);
+        margin-bottom: 0;
+        z-index: 30;
+      }
+    }
+  </style>
+
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="map-grid"></div>
+    <div class="map-fade"></div>
+
+    <svg
+      viewBox="0 0 900 700"
+      preserveAspectRatio="xMidYMid slice"
+      class="absolute inset-0 w-full h-full opacity-90"
+    >
+      <path
+        class="route-path"
+        d="M700,660 L700,470 L800,470 L800,270 L865,270 L865,80"
+        fill="none"
+        stroke="url(#routeGrad)"
+        stroke-width="5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <defs>
+        <linearGradient id="routeGrad" x1="700" y1="660" x2="865" y2="80" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#7C3AED" />
+          <stop offset="1" stop-color="#A855F7" />
+        </linearGradient>
+      </defs>
+
+      <circle cx="700" cy="660" r="7" fill="#7C3AED" />
+      <circle class="pin-ring" cx="700" cy="660" r="7" fill="none" stroke="#7C3AED" stroke-width="2" />
+
+      <circle cx="865" cy="80" r="7" fill="#A855F7" />
+      <circle class="pin-ring" cx="865" cy="80" r="7" fill="none" stroke="#A855F7" stroke-width="2" />
+
+      <circle r="5" fill="#7C3AED">
+        <animateMotion
+          dur="6s"
+          repeatCount="indefinite"
+          path="M700,660 L700,470 L800,470 L800,270 L865,270 L865,80"
+        />
+      </circle>
+
+      <path class="laser-route-base" d="M440,40 L440,170 L570,170 L570,330" />
+      <path
+        class="laser-route"
+        d="M440,40 L440,170 L570,170 L570,330"
+        stroke="#8B5CF6"
+        stroke-width="2"
+        style="color:#8B5CF6; animation-duration: 3.2s;"
+      />
+
+      <path class="laser-route-base" d="M470,660 L630,660 L630,530 L770,530" />
+      <path
+        class="laser-route reverse"
+        d="M470,660 L630,660 L630,530 L770,530"
+        stroke="#A855F7"
+        stroke-width="2"
+        style="color:#A855F7; animation-duration: 3.8s;"
+      />
+
+      <path class="laser-route-base" d="M430,470 L520,470 L520,590" />
+      <path
+        class="laser-route reverse"
+        d="M430,470 L520,470 L520,590"
+        stroke="#7C3AED"
+        stroke-width="1.5"
+        style="color:#7C3AED; animation-duration: 2.8s;"
+      />
+
+      <path class="laser-route-base" d="M600,20 L600,120 L690,120 L690,250" />
+      <path
+        class="laser-route"
+        d="M600,20 L600,120 L690,120 L690,250"
+        stroke="#A78BFA"
+        stroke-width="2"
+        style="color:#A78BFA; animation-duration: 3.5s;"
+      />
+    </svg>
+  </div>
+
+  <div
+    class="carriers-glow absolute top-1/2 right-[-160px] -translate-y-1/2 w-[560px] h-[560px] rounded-full bg-gradient-to-br from-[#8B5CF6]/35 to-transparent blur-[100px] -z-10"
+  ></div>
+
+  <div class="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
+    <div class="flex flex-col lg:flex-row items-center lg:items-start gap-10 lg:gap-6">
+      <div class="w-full lg:w-[720px] lg:pt-4 lg:shrink-0 text-center lg:text-left">
+        <div
+          class="inline-flex items-center gap-2 bg-[#F6F3FD] border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-5"
+        >
+          <span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+          <span class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase">
+            Cobertura nacional
+          </span>
+        </div>
+
+        <h2
+          class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[52px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-6 text-balance"
+        >
+          Una sola plataforma,
+          <span class="text-[#7C3AED]">todas las transportadoras</span>
+          del país
+        </h2>
+
+        <div class="grid grid-cols-4 sm:grid-cols-6 gap-2.5 max-w-[620px] mx-auto lg:mx-0 mb-7">
+          {carriers.map((c) => (
+            <div
+              class="carrier-tile flex items-center justify-center bg-white border border-[#EFEAFB] rounded-xl aspect-square p-2.5 shadow-[0_6px_16px_-10px_rgba(124,58,237,0.3)]"
+              title={c.name}
+            >
+              <img src={c.src} alt={c.name} class="w-full h-full object-contain" loading="lazy" />
+            </div>
+          ))}
+        </div>
+
+        <ul class="flex flex-col gap-3 items-center lg:items-start">
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Comparas tarifas de todas las transportadoras en segundos
+          </li>
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Generas la guía sin salir de Probability
+          </li>
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Rastreas todos tus envíos desde un único panel
+          </li>
+        </ul>
+      </div>
+
+      <div class="w-full lg:hidden relative flex justify-center">
+        <div class="carriers-box-stage-mobile relative w-[420px] max-w-full h-[420px] sm:w-[520px] sm:h-[520px]">
+          <div class="carriers-box-float absolute inset-0">
+            <img
+              src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/hero-box-poster.png"
+              alt="Paquete Probability listo para despachar"
+              class="absolute inset-0 w-full h-full object-contain"
+              width="900"
+              height="900"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="carriers-box-stage hidden lg:block">
+    <div class="carriers-box-float absolute inset-0">
+      <img
+        src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/hero-box-poster.png"
+        alt="Paquete Probability listo para despachar"
+        class="absolute inset-0 w-full h-full object-contain"
+        width="900"
+        height="900"
+      />
+    </div>
+  </div>
+</section>
+
+<script>
+  const carriersSection = document.getElementById('carriers-section');
+  if (carriersSection && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        carriersSection.classList.toggle('is-paused', !entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+    observer.observe(carriersSection);
+  }
+</script>
