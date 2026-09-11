@@ -14,6 +14,7 @@ import { getAIRecommendationAction } from "@/services/modules/orders/infra/actio
 import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
 import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
 import daneCodes from "../resources/municipios_dane_extendido.json";
+import { buildGuideDestination } from "@/shared/utils/guide-destination";
 
 const addressSchema = z.object({
     company: z.string().optional(),
@@ -172,10 +173,11 @@ export const ShippingForm = () => {
             setValue("destination.lastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
             setValue("destination.email", order.customer_email);
             setValue("destination.phone", order.customer_phone);
-            setValue("destination.address", order.shipping_street);
-            setValue("destination.suburb", order.shipping_state || "");
-            setValue("destination.crossStreet", "");
-            setValue("destination.reference", "");
+            const destParts = buildGuideDestination(order);
+            setValue("destination.address", destParts.address);
+            setValue("destination.suburb", destParts.suburb);
+            setValue("destination.crossStreet", destParts.crossStreet || destParts.address);
+            setValue("destination.reference", destParts.reference);
 
             const mappedDane = findDaneCode(order.shipping_city, order.shipping_state);
             if (mappedDane) {

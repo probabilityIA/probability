@@ -12,6 +12,7 @@ import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
+import { buildGuideDestination } from '@/shared/utils/guide-destination';
 
 const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -260,6 +261,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
             const order = ordersToGenerate[i];
             try {
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
+                const destParts = buildGuideDestination(order);
 
                 const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
                 const guideTotalCost = (order.quote!.flete) + (order.quote!.minimumInsurance ?? 0) + (order.quote!.extraInsurance ?? 0);
@@ -298,15 +300,15 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     },
                     destination: {
                         daneCode: destDane || '',
-                        address: order.shipping_street || 'Dirección no especificada',
+                        address: destParts.address || 'Dirección no especificada',
                         company: order.customer_name || 'Cliente',
                         firstName: order.customer_name?.split(' ')[0] || 'Cliente',
                         lastName: order.customer_name?.split(' ').slice(1).join(' ') || 'Apellido',
                         email: order.customer_email || 'cliente@example.com',
                         phone: order.customer_phone || '3009876543',
-                        suburb: order.shipping_state || 'Barrio',
-                        crossStreet: order.shipping_street || 'Calle principal',
-                        reference: 'Casa',
+                        suburb: destParts.suburb,
+                        crossStreet: destParts.crossStreet || destParts.address,
+                        reference: destParts.reference,
                     },
                 };
 

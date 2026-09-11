@@ -14,6 +14,7 @@ import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { findDaneCode } from "@/shared/utils/dane-lookup";
+import { buildGuideDestination, GUIDE_FIELD_LIMITS } from "@/shared/utils/guide-destination";
 import { CarrierEffectivenessRates } from "@/services/modules/geozones/ui/components/CarrierEffectivenessRates";
 import { getProbabilityByCarrierAction } from "@/services/modules/geozones/infra/actions";
 import type { ProbabilityResult } from "@/services/modules/geozones/domain/types";
@@ -151,7 +152,7 @@ const step3Schema = z.object({
     destEmail: z.string().email("Email inv\u00e1lido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
     destPhone: z.string().length(10, "Debe tener 10 d\u00edgitos"),
     destSuburb: z.string().max(30, "Max 30 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
-    destCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
+    destCrossStreet: z.string().min(2, "Min 2 caracteres").max(GUIDE_FIELD_LIMITS.crossStreet, `Max ${GUIDE_FIELD_LIMITS.crossStreet} caracteres`),
     destReference: z.string().max(25, "Max 25 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
     requestPickup: z.boolean(),
     myShipmentReference: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres"),
@@ -398,7 +399,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         if (isOpen && order) {
             step1Form.setValue("contentValue", order.total_amount);
             step1Form.setValue("description", `Order ${order.order_number}`);
-            step1Form.setValue("destAddress", (order.shipping_street || "").split(" | ")[0], { shouldValidate: true });
+            const destParts = buildGuideDestination(order);
+            step1Form.setValue("destAddress", destParts.address, { shouldValidate: true });
 
             if (order.weight && order.weight > 0) {
                 step1Form.setValue("weight", order.weight, { shouldValidate: true });
@@ -430,10 +432,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             step3Form.setValue("destLastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
             step3Form.setValue("destEmail", order.customer_email);
             step3Form.setValue("destPhone", normalizeColombianPhone(order.customer_phone));
-            const streetParts = (order.shipping_street || "").split(" | ");
-            step3Form.setValue("destCrossStreet", (streetParts[0] || "").substring(0, 35));
-            if (streetParts[1]) step3Form.setValue("destReference", streetParts[1].substring(0, 25));
-            if (streetParts[2]) step3Form.setValue("destSuburb", streetParts[2].substring(0, 30));
+            step3Form.setValue("destCrossStreet", destParts.crossStreet || destParts.address);
+            if (destParts.reference) step3Form.setValue("destReference", destParts.reference);
+            if (destParts.suburb) step3Form.setValue("destSuburb", destParts.suburb);
             step3Form.setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
             step3Form.setValue("external_order_id", order.order_number);
         }
