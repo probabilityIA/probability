@@ -684,8 +684,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             return;
         }
 
-        step3Form.setValue("originCrossStreet", data.originAddress);
-        step3Form.setValue("destCrossStreet", data.destAddress);
+        if (!step3Form.getValues("originCrossStreet")?.trim()) {
+            step3Form.setValue("originCrossStreet", clampGuideField(data.originAddress, GUIDE_FIELD_LIMITS.crossStreet));
+        }
+        if (!step3Form.getValues("destCrossStreet")?.trim()) {
+            step3Form.setValue("destCrossStreet", clampGuideField(data.destAddress, GUIDE_FIELD_LIMITS.crossStreet));
+        }
 
         const errors = step1Form.formState.errors;
         if (Object.keys(errors).length > 0) {
