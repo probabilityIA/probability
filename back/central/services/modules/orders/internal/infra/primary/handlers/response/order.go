@@ -70,6 +70,8 @@ type Order struct {
 	ShippingGeoConfidence string   `json:"shipping_geo_confidence,omitempty"`
 
 	ShippingAddressSource    string `json:"shipping_address_source,omitempty"`
+	ShippingDeliveryType     string `json:"shipping_delivery_type,omitempty"`
+	ShippingOfficeCarrier    string `json:"shipping_office_carrier,omitempty"`
 	ShippingNeighborhood     string `json:"shipping_neighborhood,omitempty"`
 	ShippingComplementType   string `json:"shipping_complement_type,omitempty"`
 	ShippingComplementNumber string `json:"shipping_complement_number,omitempty"`

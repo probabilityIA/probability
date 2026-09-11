@@ -151,6 +151,12 @@ func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrd
 	} else if order.Platform != "" && order.Platform != "manual" {
 		order.ShippingAddressSource = "channel"
 	}
+	if dto.ShippingDeliveryType != "" {
+		order.ShippingDeliveryType = dto.ShippingDeliveryType
+	}
+	if dto.ShippingOfficeCarrier != "" {
+		order.ShippingOfficeCarrier = dto.ShippingOfficeCarrier
+	}
 	if dto.ShippingNeighborhood != "" {
 		order.ShippingNeighborhood = dto.ShippingNeighborhood
 	}

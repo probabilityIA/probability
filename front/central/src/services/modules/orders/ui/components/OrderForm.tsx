@@ -26,6 +26,7 @@ import { getEffectivePriceAction, listClientGroupsAction, getCatalogPricesAction
 import { ClientGroup } from '../../../pricing/domain/types';
 import { getActionError } from '@/shared/utils/action-result';
 import { COMPLEMENT_TYPES, buildComplement } from '@/shared/utils/guide-destination';
+import { CarrierOfficeSelector } from '@/shared/ui/CarrierOfficeSelector';
 import { esCanalDeVenta, salesChannelLabel } from '../../domain/sales-channel-labels';
 
 interface OrderFormProps {
@@ -267,6 +268,12 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         return parts.length >= 3 ? parts[2] : '';
     });
 
+    const [deliveryType, setDeliveryType] = useState<'address' | 'office'>(
+        order?.shipping_delivery_type === 'office' ? 'office' : 'address',
+    );
+    const [officeCarrier, setOfficeCarrier] = useState(order?.shipping_office_carrier || '');
+    const [showOfficePicker, setShowOfficePicker] = useState(false);
+    const [officeError, setOfficeError] = useState(false);
     const [addressSource, setAddressSource] = useState<'google' | 'manual' | 'channel' | ''>(
         order?.shipping_address_source || (order && order.platform !== 'manual' ? 'channel' : ''),
     );
@@ -517,7 +524,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 throw new Error('Selecciona la ciudad y el departamento de la lista, no lo escribas libre: hay ciudades con el mismo nombre en distintos departamentos');
             }
 
-            const complement = buildComplement(complementType, complementNumber, tower, building);
+            if (deliveryType === 'office' && !officeCarrier) {
+                setOfficeError(true);
+                throw new Error('Elige la oficina de la transportadora donde el cliente va a recoger');
+            }
+
+            const complement = deliveryType === 'office'
+                ? ''
+                : buildComplement(complementType, complementNumber, tower, building);
             const parts = [formData.shipping_street || ''];
             if (complement) parts.push(complement);
             if (barrio.trim()) parts.push(barrio.trim());
@@ -536,6 +550,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 payment_method_id: formData.payment_method_id,
                 shipping_street: fullShippingStreet,
                 shipping_address_source: addressSource || 'manual',
+                shipping_delivery_type: deliveryType,
+                shipping_office_carrier: deliveryType === 'office' ? officeCarrier : '',
                 shipping_neighborhood: barrio.trim(),
                 shipping_complement_type: complementType,
                 shipping_complement_number: complementNumber.trim(),
@@ -909,6 +925,74 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                         )}
 
+                        <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-slate-200 dark:border-gray-700 px-3 py-2.5">
+                            <input
+                                id="entrega-en-oficina"
+                                type="checkbox"
+                                checked={deliveryType === 'office'}
+                                onChange={(e) => {
+                                    const next = e.target.checked ? 'office' : 'address';
+                                    setDeliveryType(next);
+                                    setOfficeError(false);
+                                    setShowOfficePicker(next === 'office' && !officeCarrier);
+                                    if (next === 'address') setOfficeCarrier('');
+                                }}
+                                className="mt-0.5 h-4 w-4 accent-purple-600 cursor-pointer"
+                            />
+                            <label htmlFor="entrega-en-oficina" className="cursor-pointer">
+                                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Entrega en oficina de la transportadora
+                                </span>
+                                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                    El cliente recoge el paquete. Elige la oficina para que la {'guía'} salga con la {'dirección'} exacta.
+                                </span>
+                            </label>
+                        </div>
+
+                        {deliveryType === 'office' && (
+                            <div className="mb-4">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowOfficePicker((v) => !v)}
+                                        className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                                            officeError
+                                                ? 'border-red-500 text-red-600'
+                                                : officeCarrier
+                                                    ? 'border-green-400 text-green-700 dark:text-green-400'
+                                                    : 'border-purple-400 text-purple-700 dark:text-purple-300'
+                                        }`}
+                                    >
+                                        {officeCarrier ? 'Cambiar oficina' : 'Elegir oficina'}
+                                    </button>
+                                    {officeCarrier && (
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                            {formData.shipping_street}
+                                        </span>
+                                    )}
+                                </div>
+                                {officeError && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        Elige la oficina donde el cliente va a recoger
+                                    </p>
+                                )}
+                                {showOfficePicker && (
+                                    <CarrierOfficeSelector
+                                        city={formData.shipping_city}
+                                        onClose={() => setShowOfficePicker(false)}
+                                        onSelectAddress={(address, carrierId, coords) => {
+                                            setFormData(prev => ({ ...prev, shipping_street: address }));
+                                            setOfficeCarrier(carrierId);
+                                            if (coords) setAddressCoords(coords);
+                                            setAddressSource('google');
+                                            setOfficeError(false);
+                                            setShowOfficePicker(false);
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -999,57 +1083,61 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 )}
                             </div>
 
-                            <div>
-                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    Tipo
-                                </label>
-                                <select
-                                    value={complementType}
-                                    onChange={(e) => setComplementType(e.target.value)}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white"
-                                >
-                                    <option value="">Sin especificar</option>
-                                    {COMPLEMENT_TYPES.map((t) => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {deliveryType === 'address' && (
+                                <>
+                                <div>
+                                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                        Tipo
+                                    </label>
+                                    <select
+                                        value={complementType}
+                                        onChange={(e) => setComplementType(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white"
+                                    >
+                                        <option value="">Sin especificar</option>
+                                        {COMPLEMENT_TYPES.map((t) => (
+                                            <option key={t.value} value={t.value}>{t.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                            <div>
-                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    {'N\u00famero'}
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={complementNumber}
-                                    onChange={(e) => setComplementNumber(e.target.value)}
-                                    placeholder={complementType === 'apartamento' ? '503' : '12'}
-                                />
-                            </div>
+                                <div>
+                                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                        {'N\u00famero'}
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        value={complementNumber}
+                                        onChange={(e) => setComplementNumber(e.target.value)}
+                                        placeholder={complementType === 'apartamento' ? '503' : '12'}
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    Torre, bloque o interior
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={tower}
-                                    onChange={(e) => setTower(e.target.value)}
-                                    placeholder="Torre B"
-                                />
-                            </div>
+                                <div>
+                                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                        Torre, bloque o interior
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        value={tower}
+                                        onChange={(e) => setTower(e.target.value)}
+                                        placeholder="Torre B"
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    Edificio o conjunto
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={building}
-                                    onChange={(e) => setBuilding(e.target.value)}
-                                    placeholder="Alameda de Albornoz"
-                                />
-                            </div>
+                                <div>
+                                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                        Edificio o conjunto
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        value={building}
+                                        onChange={(e) => setBuilding(e.target.value)}
+                                        placeholder="Alameda de Albornoz"
+                                    />
+                                </div>
+                                </>
+                            )}
 
                             <div>
                                 <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">

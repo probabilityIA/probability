@@ -163,6 +163,8 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 		CustomerDNI:       req.CustomerDNI,
 
 		ShippingAddressSource:    req.ShippingAddressSource,
+		ShippingDeliveryType:     req.ShippingDeliveryType,
+		ShippingOfficeCarrier:    req.ShippingOfficeCarrier,
 		ShippingNeighborhood:     req.ShippingNeighborhood,
 		ShippingComplementType:   req.ShippingComplementType,
 		ShippingComplementNumber: req.ShippingComplementNumber,

@@ -67,6 +67,8 @@ type ProbabilityOrder struct {
 	ShippingGeoConfidence string
 
 	ShippingAddressSource    string
+	ShippingDeliveryType     string
+	ShippingOfficeCarrier    string
 	ShippingNeighborhood     string
 	ShippingComplementType   string
 	ShippingComplementNumber string

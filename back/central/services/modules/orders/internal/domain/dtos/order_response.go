@@ -70,6 +70,8 @@ type OrderResponse struct {
 	ShippingGeoConfidence string
 
 	ShippingAddressSource    string
+	ShippingDeliveryType     string
+	ShippingOfficeCarrier    string
 	ShippingNeighborhood     string
 	ShippingComplementType   string
 	ShippingComplementNumber string

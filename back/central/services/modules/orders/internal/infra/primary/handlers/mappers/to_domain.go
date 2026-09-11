@@ -35,6 +35,8 @@ func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRe
 		ShippingLng:        req.ShippingLng,
 
 		ShippingAddressSource:    req.ShippingAddressSource,
+		ShippingDeliveryType:     req.ShippingDeliveryType,
+		ShippingOfficeCarrier:    req.ShippingOfficeCarrier,
 		ShippingNeighborhood:     req.ShippingNeighborhood,
 		ShippingComplementType:   req.ShippingComplementType,
 		ShippingComplementNumber: req.ShippingComplementNumber,

@@ -12,7 +12,7 @@ import { Order } from "@/services/modules/orders/domain/types";
 import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
 import { getAIRecommendationAction } from "@/services/modules/orders/infra/actions";
 import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
-import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
+import { CarrierOfficeSelector } from "@/shared/ui/CarrierOfficeSelector";
 import daneCodes from "../resources/municipios_dane_extendido.json";
 import { buildGuideDestination } from "@/shared/utils/guide-destination";
 

@@ -30,6 +30,7 @@ type OrderSummary struct {
 	ShippingState          string                 `json:"shipping_state,omitempty"`
 	ShippingGeoConfidence  string                 `json:"shipping_geo_confidence,omitempty"`
 	ShippingAddressSource  string                 `json:"shipping_address_source,omitempty"`
+	ShippingDeliveryType   string                 `json:"shipping_delivery_type,omitempty"`
 	Weight                 *float64               `json:"weight,omitempty"`
 	Height                 *float64               `json:"height,omitempty"`
 	Width                  *float64               `json:"width,omitempty"`
