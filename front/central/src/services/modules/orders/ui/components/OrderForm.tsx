@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { Order, CreateOrderDTO, UpdateOrderDTO } from '../../domain/types';
 import { Product } from '../../../products/domain/types';
 import { Button, Input, Alert, Modal } from '@/shared/ui';
@@ -268,6 +268,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         return parts.length >= 3 ? parts[2] : '';
     });
 
+    const officeCheckboxId = useId();
     const [deliveryType, setDeliveryType] = useState<'address' | 'office'>(
         order?.shipping_delivery_type === 'office' ? 'office' : 'address',
     );
@@ -500,6 +501,47 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             }
         }, 150);
     };
+
+    const cityField = (
+        <div ref={cityRef} className="relative md:col-span-2">
+            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Ciudad y Departamento
+            </label>
+            <input
+                type="text"
+                value={citySearch}
+                onChange={(e) => {
+                    setCitySearch(e.target.value);
+                    setShowCityResults(true);
+                    setCitySelected(false);
+                    setCityError(false);
+                    setFormData(prev => ({ ...prev, shipping_city: '', shipping_state: '' }));
+                }}
+                onFocus={() => setShowCityResults(true)}
+                onBlur={handleCityBlur}
+                className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white ${
+                    cityError ? 'border-red-500' : citySelected ? 'border-green-400' : 'border-gray-300'
+                }`}
+                placeholder={'Buscar ciudad... (selecciona una opci\u00f3n)'}
+            />
+            {cityError && (
+                <p className="mt-1 text-xs text-red-600">Selecciona una {'opci\u00f3n'} del listado</p>
+            )}
+            {showCityResults && filteredCityOptions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {filteredCityOptions.slice(0, 50).map((opt) => (
+                        <div
+                            key={opt.value}
+                            onClick={() => handleCitySelect(opt)}
+                            className="px-3 py-2 hover:bg-purple-100 cursor-pointer text-black dark:text-white"
+                        >
+                            {opt.label}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -925,35 +967,45 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                         )}
 
-                        <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-slate-200 dark:border-gray-700 px-3 py-2.5">
-                            <input
-                                id="entrega-en-oficina"
-                                type="checkbox"
-                                checked={deliveryType === 'office'}
-                                onChange={(e) => {
-                                    const next = e.target.checked ? 'office' : 'address';
-                                    setDeliveryType(next);
-                                    setOfficeError(false);
-                                    setShowOfficePicker(next === 'office' && !officeCarrier);
-                                    if (next === 'address') setOfficeCarrier('');
-                                }}
-                                className="mt-0.5 h-4 w-4 accent-purple-600 cursor-pointer"
-                            />
-                            <label htmlFor="entrega-en-oficina" className="cursor-pointer">
-                                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                    Entrega en oficina de la transportadora
-                                </span>
-                                <span className="block text-xs text-slate-500 dark:text-slate-400">
-                                    El cliente recoge el paquete. Elige la oficina para que la {'guía'} salga con la {'dirección'} exacta.
-                                </span>
-                            </label>
+                        <div className="mb-4 rounded-lg border border-slate-200 dark:border-gray-700 px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-700 dark:text-gray-200" id={officeCheckboxId}>
+                                        Entrega en oficina de la transportadora
+                                    </p>
+                                    <p className="text-[11px] leading-snug text-slate-400">
+                                        {deliveryType === 'office'
+                                            ? 'El cliente recoge el paquete en la oficina que elijas.'
+                                            : 'Apagado: el paquete se entrega en la ' + 'dirección' + ' del cliente.'}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={deliveryType === 'office'}
+                                    aria-labelledby={officeCheckboxId}
+                                    onClick={() => {
+                                        const next = deliveryType === 'office' ? 'address' : 'office';
+                                        setDeliveryType(next);
+                                        setOfficeError(false);
+                                        setShowOfficePicker(next === 'office' && !officeCarrier);
+                                        if (next === 'address') setOfficeCarrier('');
+                                    }}
+                                    className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors"
+                                    style={{ backgroundColor: deliveryType === 'office' ? primaryColor : '#d1d5db' }}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${deliveryType === 'office' ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
                         </div>
 
                         {deliveryType === 'office' && (
                             <div className="mb-4">
+                                <div className="mb-3">{cityField}</div>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <button
                                         type="button"
+                                        disabled={!formData.shipping_city}
                                         onClick={() => setShowOfficePicker((v) => !v)}
                                         className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                                             officeError
@@ -961,10 +1013,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                                 : officeCarrier
                                                     ? 'border-green-400 text-green-700 dark:text-green-400'
                                                     : 'border-purple-400 text-purple-700 dark:text-purple-300'
-                                        }`}
+                                        } disabled:opacity-40 disabled:cursor-not-allowed`}
                                     >
                                         {officeCarrier ? 'Cambiar oficina' : 'Elegir oficina'}
                                     </button>
+                                    {!formData.shipping_city && (
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                            Elige primero la ciudad
+                                        </span>
+                                    )}
                                     {officeCarrier && (
                                         <span className="text-xs text-slate-500 dark:text-slate-400">
                                             {formData.shipping_street}
@@ -1044,44 +1101,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 ) : null}
                             </div>
 
-                            <div ref={cityRef} className="relative md:col-span-2">
-                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    Ciudad y Departamento
-                                </label>
-                                <input
-                                    type="text"
-                                    value={citySearch}
-                                    onChange={(e) => {
-                                        setCitySearch(e.target.value);
-                                        setShowCityResults(true);
-                                        setCitySelected(false);
-                                        setCityError(false);
-                                        setFormData(prev => ({ ...prev, shipping_city: '', shipping_state: '' }));
-                                    }}
-                                    onFocus={() => setShowCityResults(true)}
-                                    onBlur={handleCityBlur}
-                                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white ${
-                                        cityError ? 'border-red-500' : citySelected ? 'border-green-400' : 'border-gray-300'
-                                    }`}
-                                    placeholder={'Buscar ciudad... (selecciona una opci\u00f3n)'}
-                                />
-                                {cityError && (
-                                    <p className="mt-1 text-xs text-red-600">Selecciona una {'opci\u00f3n'} del listado</p>
-                                )}
-                                {showCityResults && filteredCityOptions.length > 0 && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                        {filteredCityOptions.slice(0, 50).map((opt) => (
-                                            <div
-                                                key={opt.value}
-                                                onClick={() => handleCitySelect(opt)}
-                                                className="px-3 py-2 hover:bg-purple-100 cursor-pointer text-black dark:text-white"
-                                            >
-                                                {opt.label}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            {deliveryType === 'address' && cityField}
 
                             {deliveryType === 'address' && (
                                 <>
