@@ -270,7 +270,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [addressSource, setAddressSource] = useState<'google' | 'manual' | 'channel' | ''>(
         order?.shipping_address_source || (order && order.platform !== 'manual' ? 'channel' : ''),
     );
-    const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(null);
+    const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(
+        order?.shipping_lat != null && order?.shipping_lng != null
+            ? { lat: order.shipping_lat, lon: order.shipping_lng }
+            : null,
+    );
     const [addressAutofilled, setAddressAutofilled] = useState(false);
 
     const { results: clientResults, loading: clientLoading, searched: clientSearched, search: searchClients, clear: clearClients } = useClientSearch({
@@ -1092,6 +1096,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     latitude={addressCoords.lat}
                                     longitude={addressCoords.lon}
                                     height="180px"
+                                    expandable
                                 />
                             </div>
                         )}
