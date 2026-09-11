@@ -15,6 +15,7 @@ interface CarrierOfficeSelectorProps {
     city: string;
     state?: string;
     initialCarrier?: string;
+    selectedAddress?: string;
     onSelectAddress: (address: string, carrierId: string, coords?: { lat: number; lon: number }) => void;
     onClose: () => void;
 }
@@ -27,7 +28,7 @@ const CARRIERS = [
     { id: 'tcc', name: 'TCC' }
 ];
 
-export function CarrierOfficeSelector({ city, state = '', initialCarrier, onSelectAddress, onClose }: CarrierOfficeSelectorProps) {
+export function CarrierOfficeSelector({ city, state = '', initialCarrier, selectedAddress = '', onSelectAddress, onClose }: CarrierOfficeSelectorProps) {
     const [selectedCarrier, setSelectedCarrier] = useState<string>(
         initialCarrier && CARRIERS.some((c) => c.id === initialCarrier) ? initialCarrier : CARRIERS[0].id,
     );
@@ -36,6 +37,14 @@ export function CarrierOfficeSelector({ city, state = '', initialCarrier, onSele
     const [error, setError] = useState<string | null>(null);
     const [subSearch, setSubSearch] = useState<string>('');
     const cleanCityLabel = city.split('(')[0].trim();
+    const normalizeAddr = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const selectedKey = normalizeAddr(selectedAddress);
+    const isSelected = (displayName: string) => {
+        if (!selectedKey) return false;
+        const inner = displayName.match(/\((.*?)\)/)?.[1] || displayName;
+        const key = normalizeAddr(inner);
+        return key.includes(selectedKey) || selectedKey.includes(key);
+    };
 
     const fetchOffices = async () => {
         if (!city) {
@@ -92,6 +101,14 @@ export function CarrierOfficeSelector({ city, state = '', initialCarrier, onSele
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                 Selecciona una transportadora para ver sus sedes principales en <strong>{city}</strong>
             </p>
+            {selectedAddress && !results.some((r) => isSelected(r.display_name)) && (
+                <div className="mb-3 rounded-md border border-purple-300 bg-purple-50 px-2.5 py-2 dark:border-purple-500/40 dark:bg-purple-900/20">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-purple-700 dark:text-purple-300">
+                        Oficina elegida en la orden
+                    </p>
+                    <p className="text-xs text-gray-700 dark:text-gray-200">{selectedAddress}</p>
+                </div>
+            )}
 
             <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
                 {CARRIERS.map(carrier => (
@@ -132,7 +149,7 @@ export function CarrierOfficeSelector({ city, state = '', initialCarrier, onSele
                     </div>
                 ) : results.length > 0 ? (
                     <div className="space-y-2">
-                        {results.map((r, i) => (
+                        {[...results].sort((a, b) => Number(isSelected(b.display_name)) - Number(isSelected(a.display_name))).map((r, i) => (
                             <div 
                                 key={r.place_id || i}
                                 onClick={() => {
@@ -147,7 +164,11 @@ export function CarrierOfficeSelector({ city, state = '', initialCarrier, onSele
                                     onSelectAddress(address, selectedCarrier, coords);
                                     onClose();
                                 }}
-                                className="group p-3 border border-gray-100 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500 rounded-md cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors"
+                                className={`group p-3 border rounded-md cursor-pointer transition-colors ${
+                                    isSelected(r.display_name)
+                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-400'
+                                        : 'border-gray-100 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10'
+                                }`}
                             >
                                 <div className="flex gap-3 items-start">
                                     <div className="bg-gray-100 dark:bg-gray-700 p-1.5 rounded-full mt-0.5 group-hover:bg-purple-100 dark:group-hover:bg-purple-800">
@@ -155,6 +176,11 @@ export function CarrierOfficeSelector({ city, state = '', initialCarrier, onSele
                                     </div>
                                     <div>
                                         <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-snug">
+                                            {isSelected(r.display_name) && (
+                                                <span className="mr-1.5 rounded bg-purple-600 px-1.5 py-0.5 text-[9px] font-bold text-white align-middle">
+                                                    ELEGIDA
+                                                </span>
+                                            )}
                                             {r.display_name.split('(')[0].trim()}
                                             {typeof r.distance_km === 'number' && r.distance_km >= 1 && (
                                                 <span className="ml-1.5 font-normal text-[10px] text-amber-600 dark:text-amber-400">

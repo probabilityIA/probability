@@ -1177,6 +1177,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         <CarrierOfficeSelector 
                                                             city={destSearch}
                                                             initialCarrier={officeCarrier || undefined}
+                                                            selectedAddress={order?.shipping_delivery_type === 'office' ? (order?.shipping_street || '').split(' | ')[0] : ''}
                                                             onSelectAddress={(addr, carrierId) => {
                                                                 step1Form.setValue("destAddress", addr, { shouldValidate: true });
                                                                 setOfficeCarrier(carrierId);

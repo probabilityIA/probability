@@ -1037,6 +1037,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     <CarrierOfficeSelector
                                         city={formData.shipping_city}
                                         state={formData.shipping_state}
+                                        initialCarrier={officeCarrier || undefined}
+                                        selectedAddress={officeCarrier ? formData.shipping_street : ''}
                                         onClose={() => setShowOfficePicker(false)}
                                         onSelectAddress={(address, carrierId, coords) => {
                                             setFormData(prev => ({ ...prev, shipping_street: address }));
