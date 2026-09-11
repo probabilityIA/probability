@@ -32,6 +32,7 @@ type OrderSummary struct {
 	ShippingAddressSource  string                 `json:"shipping_address_source,omitempty"`
 	ShippingDeliveryType   string                 `json:"shipping_delivery_type,omitempty"`
 	ShippingOfficeCarrier  string                 `json:"shipping_office_carrier,omitempty"`
+	ShippingOfficeName     string                 `json:"shipping_office_name,omitempty"`
 	Weight                 *float64               `json:"weight,omitempty"`
 	Height                 *float64               `json:"height,omitempty"`
 	Width                  *float64               `json:"width,omitempty"`

@@ -79,6 +79,8 @@ export interface Order {
     shipping_address_source?: 'google' | 'manual' | 'channel';
     shipping_delivery_type?: 'address' | 'office';
     shipping_office_carrier?: string;
+    shipping_office_name?: string;
+    shipping_office_details?: Record<string, unknown> | null;
     shipping_neighborhood?: string;
     shipping_complement_type?: string;
     shipping_complement_number?: string;
@@ -303,6 +305,8 @@ export interface CreateOrderDTO {
     shipping_address_source?: 'google' | 'manual' | 'channel';
     shipping_delivery_type?: 'address' | 'office';
     shipping_office_carrier?: string;
+    shipping_office_name?: string;
+    shipping_office_details?: Record<string, unknown> | null;
     shipping_neighborhood?: string;
     shipping_complement_type?: string;
     shipping_complement_number?: string;
@@ -395,6 +399,8 @@ export interface UpdateOrderDTO {
     shipping_address_source?: 'google' | 'manual' | 'channel';
     shipping_delivery_type?: 'address' | 'office';
     shipping_office_carrier?: string;
+    shipping_office_name?: string;
+    shipping_office_details?: Record<string, unknown> | null;
     shipping_neighborhood?: string;
     shipping_complement_type?: string;
     shipping_complement_number?: string;

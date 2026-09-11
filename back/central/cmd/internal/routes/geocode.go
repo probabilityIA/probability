@@ -67,6 +67,7 @@ type AddressSearchResult struct {
 	Neighbourhood string  `json:"neighbourhood"`
 	Postcode      string  `json:"postcode"`
 	DistanceKm    float64 `json:"distance_km,omitempty"`
+	Name          string  `json:"name,omitempty"`
 }
 
 func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
@@ -283,6 +284,7 @@ func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 		for _, res := range pResp.Results {
 			item := AddressSearchResult{
 				DisplayName: fmt.Sprintf("%s (%s)", res.Name, res.FormattedAddress),
+				Name:        res.Name,
 				PlaceID:     res.PlaceID,
 				Lat:         res.Geometry.Location.Lat,
 				Lon:         res.Geometry.Location.Lng,

@@ -1,6 +1,7 @@
 package request
 
 import (
+	"encoding/json"
 	"time"
 
 	"gorm.io/datatypes"
@@ -36,14 +37,16 @@ type UpdateOrder struct {
 	ShippingLat        *float64 `json:"shipping_lat"`
 	ShippingLng        *float64 `json:"shipping_lng"`
 
-	ShippingAddressSource    *string `json:"shipping_address_source" binding:"omitempty,oneof=google manual channel"`
-	ShippingDeliveryType     *string `json:"shipping_delivery_type" binding:"omitempty,oneof=address office"`
-	ShippingOfficeCarrier    *string `json:"shipping_office_carrier" binding:"omitempty,max=64"`
-	ShippingNeighborhood     *string `json:"shipping_neighborhood" binding:"omitempty,max=120"`
-	ShippingComplementType   *string `json:"shipping_complement_type" binding:"omitempty,max=24"`
-	ShippingComplementNumber *string `json:"shipping_complement_number" binding:"omitempty,max=32"`
-	ShippingTower            *string `json:"shipping_tower" binding:"omitempty,max=64"`
-	ShippingBuilding         *string `json:"shipping_building" binding:"omitempty,max=128"`
+	ShippingAddressSource    *string         `json:"shipping_address_source" binding:"omitempty,oneof=google manual channel"`
+	ShippingDeliveryType     *string         `json:"shipping_delivery_type" binding:"omitempty,oneof=address office"`
+	ShippingOfficeCarrier    *string         `json:"shipping_office_carrier" binding:"omitempty,max=64"`
+	ShippingOfficeName       *string         `json:"shipping_office_name" binding:"omitempty,max=128"`
+	ShippingOfficeDetails    json.RawMessage `json:"shipping_office_details"`
+	ShippingNeighborhood     *string         `json:"shipping_neighborhood" binding:"omitempty,max=120"`
+	ShippingComplementType   *string         `json:"shipping_complement_type" binding:"omitempty,max=24"`
+	ShippingComplementNumber *string         `json:"shipping_complement_number" binding:"omitempty,max=32"`
+	ShippingTower            *string         `json:"shipping_tower" binding:"omitempty,max=64"`
+	ShippingBuilding         *string         `json:"shipping_building" binding:"omitempty,max=128"`
 
 	// Información de pago
 	PaymentMethodID *uint      `json:"payment_method_id"`

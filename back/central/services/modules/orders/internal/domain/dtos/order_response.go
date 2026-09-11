@@ -72,6 +72,8 @@ type OrderResponse struct {
 	ShippingAddressSource    string
 	ShippingDeliveryType     string
 	ShippingOfficeCarrier    string
+	ShippingOfficeName       string
+	ShippingOfficeDetails    []byte
 	ShippingNeighborhood     string
 	ShippingComplementType   string
 	ShippingComplementNumber string

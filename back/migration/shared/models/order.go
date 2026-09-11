@@ -62,14 +62,16 @@ type Order struct {
 	ShippingLat        *float64
 	ShippingLng        *float64
 
-	ShippingAddressSource    string `gorm:"size:16;index"`
-	ShippingDeliveryType     string `gorm:"size:16;index"`
-	ShippingOfficeCarrier    string `gorm:"size:64"`
-	ShippingNeighborhood     string `gorm:"size:120"`
-	ShippingComplementType   string `gorm:"size:24"`
-	ShippingComplementNumber string `gorm:"size:32"`
-	ShippingTower            string `gorm:"size:64"`
-	ShippingBuilding         string `gorm:"size:128"`
+	ShippingAddressSource    string         `gorm:"size:16;index"`
+	ShippingDeliveryType     string         `gorm:"size:16;index"`
+	ShippingOfficeCarrier    string         `gorm:"size:64"`
+	ShippingOfficeName       string         `gorm:"size:128"`
+	ShippingOfficeDetails    datatypes.JSON `gorm:"type:jsonb"`
+	ShippingNeighborhood     string         `gorm:"size:120"`
+	ShippingComplementType   string         `gorm:"size:24"`
+	ShippingComplementNumber string         `gorm:"size:32"`
+	ShippingTower            string         `gorm:"size:64"`
+	ShippingBuilding         string         `gorm:"size:128"`
 
 	ShippingGeoConfidence string `gorm:"size:16;index"`
 

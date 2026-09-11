@@ -273,6 +273,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         order?.shipping_delivery_type === 'office' ? 'office' : 'address',
     );
     const [officeCarrier, setOfficeCarrier] = useState(order?.shipping_office_carrier || '');
+    const [officeName, setOfficeName] = useState(order?.shipping_office_name || '');
+    const [officeDetails, setOfficeDetails] = useState<Record<string, unknown> | null>(order?.shipping_office_details || null);
     const [showOfficePicker, setShowOfficePicker] = useState(false);
     const [officeError, setOfficeError] = useState(false);
     const [addressSource, setAddressSource] = useState<'google' | 'manual' | 'channel' | ''>(
@@ -594,6 +596,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 shipping_address_source: addressSource || 'manual',
                 shipping_delivery_type: deliveryType,
                 shipping_office_carrier: deliveryType === 'office' ? officeCarrier : '',
+                shipping_office_name: deliveryType === 'office' ? officeName : '',
+                shipping_office_details: deliveryType === 'office' ? officeDetails : null,
                 shipping_neighborhood: barrio.trim(),
                 shipping_complement_type: complementType,
                 shipping_complement_number: complementNumber.trim(),
@@ -1024,7 +1028,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     )}
                                     {officeCarrier && (
                                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                                            {formData.shipping_street}
+                                            {officeName ? <strong className="text-slate-700 dark:text-slate-200">{officeName}</strong> : null}
+                                            {officeName ? ' - ' : ''}{formData.shipping_street}
                                         </span>
                                     )}
                                 </div>
@@ -1040,9 +1045,23 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         initialCarrier={officeCarrier || undefined}
                                         selectedAddress={officeCarrier ? formData.shipping_street : ''}
                                         onClose={() => setShowOfficePicker(false)}
-                                        onSelectAddress={(address, carrierId, coords) => {
+                                        onSelectAddress={(address, carrierId, coords, name, office) => {
                                             setFormData(prev => ({ ...prev, shipping_street: address }));
                                             setOfficeCarrier(carrierId);
+                                            setOfficeName(name || '');
+                                            setOfficeDetails(office ? {
+                                                place_id: office.place_id,
+                                                name: office.name || name || '',
+                                                formatted_address: office.display_name,
+                                                address: address,
+                                                lat: office.lat,
+                                                lon: office.lon,
+                                                distance_km: office.distance_km ?? null,
+                                                carrier: carrierId,
+                                                city: formData.shipping_city,
+                                                state: formData.shipping_state,
+                                                captured_at: new Date().toISOString(),
+                                            } : null);
                                             if (coords) setAddressCoords(coords);
                                             setAddressSource('google');
                                             setOfficeError(false);

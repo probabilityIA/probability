@@ -279,6 +279,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [showOriginOffices, setShowOriginOffices] = useState(false);
     const [showDestOffices, setShowDestOffices] = useState(false);
     const [officeCarrier, setOfficeCarrier] = useState<string | null>(null);
+    const [destOfficeName, setDestOfficeName] = useState<string>('');
     const [mapViewMode, setMapViewMode] = useState<'origin-destination' | 'destination-only'>('origin-destination');
 
     const originRef = useRef<HTMLDivElement>(null);
@@ -404,6 +405,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
             if (order.shipping_delivery_type === 'office') {
                 setOfficeCarrier(order.shipping_office_carrier || null);
+                setDestOfficeName(order.shipping_office_name || '');
                 setShowDestOffices(true);
             }
 
@@ -1164,6 +1166,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 error={step1Form.formState.errors.destAddress?.message}
                                                 placeholder="Carrera 46 # 93 - 45"
                                             />
+                                            {destOfficeName && (
+                                                <p className="mt-1 flex items-center gap-1.5 text-xs text-purple-700 dark:text-purple-300">
+                                                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
+                                                    </svg>
+                                                    <span className="font-semibold">{destOfficeName}</span>
+                                                </p>
+                                            )}
                                             {destSearch && (
                                                 <div className="mt-1">
                                                     <button 
@@ -1178,7 +1188,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             city={destSearch}
                                                             initialCarrier={officeCarrier || undefined}
                                                             selectedAddress={order?.shipping_delivery_type === 'office' ? (order?.shipping_street || '').split(' | ')[0] : ''}
-                                                            onSelectAddress={(addr, carrierId) => {
+                                                            onSelectAddress={(addr, carrierId, _coords, officeName) => {
+                                                                setDestOfficeName(officeName || '');
                                                                 step1Form.setValue("destAddress", clampGuideField(addr, GUIDE_FIELD_LIMITS.address), { shouldValidate: true });
                                                                 step3Form.setValue("destCrossStreet", clampGuideField(addr, GUIDE_FIELD_LIMITS.crossStreet), { shouldValidate: true });
                                                                 setOfficeCarrier(carrierId);

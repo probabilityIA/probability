@@ -157,6 +157,12 @@ func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrd
 	if dto.ShippingOfficeCarrier != "" {
 		order.ShippingOfficeCarrier = dto.ShippingOfficeCarrier
 	}
+	if dto.ShippingOfficeName != "" {
+		order.ShippingOfficeName = dto.ShippingOfficeName
+	}
+	if len(dto.ShippingOfficeDetails) > 0 {
+		order.ShippingOfficeDetails = dto.ShippingOfficeDetails
+	}
 	if dto.ShippingNeighborhood != "" {
 		order.ShippingNeighborhood = dto.ShippingNeighborhood
 	}

@@ -3,12 +3,13 @@ import { env } from '@/shared/config/env';
 import { MapPin, Search, Loader2 } from 'lucide-react';
 import { Input, Button } from '@/shared/ui';
 
-interface OfficeResult {
+export interface OfficeResult {
     display_name: string;
     place_id: string;
     lat: number;
     lon: number;
     distance_km?: number;
+    name?: string;
 }
 
 interface CarrierOfficeSelectorProps {
@@ -16,7 +17,7 @@ interface CarrierOfficeSelectorProps {
     state?: string;
     initialCarrier?: string;
     selectedAddress?: string;
-    onSelectAddress: (address: string, carrierId: string, coords?: { lat: number; lon: number }) => void;
+    onSelectAddress: (address: string, carrierId: string, coords?: { lat: number; lon: number }, officeName?: string, office?: OfficeResult) => void;
     onClose: () => void;
 }
 
@@ -161,7 +162,8 @@ export function CarrierOfficeSelector({ city, state = '', initialCarrier, select
                                         address = match[1];
                                     }
                                     const coords = r.lat != null && r.lon != null ? { lat: r.lat, lon: r.lon } : undefined;
-                                    onSelectAddress(address, selectedCarrier, coords);
+                                    const officeName = r.name || r.display_name.split('(')[0].trim();
+                                    onSelectAddress(address, selectedCarrier, coords, officeName, r);
                                     onClose();
                                 }}
                                 className={`group p-3 border rounded-md cursor-pointer transition-colors ${

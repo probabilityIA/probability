@@ -42,14 +42,16 @@ type CreateOrderRequest struct {
 	ShippingLat        *float64 `json:"shipping_lat,omitempty"`
 	ShippingLng        *float64 `json:"shipping_lng,omitempty"`
 
-	ShippingAddressSource    string `json:"shipping_address_source"`
-	ShippingDeliveryType     string `json:"shipping_delivery_type"`
-	ShippingOfficeCarrier    string `json:"shipping_office_carrier"`
-	ShippingNeighborhood     string `json:"shipping_neighborhood"`
-	ShippingComplementType   string `json:"shipping_complement_type"`
-	ShippingComplementNumber string `json:"shipping_complement_number"`
-	ShippingTower            string `json:"shipping_tower"`
-	ShippingBuilding         string `json:"shipping_building"`
+	ShippingAddressSource    string          `json:"shipping_address_source"`
+	ShippingDeliveryType     string          `json:"shipping_delivery_type"`
+	ShippingOfficeCarrier    string          `json:"shipping_office_carrier"`
+	ShippingOfficeName       string          `json:"shipping_office_name"`
+	ShippingOfficeDetails    json.RawMessage `json:"shipping_office_details,omitempty"`
+	ShippingNeighborhood     string          `json:"shipping_neighborhood"`
+	ShippingComplementType   string          `json:"shipping_complement_type"`
+	ShippingComplementNumber string          `json:"shipping_complement_number"`
+	ShippingTower            string          `json:"shipping_tower"`
+	ShippingBuilding         string          `json:"shipping_building"`
 
 	PaymentMethodID uint       `json:"payment_method_id"`
 	IsPaid          bool       `json:"is_paid"`

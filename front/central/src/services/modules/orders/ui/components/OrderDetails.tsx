@@ -830,6 +830,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                             <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
                                                                 El cliente recoge en oficina
                                                             </p>
+                                                            {order.shipping_office_name && (
+                                                                <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300">
+                                                                    {order.shipping_office_name}
+                                                                </p>
+                                                            )}
                                                             {order.shipping_office_carrier && (
                                                                 <p className="text-[11px] text-amber-700 dark:text-amber-400/90">
                                                                     Oficina de {carrierOfficeLabel(order.shipping_office_carrier)}

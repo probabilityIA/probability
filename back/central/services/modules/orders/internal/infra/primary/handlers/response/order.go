@@ -69,15 +69,17 @@ type Order struct {
 	ShippingLng           *float64 `json:"shipping_lng,omitempty"`
 	ShippingGeoConfidence string   `json:"shipping_geo_confidence,omitempty"`
 
-	ShippingAddressSource    string `json:"shipping_address_source,omitempty"`
-	ShippingDeliveryType     string `json:"shipping_delivery_type,omitempty"`
-	ShippingOfficeCarrier    string `json:"shipping_office_carrier,omitempty"`
-	ShippingNeighborhood     string `json:"shipping_neighborhood,omitempty"`
-	ShippingComplementType   string `json:"shipping_complement_type,omitempty"`
-	ShippingComplementNumber string `json:"shipping_complement_number,omitempty"`
-	ShippingTower            string `json:"shipping_tower,omitempty"`
-	ShippingBuilding         string `json:"shipping_building,omitempty"`
-	DestinationDaneCode      string `json:"destination_dane_code,omitempty"`
+	ShippingAddressSource    string          `json:"shipping_address_source,omitempty"`
+	ShippingDeliveryType     string          `json:"shipping_delivery_type,omitempty"`
+	ShippingOfficeCarrier    string          `json:"shipping_office_carrier,omitempty"`
+	ShippingOfficeName       string          `json:"shipping_office_name,omitempty"`
+	ShippingOfficeDetails    json.RawMessage `json:"shipping_office_details,omitempty"`
+	ShippingNeighborhood     string          `json:"shipping_neighborhood,omitempty"`
+	ShippingComplementType   string          `json:"shipping_complement_type,omitempty"`
+	ShippingComplementNumber string          `json:"shipping_complement_number,omitempty"`
+	ShippingTower            string          `json:"shipping_tower,omitempty"`
+	ShippingBuilding         string          `json:"shipping_building,omitempty"`
+	DestinationDaneCode      string          `json:"destination_dane_code,omitempty"`
 
 	// Información de pago
 	PaymentMethodID uint       `json:"payment_method_id"`
