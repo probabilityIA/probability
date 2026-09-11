@@ -146,6 +146,22 @@ func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrd
 		}
 	}
 
+	if dto.ShippingNeighborhood != "" {
+		order.ShippingNeighborhood = dto.ShippingNeighborhood
+	}
+	if dto.ShippingComplementType != "" {
+		order.ShippingComplementType = dto.ShippingComplementType
+	}
+	if dto.ShippingComplementNumber != "" {
+		order.ShippingComplementNumber = dto.ShippingComplementNumber
+	}
+	if dto.ShippingTower != "" {
+		order.ShippingTower = dto.ShippingTower
+	}
+	if dto.ShippingBuilding != "" {
+		order.ShippingBuilding = dto.ShippingBuilding
+	}
+
 	for _, ship := range dto.Shipments {
 		if ship.WarehouseID != nil {
 			order.WarehouseID = ship.WarehouseID

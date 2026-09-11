@@ -76,6 +76,11 @@ export interface Order {
     shipping_postal_code: string;
     shipping_house?: string;
     shipping_barrio?: string;
+    shipping_neighborhood?: string;
+    shipping_complement_type?: string;
+    shipping_complement_number?: string;
+    shipping_tower?: string;
+    shipping_building?: string;
     shipping_lat?: number;
     shipping_lng?: number;
     shipping_geo_confidence?: 'high' | 'medium' | 'low';
@@ -292,6 +297,11 @@ export interface CreateOrderDTO {
     shipping_postal_code?: string;
     shipping_house?: string;
     shipping_barrio?: string;
+    shipping_neighborhood?: string;
+    shipping_complement_type?: string;
+    shipping_complement_number?: string;
+    shipping_tower?: string;
+    shipping_building?: string;
     shipping_lat?: number;
     shipping_lng?: number;
 
@@ -376,6 +386,11 @@ export interface UpdateOrderDTO {
     shipping_postal_code?: string;
     shipping_house?: string;
     shipping_barrio?: string;
+    shipping_neighborhood?: string;
+    shipping_complement_type?: string;
+    shipping_complement_number?: string;
+    shipping_tower?: string;
+    shipping_building?: string;
     shipping_lat?: number;
     shipping_lng?: number;
 

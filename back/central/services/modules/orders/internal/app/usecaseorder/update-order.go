@@ -104,6 +104,21 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	if req.ShippingLng != nil {
 		order.ShippingLng = req.ShippingLng
 	}
+	if req.ShippingNeighborhood != nil {
+		order.ShippingNeighborhood = *req.ShippingNeighborhood
+	}
+	if req.ShippingComplementType != nil {
+		order.ShippingComplementType = *req.ShippingComplementType
+	}
+	if req.ShippingComplementNumber != nil {
+		order.ShippingComplementNumber = *req.ShippingComplementNumber
+	}
+	if req.ShippingTower != nil {
+		order.ShippingTower = *req.ShippingTower
+	}
+	if req.ShippingBuilding != nil {
+		order.ShippingBuilding = *req.ShippingBuilding
+	}
 
 	// Información de pago
 	if req.IsPaid != nil {

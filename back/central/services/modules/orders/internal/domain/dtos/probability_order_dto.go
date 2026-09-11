@@ -43,16 +43,22 @@ type ProbabilityOrderDTO struct {
 	CurrencyPresentment         string  `json:"currency_presentment"`
 
 	// Información del cliente
-	CustomerID         *uint   `json:"customer_id,omitempty"`
-	CustomerName       string  `json:"customer_name"`
-	CustomerFirstName  string  `json:"customer_first_name"`
-	CustomerLastName   string  `json:"customer_last_name"`
-	CustomerEmail      string  `json:"customer_email"`
-	CustomerPhone      string  `json:"customer_phone"`
-	CustomerDNI        string  `json:"customer_dni"`
-	ClientGroupID      *uint   `json:"client_group_id,omitempty"`
-	CustomerOrderCount *int    `json:"customer_order_count,omitempty"`
-	CustomerTotalSpent *string `json:"customer_total_spent,omitempty"`
+	CustomerID        *uint  `json:"customer_id,omitempty"`
+	CustomerName      string `json:"customer_name"`
+	CustomerFirstName string `json:"customer_first_name"`
+	CustomerLastName  string `json:"customer_last_name"`
+	CustomerEmail     string `json:"customer_email"`
+	CustomerPhone     string `json:"customer_phone"`
+	CustomerDNI       string `json:"customer_dni"`
+
+	ShippingNeighborhood     string  `json:"shipping_neighborhood,omitempty"`
+	ShippingComplementType   string  `json:"shipping_complement_type,omitempty"`
+	ShippingComplementNumber string  `json:"shipping_complement_number,omitempty"`
+	ShippingTower            string  `json:"shipping_tower,omitempty"`
+	ShippingBuilding         string  `json:"shipping_building,omitempty"`
+	ClientGroupID            *uint   `json:"client_group_id,omitempty"`
+	CustomerOrderCount       *int    `json:"customer_order_count,omitempty"`
+	CustomerTotalSpent       *string `json:"customer_total_spent,omitempty"`
 
 	// Tipo y estado
 	OrderTypeID    *uint  `json:"order_type_id,omitempty"`

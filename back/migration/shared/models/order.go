@@ -62,6 +62,12 @@ type Order struct {
 	ShippingLat        *float64
 	ShippingLng        *float64
 
+	ShippingNeighborhood     string `gorm:"size:120"`
+	ShippingComplementType   string `gorm:"size:24"`
+	ShippingComplementNumber string `gorm:"size:32"`
+	ShippingTower            string `gorm:"size:64"`
+	ShippingBuilding         string `gorm:"size:128"`
+
 	ShippingGeoConfidence string `gorm:"size:16;index"`
 
 	DestinationGeozoneID   *uint          `gorm:"index"`

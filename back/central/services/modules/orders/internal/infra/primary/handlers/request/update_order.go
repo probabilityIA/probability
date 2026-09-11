@@ -36,6 +36,12 @@ type UpdateOrder struct {
 	ShippingLat        *float64 `json:"shipping_lat"`
 	ShippingLng        *float64 `json:"shipping_lng"`
 
+	ShippingNeighborhood     *string `json:"shipping_neighborhood" binding:"omitempty,max=120"`
+	ShippingComplementType   *string `json:"shipping_complement_type" binding:"omitempty,max=24"`
+	ShippingComplementNumber *string `json:"shipping_complement_number" binding:"omitempty,max=32"`
+	ShippingTower            *string `json:"shipping_tower" binding:"omitempty,max=64"`
+	ShippingBuilding         *string `json:"shipping_building" binding:"omitempty,max=128"`
+
 	// Información de pago
 	PaymentMethodID *uint      `json:"payment_method_id"`
 	IsPaid          *bool      `json:"is_paid"`

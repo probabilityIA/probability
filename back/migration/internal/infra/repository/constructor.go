@@ -41,7 +41,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateCatalogoRename(ctx); err != nil {
 		return err
 	}
-	return r.migrateClientAddressFields(ctx)
+	if err := r.migrateClientAddressFields(ctx); err != nil {
+		return err
+	}
+	return r.migrateOrderAddressFields(ctx)
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {

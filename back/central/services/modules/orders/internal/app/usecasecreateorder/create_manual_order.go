@@ -161,7 +161,13 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 		CustomerEmail:     req.CustomerEmail,
 		CustomerPhone:     req.CustomerPhone,
 		CustomerDNI:       req.CustomerDNI,
-		ClientGroupID:     req.ClientGroupID,
+
+		ShippingNeighborhood:     req.ShippingNeighborhood,
+		ShippingComplementType:   req.ShippingComplementType,
+		ShippingComplementNumber: req.ShippingComplementNumber,
+		ShippingTower:            req.ShippingTower,
+		ShippingBuilding:         req.ShippingBuilding,
+		ClientGroupID:            req.ClientGroupID,
 
 		// Tipo y estado
 		OrderTypeID:    req.OrderTypeID,

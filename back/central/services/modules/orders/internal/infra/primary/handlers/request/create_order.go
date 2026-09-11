@@ -46,6 +46,12 @@ type CreateOrder struct {
 	ShippingLat        *float64 `json:"shipping_lat"`
 	ShippingLng        *float64 `json:"shipping_lng"`
 
+	ShippingNeighborhood     string `json:"shipping_neighborhood" binding:"max=120"`
+	ShippingComplementType   string `json:"shipping_complement_type" binding:"max=24"`
+	ShippingComplementNumber string `json:"shipping_complement_number" binding:"max=32"`
+	ShippingTower            string `json:"shipping_tower" binding:"max=64"`
+	ShippingBuilding         string `json:"shipping_building" binding:"max=128"`
+
 	// Información de pago
 	PaymentMethodID uint       `json:"payment_method_id" binding:"required"`
 	IsPaid          bool       `json:"is_paid"`

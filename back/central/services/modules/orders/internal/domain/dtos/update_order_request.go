@@ -32,6 +32,12 @@ type UpdateOrderRequest struct {
 	ShippingLat        *float64
 	ShippingLng        *float64
 
+	ShippingNeighborhood     *string
+	ShippingComplementType   *string
+	ShippingComplementNumber *string
+	ShippingTower            *string
+	ShippingBuilding         *string
+
 	// Información de pago
 	PaymentMethodID *uint
 	IsPaid          *bool

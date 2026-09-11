@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildGuideDestination, clampGuideField, GUIDE_FIELD_LIMITS } from './guide-destination';
+import { buildGuideDestination, buildComplement, clampGuideField, GUIDE_FIELD_LIMITS } from './guide-destination';
 
 const within = (parts: ReturnType<typeof buildGuideDestination>) => {
     expect(parts.address.length).toBeLessThanOrEqual(GUIDE_FIELD_LIMITS.address);
@@ -107,6 +107,42 @@ describe('buildGuideDestination con una sola cadena', () => {
     it('sin barrio conocido el campo queda vacio', () => {
         const parts = buildGuideDestination({ shipping_street: 'Calle 8 #36-16' });
         expect(parts.suburb).toBe('');
+    });
+});
+
+describe('con los campos estructurados del formulario', () => {
+    it('VIG-0150 capturada con campos separados no necesita heuristica', () => {
+        const parts = buildGuideDestination({
+            shipping_street: 'Calle 6 # 3-184',
+            shipping_complement_type: 'apartamento',
+            shipping_complement_number: '503',
+            shipping_tower: 'Torre B',
+            shipping_building: 'Alameda de Albornoz',
+            shipping_neighborhood: 'Albornoz',
+        });
+        expect(parts.address).toBe('Calle 6 # 3-184');
+        expect(parts.reference).toBe('Apto 503');
+        expect(parts.crossStreet).toBe('Torre B Alameda de Albornoz');
+        expect(parts.suburb).toBe('Albornoz');
+        expect(parts.dropped).toBe('');
+        within(parts);
+    });
+
+    it('los campos estructurados le ganan al parseo del texto', () => {
+        const parts = buildGuideDestination({
+            shipping_street: 'Calle 6 # 3-184 | Apto 503 Torre B | Albornoz',
+            shipping_complement_type: 'casa',
+            shipping_complement_number: '17',
+        });
+        expect(parts.reference).toBe('Casa 17');
+        expect(parts.suburb).toBe('Albornoz');
+    });
+
+    it('buildComplement arma el texto que ve el transportador', () => {
+        expect(buildComplement('apartamento', '503', 'Torre B', 'Alameda')).toBe('Apto 503 Torre B Alameda');
+        expect(buildComplement('casa', '17', '', '')).toBe('Casa 17');
+        expect(buildComplement('', '', '', '')).toBe('');
+        expect(buildComplement('', '  ', 'Torre 2', '')).toBe('Torre 2');
     });
 });
 

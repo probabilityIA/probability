@@ -68,7 +68,13 @@ type Order struct {
 	ShippingLat           *float64 `json:"shipping_lat,omitempty"`
 	ShippingLng           *float64 `json:"shipping_lng,omitempty"`
 	ShippingGeoConfidence string   `json:"shipping_geo_confidence,omitempty"`
-	DestinationDaneCode   string   `json:"destination_dane_code,omitempty"`
+
+	ShippingNeighborhood     string `json:"shipping_neighborhood,omitempty"`
+	ShippingComplementType   string `json:"shipping_complement_type,omitempty"`
+	ShippingComplementNumber string `json:"shipping_complement_number,omitempty"`
+	ShippingTower            string `json:"shipping_tower,omitempty"`
+	ShippingBuilding         string `json:"shipping_building,omitempty"`
+	DestinationDaneCode      string `json:"destination_dane_code,omitempty"`
 
 	// Información de pago
 	PaymentMethodID uint       `json:"payment_method_id"`

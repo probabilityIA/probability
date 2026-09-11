@@ -7,9 +7,43 @@ export const GUIDE_FIELD_LIMITS = {
 
 export const ADDRESS_PART_SEPARATOR = ' | ';
 
+export const COMPLEMENT_TYPES = [
+    { value: 'casa', label: 'Casa', short: 'Casa' },
+    { value: 'apartamento', label: 'Apartamento', short: 'Apto' },
+    { value: 'oficina', label: 'Oficina', short: 'Of.' },
+    { value: 'local', label: 'Local', short: 'Local' },
+    { value: 'bodega', label: 'Bodega', short: 'Bodega' },
+    { value: 'lote', label: 'Lote', short: 'Lote' },
+    { value: 'finca', label: 'Finca', short: 'Finca' },
+] as const;
+
+export const complementShortLabel = (value: string): string =>
+    COMPLEMENT_TYPES.find((t) => t.value === value)?.short || '';
+
+export const buildComplement = (
+    type: string,
+    complementNumber: string,
+    tower: string,
+    building: string,
+): string => {
+    const chunks: string[] = [];
+    const short = complementShortLabel(type);
+    const num = (complementNumber || '').trim();
+    if (short && num) chunks.push(`${short} ${num}`);
+    else if (short) chunks.push(short);
+    else if (num) chunks.push(num);
+    if ((tower || '').trim()) chunks.push(tower.trim());
+    if ((building || '').trim()) chunks.push(building.trim());
+    return chunks.join(' ');
+};
+
 export interface GuideAddressSource {
     shipping_street?: string | null;
     shipping_neighborhood?: string | null;
+    shipping_complement_type?: string | null;
+    shipping_complement_number?: string | null;
+    shipping_tower?: string | null;
+    shipping_building?: string | null;
 }
 
 export interface GuideDestinationParts {
@@ -97,6 +131,26 @@ export const buildGuideDestination = (order: GuideAddressSource | null | undefin
     }
 
     const parts = street.split(ADDRESS_PART_SEPARATOR).map(collapse).filter(Boolean);
+
+    const structuredRef = buildComplement(
+        order?.shipping_complement_type || '',
+        order?.shipping_complement_number || '',
+        '',
+        '',
+    );
+    const structuredCross = collapse(
+        [order?.shipping_tower || '', order?.shipping_building || ''].filter(Boolean).join(' '),
+    );
+
+    if (structuredRef || structuredCross) {
+        return {
+            address: clampGuideField(parts[0], GUIDE_FIELD_LIMITS.address),
+            crossStreet: clampGuideField(structuredCross, GUIDE_FIELD_LIMITS.crossStreet),
+            reference: clampGuideField(structuredRef, GUIDE_FIELD_LIMITS.reference),
+            suburb: clampGuideField(neighborhood || parts[2] || '', GUIDE_FIELD_LIMITS.suburb),
+            dropped: '',
+        };
+    }
 
     if (parts.length > 1) {
         const address = clampGuideField(parts[0], GUIDE_FIELD_LIMITS.address);

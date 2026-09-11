@@ -25,6 +25,7 @@ import { getCustomerAddressesAction } from '../../../customers/infra/actions';
 import { getEffectivePriceAction, listClientGroupsAction, getCatalogPricesAction, listAvailableClientsAction } from '../../../pricing/infra/actions';
 import { ClientGroup } from '../../../pricing/domain/types';
 import { getActionError } from '@/shared/utils/action-result';
+import { COMPLEMENT_TYPES, buildComplement } from '@/shared/utils/guide-destination';
 import { esCanalDeVenta, salesChannelLabel } from '../../domain/sales-channel-labels';
 
 interface OrderFormProps {
@@ -250,12 +251,17 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             .replace(/\s*[,(]?\s*d\.?\s*c\.?\s*\)?\s*$/g, '')
             .trim();
 
-    const [house, setHouse] = useState(() => {
+    const [complementType, setComplementType] = useState(order?.shipping_complement_type || '');
+    const [complementNumber, setComplementNumber] = useState(() => {
+        if (order?.shipping_complement_number) return order.shipping_complement_number;
         if (!order?.shipping_street) return '';
         const parts = order.shipping_street.split(' | ');
         return parts.length >= 2 ? parts[1] : '';
     });
+    const [tower, setTower] = useState(order?.shipping_tower || '');
+    const [building, setBuilding] = useState(order?.shipping_building || '');
     const [barrio, setBarrio] = useState(() => {
+        if (order?.shipping_neighborhood) return order.shipping_neighborhood;
         if (!order?.shipping_street) return '';
         const parts = order.shipping_street.split(' | ');
         return parts.length >= 3 ? parts[2] : '';
@@ -349,7 +355,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                     shipping_country: addr.country || 'Colombia',
                     shipping_postal_code: addr.postal_code || '',
                 }));
-                setHouse(addrHouse);
+                setComplementType('');
+                setComplementNumber(addrHouse);
+                setTower('');
+                setBuilding('');
                 setBarrio(addrBarrio);
 
                 if (addr.city && addr.state) {
@@ -501,8 +510,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 throw new Error('Selecciona la ciudad y el departamento de la lista, no lo escribas libre: hay ciudades con el mismo nombre en distintos departamentos');
             }
 
+            const complement = buildComplement(complementType, complementNumber, tower, building);
             const parts = [formData.shipping_street || ''];
-            if (house.trim()) parts.push(house.trim());
+            if (complement) parts.push(complement);
             if (barrio.trim()) parts.push(barrio.trim());
             const fullShippingStreet = parts.join(' | ');
 
@@ -518,6 +528,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 cod_total: isCOD ? formData.cod_total : 0,
                 payment_method_id: formData.payment_method_id,
                 shipping_street: fullShippingStreet,
+                shipping_neighborhood: barrio.trim(),
+                shipping_complement_type: complementType,
+                shipping_complement_number: complementNumber.trim(),
+                shipping_tower: tower.trim(),
+                shipping_building: building.trim(),
                 shipping_lat: addressCoords?.lat,
                 shipping_lng: addressCoords?.lon,
                 items: itemsToSend,
@@ -959,13 +974,53 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                             <div>
                                 <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                    Casa
+                                    Tipo
+                                </label>
+                                <select
+                                    value={complementType}
+                                    onChange={(e) => setComplementType(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white"
+                                >
+                                    <option value="">Sin especificar</option>
+                                    {COMPLEMENT_TYPES.map((t) => (
+                                        <option key={t.value} value={t.value}>{t.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                    {'N\u00famero'}
                                 </label>
                                 <Input
                                     type="text"
-                                    value={house}
-                                    onChange={(e) => setHouse(e.target.value)}
-                                    placeholder={'N\u00famero de casa'}
+                                    value={complementNumber}
+                                    onChange={(e) => setComplementNumber(e.target.value)}
+                                    placeholder={complementType === 'apartamento' ? '503' : '12'}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Torre, bloque o interior
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={tower}
+                                    onChange={(e) => setTower(e.target.value)}
+                                    placeholder="Torre B"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Edificio o conjunto
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={building}
+                                    onChange={(e) => setBuilding(e.target.value)}
+                                    placeholder="Alameda de Albornoz"
                                 />
                             </div>
 

@@ -42,6 +42,12 @@ type CreateOrderRequest struct {
 	ShippingLat        *float64 `json:"shipping_lat,omitempty"`
 	ShippingLng        *float64 `json:"shipping_lng,omitempty"`
 
+	ShippingNeighborhood     string `json:"shipping_neighborhood"`
+	ShippingComplementType   string `json:"shipping_complement_type"`
+	ShippingComplementNumber string `json:"shipping_complement_number"`
+	ShippingTower            string `json:"shipping_tower"`
+	ShippingBuilding         string `json:"shipping_building"`
+
 	PaymentMethodID uint       `json:"payment_method_id"`
 	IsPaid          bool       `json:"is_paid"`
 	PaidAt          *time.Time `json:"paid_at,omitempty"`
