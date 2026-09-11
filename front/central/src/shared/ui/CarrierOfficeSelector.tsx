@@ -14,6 +14,7 @@ interface OfficeResult {
 interface CarrierOfficeSelectorProps {
     city: string;
     state?: string;
+    initialCarrier?: string;
     onSelectAddress: (address: string, carrierId: string, coords?: { lat: number; lon: number }) => void;
     onClose: () => void;
 }
@@ -26,8 +27,10 @@ const CARRIERS = [
     { id: 'tcc', name: 'TCC' }
 ];
 
-export function CarrierOfficeSelector({ city, state = '', onSelectAddress, onClose }: CarrierOfficeSelectorProps) {
-    const [selectedCarrier, setSelectedCarrier] = useState<string>(CARRIERS[0].id);
+export function CarrierOfficeSelector({ city, state = '', initialCarrier, onSelectAddress, onClose }: CarrierOfficeSelectorProps) {
+    const [selectedCarrier, setSelectedCarrier] = useState<string>(
+        initialCarrier && CARRIERS.some((c) => c.id === initialCarrier) ? initialCarrier : CARRIERS[0].id,
+    );
     const [results, setResults] = useState<OfficeResult[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);

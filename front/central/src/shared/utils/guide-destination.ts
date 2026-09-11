@@ -19,6 +19,17 @@ export const COMPLEMENT_TYPES = [
     { value: 'finca', label: 'Finca', short: 'Finca' },
 ] as const;
 
+export const CARRIER_LABELS: Record<string, string> = {
+    coordinadora: 'Coordinadora',
+    interrapidisimo: 'Inter Rapid\u00edsimo',
+    servientrega: 'Servientrega',
+    envia: 'Env\u00eda',
+    tcc: 'TCC',
+};
+
+export const carrierOfficeLabel = (value: string): string =>
+    CARRIER_LABELS[(value || '').toLowerCase()] || value;
+
 export const complementShortLabel = (value: string): string =>
     COMPLEMENT_TYPES.find((t) => t.value === value)?.short || '';
 

@@ -402,6 +402,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             const destParts = buildGuideDestination(order);
             step1Form.setValue("destAddress", destParts.address, { shouldValidate: true });
 
+            if (order.shipping_delivery_type === 'office') {
+                setOfficeCarrier(order.shipping_office_carrier || null);
+                setShowDestOffices(true);
+            }
+
             if (order.weight && order.weight > 0) {
                 step1Form.setValue("weight", order.weight, { shouldValidate: true });
                 step1Form.setValue("height", order.height || 10, { shouldValidate: true });
@@ -1171,6 +1176,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     {showDestOffices && (
                                                         <CarrierOfficeSelector 
                                                             city={destSearch}
+                                                            initialCarrier={officeCarrier || undefined}
                                                             onSelectAddress={(addr, carrierId) => {
                                                                 step1Form.setValue("destAddress", addr, { shouldValidate: true });
                                                                 setOfficeCarrier(carrierId);

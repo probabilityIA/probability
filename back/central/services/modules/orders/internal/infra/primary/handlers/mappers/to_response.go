@@ -257,6 +257,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		ShippingGeoConfidence:  dto.ShippingGeoConfidence,
 		ShippingAddressSource:  dto.ShippingAddressSource,
 		ShippingDeliveryType:   dto.ShippingDeliveryType,
+		ShippingOfficeCarrier:  dto.ShippingOfficeCarrier,
 		Weight:                 dto.Weight,
 		Height:                 dto.Height,
 		Width:                  dto.Width,

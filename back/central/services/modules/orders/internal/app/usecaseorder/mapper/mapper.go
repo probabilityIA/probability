@@ -260,6 +260,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		ShippingGeoConfidence:  order.ShippingGeoConfidence,
 		ShippingAddressSource:  order.ShippingAddressSource,
 		ShippingDeliveryType:   order.ShippingDeliveryType,
+		ShippingOfficeCarrier:  order.ShippingOfficeCarrier,
 		Weight:                 order.Weight,
 		Height:                 order.Height,
 		Width:                  order.Width,

@@ -14,6 +14,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
+import { carrierOfficeLabel } from '@/shared/utils/guide-destination';
 import dynamic from 'next/dynamic';
 import { Package, Copy, Check, Link2, X, Calendar, CreditCard, Truck, Receipt, Percent, Wallet, ShoppingBag, User, Phone, Mail, MapPin, ClipboardList, Save, MessageCircle, History, AlertTriangle, RefreshCw, Clock, FileText, ChevronRight, ArrowRight, Plus, CircleCheck, Scissors } from 'lucide-react';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
@@ -820,6 +821,23 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             <div className="py-4 text-center text-xs text-slate-400">Cargando...</div>
                                         ) : (
                                             <div className="space-y-2.5">
+                                                {order.shipping_delivery_type === 'office' && (
+                                                    <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-2 dark:border-amber-500/40 dark:bg-amber-500/10">
+                                                        <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
+                                                        </svg>
+                                                        <div>
+                                                            <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                                                                El cliente recoge en oficina
+                                                            </p>
+                                                            {order.shipping_office_carrier && (
+                                                                <p className="text-[11px] text-amber-700 dark:text-amber-400/90">
+                                                                    Oficina de {carrierOfficeLabel(order.shipping_office_carrier)}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <p className="text-sm font-medium text-slate-800 dark:text-white">{order.shipping_street || '-'}</p>
                                                     <p className="text-xs text-slate-400">
