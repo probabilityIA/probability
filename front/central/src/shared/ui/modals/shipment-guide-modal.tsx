@@ -104,6 +104,7 @@ interface ShipmentGuideModalProps {
     onClose: () => void;
     order?: Order;
     onGuideGenerated?: (data: { tracking_number: string; carrier?: string; label_url?: string }) => void;
+    onEditOrder?: (order: Order) => void;
     recommendedCarrier?: string;
 }
 
@@ -169,7 +170,7 @@ const STEPS = [
     { id: 4, label: "Pago" },
 ];
 
-export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGenerated, recommendedCarrier }: ShipmentGuideModalProps) {
+export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGenerated, recommendedCarrier, onEditOrder }: ShipmentGuideModalProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -1169,7 +1170,32 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 {...step1Form.register("destAddress")}
                                                 error={step1Form.formState.errors.destAddress?.message}
                                                 placeholder="Carrera 46 # 93 - 45"
+                                                readOnly={Boolean(order)}
+                                                className={order ? 'cursor-not-allowed opacity-90' : undefined}
                                             />
+                                            {order && (
+                                                <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                                                    {order.shipping_delivery_type === 'office'
+                                                        ? 'La oficina se cambia con el buscador de abajo. '
+                                                        : 'La ' + 'dirección' + ' del cliente se cambia en la orden, no aqui. '}
+                                                    {onEditOrder ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => { onClose(); onEditOrder(order); }}
+                                                            className="font-semibold text-purple-600 underline dark:text-purple-400"
+                                                        >
+                                                            Editar la orden
+                                                        </button>
+                                                    ) : (
+                                                        <a
+                                                            href={`/orders?order_id=${order.id}&edit=1`}
+                                                            className="font-semibold text-purple-600 underline dark:text-purple-400"
+                                                        >
+                                                            Editar la orden
+                                                        </a>
+                                                    )}
+                                                </p>
+                                            )}
                                             {destOfficeName && (
                                                 <p className="mt-1 flex items-center gap-1.5 text-xs text-purple-700 dark:text-purple-300">
                                                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

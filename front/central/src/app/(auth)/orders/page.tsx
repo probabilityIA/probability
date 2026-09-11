@@ -21,6 +21,7 @@ export default function OrdersPage() {
     const { showToast } = useToast();
     const searchParams = useSearchParams();
     const deepLinkedOrderId = searchParams.get('order_id');
+    const deepLinkEdit = searchParams.get('edit') === '1';
     const deepLinkHandled = useRef<string | null>(null);
     const { selectedBusinessId } = useOrdersBusiness();
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -75,8 +76,12 @@ export default function OrdersPage() {
                 if (cancelado) return;
                 if (response.success && response.data) {
                     setSelectedOrder(response.data);
-                    setViewMode('details');
-                    setShowViewModal(true);
+                    if (deepLinkEdit) {
+                        setShowEditModal(true);
+                    } else {
+                        setViewMode('details');
+                        setShowViewModal(true);
+                    }
                 } else {
                     showToast('No se pudo abrir la orden del enlace', 'error');
                 }
@@ -173,11 +178,13 @@ export default function OrdersPage() {
             />
 
             <ShipmentGuideModal
+                onEditOrder={(o) => { setSelectedOrder(o); setShowEditModal(true); }}
                 isOpen={showTestGuideModal}
                 onClose={() => setShowTestGuideModal(false)}
             />
 
             <ShipmentGuideModal
+                onEditOrder={(o) => { setSelectedOrder(o); setShowEditModal(true); }}
                 isOpen={showGuideModal}
                 onClose={() => {
                     setShowGuideModal(false);
