@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildGuideDestination, buildComplement, clampGuideField, GUIDE_FIELD_LIMITS, GUIDE_MIN_ADDRESS } from './guide-destination';
+import { buildGuideDestination, buildComplement, clampGuideField, GUIDE_FIELD_LIMITS, GUIDE_MIN_ADDRESS, OFFICE_PICKUP_NOTE } from './guide-destination';
 
 const within = (parts: ReturnType<typeof buildGuideDestination>) => {
     expect(parts.address.length).toBeLessThanOrEqual(GUIDE_FIELD_LIMITS.address);
@@ -164,6 +164,40 @@ describe('no romper la validacion del modal de guia', () => {
         const parts = buildGuideDestination({ shipping_street: 'Cra 7 apto 301' });
         expect(parts.address).toBe('Cra 7 apto 301');
         expect(parts.crossStreet).toBe('');
+    });
+});
+
+describe('entrega en oficina', () => {
+    it('manda el nombre de la oficina y la instruccion de reclamar', () => {
+        const parts = buildGuideDestination({
+            shipping_street: 'Cl. 38 Sur #36 - 24, Zona 9, Envigado, Antioquia, Colombia',
+            shipping_delivery_type: 'office',
+            shipping_office_name: 'Interrapidisimo Envigado Oficina Principal',
+        });
+        expect(parts.crossStreet).toBe('Interrapidisimo Envigado Oficina Principal');
+        expect(parts.reference).toBe(OFFICE_PICKUP_NOTE);
+        expect(parts.address).toContain('Cl. 38 Sur #36 - 24');
+        expect(parts.dropped).toBe('');
+        within(parts);
+    });
+
+    it('sin nombre de oficina igual avisa que se reclama en oficina', () => {
+        const parts = buildGuideDestination({
+            shipping_street: 'Cl. 9 #9-28, Palestina, Caldas',
+            shipping_delivery_type: 'office',
+        });
+        expect(parts.reference).toBe(OFFICE_PICKUP_NOTE);
+        expect(parts.crossStreet).toBe('');
+    });
+
+    it('una orden a domicilio no lleva esa nota', () => {
+        const parts = buildGuideDestination({
+            shipping_street: 'Calle 6 # 3-184',
+            shipping_delivery_type: 'address',
+            shipping_complement_type: 'apartamento',
+            shipping_complement_number: '503',
+        });
+        expect(parts.reference).toBe('Apto 503');
     });
 });
 

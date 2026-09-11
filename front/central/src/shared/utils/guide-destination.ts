@@ -50,9 +50,13 @@ export const buildComplement = (
     return chunks.join(' ');
 };
 
+export const OFFICE_PICKUP_NOTE = 'RECLAMAR EN OFICINA';
+
 export interface GuideAddressSource {
     shipping_street?: string | null;
     shipping_neighborhood?: string | null;
+    shipping_delivery_type?: string | null;
+    shipping_office_name?: string | null;
     shipping_complement_type?: string | null;
     shipping_complement_number?: string | null;
     shipping_tower?: string | null;
@@ -144,6 +148,17 @@ export const buildGuideDestination = (order: GuideAddressSource | null | undefin
     }
 
     const parts = street.split(ADDRESS_PART_SEPARATOR).map(collapse).filter(Boolean);
+
+    if (order?.shipping_delivery_type === 'office') {
+        const officeName = collapse(order?.shipping_office_name || '');
+        return {
+            address: clampGuideField(parts[0], GUIDE_FIELD_LIMITS.address),
+            crossStreet: clampGuideField(officeName, GUIDE_FIELD_LIMITS.crossStreet),
+            reference: OFFICE_PICKUP_NOTE,
+            suburb: clampGuideField(neighborhood || parts[2] || '', GUIDE_FIELD_LIMITS.suburb),
+            dropped: '',
+        };
+    }
 
     const structuredRef = buildComplement(
         order?.shipping_complement_type || '',
