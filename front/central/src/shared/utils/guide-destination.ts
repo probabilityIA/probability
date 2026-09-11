@@ -1,3 +1,5 @@
+export const GUIDE_MIN_ADDRESS = 8;
+
 export const GUIDE_FIELD_LIMITS = {
     address: 50,
     crossStreet: 50,
@@ -163,8 +165,8 @@ export const buildGuideDestination = (order: GuideAddressSource | null | undefin
     }
 
     const cut = findComplementCut(street);
-    if (cut > 0 && cut <= GUIDE_FIELD_LIMITS.address) {
-        const via = collapse(street.slice(0, cut));
+    const via = cut > 0 ? collapse(street.slice(0, cut)) : '';
+    if (via.length >= GUIDE_MIN_ADDRESS && via.length <= GUIDE_FIELD_LIMITS.address) {
         const complement = collapse(street.slice(cut));
         const complementChunks = splitLongText(complement, GUIDE_FIELD_LIMITS.crossStreet);
         const crossFromCut = fill(complementChunks, GUIDE_FIELD_LIMITS.crossStreet);

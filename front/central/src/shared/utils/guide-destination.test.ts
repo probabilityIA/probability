@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildGuideDestination, buildComplement, clampGuideField, GUIDE_FIELD_LIMITS } from './guide-destination';
+import { buildGuideDestination, buildComplement, clampGuideField, GUIDE_FIELD_LIMITS, GUIDE_MIN_ADDRESS } from './guide-destination';
 
 const within = (parts: ReturnType<typeof buildGuideDestination>) => {
     expect(parts.address.length).toBeLessThanOrEqual(GUIDE_FIELD_LIMITS.address);
@@ -143,6 +143,27 @@ describe('con los campos estructurados del formulario', () => {
         expect(buildComplement('casa', '17', '', '')).toBe('Casa 17');
         expect(buildComplement('', '', '', '')).toBe('');
         expect(buildComplement('', '  ', 'Torre 2', '')).toBe('Torre 2');
+    });
+});
+
+describe('no romper la validacion del modal de guia', () => {
+    it('nunca deja address por debajo del minimo que exige el paso 1', () => {
+        const cortas = [
+            'Calle 5 casa 12',
+            'Cra 7 apto 301',
+            'Mz A casa 4 barrio centro',
+            'Calle 8 local 3',
+        ];
+        for (const street of cortas) {
+            const parts = buildGuideDestination({ shipping_street: street });
+            expect(parts.address.length).toBeGreaterThanOrEqual(GUIDE_MIN_ADDRESS);
+        }
+    });
+
+    it('si cortar en el complemento deja la via muy corta, no corta', () => {
+        const parts = buildGuideDestination({ shipping_street: 'Cra 7 apto 301' });
+        expect(parts.address).toBe('Cra 7 apto 301');
+        expect(parts.crossStreet).toBe('');
     });
 });
 
