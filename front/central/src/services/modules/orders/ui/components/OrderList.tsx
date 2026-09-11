@@ -349,6 +349,15 @@ const OrderRow = memo(({
                                         : 'Dir. dudosa'}
                             </span>
                         )}
+                        {order.shipping_address_source === 'manual' && (
+                            <span
+                                className="self-start inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                style={{ backgroundColor: '#fef3c7', color: '#92400e' }}
+                                title={'La dirección se escribió a mano, sin elegir una sugerencia de Google Maps'}
+                            >
+                                {'Dir. sin Google'}
+                            </span>
+                        )}
                         <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
                             <div

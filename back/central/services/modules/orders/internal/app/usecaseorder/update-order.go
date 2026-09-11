@@ -104,6 +104,9 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	if req.ShippingLng != nil {
 		order.ShippingLng = req.ShippingLng
 	}
+	if req.ShippingAddressSource != nil {
+		order.ShippingAddressSource = *req.ShippingAddressSource
+	}
 	if req.ShippingNeighborhood != nil {
 		order.ShippingNeighborhood = *req.ShippingNeighborhood
 	}

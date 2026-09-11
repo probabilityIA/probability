@@ -146,6 +146,11 @@ func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrd
 		}
 	}
 
+	if dto.ShippingAddressSource != "" {
+		order.ShippingAddressSource = dto.ShippingAddressSource
+	} else if order.Platform != "" && order.Platform != "manual" {
+		order.ShippingAddressSource = "channel"
+	}
 	if dto.ShippingNeighborhood != "" {
 		order.ShippingNeighborhood = dto.ShippingNeighborhood
 	}

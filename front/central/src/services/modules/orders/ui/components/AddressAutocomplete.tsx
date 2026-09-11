@@ -17,6 +17,7 @@ interface AddressAutocompleteProps {
     value: string;
     onChange: (value: string) => void;
     onSelect: (suggestion: AddressSuggestion) => void;
+    onManualEdit?: () => void;
     placeholder?: string;
     country?: string;
     city?: string;
@@ -26,6 +27,7 @@ export default function AddressAutocomplete({
     value,
     onChange,
     onSelect,
+    onManualEdit,
     placeholder = 'Calle/Carrera número',
     country = 'co',
     city = '',
@@ -66,6 +68,7 @@ export default function AddressAutocomplete({
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         onChange(val);
+        onManualEdit?.();
 
         if (selectedRef.current) {
             if (val.length < 4) {

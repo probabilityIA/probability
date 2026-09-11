@@ -51,6 +51,7 @@ type ProbabilityOrderDTO struct {
 	CustomerPhone     string `json:"customer_phone"`
 	CustomerDNI       string `json:"customer_dni"`
 
+	ShippingAddressSource    string  `json:"shipping_address_source,omitempty"`
 	ShippingNeighborhood     string  `json:"shipping_neighborhood,omitempty"`
 	ShippingComplementType   string  `json:"shipping_complement_type,omitempty"`
 	ShippingComplementNumber string  `json:"shipping_complement_number,omitempty"`

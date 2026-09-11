@@ -42,6 +42,7 @@ type CreateOrderRequest struct {
 	ShippingLat        *float64 `json:"shipping_lat,omitempty"`
 	ShippingLng        *float64 `json:"shipping_lng,omitempty"`
 
+	ShippingAddressSource    string `json:"shipping_address_source"`
 	ShippingNeighborhood     string `json:"shipping_neighborhood"`
 	ShippingComplementType   string `json:"shipping_complement_type"`
 	ShippingComplementNumber string `json:"shipping_complement_number"`

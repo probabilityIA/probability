@@ -267,6 +267,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         return parts.length >= 3 ? parts[2] : '';
     });
 
+    const [addressSource, setAddressSource] = useState<'google' | 'manual' | 'channel' | ''>(
+        order?.shipping_address_source || (order && order.platform !== 'manual' ? 'channel' : ''),
+    );
     const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(null);
     const [addressAutofilled, setAddressAutofilled] = useState(false);
 
@@ -528,6 +531,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 cod_total: isCOD ? formData.cod_total : 0,
                 payment_method_id: formData.payment_method_id,
                 shipping_street: fullShippingStreet,
+                shipping_address_source: addressSource || 'manual',
                 shipping_neighborhood: barrio.trim(),
                 shipping_complement_type: complementType,
                 shipping_complement_number: complementNumber.trim(),
@@ -910,8 +914,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     value={formData.shipping_street}
                                     onChange={(val) => setFormData({ ...formData, shipping_street: val })}
                                     city={formData.shipping_city}
+                                    onManualEdit={() => setAddressSource('manual')}
                                     onSelect={(s: AddressSuggestion) => {
                                         setAddressAutofilled(false);
+                                        setAddressSource('google');
                                         if (s.lat && s.lon) setAddressCoords({ lat: s.lat, lon: s.lon });
                                         if (s.neighbourhood) setBarrio(s.neighbourhood);
                                         if (s.postcode) setFormData(prev => ({ ...prev, shipping_postal_code: s.postcode }));
@@ -931,6 +937,23 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         }
                                     }}
                                 />
+                                {addressSource === 'google' ? (
+                                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        {'Dirección tomada de Google Maps.'}
+                                    </p>
+                                ) : addressSource === 'channel' ? null : formData.shipping_street?.trim() ? (
+                                    <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                        <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                        </svg>
+                                        <span>
+                                            {'Dirección escrita a mano. Te recomendamos elegir una de las sugerencias de Google para que la guía llegue con mayor precisión.'}
+                                        </span>
+                                    </p>
+                                ) : null}
                             </div>
 
                             <div ref={cityRef} className="relative md:col-span-2">

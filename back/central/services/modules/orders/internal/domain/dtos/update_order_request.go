@@ -32,6 +32,7 @@ type UpdateOrderRequest struct {
 	ShippingLat        *float64
 	ShippingLng        *float64
 
+	ShippingAddressSource    *string
 	ShippingNeighborhood     *string
 	ShippingComplementType   *string
 	ShippingComplementNumber *string

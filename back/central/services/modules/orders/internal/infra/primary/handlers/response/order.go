@@ -69,6 +69,7 @@ type Order struct {
 	ShippingLng           *float64 `json:"shipping_lng,omitempty"`
 	ShippingGeoConfidence string   `json:"shipping_geo_confidence,omitempty"`
 
+	ShippingAddressSource    string `json:"shipping_address_source,omitempty"`
 	ShippingNeighborhood     string `json:"shipping_neighborhood,omitempty"`
 	ShippingComplementType   string `json:"shipping_complement_type,omitempty"`
 	ShippingComplementNumber string `json:"shipping_complement_number,omitempty"`

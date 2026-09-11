@@ -46,6 +46,7 @@ type CreateOrder struct {
 	ShippingLat        *float64 `json:"shipping_lat"`
 	ShippingLng        *float64 `json:"shipping_lng"`
 
+	ShippingAddressSource    string `json:"shipping_address_source" binding:"omitempty,oneof=google manual channel"`
 	ShippingNeighborhood     string `json:"shipping_neighborhood" binding:"max=120"`
 	ShippingComplementType   string `json:"shipping_complement_type" binding:"max=24"`
 	ShippingComplementNumber string `json:"shipping_complement_number" binding:"max=32"`
