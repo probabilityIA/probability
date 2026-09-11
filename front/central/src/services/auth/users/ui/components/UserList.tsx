@@ -588,7 +588,7 @@ export const UserList: React.FC = () => {
                                                         <button
                                                             onClick={() => setResetPasswordUser(user)}
                                                             className="p-2 btn btn-quaternary rounded-md transition-colors duration-200"
-                                                            title="Restablecer contrase\u00f1a"
+                                                            title={'Restablecer contrase\u00f1a'}
                                                             aria-label="Restablecer contrasena"
                                                         >
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -823,7 +823,7 @@ export const UserList: React.FC = () => {
             {resetPasswordUser && !generatedPassword && (
                 <ConfirmModal
                     isOpen={true}
-                    title="Restablecer Contrase\u00f1a"
+                    title={'Restablecer Contrase\u00f1a'}
                     message={`Se generar\u00e1 una nueva contrase\u00f1a aleatoria para ${resetPasswordUser.name} (${resetPasswordUser.email}). La contrase\u00f1a actual dejar\u00e1 de funcionar. \u00bfEst\u00e1 seguro?`}
                     confirmText={resettingPassword ? 'Generando...' : 'Si, generar nueva contrase\u00f1a'}
                     cancelText="Cancelar"
@@ -836,7 +836,7 @@ export const UserList: React.FC = () => {
             <Modal
                 isOpen={!!generatedPassword}
                 onClose={closePasswordModal}
-                title="Nueva Contrase\u00f1a Generada"
+                title={'Nueva Contrase\u00f1a Generada'}
                 size="sm"
             >
                 <div className="space-y-4">

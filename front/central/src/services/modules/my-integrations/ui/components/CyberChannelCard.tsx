@@ -179,7 +179,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         <span className="truncate">{typeName}</span>
                         {integration.is_testing && (
                             <span
-                                title="Integraci\u00f3n en modo pruebas: apunta al simulador, no a la tienda real"
+                                title={'Integraci\u00f3n en modo pruebas: apunta al simulador, no a la tienda real'}
                                 className="flex-shrink-0 rounded-md border border-amber-300 bg-amber-100 px-1.5 py-px text-[9px] font-extrabold uppercase tracking-wider text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/20 dark:text-amber-300"
                             >
                                 Test
@@ -450,7 +450,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                 <button
                     onClick={() => onEdit(integration)}
                     disabled={isEditing}
-                    title="Configurar integraci\u00f3n"
+                    title={'Configurar integraci\u00f3n'}
                     className={`flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 ${isEditing ? 'cursor-wait opacity-60' : ''}`}
                 >
                     {isEditing ? (

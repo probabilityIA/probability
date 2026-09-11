@@ -14,7 +14,7 @@ import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { findDaneCode } from "@/shared/utils/dane-lookup";
-import { buildGuideDestination, GUIDE_FIELD_LIMITS } from "@/shared/utils/guide-destination";
+import { buildGuideDestination, clampGuideField, GUIDE_FIELD_LIMITS } from "@/shared/utils/guide-destination";
 import { CarrierEffectivenessRates } from "@/services/modules/geozones/ui/components/CarrierEffectivenessRates";
 import { getProbabilityByCarrierAction } from "@/services/modules/geozones/infra/actions";
 import type { ProbabilityResult } from "@/services/modules/geozones/domain/types";
@@ -974,7 +974,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', maxHeight: '90vh' }}>
                 {loading && currentStep === 4 && (
                     <BrandLoaderOverlay
-                        title="Generando tu gu\u00eda..."
+                        title={'Generando tu gu\u00eda...'}
                         subtitle="Estamos confirmando con la transportadora. No cierres esta ventana ni vuelvas a generar."
                     />
                 )}
@@ -1102,7 +1102,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         <CarrierOfficeSelector 
                                                             city={originSearch}
                                                             onSelectAddress={(addr, carrierId) => {
-                                                                step1Form.setValue("originAddress", addr, { shouldValidate: true });
+                                                                step1Form.setValue("originAddress", clampGuideField(addr, GUIDE_FIELD_LIMITS.address), { shouldValidate: true });
                                                                 setOfficeCarrier(carrierId);
                                                                 setShowOriginOffices(false);
                                                             }}
@@ -1179,7 +1179,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             initialCarrier={officeCarrier || undefined}
                                                             selectedAddress={order?.shipping_delivery_type === 'office' ? (order?.shipping_street || '').split(' | ')[0] : ''}
                                                             onSelectAddress={(addr, carrierId) => {
-                                                                step1Form.setValue("destAddress", addr, { shouldValidate: true });
+                                                                step1Form.setValue("destAddress", clampGuideField(addr, GUIDE_FIELD_LIMITS.address), { shouldValidate: true });
+                                                                step3Form.setValue("destCrossStreet", clampGuideField(addr, GUIDE_FIELD_LIMITS.crossStreet), { shouldValidate: true });
                                                                 setOfficeCarrier(carrierId);
                                                                 setShowDestOffices(false);
                                                             }}
@@ -1241,7 +1242,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-3 gap-2 mt-3">
                                             <Input
                                                 compact
-                                                label="Descripci\u00f3n *"
+                                                label={'Descripci\u00f3n *'}
                                                 {...step1Form.register("description")}
                                                 error={step1Form.formState.errors.description?.message}
                                                 placeholder="descripcion"
@@ -1685,7 +1686,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-2 gap-1.5">
                                             <Input compact label="Nombre *" {...step3Form.register("originFirstName")} error={step3Form.formState.errors.originFirstName?.message} placeholder="Luisa" />
                                             <Input compact label="Apellido *" {...step3Form.register("originLastName")} error={step3Form.formState.errors.originLastName?.message} placeholder="Munoz" />
-                                            <Input compact label="Tel\u00e9fono *" {...step3Form.register("originPhone")} error={step3Form.formState.errors.originPhone?.message} placeholder="3224098631" />
+                                            <Input compact label={'Tel\u00e9fono *'} {...step3Form.register("originPhone")} error={step3Form.formState.errors.originPhone?.message} placeholder="3224098631" />
                                             <Input compact label="Correo *" type="email" {...step3Form.register("originEmail")} error={step3Form.formState.errors.originEmail?.message} placeholder="correo@ejemplo.com" />
                                         </div>
                                     </div>
@@ -1711,7 +1712,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-2 gap-1.5">
                                             <Input compact label="Nombre *" {...step3Form.register("destFirstName")} error={step3Form.formState.errors.destFirstName?.message} placeholder="Luisa" />
                                             <Input compact label="Apellido *" {...step3Form.register("destLastName")} error={step3Form.formState.errors.destLastName?.message} placeholder="Munoz" />
-                                            <Input compact label="Tel\u00e9fono *" {...step3Form.register("destPhone")} error={step3Form.formState.errors.destPhone?.message} placeholder="3224098631" />
+                                            <Input compact label={'Tel\u00e9fono *'} {...step3Form.register("destPhone")} error={step3Form.formState.errors.destPhone?.message} placeholder="3224098631" />
                                             <Input compact label="Correo *" type="email" {...step3Form.register("destEmail")} error={step3Form.formState.errors.destEmail?.message} placeholder="correo@ejemplo.com" />
                                         </div>
                                     </div>
@@ -1720,8 +1721,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 <div className="border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50/60 dark:bg-gray-700/30 p-4">
                                     <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-2">Opciones adicionales</p>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <Input compact label="Mi referencia de env\u00edo" {...step3Form.register("myShipmentReference")} error={step3Form.formState.errors.myShipmentReference?.message} placeholder="Orden 5649" />
-                                        <Input compact label="N\u00famero de orden externo" {...step3Form.register("external_order_id")} error={step3Form.formState.errors.external_order_id?.message} placeholder="ORD345678" />
+                                        <Input compact label={'Mi referencia de env\u00edo'} {...step3Form.register("myShipmentReference")} error={step3Form.formState.errors.myShipmentReference?.message} placeholder="Orden 5649" />
+                                        <Input compact label={'N\u00famero de orden externo'} {...step3Form.register("external_order_id")} error={step3Form.formState.errors.external_order_id?.message} placeholder="ORD345678" />
                                     </div>
                                     <label className="flex items-center space-x-2 mt-2">
                                         <input type="checkbox" {...step3Form.register("requestPickup")} className="rounded w-5 h-5" />

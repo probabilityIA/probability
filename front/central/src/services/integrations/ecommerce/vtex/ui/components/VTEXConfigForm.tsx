@@ -395,7 +395,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 </div>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuraci\u00f3n General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title={'Configuraci\u00f3n General'}>
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -569,26 +569,26 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 />
             )}
 
-            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizaci\u00f3n">
+            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title={'Sincronizaci\u00f3n'}>
                 <div className="rounded-lg bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700" style={{ border: `1px solid ${INPUT_BORDER}` }}>
                     <ToggleRow
                         icon={<ArrowPathIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar inventario hacia VTEX"
-                        subtitle="Env\u00eda el stock de Probability a los SKUs de tu tienda VTEX"
+                        subtitle={'Env\u00eda el stock de Probability a los SKUs de tu tienda VTEX'}
                         checked={inventorySyncEnabled}
                         onToggle={() => setInventorySyncEnabled(!inventorySyncEnabled)}
                     />
                     <ToggleRow
                         icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar estados hacia VTEX"
-                        subtitle="Actualiza el estado de las \u00f3rdenes en VTEX cuando cambian en Probability"
+                        subtitle={'Actualiza el estado de las \u00f3rdenes en VTEX cuando cambian en Probability'}
                         checked={statusSyncEnabled}
                         onToggle={() => setStatusSyncEnabled(!statusSyncEnabled)}
                     />
                     <ToggleRow
                         icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Recibir estados desde VTEX"
-                        subtitle="Deja que VTEX mueva el estado de las \u00f3rdenes ac\u00e1. Las cancelaciones entran igual"
+                        subtitle={'Deja que VTEX mueva el estado de las \u00f3rdenes ac\u00e1. Las cancelaciones entran igual'}
                         checked={statusInboundEnabled}
                         onToggle={() => setStatusInboundEnabled(!statusInboundEnabled)}
                     />
@@ -655,7 +655,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
             )}
 
             {isEdit && integrationId && (
-                <SectionCard icon={<ShoppingBagIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizar \u00f3rdenes">
+                <SectionCard icon={<ShoppingBagIcon style={{ color: GREEN, width: 16, height: 16 }} />} title={'Sincronizar \u00f3rdenes'}>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
                         Trae las ordenes de VTEX del periodo elegido. Los estados de VTEX (ready-for-handling, payment-pending, canceled) se traducen automaticamente a los de Probability.
                     </p>

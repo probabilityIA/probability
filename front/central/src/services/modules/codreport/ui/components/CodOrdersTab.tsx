@@ -124,7 +124,7 @@ function CarrierFeeCell({ order, editable, businessId, onSaved, onError }: Carri
                 <button
                     onClick={save}
                     disabled={saving}
-                    title="Guardar comisi\u00f3n"
+                    title={'Guardar comisi\u00f3n'}
                     className="p-1 rounded-md text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 disabled:opacity-40"
                 >
                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
@@ -149,7 +149,7 @@ function CarrierFeeCell({ order, editable, businessId, onSaved, onError }: Carri
             {canEdit && (
                 <button
                     onClick={open}
-                    title="Corregir la comisi\u00f3n cobrada por la transportadora"
+                    title={'Corregir la comisi\u00f3n cobrada por la transportadora'}
                     className="p-1 rounded-md text-[#9a9aa5] opacity-0 group-hover/fee:opacity-100 focus:opacity-100 hover:text-[#c2410c] hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-opacity"
                 >
                     <Pencil size={12} />
@@ -434,7 +434,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                                         setTimeout(() => setCopiedGuide(''), 1500);
                                                     }}
                                                     className="inline-flex items-center gap-1.5 text-[12.5px] font-mono font-semibold text-[#3a3a44] dark:text-gray-300 hover:text-[#6d28d9] transition-colors whitespace-nowrap"
-                                                    title="Copiar n\u00famero de gu\u00eda"
+                                                    title={'Copiar n\u00famero de gu\u00eda'}
                                                 >
                                                     {o.guide_number}
                                                     {copiedGuide === o.guide_number
@@ -450,7 +450,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                                 <button
                                                     onClick={() => setGuidePreview(o)}
                                                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-                                                    title="Ver y descargar gu\u00eda PDF"
+                                                    title={'Ver y descargar gu\u00eda PDF'}
                                                 >
                                                     <FileText size={13} /> Ver PDF
                                                 </button>

@@ -117,7 +117,7 @@ function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: b
             return (
                 <span
                     className="inline-flex items-center gap-1 text-[10.5px] italic text-gray-400 dark:text-gray-500"
-                    title="Seg\u00fan el comparador de productos, este producto no est\u00e1 publicado en este canal"
+                    title={'Seg\u00fan el comparador de productos, este producto no est\u00e1 publicado en este canal'}
                 >
                     <Ban size={9} />
                     no esta aqui
@@ -128,7 +128,7 @@ function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: b
             return (
                 <span
                     className="text-[10.5px] italic text-gray-300 dark:text-gray-600"
-                    title="Esta publicado en este canal, pero todav\u00eda no se ha comparado su stock"
+                    title={'Esta publicado en este canal, pero todav\u00eda no se ha comparado su stock'}
                 >
                     sin comparar
                 </span>
@@ -137,7 +137,7 @@ function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: b
         return (
             <span
                 className="text-[10.5px] italic text-amber-600 dark:text-amber-400"
-                title="Esta publicado en este canal pero la comparaci\u00f3n no lo devolvi\u00f3. Vuelve a comparar este canal"
+                title={'Esta publicado en este canal pero la comparaci\u00f3n no lo devolvi\u00f3. Vuelve a comparar este canal'}
             >
                 sin dato
             </span>

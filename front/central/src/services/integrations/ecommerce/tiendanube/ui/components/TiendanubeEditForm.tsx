@@ -273,7 +273,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 </div>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuraci\u00f3n General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title={'Configuraci\u00f3n General'}>
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -396,7 +396,7 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 </div>
             </SectionCard>
 
-            <SectionCard icon={<ArrowPathIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizaci\u00f3n">
+            <SectionCard icon={<ArrowPathIcon style={{ color: GREEN, width: 16, height: 16 }} />} title={'Sincronizaci\u00f3n'}>
                 <div>
                     <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Productos</h4>
                     <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">

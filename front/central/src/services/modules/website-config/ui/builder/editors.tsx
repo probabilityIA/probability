@@ -224,7 +224,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
 
             {!isGrid && (
                 <>
-                    <Field label="T\u00edtulo" value={c.title || ''} onChange={(v) => set('title', v)} placeholder="Bienvenido a tu tienda" />
+                    <Field label={'T\u00edtulo'} value={c.title || ''} onChange={(v) => set('title', v)} placeholder="Bienvenido a tu tienda" />
                     <label className="block text-xs text-gray-500 dark:text-gray-400">
                         Tamano del titulo: {c.title_size || 40}px
                         <input
@@ -244,7 +244,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
                             className="w-full"
                         />
                     </label>
-                    <Field label="Texto del bot\u00f3n" value={c.cta_text || ''} onChange={(v) => set('cta_text', v)} placeholder="Ver Productos" />
+                    <Field label={'Texto del bot\u00f3n'} value={c.cta_text || ''} onChange={(v) => set('cta_text', v)} placeholder="Ver Productos" />
                     <button
                         type="button"
                         onClick={() => onChange({ ...c, position: { x: 50, y: 50 } })}
@@ -277,7 +277,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
 
                                 {block.type === 'text' && (
                                     <>
-                                        <Field label="T\u00edtulo" value={block.title || ''} onChange={(v) => setBlock(i, { title: v })} />
+                                        <Field label={'T\u00edtulo'} value={block.title || ''} onChange={(v) => setBlock(i, { title: v })} />
                                         <label className="block text-xs text-gray-500 dark:text-gray-400">
                                             Tamano del titulo: {block.title_size || 24}px
                                             <input
@@ -306,7 +306,7 @@ export function HeroEditor({ content, onChange, businessId, onImageDeleted }: Ed
 
                                 {block.type === 'button' && (
                                     <>
-                                        <Field label="Texto del bot\u00f3n" value={block.button_text || ''} onChange={(v) => setBlock(i, { button_text: v })} placeholder="Ver Productos" />
+                                        <Field label={'Texto del bot\u00f3n'} value={block.button_text || ''} onChange={(v) => setBlock(i, { button_text: v })} placeholder="Ver Productos" />
                                         <Field label="Enlace (ruta relativa o URL)" value={block.button_link || ''} onChange={(v) => setBlock(i, { button_link: v })} placeholder="/productos" />
                                     </>
                                 )}
@@ -335,8 +335,8 @@ export function AboutEditor({ content, onChange, businessId, onImageDeleted }: E
     return (
         <div className="space-y-3">
             <Field label="Texto principal" value={c.text || ''} onChange={(v) => set('text', v)} textarea placeholder="Quienes somos..." />
-            <Field label="Misi\u00f3n" value={c.mission || ''} onChange={(v) => set('mission', v)} textarea />
-            <Field label="Visi\u00f3n" value={c.vision || ''} onChange={(v) => set('vision', v)} textarea />
+            <Field label={'Misi\u00f3n'} value={c.mission || ''} onChange={(v) => set('mission', v)} textarea />
+            <Field label={'Visi\u00f3n'} value={c.vision || ''} onChange={(v) => set('vision', v)} textarea />
             <ImageField label="Imagen" value={c.image || ''} onChange={(v) => set('image', v)} businessId={businessId} onDeleted={onImageDeleted} />
         </div>
     );
@@ -499,7 +499,7 @@ export function ContactEditor({ content, onChange }: EditorProps) {
     return (
         <div className="space-y-3">
             <Field label="Email de contacto" value={c.email || ''} onChange={(v) => set('email', v)} placeholder="ventas@negocio.com" />
-            <Field label="Tel\u00e9fono" value={c.phone || ''} onChange={(v) => set('phone', v)} placeholder="+57 300 000 0000" />
+            <Field label={'Tel\u00e9fono'} value={c.phone || ''} onChange={(v) => set('phone', v)} placeholder="+57 300 000 0000" />
             <p className="text-xs text-gray-400">El formulario de contacto se muestra siempre que la {'secci\u00f3n'} este visible.</p>
         </div>
     );
@@ -523,7 +523,7 @@ export function WhatsAppEditor({ content, onChange }: EditorProps) {
     const set = (k: string, v: string | boolean) => onChange({ ...c, [k]: v });
     return (
         <div className="space-y-3">
-            <Field label="N\u00famero (con indicativo)" value={c.number || ''} onChange={(v) => set('number', v)} placeholder="573000000000" />
+            <Field label={'N\u00famero (con indicativo)'} value={c.number || ''} onChange={(v) => set('number', v)} placeholder="573000000000" />
             <Field label="Mensaje inicial" value={c.message || ''} onChange={(v) => set('message', v)} textarea placeholder={'Hola, me gustar\u00eda m\u00e1s informaci\u00f3n'} />
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                 <input

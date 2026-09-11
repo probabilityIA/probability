@@ -923,7 +923,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         <button
                             onClick={() => handleTest(integration.id)}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                            title="Probar conexi\u00f3n"
+                            title={'Probar conexi\u00f3n'}
                             aria-label="Probar conexion"
                         >
                             <PlayIcon className="w-3.5 h-3.5" />
@@ -933,7 +933,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             <button
                                 onClick={() => handleSyncClick(integration.id, integration.name)}
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                title="Sincronizar \u00f3rdenes"
+                                title={'Sincronizar \u00f3rdenes'}
                                 aria-label="Sincronizar ordenes"
                             >
                                 <ArrowPathIcon className="w-3.5 h-3.5" />
@@ -946,7 +946,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             <button
                                 onClick={() => onEdit(integration)}
                                 className="p-1.5 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-gray-700 rounded-md transition-colors"
-                                title="Editar integraci\u00f3n"
+                                title={'Editar integraci\u00f3n'}
                                 aria-label="Editar integracion"
                             >
                                 <PencilIcon className="w-4 h-4" />
@@ -955,7 +955,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         <button
                             onClick={() => handleDeleteClick(integration.id, integration.name)}
                             className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded-md transition-colors"
-                            title="Eliminar integraci\u00f3n"
+                            title={'Eliminar integraci\u00f3n'}
                             aria-label="Eliminar integracion"
                         >
                             <TrashIcon className="w-4 h-4" />

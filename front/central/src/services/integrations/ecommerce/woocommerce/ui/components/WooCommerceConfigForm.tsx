@@ -1106,8 +1106,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 isOpen={showRevokeConfirm}
                 onClose={() => setShowRevokeConfirm(false)}
                 onConfirm={doRevokeKey}
-                title="Revocar clave de conexi\u00f3n"
-                message="Al revocar, la tienda dejar\u00e1 de cotizar env\u00edos hasta que generes una clave nueva. Esta acci\u00f3n invalida la clave actual. \u00bfDeseas continuar?"
+                title={'Revocar clave de conexi\u00f3n'}
+                message={'Al revocar, la tienda dejar\u00e1 de cotizar env\u00edos hasta que generes una clave nueva. Esta acci\u00f3n invalida la clave actual. \u00bfDeseas continuar?'}
                 confirmText="Revocar"
                 type="danger"
             />

@@ -353,7 +353,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                 </div>
             </div>
 
-            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuraci\u00f3n General">
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title={'Configuraci\u00f3n General'}>
                 <div className="space-y-3">
                     <div>
                         <label className={fieldLabel}>
@@ -527,19 +527,19 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                 />
             )}
 
-            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizaci\u00f3n">
+            <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title={'Sincronizaci\u00f3n'}>
                 <div className="rounded-lg bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700" style={{ border: `1px solid ${INPUT_BORDER}` }}>
                     <ToggleRow
                         icon={<ArrowPathIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar inventario hacia Jumpseller"
-                        subtitle="Env\u00eda el stock de Probability a los productos de tu tienda Jumpseller"
+                        subtitle={'Env\u00eda el stock de Probability a los productos de tu tienda Jumpseller'}
                         checked={inventorySyncEnabled}
                         onToggle={() => setInventorySyncEnabled(!inventorySyncEnabled)}
                     />
                     <ToggleRow
                         icon={<ArrowsRightLeftIcon className="w-4 h-4" style={{ color: GREEN }} />}
                         title="Sincronizar estados hacia Jumpseller"
-                        subtitle="Actualiza el estado de las \u00f3rdenes en Jumpseller cuando cambian en Probability"
+                        subtitle={'Actualiza el estado de las \u00f3rdenes en Jumpseller cuando cambian en Probability'}
                         checked={statusSyncEnabled}
                         onToggle={() => setStatusSyncEnabled(!statusSyncEnabled)}
                     />

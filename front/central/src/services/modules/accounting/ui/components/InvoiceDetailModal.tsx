@@ -455,7 +455,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                 </div>
             </Modal>
 
-            <Modal isOpen={showEmitDian} onClose={() => setShowEmitDian(false)} title="Emitir factura electr\u00f3nica DIAN" size="md" zIndex={60}>
+            <Modal isOpen={showEmitDian} onClose={() => setShowEmitDian(false)} title={'Emitir factura electr\u00f3nica DIAN'} size="md" zIndex={60}>
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                         Se emitira la factura {invoice.number} ante la DIAN a traves de Factus. Verifica los datos del cliente antes de continuar.

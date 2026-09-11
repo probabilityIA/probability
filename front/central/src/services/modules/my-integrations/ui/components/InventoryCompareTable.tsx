@@ -297,7 +297,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     {guardado ? (
                         <span
                             className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 font-bold text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/25 dark:text-amber-200"
-                            title="Estos n\u00fameros salen de la \u00faltima comparaci\u00f3n guardada, no se le pregunto al canal ahora"
+                            title={'Estos n\u00fameros salen de la \u00faltima comparaci\u00f3n guardada, no se le pregunto al canal ahora'}
                         >
                             <History size={11} />
                             Foto guardada {fechaGuardada(datos.checked_at)} · vuelve a comparar para confirmar

@@ -464,7 +464,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </Alert>
             )}
 
-            <SectionCard icon={Cog6ToothIcon} title="Informaci\u00f3n b\u00e1sica">
+            <SectionCard icon={Cog6ToothIcon} title={'Informaci\u00f3n b\u00e1sica'}>
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                     <div>
                         <label className={fieldLabel}>
@@ -653,7 +653,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </SectionCard>
             )}
 
-            <SectionCard icon={DocumentTextIcon} title="Instrucciones de Configuraci\u00f3n" bg="#ffffff">
+            <SectionCard icon={DocumentTextIcon} title={'Instrucciones de Configuraci\u00f3n'} bg="#ffffff">
                 <textarea
                     value={formData.setup_instructions}
                     onChange={(e) => setFormData({ ...formData, setup_instructions: e.target.value })}

@@ -239,7 +239,7 @@ const OrderRow = memo(({
                 {order.free_shipping && (
                     <span
                         className="mb-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-px text-[9px] font-bold uppercase leading-tight tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                        title="El canal no le cobro el env\u00edo al cliente"
+                        title={'El canal no le cobro el env\u00edo al cliente'}
                     >
                         Envio gratis
                     </span>
@@ -340,7 +340,7 @@ const OrderRow = memo(({
                                             ? { backgroundColor: '#fef9c3', color: '#854d0e' }
                                             : { backgroundColor: '#fee2e2', color: '#991b1b' }
                                 }
-                                title="Confianza del geocode de la direcci\u00f3n (afecta la probabilidad)"
+                                title={'Confianza del geocode de la direcci\u00f3n (afecta la probabilidad)'}
                             >
                                 {order.shipping_geo_confidence === 'high'
                                     ? 'Dir. confiable'
@@ -1559,7 +1559,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}
             />
             <IconActionButton
-                label="Descargar \u00f3rdenes en Excel"
+                label={'Descargar \u00f3rdenes en Excel'}
                 variant="tertiary"
                 onClick={() => setIsDownloadModalOpen(true)}
                 icon={<ArrowDownTrayIcon className="w-4 h-4" />}

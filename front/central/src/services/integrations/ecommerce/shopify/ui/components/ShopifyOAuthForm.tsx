@@ -753,7 +753,7 @@ export default function ShopifyOAuthForm({
                         >
                             <ToggleRow
                                 icon={<TruckIcon className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />}
-                                title="Cotizaci\u00f3n en checkout"
+                                title={'Cotizaci\u00f3n en checkout'}
                                 subtitle="Tarifas en tiempo real con varias transportadoras al pagar"
                                 checked={carrierEnabled}
                                 onToggle={handleToggleCarrierService}
@@ -762,8 +762,8 @@ export default function ShopifyOAuthForm({
                             />
                             <ToggleRow
                                 icon={<TruckIcon className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />}
-                                title="El total del pedido ya incluye el env\u00edo"
-                                subtitle="Desactivalo si las gu\u00edas de contra entrega se generan en Probability y no llegan del canal de ventas: ah\u00ed se le suma el flete al total"
+                                title={'El total del pedido ya incluye el env\u00edo'}
+                                subtitle={'Desactivalo si las gu\u00edas de contra entrega se generan en Probability y no llegan del canal de ventas: ah\u00ed se le suma el flete al total'}
                                 checked={codIncludesShipping}
                                 onToggle={() => setCodIncludesShipping((v) => !v)}
                                 activeColor="indigo"
