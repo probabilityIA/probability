@@ -482,6 +482,16 @@ const OrderRow = memo(({
                 </td>
             )}
             <td className="px-3 sm:px-6 py-4 text-center hidden md:table-cell">
+                {order.shipping_delivery_type === 'office' && (
+                    <div className="mb-1 flex justify-center">
+                        <span
+                            className="inline-flex items-center rounded-full border border-sky-300 bg-sky-50 px-1.5 py-px text-[9px] font-bold uppercase leading-tight tracking-wide text-sky-700 dark:border-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                            title={order.shipping_office_name ? `Reclamar en oficina: ${order.shipping_office_name}` : 'Reclamar en oficina'}
+                        >
+                            Reclamar en oficina
+                        </span>
+                    </div>
+                )}
                 {order.shipment?.carrier ? (() => {
                     const logo = getCarrierLogo(order.shipment.carrier);
                     const hasGuide = !!order.shipment.tracking_number;
@@ -1853,14 +1863,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         zoom: 0.95;
                     }
 
-                    /* Tabla más "card-like" fila por fila */
                     .ordersTable :global(.table) {
                         border-collapse: separate;
-                        border-spacing: 0 10px; /* separación entre filas */
+                        border-spacing: 0 10px;
                         background: transparent;
                     }
 
-                    /* Quitar el borde del contenedor global de Table SOLO aquí */
                     .ordersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200 dark:border-gray-700.bg-white dark:bg-gray-800) {
                         border: none !important;
                         background: transparent !important;
@@ -1874,11 +1882,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         z-index: 1;
                     }
 
-                    /* Header más llamativo + bordes redondeados */
                     .ordersTable :global(.table thead th) {
                         padding-top: 10px;
                         padding-bottom: 10px;
-                        font-size: 0.75rem; /* más pequeño */
+                        font-size: 0.75rem;
                         font-weight: 800;
                         letter-spacing: 0.06em;
                         text-transform: uppercase;
@@ -1908,7 +1915,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         border-top: none;
                     }
 
-                    /* Redondeo de cada fila */
                     .ordersTable :global(.table tbody td:first-child) {
                         border-top-left-radius: 12px;
                         border-bottom-left-radius: 12px;
@@ -1918,7 +1924,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         border-bottom-right-radius: 12px;
                     }
 
-                    /* Acciones: focus consistente */
                     .ordersTable :global(a),
                     .ordersTable :global(button) {
                         outline-color: rgba(124, 58, 237, 0.35);
