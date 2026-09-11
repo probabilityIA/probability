@@ -408,7 +408,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setOfficeCarrier(order.shipping_office_carrier || null);
                 setDestOfficeName(order.shipping_office_name || '');
                 setShowDestOffices(true);
+            } else {
+                setOfficeCarrier(null);
+                setDestOfficeName('');
+                setShowDestOffices(false);
             }
+            setShowOriginOffices(false);
 
             if (order.weight && order.weight > 0) {
                 step1Form.setValue("weight", order.weight, { shouldValidate: true });
@@ -441,8 +446,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             step3Form.setValue("destEmail", order.customer_email);
             step3Form.setValue("destPhone", normalizeColombianPhone(order.customer_phone));
             step3Form.setValue("destCrossStreet", destParts.crossStreet || destParts.address);
-            if (destParts.reference) step3Form.setValue("destReference", destParts.reference);
-            if (destParts.suburb) step3Form.setValue("destSuburb", destParts.suburb);
+            step3Form.setValue("destReference", destParts.reference);
+            step3Form.setValue("destSuburb", destParts.suburb);
             step3Form.setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
             step3Form.setValue("external_order_id", order.order_number);
         }
