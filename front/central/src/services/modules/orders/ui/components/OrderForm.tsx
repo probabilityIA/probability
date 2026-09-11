@@ -699,7 +699,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                                 setActiveSearchField('dni');
                                             }
                                         }}
-                                        placeholder="Buscar cliente por c\u00e9dula..."
+                                        placeholder={'Buscar cliente por c\u00e9dula...'}
                                         autoComplete="off"
                                         className={`${clientLoading && activeSearchField === 'dni' ? 'pr-10' : ''}`}
                                         style={{ borderColor: '#e8e0f5', height: '38px' }}
@@ -937,7 +937,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white ${
                                         cityError ? 'border-red-500' : citySelected ? 'border-green-400' : 'border-gray-300'
                                     }`}
-                                    placeholder="Buscar ciudad... (selecciona una opci\u00f3n)"
+                                    placeholder={'Buscar ciudad... (selecciona una opci\u00f3n)'}
                                 />
                                 {cityError && (
                                     <p className="mt-1 text-xs text-red-600">Selecciona una {'opci\u00f3n'} del listado</p>
@@ -965,7 +965,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     type="text"
                                     value={house}
                                     onChange={(e) => setHouse(e.target.value)}
-                                    placeholder="N\u00famero de casa"
+                                    placeholder={'N\u00famero de casa'}
                                 />
                             </div>
 
@@ -1000,7 +1000,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     type="text"
                                     value={formData.shipping_postal_code}
                                     onChange={(e) => setFormData({ ...formData, shipping_postal_code: e.target.value })}
-                                    placeholder="C\u00f3digo postal"
+                                    placeholder={'C\u00f3digo postal'}
                                 />
                             </div>
 

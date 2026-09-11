@@ -528,14 +528,14 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 {fieldError('lastName')}
                             </div>
                             <div>
-                                <input value={phone} onChange={e => { setPhone(e.target.value); clearFieldError('phone'); }} placeholder="Tel\u00e9fono *" className={`w-full ${inputCls('phone')}`} />
+                                <input value={phone} onChange={e => { setPhone(e.target.value); clearFieldError('phone'); }} placeholder={'Tel\u00e9fono *'} className={`w-full ${inputCls('phone')}`} />
                                 {fieldError('phone')}
                             </div>
                             <div>
                                 <input value={email} onChange={e => { setEmail(e.target.value); clearFieldError('email'); }} placeholder="Email" className={`w-full ${inputCls('email')}`} />
                                 {fieldError('email')}
                             </div>
-                            <input value={dni} onChange={e => setDni(e.target.value)} placeholder="C\u00e9dula / DNI" className={`col-span-2 ${inputCls('dni')}`} />
+                            <input value={dni} onChange={e => setDni(e.target.value)} placeholder={'C\u00e9dula / DNI'} className={`col-span-2 ${inputCls('dni')}`} />
                         </div>
                     </div>
 
@@ -545,7 +545,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
-                                <input value={address} onChange={e => { setAddress(e.target.value); clearFieldError('address'); }} placeholder="Direcci\u00f3n *" className={`w-full ${inputCls('address')}`} />
+                                <input value={address} onChange={e => { setAddress(e.target.value); clearFieldError('address'); }} placeholder={'Direcci\u00f3n *'} className={`w-full ${inputCls('address')}`} />
                                 {fieldError('address')}
                             </div>
                             <div>

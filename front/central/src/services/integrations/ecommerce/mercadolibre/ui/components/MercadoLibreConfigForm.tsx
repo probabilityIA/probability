@@ -459,7 +459,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                         <SecretInput
                             value={formData.client_secret}
                             onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
-                            placeholder="Secret Key de la aplicaci\u00f3n"
+                            placeholder={'Secret Key de la aplicaci\u00f3n'}
                             required={!isEdit}
                             className="bg-white dark:bg-gray-800 font-mono text-sm rounded-xl"
                         />

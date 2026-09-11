@@ -726,7 +726,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="space-y-1 col-span-2">
                                 <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Ciudad Destino</label>
-                                <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_city || ''} onChange={e => setEditForm({ ...editForm, shipping_city: e.target.value })} placeholder="Ej. Bogot\u00e1" />
+                                <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_city || ''} onChange={e => setEditForm({ ...editForm, shipping_city: e.target.value })} placeholder={'Ej. Bogot\u00e1'} />
                             </div>
                             <div className="space-y-1 col-span-2">
                                 <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Departamento</label>

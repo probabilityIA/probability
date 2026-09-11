@@ -473,7 +473,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                     type="text"
                                     value={formData.contact_name}
                                     onChange={(e) => handleChange('contact_name', e.target.value)}
-                                    placeholder="Juan P\u00e9rez"
+                                    placeholder={'Juan P\u00e9rez'}
                                     maxLength={255}
                                 />
                             </div>

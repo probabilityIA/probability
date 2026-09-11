@@ -394,7 +394,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
                         <div>
                             <label className={lc}>{'Descripci\u00f3n'}</label>
-                            <textarea rows={5} className={ic} placeholder="Descripci\u00f3n del producto..." value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
+                            <textarea rows={5} className={ic} placeholder={'Descripci\u00f3n del producto...'} value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
                         </div>
 
                         <details className="group">

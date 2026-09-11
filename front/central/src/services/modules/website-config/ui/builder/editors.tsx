@@ -459,7 +459,7 @@ export function LocationEditor({ content, onChange, businessId }: LocationEditor
                     value={c.address || ''}
                     onChange={(v) => set({ address: v })}
                     onSelect={(s: AddressSuggestion) => set({ lat: s.lat, lng: s.lon })}
-                    placeholder="Busca la direcci\u00f3n de tu negocio"
+                    placeholder={'Busca la direcci\u00f3n de tu negocio'}
                 />
                 <p className="text-xs text-gray-400 mt-1">Al elegir una sugerencia se ubica el punto en el mapa {'autom\u00e1ticamente'}.</p>
             </div>
@@ -524,7 +524,7 @@ export function WhatsAppEditor({ content, onChange }: EditorProps) {
     return (
         <div className="space-y-3">
             <Field label="N\u00famero (con indicativo)" value={c.number || ''} onChange={(v) => set('number', v)} placeholder="573000000000" />
-            <Field label="Mensaje inicial" value={c.message || ''} onChange={(v) => set('message', v)} textarea placeholder="Hola, me gustar\u00eda m\u00e1s informaci\u00f3n" />
+            <Field label="Mensaje inicial" value={c.message || ''} onChange={(v) => set('message', v)} textarea placeholder={'Hola, me gustar\u00eda m\u00e1s informaci\u00f3n'} />
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                 <input
                     type="checkbox"
@@ -706,7 +706,7 @@ export function NavbarEditor({ content, onChange, businessId, onImageDeleted }: 
             </div>
 
             <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                <Field label="Barra de anuncio (opcional)" value={c.announcement_text || ''} onChange={(v) => onChange({ ...c, announcement_text: v })} placeholder="Env\u00edo gratis en compras +$100.000" />
+                <Field label="Barra de anuncio (opcional)" value={c.announcement_text || ''} onChange={(v) => onChange({ ...c, announcement_text: v })} placeholder={'Env\u00edo gratis en compras +$100.000'} />
                 {c.announcement_text && (
                     <>
                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">

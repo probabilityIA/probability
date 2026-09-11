@@ -1669,7 +1669,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="grid grid-cols-3 gap-1.5">
                                             <Input compact label="Calle *" {...step3Form.register("originCrossStreet")} error={step3Form.formState.errors.originCrossStreet?.message} placeholder="calle 75 sur n 42-97" />
                                             <Input compact label="Edificio/Apto *" {...step3Form.register("originReference")} error={step3Form.formState.errors.originReference?.message} placeholder="apt 801" />
-                                            <Input compact label="Barrio *" {...step3Form.register("originSuburb")} error={step3Form.formState.errors.originSuburb?.message} placeholder="sector Aves Mar\u00eda" />
+                                            <Input compact label="Barrio *" {...step3Form.register("originSuburb")} error={step3Form.formState.errors.originSuburb?.message} placeholder={'sector Aves Mar\u00eda'} />
                                         </div>
 
                                         <Input compact label="Empresa" {...step3Form.register("originCompany")} error={step3Form.formState.errors.originCompany?.message} placeholder="ProbabilityIA" className="mt-1.5" />

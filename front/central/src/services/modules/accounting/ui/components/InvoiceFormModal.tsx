@@ -468,7 +468,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, se
                                                 type="text"
                                                 value={row.description}
                                                 onChange={(e) => updateRow(index, { description: e.target.value })}
-                                                placeholder="Descripci\u00f3n del servicio"
+                                                placeholder={'Descripci\u00f3n del servicio'}
                                                 className={inputClass}
                                             />
                                         </td>

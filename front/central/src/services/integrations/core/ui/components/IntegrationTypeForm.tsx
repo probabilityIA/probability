@@ -660,7 +660,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     rows={6}
                     className={inputCls}
                     style={{ borderColor: INPUT_BORDER }}
-                    placeholder="Pasos para configurar esta integraci\u00f3n:&#10;&#10;1. Ve a...&#10;2. Configura...&#10;3. Copia..."
+                    placeholder={'Pasos para configurar esta integraci\u00f3n:\n\n1. Ve a...\n2. Configura...\n3. Copia...'}
                 />
                 <p className={fieldHint}>
                     <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
