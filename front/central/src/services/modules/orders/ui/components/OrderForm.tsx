@@ -1088,7 +1088,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                         </div>
 
-                        {addressCoords && (
+                        {addressCoords && addressSource === 'google' && (
                             <div className="mt-4">
                                 <MapComponent
                                     address={formData.shipping_street}
