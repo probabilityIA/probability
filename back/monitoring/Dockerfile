@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 RUN apk add --no-cache git
 
@@ -10,9 +10,9 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o monitoring-api cmd/main.go
 
-FROM alpine:3.19
+FROM alpine:3.22
 
-RUN apk add --no-cache ca-certificates wget
+RUN apk upgrade --no-cache && apk add --no-cache ca-certificates wget
 
 WORKDIR /app
 

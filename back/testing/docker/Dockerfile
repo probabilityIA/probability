@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Testing Backend
 # Etapa 1: Build con Go
-FROM --platform=linux/arm64 golang:1.25-alpine AS builder
+FROM --platform=linux/arm64 golang:1.27-alpine AS builder
 
 # Variables de compilación
 ENV CGO_ENABLED=0 \
@@ -29,7 +29,7 @@ COPY testing .
 RUN go build -ldflags="-w -s" -o probability-back-testing ./cmd/main.go
 
 # Etapa 2: Imagen final minimalista
-FROM --platform=linux/arm64 alpine:3.19
+FROM --platform=linux/arm64 alpine:3.22
 
 # Variables de entorno
 ENV TZ=America/Bogota
@@ -43,7 +43,7 @@ WORKDIR /app
 COPY --from=builder /workspace/testing/probability-back-testing .
 
 # Instalar certificados SSL y configurar zona horaria
-RUN apk update && apk add --no-cache \
+RUN apk update && apk upgrade --no-cache && apk add --no-cache \
     ca-certificates \
     tzdata && \
     cp /usr/share/zoneinfo/${TZ} /etc/localtime && \

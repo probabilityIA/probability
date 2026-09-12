@@ -6,7 +6,7 @@
 # ============================================
 # Stage 1: Dependencies
 # ============================================
-FROM --platform=linux/arm64 node:20-alpine AS deps
+FROM --platform=linux/arm64 node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN \
 # ============================================
 # Stage 2: Builder
 # ============================================
-FROM --platform=linux/arm64 node:20-alpine AS builder
+FROM --platform=linux/arm64 node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -62,9 +62,11 @@ RUN \
 # ============================================
 # Stage 3: Runner (Imagen final)
 # ============================================
-FROM --platform=linux/arm64 node:20-alpine AS runner
+FROM --platform=linux/arm64 node:24-alpine AS runner
 
 WORKDIR /app
+
+RUN apk upgrade --no-cache
 
 # Crear usuario no-root para seguridad
 RUN addgroup --system --gid 1001 nodejs

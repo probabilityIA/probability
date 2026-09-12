@@ -1,13 +1,13 @@
 # Dockerfile en la raíz que apunta al Dockerfile en docker/
 # Para compatibilidad con herramientas que esperan Dockerfile en la raíz
-FROM --platform=linux/arm64 node:20-alpine AS deps
+FROM --platform=linux/arm64 node:24-alpine AS deps
 
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
 RUN npm ci --only=production=false
 
-FROM --platform=linux/arm64 node:20-alpine AS builder
+FROM --platform=linux/arm64 node:24-alpine AS builder
 
 WORKDIR /app
 

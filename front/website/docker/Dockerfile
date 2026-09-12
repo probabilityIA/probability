@@ -6,7 +6,7 @@
 # ============================================
 # Stage 1: Dependencies
 # ============================================
-FROM --platform=linux/arm64 node:20-alpine AS deps
+FROM --platform=linux/arm64 node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ RUN npm ci --only=production=false
 # ============================================
 # Stage 2: Builder
 # ============================================
-FROM --platform=linux/arm64 node:20-alpine AS builder
+FROM --platform=linux/arm64 node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -38,9 +38,11 @@ RUN npm run build
 # ============================================
 # Stage 3: Runner con Node.js (SSR)
 # ============================================
-FROM --platform=linux/arm64 node:20-alpine AS runner
+FROM --platform=linux/arm64 node:24-alpine AS runner
 
 WORKDIR /app
+
+RUN apk upgrade --no-cache
 
 # Copiar solo las dependencias necesarias en producción
 COPY --from=builder /app/node_modules ./node_modules
