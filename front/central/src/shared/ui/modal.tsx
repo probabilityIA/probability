@@ -1,8 +1,3 @@
-/**
- * Componente Modal reutilizable
- * Usa clases globales definidas en globals.css
- */
-
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
@@ -11,15 +6,15 @@ import { createPortal } from 'react-dom';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  showCloseButton?: boolean; // NEW: Mostrar o no el botón de cerrar
+  showCloseButton?: boolean;
   title?: ReactNode;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | 'wide' | '5xl' | '6xl' | '7xl' | 'full';
-  glass?: boolean; // Efecto glassmorphism
-  transparent?: boolean; // NEW: Fondo transparente sin sombra
-  zIndex?: number; // Z-index personalizado para el modal y backdrop
-  noPadding?: boolean; // Sin padding interno ni titulo por defecto, para layouts full-bleed que manejan su propio header/scroll
-  noBodyScroll?: boolean; // El contenido maneja su propio scroll interno (cabecera y pie fijos)
+  glass?: boolean;
+  transparent?: boolean;
+  zIndex?: number;
+  noPadding?: boolean;
+  noBodyScroll?: boolean;
 }
 
 const sizeClasses = {
@@ -37,15 +32,12 @@ const sizeClasses = {
 };
 
 export function Modal({ isOpen, onClose, showCloseButton = true, title, children, size = 'md', glass = false, transparent = false, zIndex = 50, noPadding = false, noBodyScroll = false }: ModalProps) {
-  console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
-
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Cerrar con ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -56,7 +48,6 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
-  // Prevenir scroll del body cuando el modal está abierto
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -75,10 +66,8 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
 
   return createPortal(
     <>
-      {/* Backdrop */}
       <div className="modal-backdrop" style={{ zIndex: backdropZIndex }} onClick={onClose} />
 
-      {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: modalZIndex }}>
         {size === 'full' ? (
           <div
@@ -91,15 +80,13 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
               maxHeight: '90vh',
             }}
           >
-            {/* Header for full screen */}
             {title && (
-              <div className="flex items-center justify-between px-8 py-6 border-b" style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>
-                <h2 className="text-2xl font-bold" style={{ color: 'var(--color-on-primary, white)' }}>{title}</h2>
+              <div className="flex items-center justify-between px-8 py-6 bg-white dark:bg-gray-800 border-b-2" style={{ borderColor: 'var(--color-primary)' }}>
+                <h2 className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>{title}</h2>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="hover:opacity-80 transition-opacity p-2 rounded-lg"
-                    style={{ color: 'var(--color-on-primary, white)' }}
+                    className="hover:opacity-80 transition-opacity p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -109,7 +96,6 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
               </div>
             )}
 
-            {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto">
               {children}
             </div>
@@ -132,15 +118,18 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
                   : undefined
             }
           >
-            {/* Header */}
             {title && (
-              <div className="relative mb-4 flex-shrink-0 px-6 py-4 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 rounded-t-2xl" style={{ backgroundColor: 'var(--color-primary)' }}>
-                <h3 className="text-xl font-bold text-center" style={{ color: 'var(--color-on-primary, white)' }}>{title}</h3>
+              <div
+                className={`relative flex-shrink-0 px-6 py-4 rounded-t-2xl bg-white dark:bg-gray-800 border-b ${
+                  noPadding ? '' : 'mb-4 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8'
+                }`}
+                style={{ borderColor: 'var(--color-primary)' }}
+              >
+                <h3 className="text-xl font-bold text-center" style={{ color: 'var(--color-primary)' }}>{title}</h3>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="absolute right-2 top-2 hover:opacity-80 transition-opacity"
-                    style={{ color: 'var(--color-on-primary, white)' }}
+                    className="absolute right-2 top-3 transition-colors text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -150,7 +139,6 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
               </div>
             )}
 
-            {/* Content - Scrollable */}
             <div
               className={`flex-1 min-h-0 w-full max-w-full ${
                 noBodyScroll ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overflow-x-hidden'

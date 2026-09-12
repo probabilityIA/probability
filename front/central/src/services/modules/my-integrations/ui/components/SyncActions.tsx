@@ -66,8 +66,8 @@ export function SyncActions() {
     const finished = !running && states.length > 0 && states.every(s => s === 'done' || s === 'error');
 
     return (
-        <span className="flex items-center gap-2">
-            <span className="mr-1 flex items-center gap-0.5 rounded-xl border border-white/25 bg-white/10 p-0.5">
+        <span className="flex flex-wrap items-center gap-x-1 gap-y-1">
+            <span className="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-700">
                 {VIEWS.map(item => {
                     const Icon = item.icon;
                     const active = view === item.key;
@@ -76,10 +76,11 @@ export function SyncActions() {
                             key={item.key}
                             onClick={() => setView(item.key)}
                             title={item.hint}
+                            style={active ? { color: 'var(--color-primary)' } : {}}
                             className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                                 active
-                                    ? 'bg-white text-[#0d5c80] shadow-sm'
-                                    : 'text-white/85 hover:bg-white/15 hover:text-white'
+                                    ? 'bg-white shadow-sm dark:bg-gray-800'
+                                    : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
                             }`}
                         >
                             <Icon size={13} />
@@ -88,14 +89,16 @@ export function SyncActions() {
                     );
                 })}
             </span>
+
+            <span className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700" />
+
             <button
                 onClick={() => { reset(); setEnvironment(null); }}
                 disabled={running}
                 title="Resumen de órdenes: cuántas entraron por cada canal y como van"
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                    environment === null
-                        ? 'border-white bg-white text-[#0d5c80] shadow-sm'
-                        : 'border-white/30 bg-white/15 text-white hover:bg-white/25'
+                style={environment === null ? { color: 'var(--color-primary)' } : {}}
+                className={`flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                    environment === null ? '' : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
                 }`}
             >
                 <LayoutGrid size={13} />
@@ -113,10 +116,9 @@ export function SyncActions() {
                         }}
                         disabled={running || action.disabled}
                         title={action.hint}
-                        className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                            active
-                                ? 'border-white bg-white text-[#0d5c80] shadow-sm'
-                                : 'border-white/30 bg-white/15 text-white hover:bg-white/25'
+                        style={active ? { color: 'var(--color-primary)' } : {}}
+                        className={`flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                            active ? '' : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
                         }`}
                     >
                         <Icon size={13} />
@@ -125,12 +127,15 @@ export function SyncActions() {
                 );
             })}
             {finished && (
-                <button
-                    onClick={reset}
-                    className="whitespace-nowrap rounded-lg border border-white/20 px-2.5 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:bg-white/15"
-                >
-                    Reiniciar
-                </button>
+                <>
+                    <span className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700" />
+                    <button
+                        onClick={reset}
+                        className="whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                        Reiniciar
+                    </button>
+                </>
             )}
         </span>
     );

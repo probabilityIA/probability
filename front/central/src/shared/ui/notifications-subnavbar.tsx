@@ -8,7 +8,11 @@ import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useNotificationBusiness } from '@/shared/contexts/notification-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
+import { NotificationSummaryKpis } from '@/services/modules/notification-config/ui';
 import { TourLauncher } from '@/services/modules/tours/ui';
+
+export const NOTIFICATIONS_STATS_SLOT_ID = 'notifications-stats-slot';
+export const NOTIFICATIONS_TABS_SLOT_ID = 'notifications-tabs-slot';
 
 export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
     const pathname = usePathname();
@@ -27,7 +31,7 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
     const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
     const menuItems = [
-        { href: '/notification-config', label: 'Configuraciones', icon: '🔔', enabled: true },
+        { href: '/notification-config', label: 'Notificaciones', icon: '🔔', enabled: true },
         { href: '/notification-channels', label: 'Canales', icon: '📡', enabled: isSuperAdmin },
         { href: '/notification-event-types', label: 'Tipos de Eventos', icon: '📋', enabled: isSuperAdmin },
     ].filter((item) => item.enabled);
@@ -54,7 +58,9 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
                             );
                         })}
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-4 ml-4">
+                        <NotificationSummaryKpis />
+                        <span id={NOTIFICATIONS_STATS_SLOT_ID} className="inline-flex items-center empty:hidden" />
                         <MyIntegrationsButton businessId={selectedBusinessId} />
                         <TourLauncher />
                         <SuperAdminBusinessSelector
@@ -67,6 +73,10 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
                     </div>
                 </div>
             </div>
+            <div
+                id={NOTIFICATIONS_TABS_SLOT_ID}
+                className="empty:hidden px-4 sm:px-6 lg:px-8 py-2 border-t border-gray-100 dark:border-gray-700/60"
+            />
         </div>
     );
 });

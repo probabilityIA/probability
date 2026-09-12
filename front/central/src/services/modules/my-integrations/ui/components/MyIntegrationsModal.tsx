@@ -26,6 +26,7 @@ import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
 import { SyncActivityProvider, type HubView } from '../sync-activity-context';
 import { SyncActions } from './SyncActions';
 import { ReportView } from './ReportView';
+import { INTEGRATIONS_SUBHEADER_SLOT_ID, INTEGRATIONS_TOOLBAR_SLOT_ID } from './PanelToolbar';
 import { fetchSyncFindings } from '../../infra/repository/sync-findings';
 import type { FindingsReport } from '../../domain/types';
 
@@ -227,6 +228,15 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         fetchData();
     };
 
+    const handleEditRefresh = async () => {
+        fetchData();
+        if (!editingIntegration) return;
+        const result = await getIntegrationByIdAction(editingIntegration.id);
+        if (result.success && result.data) {
+            setEditingIntegration(result.data);
+        }
+    };
+
     const setClusterRef = useCallback((code: string) => (el: HTMLDivElement | null) => {
         if (el) clusterRefs.current.set(code, el);
         else clusterRefs.current.delete(code);
@@ -341,14 +351,13 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                 isOpen={isOpen}
                 onClose={onClose}
                 title={(
-                    <span className="flex w-full items-center gap-4 px-8">
-                        <span className="flex-shrink-0">
-                            <SyncActions />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-center">Tus Integraciones</span>
+                    <span className="flex w-full flex-wrap items-center gap-3 pr-8">
+                        <span className="text-lg font-semibold">Tus Integraciones</span>
+                        <SyncActions />
                         <button
                             onClick={() => setCreateModalOpen(true)}
-                            className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/25"
+                            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}
+                            className="ml-auto flex flex-shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-opacity hover:opacity-90"
                         >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -358,11 +367,21 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                     </span>
                 )}
                 size="6xl"
+                noPadding
+                noBodyScroll={view === 'informe'}
             >
                 <style>{HUB_KEYFRAMES}</style>
+                <div className="sticky top-0 z-30 bg-white px-6 dark:bg-gray-800">
+                    {view === 'informe' && (
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-gray-200 py-1 dark:border-gray-700">
+                            <div id={INTEGRATIONS_SUBHEADER_SLOT_ID} className="contents" />
+                            <div id={INTEGRATIONS_TOOLBAR_SLOT_ID} className="contents" />
+                        </div>
+                    )}
+                </div>
                 <div
-                    className="mx-auto"
-                    style={{ width: view === 'informe' ? 'min(96rem, 96vw)' : 'min(80rem, 92vw)', maxWidth: '100%' }}
+                    className={view === 'informe' ? 'flex min-h-0 w-full flex-1 flex-col' : 'mx-auto px-6 pt-4 pb-6'}
+                    style={view === 'informe' ? { maxWidth: '100%' } : { width: 'min(80rem, 92vw)', maxWidth: '100%' }}
                 >
                 {loading ? (
                     <div className="flex items-center justify-center py-16">
@@ -454,6 +473,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                         <IntegrationForm
                             integration={editingIntegration}
                             onSuccess={handleEditSuccess}
+                            onRefresh={handleEditRefresh}
                             onCancel={handleEditClose}
                         />
                     )}

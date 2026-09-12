@@ -124,6 +124,15 @@ export default function IntegrationsPage() {
         setRefreshKey(prev => prev + 1);
     };
 
+    const handleRefreshWithoutClosing = async () => {
+        setRefreshKey(prev => prev + 1);
+        if (!selectedIntegration) return;
+        const result = await getIntegrationByIdAction(selectedIntegration.id);
+        if (result.success && result.data) {
+            setSelectedIntegration(result.data);
+        }
+    };
+
     const handleModalClose = () => {
         setShowCreateModal(false);
         setShowEditModal(false);
@@ -264,6 +273,7 @@ export default function IntegrationsPage() {
                     <IntegrationForm
                         integration={selectedIntegration}
                         onSuccess={handleSuccess}
+                        onRefresh={handleRefreshWithoutClosing}
                         onCancel={handleModalClose}
                     />
                 </div>

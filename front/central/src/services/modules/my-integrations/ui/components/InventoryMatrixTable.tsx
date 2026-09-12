@@ -1,15 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowRight, Ban, Filter, History, Loader2, RefreshCw, Search, Send } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Ban, ChevronDown, Filter, History, Loader2, RefreshCw, Search, Send } from 'lucide-react';
 import type { Integration } from '@/services/integrations/core/domain/types';
-import { fetchMatchMatrix, type MatrixRow } from '../../infra/repository/sync-findings';
+import { fetchMatchMatrix, type MatrixRow, type MatrixSearchBy } from '../../infra/repository/sync-findings';
 import { compararInventario, type CompareRow } from '../../infra/repository/inventory-compare';
 import { channelBrand } from '../../domain/types';
 import { getSyncProvider } from '../providers';
 import { useSyncActivity } from '../sync-activity-context';
 import { ACCENT, ACCENT_BORDER, ACCENT_SOFT, CARD_BORDER } from '../panel-theme';
 import { PanelPager } from './PanelPager';
+import { PanelToolbar } from './PanelToolbar';
+import { MATRIX_SEARCH_FIELDS as CAMPOS_BUSQUEDA } from '../../infra/repository/sync-findings';
 
 interface InventoryMatrixTableProps {
     businessId: number | null;
@@ -186,6 +188,8 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
     const [error, setError] = useState<string | null>(null);
     const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
     const [busqueda, setBusqueda] = useState('');
+    const [searchBy, setSearchBy] = useState<MatrixSearchBy>('all');
+    const [termino, setTermino] = useState('');
     const [soloCambios, setSoloCambios] = useState(false);
     const [enviando, setEnviando] = useState(false);
     const [barriendo, setBarriendo] = useState(false);
@@ -194,7 +198,13 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
     const cortar = useRef(false);
 
     const leerGrupo = useCallback(async (page: number, vivos?: Set<number>) => {
-        const matriz = await fetchMatchMatrix(businessId ?? undefined, page, {}, undefined, tamano);
+        const matriz = await fetchMatchMatrix(
+            businessId ?? undefined,
+            page,
+            { search: termino, searchBy },
+            undefined,
+            tamano,
+        );
         const skus = matriz.rows.map(r => r.sku).filter(Boolean);
         if (skus.length === 0) return { matriz, mapa: {} as PorCanal, fotos: {} as FotoCanal };
 
@@ -225,7 +235,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
             fotos[id] = { guardada: deCache, cuando };
         }
         return { matriz, mapa, fotos };
-    }, [businessId, canales, tamano]);
+    }, [businessId, canales, tamano, termino, searchBy]);
 
     const compararCanal = useCallback(async (canalID: number) => {
         setCargando(true);
@@ -303,9 +313,17 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
     }, [leerGrupo, totalPaginas]);
 
     useEffect(() => {
+        const id = setTimeout(() => {
+            setTermino(busqueda.trim());
+            setPagina(1);
+        }, 400);
+        return () => clearTimeout(id);
+    }, [busqueda]);
+
+    useEffect(() => {
         if (barriendo || soloCambios) return;
         void comparar(pagina);
-    }, [pagina, tamano, canalesKey]);
+    }, [pagina, tamano, canalesKey, termino, searchBy]);
 
     useEffect(() => {
         if (enviando && !running) {
@@ -316,12 +334,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
 
     const cambiaEnAlgunCanal = (sku: string) => canales.some(c => porCanal[c.id]?.[sku]?.action === 'update');
 
-    const termino = busqueda.trim().toLowerCase();
-    const visibles = productos.filter(p => {
-        if (soloCambios && !cambiaEnAlgunCanal(p.sku)) return false;
-        if (!termino) return true;
-        return p.sku?.toLowerCase().includes(termino) || (p.name ?? '').toLowerCase().includes(termino);
-    });
+    const visibles = productos.filter(p => !soloCambios || cambiaEnAlgunCanal(p.sku));
     const conCambios = productos.filter(p => cambiaEnAlgunCanal(p.sku));
     const todasMarcadas = conCambios.length > 0 && conCambios.every(p => seleccion.has(p.sku));
 
@@ -348,35 +361,60 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
         productos.filter(p => porCanal[canalID]?.[p.sku]?.action === 'update').length;
 
     return (
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <p className="text-[12px] text-gray-500 dark:text-gray-400">
-                Una fila por producto. Se lee de izquierda a derecha: primero el ERP que te sirve de origen de inventario,
-                despues lo que tiene Probability, y despues cada canal de venta. Arranca con la
-                <span className="font-semibold text-amber-700 dark:text-amber-300"> {'\u00faltima'} {'comparaci\u00f3n'} guardada</span>, para no
-                pegarle a la API de cada canal cada vez que abres. Usa el boton bajo cada canal para preguntarle su stock
-                ahora mismo. La flecha muestra en cuanto quedaria el canal si lo envias.
-            </p>
-
-            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500">
-                <span className="inline-flex items-center gap-1">
-                    <Ban size={9} />
-                    <span className="italic">{'no est\u00e1'} {'aqu\u00ed'}</span>: el producto no esta publicado en ese canal (sale del comparador de productos)
-                </span>
-                <span className="inline-flex items-center gap-1">
-                    <span className="italic">sin comparar</span>: si esta publicado, pero todavia no le hemos preguntado su stock
-                </span>
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="relative">
-                    <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        value={busqueda}
-                        onChange={event => setBusqueda(event.target.value)}
-                        placeholder="Buscar SKU o producto en este grupo"
-                        className="w-72 rounded-lg border bg-white py-1.5 pl-7 pr-2 text-[12px] text-gray-700 outline-none placeholder:text-gray-400 dark:bg-gray-800 dark:text-gray-200"
-                        style={{ borderColor: CARD_BORDER }}
-                    />
+        <div className="flex min-h-0 flex-1 flex-col">
+            <PanelToolbar>
+            <div className="order-2 flex flex-wrap items-center gap-2">
+                <div className="flex flex-shrink-0 items-stretch">
+                    <div className="relative w-24">
+                        <select
+                            value={searchBy}
+                            onChange={event => setSearchBy(event.target.value as MatrixSearchBy)}
+                            title="Por que campo buscar"
+                            className="w-full appearance-none rounded-lg rounded-r-none border border-r-0 py-1 pl-2.5 pr-6 text-[11px] font-semibold leading-4 focus:outline-none"
+                            style={{
+                                backgroundColor: 'var(--color-primary)',
+                                borderColor: 'var(--color-primary)',
+                                color: 'var(--color-on-primary, white)',
+                                borderTopRightRadius: 0,
+                                borderBottomRightRadius: 0,
+                                paddingTop: 3,
+                                paddingBottom: 3,
+                                paddingLeft: 10,
+                                paddingRight: 24,
+                                fontSize: 11,
+                                lineHeight: '16px',
+                                height: 26,
+                            }}
+                        >
+                            {CAMPOS_BUSQUEDA.map(campo => (
+                                <option key={campo.key} value={campo.key}>{campo.label}</option>
+                            ))}
+                        </select>
+                        <ChevronDown
+                            size={13}
+                            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
+                            style={{ color: 'var(--color-on-primary, white)' }}
+                        />
+                    </div>
+                    <div className="relative w-48">
+                        <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            value={busqueda}
+                            onChange={event => setBusqueda(event.target.value)}
+                            placeholder={CAMPOS_BUSQUEDA.find(c => c.key === searchBy)?.hint ?? ''}
+                            className="h-full w-full rounded-lg rounded-l-none border bg-white pl-7 pr-2 text-[11px] leading-4 text-gray-700 outline-none placeholder:text-gray-400 dark:bg-gray-800 dark:text-gray-200"
+                            style={{
+                                borderColor: CARD_BORDER,
+                                borderTopLeftRadius: 0,
+                                borderBottomLeftRadius: 0,
+                                paddingTop: 3,
+                                paddingBottom: 3,
+                                fontSize: 11,
+                                lineHeight: '16px',
+                                height: 26,
+                            }}
+                        />
+                    </div>
                 </div>
 
                 <button
@@ -413,7 +451,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                     onClick={() => comparar(pagina, new Set(canales.map(canal => canal.id)))}
                     disabled={cargando}
                     title="Le pregunta el stock a todos los canales de este grupo"
-                    className="ml-auto inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-semibold transition-colors hover:opacity-80 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-semibold transition-colors hover:opacity-80 disabled:opacity-50"
                     style={{ borderColor: ACCENT_BORDER, backgroundColor: ACCENT_SOFT, color: ACCENT }}
                 >
                     {cargando ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
@@ -421,8 +459,9 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                 </button>
                 {leidoA && <span className="text-[11px] text-gray-400">Stock {'le\u00eddo'} a las {leidoA}</span>}
             </div>
+            </PanelToolbar>
 
-            <div className="min-h-0 flex-1 overflow-auto rounded-xl border" style={{ borderColor: CARD_BORDER }}>
+            <div className="min-h-0 flex-1 overflow-auto border-y" style={{ borderColor: CARD_BORDER }}>
                 <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-20 bg-gray-50 dark:bg-gray-800">
                         <tr className="text-left">

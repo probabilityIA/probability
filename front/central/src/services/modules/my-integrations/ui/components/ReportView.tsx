@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2 } from 'lucide-react';
 import { fetchSyncFindings } from '../../infra/repository/sync-findings';
 import { FindingItemsTable } from './FindingItemsTable';
@@ -15,6 +16,7 @@ import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import { useSyncActivity } from '../sync-activity-context';
 import { ACCENT, CARD_BORDER } from '../panel-theme';
+import { INTEGRATIONS_SUBHEADER_SLOT_ID } from './PanelToolbar';
 
 interface ReportViewProps {
     businessId: number | null;
@@ -81,27 +83,23 @@ function KpiCanal({
     problemas: number;
 }) {
     return (
-        <div
-            className="min-w-[9.5rem] rounded-xl border px-3 py-2 dark:bg-gray-800/60"
-            style={{ borderColor: CARD_BORDER, backgroundColor: '#fafafd' }}
-        >
-            <span className="flex items-center gap-1.5 text-[10.5px] font-semibold text-gray-500 dark:text-gray-400">
-                <ChannelLogo url={logo} code={code} size={16} />
-                <span className="truncate">{name}</span>
+        <div className="px-2.5 leading-tight">
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                <ChannelLogo url={logo} code={code} size={13} />
+                <span className="max-w-[9rem] truncate">{name}</span>
             </span>
-            <div className="mt-0.5 flex items-baseline gap-1">
-                <span className="text-[17px] font-black leading-none text-gray-900 dark:text-white">
+            <span className="flex items-baseline gap-1">
+                <span className="text-[14px] font-bold leading-none text-gray-900 dark:text-white">
                     {matched.toLocaleString('es-CO')}
                 </span>
-                <span className="text-[10.5px] text-gray-500 dark:text-gray-400">asociados</span>
-            </div>
-            {problemas > 0 ? (
-                <span className="mt-0.5 block text-[10.5px] font-bold text-amber-600 dark:text-amber-400">
-                    {problemas.toLocaleString('es-CO')} por revisar
-                </span>
-            ) : (
-                <span className="mt-0.5 block text-[10.5px] text-emerald-600 dark:text-emerald-400">sin pendientes</span>
-            )}
+                {problemas > 0 ? (
+                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                        {problemas.toLocaleString('es-CO')} por revisar
+                    </span>
+                ) : (
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400">sin pendientes</span>
+                )}
+            </span>
         </div>
     );
 }
@@ -111,6 +109,11 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
     const [report, setReport] = useState<FindingsReport | null>(null);
     const [loading, setLoading] = useState(true);
     const [hallazgo, setHallazgo] = useState<string>(MATRIZ);
+    const [subheaderSlot, setSubheaderSlot] = useState<HTMLElement | null>(null);
+
+    useEffect(() => {
+        setSubheaderSlot(document.getElementById(INTEGRATIONS_SUBHEADER_SLOT_ID));
+    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -137,10 +140,11 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
     const activo = findings.find(f => f.code === hallazgo) ?? null;
 
     return (
-        <div className="flex h-[74vh] flex-col">
-            <div className="flex items-start justify-between gap-4 pb-3">
-                {!loading && enProductos && (
-                    <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+        <div className="flex h-[78vh] min-h-0 w-full flex-1 flex-col">
+            {subheaderSlot && createPortal(
+            <>
+                {!loading && enProductos && findings.length > 0 && (
+                    <div className="order-1 flex flex-wrap items-center gap-2">
                         <Pildora label="Matriz de productos" active={activo === null} onClick={() => setHallazgo(MATRIZ)} />
                         {findings.map(finding => (
                             <Pildora
@@ -155,22 +159,8 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
                     </div>
                 )}
 
-                {!enProductos && (
-                    <p className="min-w-0 flex-1 text-[12px] text-gray-500 dark:text-gray-400">
-                        {enOrdenes
-                            ? 'Cuántas órdenes entraron por cada origen y en que estado van.'
-                            : environment === 'data'
-                                ? 'Compara el dato de cada canal contra Probability y decide que traer.'
-                                : environment === 'inventory'
-                                    ? 'Compara el stock de cada canal contra Probability antes de enviarlo.'
-                                    : environment === 'orders_compare'
-                                        ? 'Cruza las órdenes del canal contra las de Probability y crea acá las que faltan.'
-                                        : 'Facturación desde el hub: próximamente.'}
-                    </p>
-                )}
-
                 {!loading && enProductos && (report?.channels?.length ?? 0) > 0 && (
-                    <div className="hidden flex-wrap justify-end gap-2 lg:flex">
+                    <div className="order-3 ml-auto hidden flex-wrap items-center divide-x divide-gray-200 lg:flex dark:divide-gray-700">
                         {report?.channels.map(channel => (
                             <KpiCanal
                                 key={channel.integration_id}
@@ -185,7 +175,9 @@ export function ReportView({ businessId, integrations, orderSources, stats, stat
                         ))}
                     </div>
                 )}
-            </div>
+            </>,
+            subheaderSlot,
+            )}
 
             {loading && !enOrdenes && (
                 <div className="flex items-center justify-center gap-2 py-20 text-[12px] text-gray-500">

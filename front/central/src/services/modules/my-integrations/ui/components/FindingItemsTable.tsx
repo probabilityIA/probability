@@ -9,6 +9,7 @@ import {
 } from '../../infra/repository/sync-findings';
 import { channelBrand } from '../../domain/types';
 import { PanelPager } from './PanelPager';
+import { PanelToolbar } from './PanelToolbar';
 import { ACCENT, ACCENT_BORDER, ACCENT_SOFT, CARD_BORDER, inputCls } from '../panel-theme';
 
 interface FindingItemsTableProps {
@@ -206,8 +207,9 @@ export function FindingItemsTable({ code, detail, businessId, total, channels, c
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
             {detail && <p className="text-[12px] text-gray-500 dark:text-gray-400">{detail}</p>}
-            <div className="flex items-center gap-2">
-                <div className="relative min-w-0 flex-1">
+            <PanelToolbar>
+            <div className="order-2 flex items-center gap-2">
+                <div className="relative w-72 min-w-0 max-w-full">
                     <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         value={search}
@@ -235,6 +237,7 @@ export function FindingItemsTable({ code, detail, businessId, total, channels, c
                     Excel
                 </a>
             </div>
+            </PanelToolbar>
 
             <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border" style={{ borderColor: CARD_BORDER }}>
                 <table className="w-full border-collapse text-[11.5px]">

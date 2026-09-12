@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+
+export const RULES_TABS_SLOT_ID = "rules-tabs-slot";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useOrderStatuses } from "@/services/modules/orderstatus/ui";
 import { useIntegrationsSimple } from "@/services/integrations/core/ui/hooks/useIntegrationsSimple";
@@ -59,6 +62,20 @@ export function IntegrationRulesForm({
   );
   const [whatsappTypeId, setWhatsappTypeId] = useState(0);
   const [activeTab, setActiveTab] = useState<"status" | "scheduled">("status");
+  const [expandedSections, setExpandedSections] = useState<number[]>([]);
+  const [tabsSlot, setTabsSlot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setTabsSlot(document.getElementById(RULES_TABS_SLOT_ID));
+  }, []);
+
+  const toggleSection = (integrationId: number) => {
+    setExpandedSections((prev) =>
+      prev.includes(integrationId)
+        ? prev.filter((id) => id !== integrationId)
+        : [...prev, integrationId],
+    );
+  };
 
   useEffect(() => {
     const loadTypes = async () => {
@@ -133,6 +150,9 @@ export function IntegrationRulesForm({
   }, [integrations, rules]);
 
   const handleAddRule = (integrationId: number) => {
+    setExpandedSections((prev) =>
+      prev.includes(integrationId) ? prev : [...prev, integrationId],
+    );
     setRules((prev) => [
       ...prev,
       {
@@ -243,33 +263,33 @@ export function IntegrationRulesForm({
   const loadingSections = loadingExisting || loadingIntegrations;
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 min-h-0 flex-col">
 
-      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-600">
-        <button
-          type="button"
-          onClick={() => setActiveTab("status")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === "status"
-              ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
-          }`}
-        >
-          {"Por estado de la orden"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("scheduled")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === "scheduled"
-              ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
-          }`}
-        >
-          {"Programadas por segmento"}
-        </button>
-      </div>
+      {tabsSlot && createPortal(
+        <span className="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-700">
+          {([
+            { key: "status" as const, label: "Por estado de la orden" },
+            { key: "scheduled" as const, label: "Programadas por segmento" },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              style={activeTab === tab.key ? { color: "var(--color-primary)" } : {}}
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all ${
+                activeTab === tab.key
+                  ? "bg-white shadow-sm dark:bg-gray-800"
+                  : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </span>,
+        tabsSlot,
+      )}
 
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
       {activeTab === "scheduled" ? (
         <div className="pt-2">
           <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
@@ -306,12 +326,20 @@ export function IntegrationRulesForm({
               (r) => r.integration_id === section.id && !r._deleted,
             );
 
+            const isExpanded = expandedSections.includes(section.id);
+
             return (
               <div
                 key={section.id}
                 className="rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden"
               >
-                <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.id)}
+                  className={`flex w-full items-center gap-3 px-3 py-2 text-left bg-gray-50 dark:bg-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                    isExpanded ? "border-b border-gray-200 dark:border-gray-600" : ""
+                  }`}
+                >
                   {section.imageUrl ? (
                     <img
                       src={section.imageUrl}
@@ -336,8 +364,18 @@ export function IntegrationRulesForm({
                   <span className="shrink-0 rounded-full bg-white dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
                     {sectionRules.length} {sectionRules.length === 1 ? "regla" : "reglas"}
                   </span>
-                </div>
+                  <svg
+                    className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
+                {isExpanded && (
+                  <>
                 {sectionRules.length === 0 ? (
                   <div className="py-5 text-center text-xs text-gray-400">
                     {"Sin reglas para este canal"}
@@ -384,13 +422,16 @@ export function IntegrationRulesForm({
                     {"Agregar regla"}
                   </button>
                 </div>
+                  </>
+                )}
               </div>
             );
           })}
         </div>
       )}
+      </div>
 
-      <div className="flex items-center justify-between pt-4 border-t">
+      <div className="flex shrink-0 items-center justify-between px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-2xl">
         <span className="text-sm text-gray-500 dark:text-gray-400">
           {activeTab === "status" ? `${activeRulesCount} regla(s) activa(s)` : ""}
         </span>
@@ -399,24 +440,19 @@ export function IntegrationRulesForm({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="p-2 rounded-lg bg-gray-100 text-gray-500 dark:text-gray-400 hover:bg-gray-200 transition-colors disabled:opacity-40"
-            title="Cancelar"
+            className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            {"Cancelar"}
           </button>
           {activeTab === "status" && (
             <button
               type="button"
               onClick={handleSave}
               disabled={loading || loadingSections}
-              className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-40"
-              title={loading ? "Guardando..." : "Guardar reglas"}
+              style={{ backgroundColor: "var(--color-primary)", color: "var(--color-on-primary, white)" }}
+              className="rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              {loading ? "Guardando..." : "Guardar reglas"}
             </button>
           )}
         </div>

@@ -107,6 +107,13 @@ export interface MatrixRow {
 
 export type MatrixSearchBy = 'all' | 'sku' | 'name' | 'barcode';
 
+export const MATRIX_SEARCH_FIELDS: { key: MatrixSearchBy; label: string; hint: string }[] = [
+    { key: 'all', label: 'Todo', hint: 'Buscar SKU, producto o ean' },
+    { key: 'sku', label: 'SKU', hint: 'Buscar por SKU' },
+    { key: 'name', label: 'Producto', hint: 'Buscar por nombre' },
+    { key: 'barcode', label: 'Ean', hint: 'Buscar por código de barras' },
+];
+
 export interface MatrixFilters {
     search?: string;
     searchBy?: MatrixSearchBy;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Download, Eye, Loader2, Search, TriangleAlert, X } from 'lucide-react';
+import { Check, ChevronDown, Download, Eye, Loader2, Search, TriangleAlert, X } from 'lucide-react';
 import { ProductDetailModal } from '@/services/modules/products/ui/components/ProductDetailModal';
 import {
     fetchMatchMatrix,
@@ -14,7 +14,9 @@ import {
 import { DynamicFilters, type ActiveFilter, type FilterOption } from '@/shared/ui/dynamic-filters';
 import { channelBrand } from '../../domain/types';
 import { PanelPager } from './PanelPager';
-import { ACCENT, ACCENT_BORDER, ACCENT_SOFT, CARD_BORDER, inputCls } from '../panel-theme';
+import { PanelToolbar } from './PanelToolbar';
+import { MATRIX_SEARCH_FIELDS } from '../../infra/repository/sync-findings';
+import { ACCENT, ACCENT_BORDER, ACCENT_SOFT, CARD_BORDER } from '../panel-theme';
 
 interface MatchMatrixTableProps {
     businessId: number | null;
@@ -135,12 +137,7 @@ function Fila({ row, columns, onDetail }: { row: MatrixRow; columns: MatrixColum
     );
 }
 
-const CAMPOS_BUSQUEDA: { key: MatrixSearchBy; label: string; hint: string }[] = [
-    { key: 'all', label: 'Todo', hint: 'Buscar SKU, producto o ean' },
-    { key: 'sku', label: 'SKU', hint: 'Buscar por SKU' },
-    { key: 'name', label: 'Producto', hint: 'Buscar por nombre' },
-    { key: 'barcode', label: 'Ean', hint: 'Buscar por código de barras' },
-];
+const CAMPOS_BUSQUEDA = MATRIX_SEARCH_FIELDS;
 
 export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
     const [columns, setColumns] = useState<MatrixColumn[]>([]);
@@ -253,35 +250,58 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
     const nombreArchivo = nombreDeArchivo(hayFiltros ? 'resumen-canales-filtrado' : 'resumen-canales');
 
     return (
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <p className="text-[12px] text-gray-500 dark:text-gray-400">
-                Una fila por producto, una columna por canal.{' '}
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Verde</span> = el SKU coincide.
-                Combina <span className="font-semibold">se vende en</span> y{' '}
-                <span className="font-semibold">no se vende en</span> para encontrar lo que falta publicar.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="flex flex-shrink-0 items-center">
-                    <select
-                        value={searchBy}
-                        onChange={event => setSearchBy(event.target.value as MatrixSearchBy)}
-                        title="Por que campo buscar"
-                        className={`${inputCls} w-auto rounded-r-none border-r-0 py-1.5 pl-2.5 pr-6 text-[12px]`}
-                        style={{ borderColor: CARD_BORDER }}
-                    >
-                        {CAMPOS_BUSQUEDA.map(campo => (
-                            <option key={campo.key} value={campo.key}>{campo.label}</option>
-                        ))}
-                    </select>
-                    <div className="relative w-52">
+        <div className="flex min-h-0 flex-1 flex-col">
+            <PanelToolbar>
+            <div className="order-2 flex flex-wrap items-center gap-2">
+                <div className="flex flex-shrink-0 items-stretch">
+                    <div className="relative w-24">
+                        <select
+                            value={searchBy}
+                            onChange={event => setSearchBy(event.target.value as MatrixSearchBy)}
+                            title="Por que campo buscar"
+                            className="w-full appearance-none rounded-lg rounded-r-none border border-r-0 py-1 pl-2.5 pr-6 text-[11px] font-semibold leading-4 focus:outline-none"
+                            style={{
+                                backgroundColor: 'var(--color-primary)',
+                                borderColor: 'var(--color-primary)',
+                                color: 'var(--color-on-primary, white)',
+                                borderTopRightRadius: 0,
+                                borderBottomRightRadius: 0,
+                                paddingTop: 3,
+                                paddingBottom: 3,
+                                paddingLeft: 10,
+                                paddingRight: 24,
+                                fontSize: 11,
+                                lineHeight: '16px',
+                                height: 26,
+                            }}
+                        >
+                            {CAMPOS_BUSQUEDA.map(campo => (
+                                <option key={campo.key} value={campo.key}>{campo.label}</option>
+                            ))}
+                        </select>
+                        <ChevronDown
+                            size={13}
+                            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
+                            style={{ color: 'var(--color-on-primary, white)' }}
+                        />
+                    </div>
+                    <div className="relative w-48">
                         <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             value={search}
                             onChange={event => setSearch(event.target.value)}
                             placeholder={CAMPOS_BUSQUEDA.find(c => c.key === searchBy)?.hint ?? ''}
-                            className={`${inputCls} rounded-l-none py-1.5 pl-7 pr-7`}
-                            style={{ borderColor: CARD_BORDER }}
+                            className="h-full w-full rounded-lg rounded-l-none border bg-white py-1 pl-7 pr-7 text-[11px] leading-4 text-gray-900 placeholder-gray-400 focus:outline-none dark:bg-gray-800 dark:text-white"
+                            style={{
+                                borderColor: CARD_BORDER,
+                                borderTopLeftRadius: 0,
+                                borderBottomLeftRadius: 0,
+                                paddingTop: 3,
+                                paddingBottom: 3,
+                                fontSize: 11,
+                                lineHeight: '16px',
+                                height: 26,
+                            }}
                         />
                         {search !== '' && (
                             <button
@@ -294,29 +314,37 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
                     </div>
                 </div>
 
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0">
                     <DynamicFilters
                         variant="bar"
                         availableFilters={opcionesFiltro}
                         activeFilters={filtrosActivos}
                         onAddFilter={agregarFiltro}
                         onRemoveFilter={quitarFiltro}
-                        triggerClassName="!h-8 !w-8 !rounded-lg"
+                        triggerClassName="!h-[26px] !w-[26px] !rounded-lg"
                     />
                 </div>
 
                 <a
                     href={matchMatrixCsvUrl(businessId ?? undefined, filters)}
                     download={nombreArchivo}
-                    className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors"
-                    style={{ borderColor: ACCENT_BORDER, backgroundColor: ACCENT_SOFT, color: ACCENT }}
+                    className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg border px-3 font-semibold transition-colors"
+                    style={{
+                        borderColor: ACCENT_BORDER,
+                        backgroundColor: ACCENT_SOFT,
+                        color: ACCENT,
+                        height: 26,
+                        fontSize: 11,
+                        lineHeight: '16px',
+                    }}
                 >
                     <Download size={13} />
                     Excel
                 </a>
             </div>
+            </PanelToolbar>
 
-            <div className="min-h-0 flex-1 overflow-auto rounded-xl border" style={{ borderColor: CARD_BORDER }}>
+            <div className="min-h-0 flex-1 overflow-auto border-y" style={{ borderColor: CARD_BORDER }}>
                 <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-20 bg-gray-50 dark:bg-gray-800">
                         <tr className="text-left">

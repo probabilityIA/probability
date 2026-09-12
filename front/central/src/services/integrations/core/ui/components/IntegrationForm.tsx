@@ -62,10 +62,11 @@ interface IntegrationFormProps {
     integration?: Integration;
     onSuccess?: () => void;
     onCancel?: () => void;
+    onRefresh?: () => void;
     onTypeSelected?: (hasTypeSelected: boolean) => void;
 }
 
-export default function IntegrationForm({ integration, onSuccess, onCancel, onTypeSelected }: IntegrationFormProps) {
+export default function IntegrationForm({ integration, onSuccess, onCancel, onRefresh, onTypeSelected }: IntegrationFormProps) {
     const [integrationTypes, setIntegrationTypes] = useState<IntegrationType[]>([]);
     const [selectedType, setSelectedType] = useState<IntegrationType | null>(null);
     const [loadingTypes, setLoadingTypes] = useState(true);
@@ -106,7 +107,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         };
 
         fetchIntegrationTypes();
-    }, [integration]);
+    }, [integration?.id, integration?.integration_type_id]);
 
     const handleTypeChange = (typeId: number) => {
         const type = integrationTypes.find(t => t.id === typeId);
@@ -399,7 +400,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         const result = await testIntegrationAction(id);
                         return { success: result.success, message: result.message };
                     }}
-                    onRefresh={onSuccess}
+                    onRefresh={onRefresh}
                 />
             );
         }

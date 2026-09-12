@@ -4,6 +4,7 @@ import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import { ChannelLogo } from './ChannelLogo';
 import { CARD_BORDER } from '../panel-theme';
+import { PanelSummary } from './PanelToolbar';
 
 interface OrdersReportProps {
     integrations: Integration[];
@@ -97,64 +98,46 @@ export function OrdersReport({ integrations, stats, statsLoaded }: OrdersReportP
 
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-2">
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                <div
-                    className="rounded-2xl border px-4 py-3 dark:bg-gray-800/60"
-                    style={{ borderColor: CARD_BORDER, backgroundColor: '#fafafd' }}
-                >
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">
-                        Ordenes
-                    </span>
-                    <p className="mt-1 text-[28px] font-bold leading-none tabular-nums text-gray-900 dark:text-white">
-                        {numberFormat.format(totales.orders_count)}
-                    </p>
-                    <span className="mt-1 block text-[10.5px] text-gray-400 dark:text-gray-500">
-                        en {filas.length} {filas.length === 1 ? 'origen' : 'origenes'}
-                    </span>
-                </div>
-                {BUCKETS.map(bucket => {
-                    const value = totales[bucket.key];
-                    const pct = totales.orders_count > 0 ? Math.round((value / totales.orders_count) * 100) : 0;
-                    return (
-                        <div
-                            key={bucket.key}
-                            className="rounded-2xl border px-4 py-3 dark:bg-gray-800/60"
-                            style={{ borderColor: CARD_BORDER, backgroundColor: '#fafafd' }}
-                        >
-                            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">
-                                <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: bucket.color }} />
-                                {bucket.label}
+            <PanelSummary>
+                <div className="order-3 ml-auto flex flex-wrap items-center justify-end gap-x-6 gap-y-2">
+                    <div className="leading-tight">
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
+                            Ordenes
+                        </p>
+                        <p className="flex items-baseline gap-1.5">
+                            <span className="text-[17px] font-bold leading-none tabular-nums text-gray-900 dark:text-white">
+                                {numberFormat.format(totales.orders_count)}
                             </span>
-                            <p className="mt-1 text-[28px] font-bold leading-none tabular-nums text-gray-900 dark:text-white">
-                                {numberFormat.format(value)}
-                            </p>
-                            <span className="mt-1 block text-[10.5px] text-gray-400 dark:text-gray-500">
-                                {pct}% del total
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                                en {filas.length} {filas.length === 1 ? 'origen' : 'origenes'}
                             </span>
-                        </div>
-                    );
-                })}
-            </div>
+                        </p>
+                    </div>
 
-            <div
-                className="rounded-2xl border px-4 py-3 dark:bg-gray-800/60"
-                style={{ borderColor: CARD_BORDER, backgroundColor: '#ffffff' }}
-            >
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Como van todas las ordenes
-                </span>
-                <div className="mt-2">
-                    <Barra item={totales} total={totales.orders_count} />
+                    <span className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+
+                    {BUCKETS.map(bucket => {
+                        const value = totales[bucket.key];
+                        const pct = totales.orders_count > 0 ? Math.round((value / totales.orders_count) * 100) : 0;
+                        return (
+                            <div key={bucket.key} className="flex items-center gap-2 leading-tight">
+                                <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ backgroundColor: bucket.color }} />
+                                <div>
+                                    <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
+                                        {bucket.label}
+                                    </p>
+                                    <p className="flex items-baseline gap-1.5">
+                                        <span className="text-[17px] font-bold leading-none tabular-nums text-gray-900 dark:text-white">
+                                            {numberFormat.format(value)}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 dark:text-gray-500">{pct}%</span>
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                    {BUCKETS.map(bucket => (
-                        <span key={bucket.key} className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-300">
-                            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: bucket.color }} />
-                            {numberFormat.format(totales[bucket.key])} {bucket.label.toLowerCase()}
-                        </span>
-                    ))}
-                </div>
-            </div>
+            </PanelSummary>
 
             <div
                 className="overflow-hidden rounded-2xl border dark:bg-gray-800/60"
