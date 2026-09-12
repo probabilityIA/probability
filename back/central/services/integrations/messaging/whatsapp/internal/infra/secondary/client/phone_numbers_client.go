@@ -172,3 +172,35 @@ func (c *phoneNumbersClient) GetPhoneNumber(ctx context.Context, phoneNumberID, 
 		Status:                 result.Status,
 	}, nil
 }
+
+func (c *phoneNumbersClient) DeletePhoneNumber(ctx context.Context, phoneNumberID, accessToken string) error {
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "Bearer "+accessToken).
+		Delete(phoneNumberID)
+	if err != nil {
+		return fmt.Errorf("error borrando el número %s: %w", phoneNumberID, err)
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return parseMetaGraphError(resp.String(), resp.StatusCode(), 0)
+	}
+
+	return nil
+}
+
+func (c *phoneNumbersClient) DeregisterPhoneNumber(ctx context.Context, phoneNumberID, accessToken string) error {
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "Bearer "+accessToken).
+		Post(fmt.Sprintf("%s/deregister", phoneNumberID))
+	if err != nil {
+		return fmt.Errorf("error dando de baja el número %s de la Cloud API: %w", phoneNumberID, err)
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return parseMetaGraphError(resp.String(), resp.StatusCode(), 0)
+	}
+
+	return nil
+}

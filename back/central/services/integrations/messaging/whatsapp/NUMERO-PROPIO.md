@@ -104,6 +104,7 @@ Los cuatro pasos son API, con el token del system user (`whatsapp_business_manag
 | 2. Pedir el codigo | `POST /whatsapp/numbers/code` | `POST /{phone_number_id}/request_code` (SMS o VOICE) | `esperando_codigo` |
 | 3. Verificar | `POST /whatsapp/numbers/verify` | `POST /{phone_number_id}/verify_code` | `verificado` |
 | 4. Activar | `POST /whatsapp/numbers/register` | `POST /{phone_number_id}/register` con PIN | `registrado` |
+| Deshacer | `DELETE /whatsapp/numbers` | `POST /{phone_number_id}/deregister` (solo si estaba registrado) + `DELETE /{phone_number_id}` | `sin_numero` |
 
 `GET /whatsapp/numbers` devuelve el estado, y lo completa con
 `GET /{phone_number_id}` de Meta (`display_phone_number`, `quality_rating`,
@@ -117,6 +118,42 @@ Los cuatro pasos son API, con el token del system user (`whatsapp_business_manag
   el `PUT /integrations/:id` generico no los puede tocar. Sin eso, un negocio
   podria marcarse `registrado` sin haber verificado nada.
 - No hay paso de plantillas: el numero usa las que ya estan aprobadas.
+
+## Los digitos del numero no se pueden editar
+
+Meta no tiene ninguna operacion para cambiarle `cc` o `phone_number` a un numero
+ya creado: solo existe crear y borrar. Lo unico editable de un numero vivo es su
+perfil (`POST /{phone_number_id}/whatsapp_business_profile`), el nombre visible
+y el PIN de dos pasos.
+
+Por eso un numero mal escrito se corrige con `DELETE /whatsapp/numbers` y volver
+a agregarlo. Si el numero ya estaba `registrado`, primero se hace `deregister`
+(un fallo ahi no aborta: se registra en el log y se sigue con el borrado), y
+`use_platform_token` vuelve a `true`, asi que mientras tanto el negocio envia por
+el numero de Probability en vez de quedarse mudo.
+
+Si Meta responde que el objeto ya no existe (`803`, o `100/33`, o 404) se limpia
+la configuracion local igual: de otro modo un `phone_number_id` fantasma dejaria
+al negocio trabado, sin poder agregar otro numero.
+
+## La validacion antes de llamar a Meta
+
+`validarNumero` rechaza el numero **antes** de crearlo en Meta. Nacio del caso de
+`LaPerchaDel10` (2026-09-11): se agrego `+57 30279400815`, once digitos. Meta lo
+acepto sin chistar y devolvio un `phone_number_id`, pero el codigo de
+verificacion no podia llegar a ningun lado, asi que `request_code` y
+`verify_code` fallaban con 400 y el negocio quedaba atascado en
+`esperando_codigo` sin forma de deshacerlo.
+
+Reglas: indicativo de maximo 3 digitos, indicativo mas numero de maximo 15
+(E.164), y para Colombia (`57`) exactamente 10 digitos empezando por 3. La regla
+de Colombia es la unica especifica de un pais, y es la que hubiera atajado este
+caso: la de E.164 no, porque 2 + 11 = 13 digitos es un numero internacional
+perfectamente valido.
+
+**Como se detecta a ojo un numero que Meta no reconoce:** en
+`GET /{waba_id}/phone_numbers`, un numero valido vuelve formateado por pais
+(`+57 350 6886697`) y uno invalido vuelve pegado (`+57 30279400815`).
 
 Limites de Meta que se van a ver en la practica:
 
