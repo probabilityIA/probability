@@ -71,9 +71,55 @@ crudo del proveedor sin clasificarlo: es exactamente lo que produjo el incidente
   evento en silencio. Ante la duda, reintentar es lo correcto.
 - Duplicar la lista de frases no reintentables en vez de usar el clasificador.
 
-## Pendiente de fondo
+## La red de seguridad: backoff + DLQ (desde 2026-09-11)
 
-Esto es una mitigacion en el handler. La solucion completa es limite de
-reintentos + backoff + DLQ en `shared/rabbitmq`, que hoy no existe. Ver
-`.claude/alerts/consumidor-muerto-por-canal-cerrado.md` y la Fase 1 de
-`.claude/docs/escalabilidad-1m-ordenes-mes.md`.
+`shared/rabbitmq` ya NO hace `Nack(requeue: true)` a secas. Al fallar un handler,
+`handleFailedMessage` (`shared/rabbitmq/retry.go`) republica el mensaje a una cola
+de espera y ACKea el original:
+
+| Intento | Espera | A donde va |
+|---|---|---|
+| 1 | 10 s | `probability.retry.10s` |
+| 2 | 60 s | `probability.retry.60s` |
+| 3 | 300 s | `probability.retry.300s` |
+| 4 | 300 s | `probability.retry.300s` |
+| 5 | - | `probability.dlq`, y se ACKea |
+
+Un mensaje muerto llega a la DLQ en ~11 minutos y deja de circular. **El bucle
+caliente es ahora imposible por diseno**, clasifique bien el handler o no.
+
+Como funciona: las colas de espera se declaran con `x-message-ttl` y
+`x-dead-letter-exchange: ""`, **sin** `x-dead-letter-routing-key`. Al vencer el
+TTL, RabbitMQ usa la routing key propia del mensaje, que es el nombre de la cola
+original, y el exchange por defecto lo devuelve ahi solo. Para que esa routing
+key sobreviva, la republicacion va a un exchange **fanout** (que la ignora al
+enrutar pero la conserva en el mensaje), no al exchange por defecto.
+
+Son 3 colas de espera + 1 DLQ compartidas por las 83 colas del sistema, no un
+juego por cola: en el `t4g.small` serian 332 colas.
+
+**Las colas principales NO cambiaron de argumentos.** Declararlas con `x-dead-
+letter-exchange` habria roto el arranque con `PRECONDITION_FAILED - inequivalent
+arg`, porque ya existen en produccion declaradas con `nil`.
+
+Si la republicacion falla (broker caido), se cae al `Nack(requeue: true)` de
+siempre: es preferible un mensaje que gira a un mensaje perdido.
+
+En la DLQ cada mensaje lleva `x-origin-queue`, `x-retry-count`, `x-last-error` y
+`x-first-failed-at`, asi que se sabe de donde vino y por que murio.
+
+## Clasificar sigue importando
+
+La DLQ evita el incendio, no hace bien el trabajo. Un error permanente sin
+clasificar da cinco vueltas y 11 minutos de espera antes de morir, y ensucia la
+DLQ con ruido que tapa los mensajes que si hay que revisar. La tabla de arriba
+sigue siendo obligatoria; lo que cambia es que equivocarse ya no tumba el
+servidor.
+
+## Pendiente
+
+- **Alarma sobre la profundidad de `probability.dlq`.** Sin ella los mensajes
+  muertos se acumulan sin que nadie mire. Hoy ademas el envio de logs a
+  CloudWatch esta caido desde 2026-09-02, asi que no hay por donde enterarse.
+- **Que hacer con lo que cae en la DLQ**: no hay reproceso ni purga; se revisa a
+  mano con `rabbitmqctl`.

@@ -51,6 +51,9 @@ type rabbitMQ struct {
 	consumers []consumerRegistration
 	done      chan struct{}
 	connEpoch uint64
+
+	retryMu      sync.Mutex
+	retryChannel *amqp.Channel
 }
 
 func New(logger log.ILogger, config env.IConfig) (IQueue, error) {
@@ -117,6 +120,40 @@ func (r *rabbitMQ) connect() error {
 	}
 
 	r.connEpoch++
+
+	if err := r.setupRetryChannel(); err != nil {
+		r.logger.Error().
+			Err(err).
+			Msg("No se pudo preparar la infraestructura de reintentos: los mensajes fallidos volveran a reencolarse sin limite")
+	}
+
+	return nil
+}
+
+func (r *rabbitMQ) setupRetryChannel() error {
+	ch, err := r.conn.Channel()
+	if err != nil {
+		return fmt.Errorf("abriendo el canal de reintentos: %w", err)
+	}
+
+	if err := r.declareRetryInfrastructure(ch); err != nil {
+		ch.Close()
+		return err
+	}
+
+	r.retryMu.Lock()
+	anterior := r.retryChannel
+	r.retryChannel = ch
+	r.retryMu.Unlock()
+
+	if anterior != nil {
+		anterior.Close()
+	}
+
+	r.logger.Info().
+		Int("max_attempts", MaxDeliveryAttempts).
+		Str("dlq", DeadLetterQueue).
+		Msg("Reintentos con backoff y DLQ listos")
 
 	return nil
 }
@@ -353,15 +390,7 @@ func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler 
 						Msg("Message received from queue - processing")
 
 					if err := handler(msg.Body); err != nil {
-						r.logger.Error().
-							Err(err).
-							Str("queue", queueName).
-							Msg("Error processing message")
-						r.logger.Debug().
-							Err(err).
-							Str("queue", queueName).
-							Msg("Message processing FAILED - will be requeued")
-						msg.Nack(false, true)
+						r.handleFailedMessage(queueName, msg, err)
 					} else {
 						r.logger.Debug().
 							Str("queue", queueName).
@@ -717,6 +746,17 @@ func (r *rabbitMQ) Close() error {
 	r.logger.Info().Msg("Closing RabbitMQ connection")
 
 	close(r.done)
+
+	r.retryMu.Lock()
+	if r.retryChannel != nil {
+		if err := r.retryChannel.Close(); err != nil {
+			r.logger.Error().
+				Err(err).
+				Msg("Error closing RabbitMQ retry channel")
+		}
+		r.retryChannel = nil
+	}
+	r.retryMu.Unlock()
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
