@@ -1,0 +1,232 @@
+---
+const whatsappEmojis = ['💬', '✅', '📦', '👍', '🎉', '📲', '😊', '❤️'];
+const notifEmojis = Array.from({ length: 100 }).map((_, i) => {
+  const left = ((i * 0.6180339887) % 1) * 100;
+  const top = ((i * 0.4142135624) % 1) * 100;
+  const size = 12 + (i % 5) * 4;
+  const rot = ((i * 47) % 40) - 20;
+  return {
+    e: whatsappEmojis[i % whatsappEmojis.length],
+    left,
+    top,
+    size,
+    rot,
+  };
+});
+---
+
+<section id="notifications-section" class="relative w-full overflow-x-clip bg-[#FAF9FD] py-14 sm:py-20 md:py-24">
+  <style>
+    .notif-emoji {
+      position: absolute;
+      opacity: 0.14;
+      filter: grayscale(1);
+      line-height: 1;
+    }
+  </style>
+
+  <div class="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+    <div class="text-center max-w-[680px] mx-auto mb-14 sm:mb-16">
+      <div
+        class="inline-flex items-center gap-2 bg-[#F6F3FD] border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-5"
+      >
+        <span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+        <span class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase">
+          Notificaciones
+        </span>
+      </div>
+
+      <h2
+        class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[52px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-6 text-balance"
+      >
+        Mantén a tus clientes informados,
+        <span class="text-[#7C3AED]">sin mover un dedo</span>
+      </h2>
+
+      <p class="text-[#3A2E5C] text-base sm:text-lg">
+        Probability le avisa a tu cliente en cada paso del pedido, automáticamente y sin que tu equipo tenga que hacer seguimiento manual.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+      <div class="notif-card relative rounded-2xl overflow-hidden bg-white border border-[#EFEAFB] p-6 sm:p-8 pt-8 shadow-[0_6px_20px_-12px_rgba(124,58,237,0.25)]">
+        <div class="notif-mock flex items-center justify-center h-[190px] mb-6">
+          <div class="w-[220px] rounded-2xl bg-gradient-to-br from-[#F6F3FD] to-[#EDE6FB] border border-[#E7E2F5] shadow-lg p-4">
+            <p class="text-[10px] text-[#8A7FA8] uppercase tracking-wide mb-3">Reglas · WhatsApp</p>
+            {[
+              { label: 'Guía generada', on: true },
+              { label: 'Pedido enviado', on: true },
+              { label: 'Entregado', on: true },
+              { label: 'Devolución', on: false },
+            ].map((row) => (
+              <div class="flex items-center justify-between mb-2.5 last:mb-0">
+                <span class="text-[11px] text-[#3A2E5C]">{row.label}</span>
+                <span class={`w-7 h-4 rounded-full relative ${row.on ? 'bg-[#8B5CF6]' : 'bg-[#D9CFF2]'}`}>
+                  <span class={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${row.on ? 'left-3.5' : 'left-0.5'}`}></span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <h3 class="text-[#181225] font-bold text-lg sm:text-xl mb-2">Reglas por canal y evento</h3>
+        <p class="text-[#3A2E5C] text-sm sm:text-base">
+          Defines qué evento dispara cada notificación (guía generada, pedido enviado, entregado) por cada canal de venta, sin tocar código.
+        </p>
+      </div>
+
+      <div class="notif-card relative rounded-2xl overflow-hidden bg-white border border-[#EFEAFB] p-6 sm:p-8 pt-8 shadow-[0_6px_20px_-12px_rgba(124,58,237,0.25)]">
+        <div class="notif-mock flex items-center justify-center h-[190px] mb-6">
+          <div class="w-[220px] rounded-2xl bg-gradient-to-br from-[#F6F3FD] to-[#EDE6FB] border border-[#E7E2F5] shadow-lg p-4">
+            <p class="text-[10px] text-[#8A7FA8] uppercase tracking-wide mb-2">Nueva plantilla</p>
+            <div class="h-2.5 w-24 rounded-full bg-[#D9CFF2] mb-1.5"></div>
+            <div class="h-2.5 w-16 rounded-full bg-[#D9CFF2] mb-3"></div>
+            <div class="rounded-xl rounded-tl-sm bg-[#8B5CF6] px-3 py-2">
+              <p class="text-[10px] text-white leading-snug">Hola {'{{1}}'}, hace {'{{2}}'} días que no te vemos 👋</p>
+            </div>
+          </div>
+        </div>
+        <h3 class="text-[#181225] font-bold text-lg sm:text-xl mb-2">Campañas por WhatsApp</h3>
+        <p class="text-[#3A2E5C] text-sm sm:text-base">
+          Crea plantillas de marketing aprobadas por Meta y lánzalas a tu base de clientes directamente desde Probability.
+        </p>
+      </div>
+
+      <div class="notif-card relative rounded-2xl overflow-hidden bg-white border border-[#EFEAFB] p-6 sm:p-8 pt-8 shadow-[0_6px_20px_-12px_rgba(124,58,237,0.25)]">
+        <div class="notif-mock flex items-center justify-center h-[190px] mb-6">
+          <div class="w-[220px] rounded-2xl bg-gradient-to-br from-[#F6F3FD] to-[#EDE6FB] border border-[#E7E2F5] shadow-lg p-3">
+            {[
+              { name: 'Carlos A.', msg: 'Tu pedido va en camino', active: true },
+              { name: 'Camila G.', msg: 'Gracias!', active: false },
+              { name: 'Sebastián C.', msg: 'Confirmar pedido', active: false },
+            ].map((chat) => (
+              <div class={`flex items-center gap-2 rounded-lg px-2 py-1.5 mb-1.5 last:mb-0 ${chat.active ? 'bg-[#8B5CF6]/10' : ''}`}>
+                <div class="w-6 h-6 rounded-full bg-[#8B5CF6] flex items-center justify-center shrink-0">
+                  <span class="text-white text-[9px] font-bold">{chat.name.charAt(0)}</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[10px] font-semibold text-[#181225] truncate">{chat.name}</p>
+                  <p class="text-[9px] text-[#8A7FA8] truncate">{chat.msg}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <h3 class="text-[#181225] font-bold text-lg sm:text-xl mb-2">Conversaciones centralizadas</h3>
+        <p class="text-[#3A2E5C] text-sm sm:text-base">
+          Ves el historial completo de cada chat de WhatsApp con tus clientes, en un solo panel, sin cambiar de aplicación.
+        </p>
+      </div>
+    </div>
+
+    <div class="relative rounded-3xl overflow-hidden bg-gradient-to-br from-white via-[#F6F3FD] to-[#E7DFF9] border border-[#E7E2F5] p-6 sm:p-10 md:p-14">
+      <div class="notif-emoji-bg absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+        {notifEmojis.map((item) => (
+          <span
+            class="notif-emoji"
+            style={`left: ${item.left}%; top: ${item.top}%; font-size: ${item.size}px; transform: translate(-50%, -50%) rotate(${item.rot}deg);`}
+          >
+            {item.e}
+          </span>
+        ))}
+      </div>
+
+      <div class="hidden sm:block absolute top-24 sm:top-28 right-5 sm:right-8 w-[150px] rounded-2xl bg-white shadow-xl p-3 rotate-6 z-10">
+        <p class="text-[9px] text-[#8A7FA8] uppercase tracking-wide mb-2">Nueva plantilla</p>
+        <div class="h-2 w-16 rounded-full bg-[#EDE6FB] mb-1"></div>
+        <div class="h-2 w-12 rounded-full bg-[#EDE6FB] mb-2"></div>
+        <div class="rounded-lg rounded-tl-sm bg-[#8B5CF6] px-2.5 py-1.5">
+          <p class="text-[9px] text-white leading-snug">Tu guía ya está lista 🚚</p>
+        </div>
+      </div>
+
+      <div class="hidden sm:block absolute bottom-5 left-5 sm:left-8 w-[150px] rounded-2xl bg-white shadow-xl p-3 -rotate-6 z-10">
+        <p class="text-[9px] text-[#8A7FA8] uppercase tracking-wide mb-2">Nueva plantilla</p>
+        <div class="h-2 w-16 rounded-full bg-[#EDE6FB] mb-1"></div>
+        <div class="h-2 w-12 rounded-full bg-[#EDE6FB] mb-2"></div>
+        <div class="rounded-lg rounded-tl-sm bg-[#8B5CF6] px-2.5 py-1.5">
+          <p class="text-[9px] text-white leading-snug">Gracias por tu compra 💜</p>
+        </div>
+      </div>
+
+      {[
+        { text: 'Tu factura está lista 🧾', pos: 'hidden lg:block absolute top-24 sm:top-28 left-2 rotate-3' },
+        { text: 'Pago confirmado 💳', pos: 'hidden lg:block absolute top-24 sm:top-28 right-1/3 -rotate-3' },
+        { text: 'Pedido entregado 📬', pos: 'hidden lg:block absolute bottom-2 right-2 rotate-3' },
+        { text: 'Saldo de billetera bajo ⚠️', pos: 'hidden lg:block absolute bottom-2 left-1/3 -rotate-3' },
+      ].map((v) => (
+        <div class={`${v.pos} w-[120px] rounded-xl bg-white shadow-lg p-2.5 opacity-70 z-0`}>
+          <p class="text-[7px] text-[#8A7FA8] uppercase tracking-wide mb-1.5">Nueva plantilla</p>
+          <div class="h-1.5 w-12 rounded-full bg-[#EDE6FB] mb-1"></div>
+          <div class="h-1.5 w-9 rounded-full bg-[#EDE6FB] mb-1.5"></div>
+          <div class="rounded-md rounded-tl-sm bg-[#8B5CF6] px-2 py-1">
+            <p class="text-[7px] text-white leading-snug">{v.text}</p>
+          </div>
+        </div>
+      ))}
+
+      <div class="relative z-10">
+        <h3 class="text-[#181225] font-bold text-2xl sm:text-3xl mb-8 sm:mb-10">
+          Todo llega directo por WhatsApp
+        </h3>
+
+        <div class="relative mb-10 sm:mb-14 md:pl-[130px]">
+          <div class="rounded-2xl overflow-hidden border border-[#E7E2F5] shadow-2xl bg-black max-w-[640px] md:ml-0 mx-auto">
+            <video
+              class="w-full h-full object-cover aspect-video"
+              autoplay
+              muted
+              loop
+              playsinline
+              poster="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/whatsapp-module-demo-poster.jpg"
+            >
+              <source src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/whatsapp-module-demo.mp4" type="video/mp4" />
+            </video>
+          </div>
+
+          <div class="hidden md:block absolute left-0 top-6 w-[190px] rounded-2xl bg-white shadow-2xl p-3">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-7 h-7 rounded-full bg-[#8B5CF6] flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.81L2 22l5.44-1.42c1.36.73 2.92 1.15 4.6 1.15 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2z"/></svg>
+              </div>
+              <div class="h-2 w-16 rounded-full bg-[#EDE6FB]"></div>
+            </div>
+            <div class="rounded-xl rounded-tl-sm bg-[#8B5CF6] px-3 py-2 mb-2 ml-4">
+              <p class="text-[10px] text-white leading-snug">Tu pedido #4821 va en camino 📦</p>
+            </div>
+            <div class="rounded-xl rounded-tl-sm bg-[#F6F3FD] px-3 py-2 mr-4">
+              <p class="text-[10px] text-[#3A2E5C] leading-snug">Llega hoy antes de las 6pm ✅</p>
+            </div>
+          </div>
+
+          <div class="hidden md:block absolute right-4 lg:right-[-24px] bottom-[-24px] w-[190px] rounded-2xl bg-white shadow-2xl p-4">
+            <p class="text-[10px] text-[#8A7FA8] uppercase tracking-wide mb-2">Nueva plantilla</p>
+            <div class="h-2.5 w-24 rounded-full bg-[#EDE6FB] mb-1.5"></div>
+            <div class="h-2.5 w-16 rounded-full bg-[#EDE6FB] mb-3"></div>
+            <div class="rounded-xl rounded-tl-sm bg-[#8B5CF6] px-3 py-2">
+              <p class="text-[10px] text-white leading-snug">Hola {'{{1}}'}, hace {'{{2}}'} días que no te vemos 👋</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 max-w-[560px]">
+          <img
+            src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/brand/logo-mark-badge.svg"
+            alt="ProbabilityIA"
+            class="w-10 h-10 sm:w-12 sm:h-12 rounded-full shrink-0 shadow-md"
+          />
+          <div class="relative bg-[#EDE6FB] rounded-2xl rounded-tl-sm px-4 py-3 shadow-[0_4px_14px_-6px_rgba(0,0,0,0.15)]">
+            <p class="text-[#181225] text-sm sm:text-base">
+              Sin apps que descargar ni cuentas que crear: tus clientes reciben la actualización de su pedido en el WhatsApp que ya usan todos los días.
+            </p>
+            <div class="flex items-center justify-end gap-1 mt-1.5">
+              <span class="text-[11px] text-[#8A7FA8]">8:42 p.m.</span>
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 16 15" fill="none">
+                <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.6-2.164a.472.472 0 0 0-.66.056l-.451.543a.472.472 0 0 0 .057.66l3.267 2.72c.16.134.36.2.559.2a.86.86 0 0 0 .68-.35l6.611-8.156a.472.472 0 0 0-.063-.66l-.525-.421ZM15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-.786-.654-.941 1.162 1.412 1.176c.16.134.36.2.558.2a.86.86 0 0 0 .681-.35l6.611-8.156a.472.472 0 0 0-.063-.66l-.526-.421-.071-.009Z" fill="#53BDEB"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
