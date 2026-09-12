@@ -69,6 +69,10 @@ export class WhatsAppUseCases {
         return this.repository.registerNumber(businessId);
     }
 
+    async removeNumber(businessId?: number): Promise<WhatsAppNumberResponse> {
+        return this.repository.removeNumber(businessId);
+    }
+
     async getEmbeddedSignupConfig(): Promise<WhatsAppEmbeddedSignupConfigResponse> {
         return this.repository.getEmbeddedSignupConfig();
     }
