@@ -135,6 +135,8 @@ type IPhoneNumbersAPI interface {
 	VerifyCode(ctx context.Context, phoneNumberID, accessToken, code string) error
 	Register(ctx context.Context, phoneNumberID, accessToken, pin string) error
 	GetPhoneNumber(ctx context.Context, phoneNumberID, accessToken string) (*WABAPhoneNumber, error)
+	DeregisterPhoneNumber(ctx context.Context, phoneNumberID, accessToken string) error
+	DeletePhoneNumber(ctx context.Context, phoneNumberID, accessToken string) error
 }
 
 type WhatsAppBusinessProfile struct {

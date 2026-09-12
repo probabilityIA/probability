@@ -20,13 +20,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// Repository implementa el repositorio de órdenes
 type Repository struct {
 	db           db.IDatabase
 	imageURLBase string
 }
 
-// New crea una nueva instancia del repositorio
 func New(database db.IDatabase, config env.IConfig) ports.IRepository {
 	imageURLBase := config.Get("URL_BASE_DOMAIN_S3")
 	return &Repository{
@@ -35,9 +33,7 @@ func New(database db.IDatabase, config env.IConfig) ports.IRepository {
 	}
 }
 
-// CreateOrder crea una nueva orden en la base de datos
 func (r *Repository) CreateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
-	// Validaciones críticas antes de insertar
 	if order.ExternalID == "" {
 		return fmt.Errorf("error: intentando insertar orden sin external_id - OrderNumber: %s", order.OrderNumber)
 	}
@@ -50,7 +46,6 @@ func (r *Repository) CreateOrder(ctx context.Context, order *entities.Probabilit
 
 	dbOrder := mappers.ToDBOrder(order)
 	if err := r.db.Conn(ctx).Create(dbOrder).Error; err != nil {
-		// Detectar error de clave duplicada para external_id + integration_id
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "duplicate key value violates unique constraint") &&
 			(strings.Contains(errMsg, "idx_integration_external_id") || strings.Contains(errMsg, "SQLSTATE 23505")) {
@@ -58,17 +53,15 @@ func (r *Repository) CreateOrder(ctx context.Context, order *entities.Probabilit
 		}
 		return err
 	}
-	// Actualizar el ID del modelo de dominio con el ID generado
 	order.ID = dbOrder.ID
 	return nil
 }
 
-// GetFirstIntegrationIDByBusinessID obtiene la primera integración disponible para un negocio
 func (r *Repository) GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
 	var integration models.Integration
 	err := r.db.Conn(ctx).
 		Where("business_id = ?", businessID).
-		Or("business_id IS NULL"). // Algunas integraciones pueden ser globales
+		Or("business_id IS NULL").
 		Order("business_id DESC, is_default DESC, id ASC").
 		First(&integration).Error
 
@@ -79,19 +72,18 @@ func (r *Repository) GetFirstIntegrationIDByBusinessID(ctx context.Context, busi
 	return integration.ID, nil
 }
 
-// GetOrderByID obtiene una orden por su ID
 func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
+		Preload("Integration.IntegrationType").
 		Preload("PaymentMethod").
-		Preload("OrderStatus").                           // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").                         // Precargar PaymentStatus
-		Preload("FulfillmentStatus").                     // Precargar FulfillmentStatus
-		Preload("OrderItems.Product").                    // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("ChannelMetadata").                       // Precargar ChannelMetadata para acceso a RawData en scoring
-		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+		Preload("OrderStatus").
+		Preload("PaymentStatus").
+		Preload("FulfillmentStatus").
+		Preload("OrderItems.Product").
+		Preload("ChannelMetadata").
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
 		Where("id = ?", id).
@@ -127,7 +119,6 @@ func (r *Repository) hasConfirmedCodCut(ctx context.Context, orderID string) boo
 	return count > 0
 }
 
-// getGeozoneCode obtiene el codigo DANE de una geozona (usado para prellenar destino de guias)
 func (r *Repository) getGeozoneCode(ctx context.Context, geozoneID *uint) string {
 	if geozoneID == nil {
 		return ""
@@ -140,19 +131,18 @@ func (r *Repository) getGeozoneCode(ctx context.Context, geozoneID *uint) string
 	return code
 }
 
-// GetOrderByInternalNumber obtiene una orden por su número interno
 func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
+		Preload("Integration.IntegrationType").
 		Preload("PaymentMethod").
-		Preload("OrderStatus").                           // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").                         // Precargar PaymentStatus
-		Preload("FulfillmentStatus").                     // Precargar FulfillmentStatus
-		Preload("OrderItems.Product").                    // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("ChannelMetadata").                       // Precargar ChannelMetadata para acceso a RawData en scoring
-		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+		Preload("OrderStatus").
+		Preload("PaymentStatus").
+		Preload("FulfillmentStatus").
+		Preload("OrderItems.Product").
+		Preload("ChannelMetadata").
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
 		Where("internal_number = ?", internalNumber).
@@ -160,7 +150,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("order not found")
+			return nil, domainerrors.ErrOrderNotFound
 		}
 		return nil, err
 	}
@@ -169,19 +159,18 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
-// GetOrderByOrderNumber obtiene una orden por su order_number
 func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber string) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
+		Preload("Integration.IntegrationType").
 		Preload("PaymentMethod").
-		Preload("OrderStatus").                           // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").                         // Precargar PaymentStatus
-		Preload("FulfillmentStatus").                     // Precargar FulfillmentStatus
-		Preload("OrderItems.Product").                    // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("ChannelMetadata").                       // Precargar ChannelMetadata para acceso a RawData en scoring
-		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+		Preload("OrderStatus").
+		Preload("PaymentStatus").
+		Preload("FulfillmentStatus").
+		Preload("OrderItems.Product").
+		Preload("ChannelMetadata").
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
 		Where("order_number = ?", orderNumber).
@@ -189,7 +178,7 @@ func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber stri
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("order not found")
+			return nil, domainerrors.ErrOrderNotFound
 		}
 		return nil, err
 	}
@@ -198,7 +187,6 @@ func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber stri
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
-// GetOrderByOrderNumberAndBusiness obtiene una orden por order_number + business_id
 func (r *Repository) GetOrderByOrderNumberAndBusiness(ctx context.Context, orderNumber string, businessID uint) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
@@ -218,7 +206,7 @@ func (r *Repository) GetOrderByOrderNumberAndBusiness(ctx context.Context, order
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("order not found")
+			return nil, domainerrors.ErrOrderNotFound
 		}
 		return nil, err
 	}
@@ -227,14 +215,12 @@ func (r *Repository) GetOrderByOrderNumberAndBusiness(ctx context.Context, order
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
-// ListOrders obtiene una lista paginada de órdenes con filtros
 func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error) {
 	var dbOrders []models.Order
 	var total int64
 
 	query := r.db.Conn(ctx).Model(&models.Order{})
 
-	// Aplicar filtros
 	if businessID, ok := filters["business_id"].(uint); ok && businessID > 0 {
 		query = query.Where("business_id = ?", businessID)
 	}
@@ -263,11 +249,9 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("internal_number ILIKE ?", "%"+internalNumber+"%")
 	}
 
-	// Filtro por status_id (estado de Probability)
 	if statusID, ok := filters["status_id"].(uint); ok && statusID > 0 {
 		query = query.Where("status_id = ?", statusID)
 	}
-	// Mantener compatibilidad con filtro antiguo por status (string) si se necesita
 	if status, ok := filters["status"].(string); ok && status != "" {
 		query = query.Where("status = ?", status)
 	}
@@ -304,18 +288,14 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("driver_id = ?", driverID)
 	}
 
-	// Filtro por estado de factura
 	if invoiceStatus, ok := filters["invoice_status"].(string); ok && invoiceStatus != "" {
 		if invoiceStatus == "none" {
-			// Órdenes sin factura
 			query = query.Where("NOT EXISTS (SELECT 1 FROM invoices WHERE invoices.order_id = orders.id AND invoices.deleted_at IS NULL)")
 		} else {
-			// Órdenes con factura en estado específico
 			query = query.Where("EXISTS (SELECT 1 FROM invoices WHERE invoices.order_id = orders.id AND invoices.deleted_at IS NULL AND invoices.status = ?)", invoiceStatus)
 		}
 	}
 
-	// Filtros de fecha
 	if startDate, ok := filters["start_date"].(string); ok && startDate != "" {
 		query = query.Where("created_at >= ?", startDate)
 	}
@@ -324,12 +304,10 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("created_at <= ?", endDate)
 	}
 
-	// Contar total
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Aplicar ordenamiento
 	sortBy := "created_at"
 	if sort, ok := filters["sort_by"].(string); ok && sort != "" {
 		sortBy = sort
@@ -342,29 +320,24 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 
 	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 
-	// Precargar relaciones ANTES de paginación
 	query = query.Preload("Business").
-		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
+		Preload("Integration.IntegrationType").
 		Preload("PaymentMethod").
-		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").      // Precargar PaymentStatus
-		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
-		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("Shipments")           // Cargar TODOS los shipments, luego filteramos en código
+		Preload("OrderStatus").
+		Preload("PaymentStatus").
+		Preload("FulfillmentStatus").
+		Preload("OrderItems.Product").
+		Preload("Shipments")
 
 	offset := (page - 1) * pageSize
 	if err := query.Offset(offset).Limit(pageSize).Find(&dbOrders).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Resolver OrderStatus por código para órdenes sin status_id
-	// Esto cubre órdenes existentes creadas antes del fallback directo
 	r.resolveOrderStatusByCode(ctx, dbOrders)
 
-	// Filtrar shipments: mantener solo el más reciente por orden
 	for i := range dbOrders {
 		if len(dbOrders[i].Shipments) > 1 {
-			// Ordenar por created_at descendente y mantener solo el primero
 			sort.Slice(dbOrders[i].Shipments, func(a, b int) bool {
 				return dbOrders[i].Shipments[a].CreatedAt.After(dbOrders[i].Shipments[b].CreatedAt)
 			})
@@ -372,13 +345,11 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		}
 	}
 
-	// Mapear a dominio
 	orders := make([]entities.ProbabilityOrder, len(dbOrders))
 	for i, dbOrder := range dbOrders {
 		orders[i] = *mappers.ToDomainOrder(&dbOrder, r.imageURLBase)
 	}
 
-	// Enriquecer con estado de factura (batch query)
 	r.enrichWithInvoiceStatus(ctx, orders)
 
 	r.enrichWithCodCutStatus(ctx, orders)
@@ -426,17 +397,11 @@ func (r *Repository) enrichWithCodCutStatus(ctx context.Context, orders []entiti
 	}
 }
 
-// enrichWithInvoiceStatus obtiene el estado de factura más reciente para cada orden.
-// Solo aplica a órdenes cuyo business tiene facturación configurada.
-// - "" = business sin facturación (no mostrar nada)
-// - "none" = business con facturación pero orden sin factura
-// - "pending"/"issued"/"failed"/"cancelled" = estado real de la factura
 func (r *Repository) enrichWithInvoiceStatus(ctx context.Context, orders []entities.ProbabilityOrder) {
 	if len(orders) == 0 {
 		return
 	}
 
-	// Recolectar IDs de órdenes y business_ids únicos
 	orderIDs := make([]string, len(orders))
 	businessIDSet := make(map[uint]bool)
 	for i, o := range orders {
@@ -446,7 +411,6 @@ func (r *Repository) enrichWithInvoiceStatus(ctx context.Context, orders []entit
 		}
 	}
 
-	// Determinar qué businesses tienen facturación configurada
 	var businessIDs []uint
 	for bid := range businessIDSet {
 		businessIDs = append(businessIDs, bid)
@@ -468,7 +432,6 @@ func (r *Repository) enrichWithInvoiceStatus(ctx context.Context, orders []entit
 		invoicingBusinesses[c.BusinessID] = true
 	}
 
-	// Obtener la factura más reciente (por ID desc) para cada orden
 	type invoiceResult struct {
 		OrderID string
 		Status  string
@@ -486,7 +449,6 @@ func (r *Repository) enrichWithInvoiceStatus(ctx context.Context, orders []entit
 		statusMap[r.OrderID] = r.Status
 	}
 
-	// Asignar: si tiene factura -> su status, si business tiene facturación pero no factura -> "none", si no -> ""
 	for i := range orders {
 		if status, ok := statusMap[orders[i].ID]; ok {
 			orders[i].InvoiceStatus = status
@@ -496,7 +458,6 @@ func (r *Repository) enrichWithInvoiceStatus(ctx context.Context, orders []entit
 	}
 }
 
-// GetOrderRaw obtiene los metadatos crudos de una orden
 func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*entities.ProbabilityOrderChannelMetadata, error) {
 	var dbMetadata models.OrderChannelMetadata
 	if err := r.db.Conn(ctx).Where("order_id = ?", id).First(&dbMetadata).Error; err != nil {
@@ -508,16 +469,11 @@ func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*entities.Prob
 	return mappers.ToDomainChannelMetadata(&dbMetadata), nil
 }
 
-// UpdateOrder actualiza una orden existente
 func (r *Repository) UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
 	dbOrder := mappers.ToDBOrder(order)
 	return r.db.Conn(ctx).Save(dbOrder).Error
 }
 
-// UpdateOrderShippingDimensions actualiza solo peso/dimensiones de la orden,
-// sin tocar el resto de columnas (evita pisar campos que otros procesos
-// asincronos pudieron haber actualizado entre la creacion de la orden y esta
-// llamada, ej. internal_number).
 func (r *Repository) UpdateOrderShippingDimensions(ctx context.Context, orderID string, weight, height, width, length *float64) error {
 	return r.db.Conn(ctx).
 		Model(&models.Order{}).
@@ -530,12 +486,10 @@ func (r *Repository) UpdateOrderShippingDimensions(ctx context.Context, orderID 
 		}).Error
 }
 
-// DeleteOrder elimina (soft delete) una orden
 func (r *Repository) DeleteOrder(ctx context.Context, id string) error {
 	return r.db.Conn(ctx).Where("id = ?", id).Delete(&models.Order{}).Error
 }
 
-// OrderExists verifica si existe una orden con el external_id para una integración
 func (r *Repository) OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error) {
 	var count int64
 	err := r.db.Conn(ctx).
@@ -550,18 +504,17 @@ func (r *Repository) OrderExists(ctx context.Context, externalID string, integra
 	return count > 0, nil
 }
 
-// GetOrderByExternalID obtiene una orden por external_id e integration_id
 func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
+		Preload("Integration.IntegrationType").
 		Preload("PaymentMethod").
-		Preload("OrderStatus").       // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").     // Precargar PaymentStatus
-		Preload("FulfillmentStatus"). // Precargar FulfillmentStatus
+		Preload("OrderStatus").
+		Preload("PaymentStatus").
+		Preload("FulfillmentStatus").
 		Preload("OrderItems.Product").
-		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
 		Where("external_id = ? AND integration_id = ?", externalID, integrationID).
@@ -569,7 +522,7 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("order not found")
+			return nil, domainerrors.ErrOrderNotFound
 		}
 		return nil, err
 	}
@@ -578,26 +531,18 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
-//
-//	MÉTODOS PARA TABLAS RELACIONADAS
-//
-
-// CreateOrderItems crea múltiples items de orden
 func (r *Repository) CreateOrderItems(ctx context.Context, items []*entities.ProbabilityOrderItem) error {
 	if len(items) == 0 {
 		return nil
 	}
 
-	// Convertir []*entities.ProbabilityOrderItem a []entities.ProbabilityOrderItem para usar el mapper
 	domainItems := make([]entities.ProbabilityOrderItem, len(items))
 	for i, item := range items {
 		domainItems[i] = *item
 	}
 
-	// Usar el mapper para convertir a modelos de BD
 	dbItems := mappers.ToDBOrderItems(domainItems)
 
-	// Convertir a slice de punteros para CreateInBatches
 	dbItemsPtrs := make([]*models.OrderItem, len(dbItems))
 	for i := range dbItems {
 		dbItemsPtrs[i] = &dbItems[i]
@@ -606,7 +551,6 @@ func (r *Repository) CreateOrderItems(ctx context.Context, items []*entities.Pro
 	return r.db.Conn(ctx).CreateInBatches(dbItemsPtrs, 100).Error
 }
 
-// CreateAddresses crea múltiples direcciones
 func (r *Repository) CreateAddresses(ctx context.Context, addresses []*entities.ProbabilityAddress) error {
 	if len(addresses) == 0 {
 		return nil
@@ -648,7 +592,6 @@ func (r *Repository) CreateAddresses(ctx context.Context, addresses []*entities.
 	return r.db.Conn(ctx).CreateInBatches(dbAddresses, 100).Error
 }
 
-// CreatePayments crea múltiples pagos
 func (r *Repository) CreatePayments(ctx context.Context, payments []*entities.ProbabilityPayment) error {
 	if len(payments) == 0 {
 		return nil
@@ -688,7 +631,6 @@ func (r *Repository) CreatePayments(ctx context.Context, payments []*entities.Pr
 	return r.db.Conn(ctx).CreateInBatches(dbPayments, 100).Error
 }
 
-// CreateShipments crea múltiples envíos
 func (r *Repository) CreateShipments(ctx context.Context, shipments []*entities.ProbabilityShipment) error {
 	if len(shipments) == 0 {
 		return nil
@@ -740,7 +682,6 @@ func (r *Repository) CreateShipments(ctx context.Context, shipments []*entities.
 	return r.db.Conn(ctx).CreateInBatches(dbShipments, 100).Error
 }
 
-// CreateChannelMetadata crea metadata del canal
 func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error {
 	if metadata == nil {
 		return nil
@@ -756,11 +697,6 @@ func (r *Repository) MarkChannelMetadataNotLatest(ctx context.Context, orderID s
 		Update("is_latest", false).Error
 }
 
-//
-//	MÉTODOS DE CATÁLOGO (VALIDACIÓN)
-//
-
-// GetProductBySKU busca un producto por SKU y BusinessID
 func (r *Repository) GetProductByID(ctx context.Context, businessID uint, id string) (*entities.Product, error) {
 	var product models.Product
 	err := r.db.Conn(ctx).
@@ -784,16 +720,13 @@ func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku s
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // Retornar nil si no existe, no error
+			return nil, nil
 		}
 		return nil, err
 	}
 	return mappers.ToDomainProduct(&product), nil
 }
 
-// ResolveProductForOrderItem resuelve el producto siguiendo las reglas de match
-// configuradas en la integracion, en orden de prioridad. Para cada regla intenta
-// primero la asociacion ya guardada y luego el campo directo del producto.
 func (r *Repository) ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
 	if integrationID > 0 {
 		product, err := r.resolveByStoredMapping(ctx, businessID, integrationID, item)
@@ -839,8 +772,6 @@ func (r *Repository) ResolveProductForOrderItem(ctx context.Context, businessID 
 	return nil, nil
 }
 
-// resolveByStoredMapping usa las referencias externas ya asociadas al producto.
-// No depende de las reglas: si la asociacion existe, es la fuente mas confiable.
 func (r *Repository) resolveByStoredMapping(ctx context.Context, businessID, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
 	if item.VariantID != nil && *item.VariantID != "" {
 		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_variant_id", *item.VariantID)
@@ -900,7 +831,6 @@ func (r *Repository) findProductByIntegrationField(ctx context.Context, business
 	return nil, nil
 }
 
-// CreateProduct crea un nuevo producto
 func (r *Repository) CreateProduct(ctx context.Context, product *entities.Product) error {
 	dbProduct := mappers.ToDBProduct(product)
 	if err := r.db.Conn(ctx).Create(dbProduct).Error; err != nil {
@@ -910,7 +840,6 @@ func (r *Repository) CreateProduct(ctx context.Context, product *entities.Produc
 	return nil
 }
 
-// UpsertProductIntegrationMapping crea o actualiza el mapping externo del producto para la integración.
 func (r *Repository) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error {
 	var existing models.ProductBusinessIntegration
 	err := r.db.Conn(ctx).
@@ -964,7 +893,6 @@ func stringPtrOrNil(value string) *string {
 	return &v
 }
 
-// UpdateProductPrice actualiza el precio de un producto por su ID
 func (r *Repository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
 	return r.db.Conn(ctx).
 		Model(&models.Product{}).
@@ -972,7 +900,6 @@ func (r *Repository) UpdateProductPrice(ctx context.Context, productID string, p
 		Update("price", price).Error
 }
 
-// GetClientByEmail busca un cliente por Email y BusinessID
 func (r *Repository) GetClientByEmail(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
 	var client models.Client
 	err := r.db.Conn(ctx).
@@ -981,17 +908,16 @@ func (r *Repository) GetClientByEmail(ctx context.Context, businessID uint, emai
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // Retornar nil si no existe
+			return nil, nil
 		}
 		return nil, err
 	}
 	return mappers.ToDomainClient(&client), nil
 }
 
-// GetClientByDNI busca un cliente por DNI y BusinessID
 func (r *Repository) GetClientByDNI(ctx context.Context, businessID uint, dni string) (*entities.Client, error) {
 	if dni == "" {
-		return nil, nil // No buscar si el DNI está vacío
+		return nil, nil
 	}
 
 	var client models.Client
@@ -1001,14 +927,13 @@ func (r *Repository) GetClientByDNI(ctx context.Context, businessID uint, dni st
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // Retornar nil si no existe
+			return nil, nil
 		}
 		return nil, err
 	}
 	return mappers.ToDomainClient(&client), nil
 }
 
-// CreateClient crea un nuevo cliente
 func (r *Repository) CreateClient(ctx context.Context, client *entities.Client) error {
 	dbClient := mappers.ToDBClient(client)
 	if err := r.db.Conn(ctx).Create(dbClient).Error; err != nil {
@@ -1018,9 +943,6 @@ func (r *Repository) CreateClient(ctx context.Context, client *entities.Client) 
 	return nil
 }
 
-// AssignClientToGroup vincula un cliente a un grupo de precios (client_group_member).
-// Escritura replicada — la tabla pertenece al modulo pricing pero se escribe aqui
-// para evitar compartir repositorios entre modulos.
 func (r *Repository) AssignClientToGroup(ctx context.Context, businessID, clientGroupID, clientID uint) error {
 	if businessID == 0 || clientGroupID == 0 || clientID == 0 {
 		return nil
@@ -1048,7 +970,6 @@ func (r *Repository) AssignClientToGroup(ctx context.Context, businessID, client
 	})
 }
 
-// CountOrdersByClientID cuenta las órdenes de un cliente
 func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error) {
 	var count int64
 	err := r.db.Conn(ctx).
@@ -1166,9 +1087,6 @@ func (r *Repository) GetIntegrationCodIncludesShipping(ctx context.Context, inte
 	return *result.Value, nil
 }
 
-// GetLastManualOrderNumber retorna el ultimo numero usado para el prefix
-// actual del negocio. Cuando un negocio estrena prefix, parte desde 0
-// (la siguiente orden sera 0001) sin importar cuantas ordenes 'prob-' tenga.
 func (r *Repository) GetLastManualOrderNumber(ctx context.Context, businessID uint) (int, error) {
 	prefix, _ := r.GetBusinessOrderPrefix(ctx, businessID)
 	if prefix == "" {
@@ -1194,7 +1112,6 @@ func (r *Repository) GetLastManualOrderNumber(ctx context.Context, businessID ui
 	return max, nil
 }
 
-// GetBusinessOrderPrefix retorna el prefijo del negocio (replicado para aislamiento).
 func (r *Repository) GetBusinessOrderPrefix(ctx context.Context, businessID uint) (string, error) {
 	var result struct {
 		OrderPrefix string `gorm:"column:order_prefix"`
@@ -1227,7 +1144,6 @@ func (r *Repository) GetBusinessNameByID(ctx context.Context, businessID uint) (
 	return result.Name, nil
 }
 
-// CreateOrderError guarda un error ocurrido durante el procesamiento de una orden
 func (r *Repository) CreateOrderError(ctx context.Context, orderError *entities.OrderError) error {
 	if orderError == nil {
 		return fmt.Errorf("orderError cannot be nil")
@@ -1256,7 +1172,6 @@ func (r *Repository) CreateOrderError(ctx context.Context, orderError *entities.
 	return r.db.Conn(ctx).Create(dbError).Error
 }
 
-// CreateOrderHistory registra un cambio de estado en el historial de la orden
 func (r *Repository) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
 	dbHistory := &models.OrderHistory{
 		OrderID:        history.OrderID,
@@ -1271,7 +1186,6 @@ func (r *Repository) CreateOrderHistory(ctx context.Context, history *entities.O
 	return r.db.Conn(ctx).Create(dbHistory).Error
 }
 
-// GetOrderHistory obtiene el historial de cambios de estado de una orden
 func (r *Repository) GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error) {
 	var dbHistory []models.OrderHistory
 	err := r.db.Conn(ctx).

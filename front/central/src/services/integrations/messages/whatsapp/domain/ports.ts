@@ -24,6 +24,7 @@ export interface IWhatsAppRepository {
     requestNumberCode(method: string, businessId?: number): Promise<WhatsAppNumberResponse>;
     verifyNumberCode(code: string, businessId?: number): Promise<WhatsAppNumberResponse>;
     registerNumber(businessId?: number): Promise<WhatsAppNumberResponse>;
+    removeNumber(businessId?: number): Promise<WhatsAppNumberResponse>;
     getEmbeddedSignupConfig(): Promise<WhatsAppEmbeddedSignupConfigResponse>;
     completeEmbeddedSignup(
         payload: WhatsAppEmbeddedSignupPayload,

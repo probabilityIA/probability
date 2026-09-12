@@ -3,11 +3,13 @@ package usecasenumbers
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
 
+	whaerrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 )
 
@@ -52,15 +54,15 @@ func (u *usecase) AddNumber(ctx context.Context, businessID uint, input AddNumbe
 	phoneNumber := onlyDigits(input.PhoneNumber)
 	verifiedName := strings.TrimSpace(input.VerifiedName)
 
-	if countryCode == "" || phoneNumber == "" {
-		return nil, fmt.Errorf("se necesitan el indicativo del país y el número")
-	}
 	if verifiedName == "" {
 		return nil, fmt.Errorf("se necesita el nombre que verán tus clientes")
 	}
+	if err := validarNumero(countryCode, phoneNumber); err != nil {
+		return nil, err
+	}
 
 	if existing := stringValue(config["phone_number_id"]); existing != "" {
-		return nil, fmt.Errorf("este negocio ya tiene el número %s en proceso: bórralo antes de agregar otro", existing)
+		return nil, fmt.Errorf("este negocio ya tiene un número en proceso: quítalo antes de agregar otro")
 	}
 
 	platform, err := u.credentialsCache.GetWhatsAppDefaultConfig(ctx)
@@ -239,6 +241,67 @@ func (u *usecase) Register(ctx context.Context, businessID uint) (*NumberState, 
 	return state, nil
 }
 
+func (u *usecase) RemoveNumber(ctx context.Context, businessID uint) (*NumberState, error) {
+	integrationID, config, credentials, err := u.load(ctx, businessID)
+	if err != nil {
+		return nil, err
+	}
+
+	state := stateFromConfig(integrationID, businessID, config)
+	if state.PhoneNumberID == "" {
+		return nil, fmt.Errorf("este negocio no tiene ningún número en proceso")
+	}
+
+	platform, err := u.credentialsCache.GetWhatsAppDefaultConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("credenciales de plataforma no disponibles: %w", err)
+	}
+
+	if state.HostedByPlatform {
+		api := u.apiFactory(platform.WhatsAppURL)
+		token := tokenFor(credentials, platform.AccessToken)
+
+		if state.Status == StatusRegistrado || state.Active {
+			if err := api.DeregisterPhoneNumber(ctx, state.PhoneNumberID, token); err != nil {
+				u.log.Warn(ctx).Err(err).
+					Str("phone_number_id", state.PhoneNumberID).
+					Msg("no se pudo dar de baja el número de la Cloud API: se intenta borrarlo igual")
+			}
+		}
+
+		if err := api.DeletePhoneNumber(ctx, state.PhoneNumberID, token); err != nil {
+			if !numeroYaNoExisteEnMeta(err) {
+				return nil, fmt.Errorf("Meta no dejó quitar el número: %w", err)
+			}
+			u.log.Warn(ctx).Err(err).
+				Str("phone_number_id", state.PhoneNumberID).
+				Msg("el número ya no existía en Meta: se limpia la configuración local")
+		}
+	}
+
+	if err := u.saveConfig(ctx, integrationID, map[string]any{
+		"phone_number_id":    "",
+		"waba_id":            "",
+		"number_status":      "",
+		"verified_name":      "",
+		"hosted_by_platform": false,
+		"use_platform_token": true,
+	}); err != nil {
+		return nil, err
+	}
+
+	u.log.Info(ctx).
+		Uint("business_id", businessID).
+		Str("phone_number_id", state.PhoneNumberID).
+		Msg("número quitado: el negocio vuelve a enviar por el número de Probability")
+
+	return &NumberState{
+		IntegrationID: integrationID,
+		BusinessID:    businessID,
+		Status:        StatusSinNumero,
+	}, nil
+}
+
 func (u *usecase) load(ctx context.Context, businessID uint) (uint, map[string]any, map[string]any, error) {
 	if u.resolver == nil {
 		return 0, nil, nil, fmt.Errorf("el módulo de integraciones no está disponible")
@@ -326,4 +389,34 @@ func generarPin() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%06d", n.Int64()), nil
+}
+
+func numeroYaNoExisteEnMeta(err error) bool {
+	var metaErr *whaerrors.MetaGraphError
+	if !errors.As(err, &metaErr) {
+		return false
+	}
+	if metaErr.StatusCode == 404 {
+		return true
+	}
+	return metaErr.Code == 803 || (metaErr.Code == 100 && metaErr.Subcode == 33)
+}
+
+func validarNumero(countryCode, phoneNumber string) error {
+	if countryCode == "" || phoneNumber == "" {
+		return fmt.Errorf("se necesitan el indicativo del país y el número")
+	}
+	if len(countryCode) > 3 {
+		return fmt.Errorf("el indicativo del país no puede pasar de 3 dígitos")
+	}
+	if len(countryCode)+len(phoneNumber) > 15 {
+		return fmt.Errorf("indicativo y número suman %d dígitos: un número internacional no pasa de 15", len(countryCode)+len(phoneNumber))
+	}
+	if countryCode == "57" && (len(phoneNumber) != 10 || phoneNumber[0] != '3') {
+		return fmt.Errorf("un celular colombiano tiene 10 dígitos y empieza por 3; escribiste %d (%s)", len(phoneNumber), phoneNumber)
+	}
+	if len(phoneNumber) < 6 {
+		return fmt.Errorf("el número es demasiado corto")
+	}
+	return nil
 }
