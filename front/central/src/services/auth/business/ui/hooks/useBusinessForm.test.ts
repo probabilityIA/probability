@@ -3,10 +3,6 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { useBusinessForm } from './useBusinessForm';
 import { Business } from '../../domain/types';
 
-// -----------------------------------------------------------------
-// Mocks
-// -----------------------------------------------------------------
-
 vi.mock('../../infra/actions', () => ({
     createBusinessAction: vi.fn(),
     updateBusinessAction: vi.fn(),
@@ -19,10 +15,6 @@ vi.mock('@/shared/utils/action-result', () => ({
 }));
 
 import { createBusinessAction, updateBusinessAction } from '../../infra/actions';
-
-// -----------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------
 
 const makeInitialData = (overrides: Partial<Business> = {}): Business => ({
     id: 1,
@@ -43,18 +35,11 @@ const makeInitialData = (overrides: Partial<Business> = {}): Business => ({
     ...overrides,
 } as Business);
 
-// -----------------------------------------------------------------
-// Suite principal
-// -----------------------------------------------------------------
-
 describe('useBusinessForm', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    // ---------------------------------------------------------------
-    // Estado inicial
-    // ---------------------------------------------------------------
     it('debería iniciar con formData por defecto cuando no hay initialData', () => {
         const { result } = renderHook(() => useBusinessForm());
 
@@ -79,9 +64,6 @@ describe('useBusinessForm', () => {
         expect(result.current.formData.enable_delivery).toBe(true);
     });
 
-    // ---------------------------------------------------------------
-    // handleChange
-    // ---------------------------------------------------------------
     it('debería actualizar un campo con handleChange', () => {
         const { result } = renderHook(() => useBusinessForm());
 
@@ -92,11 +74,8 @@ describe('useBusinessForm', () => {
         expect(result.current.formData.name).toBe('Nuevo Nombre');
     });
 
-    // ---------------------------------------------------------------
-    // Submit - crear
-    // ---------------------------------------------------------------
     it('debería llamar createBusinessAction al hacer submit sin initialData', async () => {
-        vi.mocked(createBusinessAction).mockResolvedValue({ success: true, message: 'OK', data: {} });
+        vi.mocked(createBusinessAction).mockResolvedValue({ success: true, message: 'OK', data: makeInitialData() });
 
         const { result } = renderHook(() => useBusinessForm());
 
@@ -114,11 +93,8 @@ describe('useBusinessForm', () => {
         expect(updateBusinessAction).not.toHaveBeenCalled();
     });
 
-    // ---------------------------------------------------------------
-    // Submit - actualizar
-    // ---------------------------------------------------------------
     it('debería llamar updateBusinessAction al hacer submit con initialData', async () => {
-        vi.mocked(updateBusinessAction).mockResolvedValue({ success: true, message: 'OK', data: {} });
+        vi.mocked(updateBusinessAction).mockResolvedValue({ success: true, message: 'OK', data: makeInitialData() });
         const data = makeInitialData();
 
         const { result } = renderHook(() => useBusinessForm(data));
@@ -138,11 +114,8 @@ describe('useBusinessForm', () => {
         expect(createBusinessAction).not.toHaveBeenCalled();
     });
 
-    // ---------------------------------------------------------------
-    // Submit - onSuccess callback
-    // ---------------------------------------------------------------
     it('debería llamar onSuccess cuando submit tiene éxito', async () => {
-        vi.mocked(createBusinessAction).mockResolvedValue({ success: true, message: 'OK', data: {} });
+        vi.mocked(createBusinessAction).mockResolvedValue({ success: true, message: 'OK', data: makeInitialData() });
         const onSuccess = vi.fn();
 
         const { result } = renderHook(() => useBusinessForm(undefined, onSuccess));
@@ -154,9 +127,6 @@ describe('useBusinessForm', () => {
         expect(onSuccess).toHaveBeenCalledOnce();
     });
 
-    // ---------------------------------------------------------------
-    // Submit - error
-    // ---------------------------------------------------------------
     it('debería capturar error y retornar false cuando submit falla', async () => {
         vi.mocked(createBusinessAction).mockRejectedValue(new Error('Nombre duplicado'));
 
@@ -172,9 +142,6 @@ describe('useBusinessForm', () => {
         expect(result.current.loading).toBe(false);
     });
 
-    // ---------------------------------------------------------------
-    // Loading state
-    // ---------------------------------------------------------------
     it('debería manejar loading correctamente durante submit', async () => {
         let resolvePromise: (value: any) => void;
         vi.mocked(createBusinessAction).mockReturnValue(
@@ -193,7 +160,7 @@ describe('useBusinessForm', () => {
         expect(result.current.loading).toBe(true);
 
         await act(async () => {
-            resolvePromise!({ success: true, message: 'OK', data: {} });
+            resolvePromise!({ success: true, message: 'OK', data: makeInitialData() });
             await submitPromise!;
         });
 

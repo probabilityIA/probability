@@ -3,10 +3,6 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { useBusinessTypes, useBusinessTypeForm } from './useBusinessTypes';
 import { BusinessType } from '../../domain/types';
 
-// -----------------------------------------------------------------
-// Mocks
-// -----------------------------------------------------------------
-
 vi.mock('../../infra/actions', () => ({
     getBusinessTypesAction: vi.fn(),
     deleteBusinessTypeAction: vi.fn(),
@@ -27,10 +23,6 @@ import {
     updateBusinessTypeAction,
 } from '../../infra/actions';
 
-// -----------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------
-
 const makeBusinessType = (id: number, name: string): BusinessType => ({
     id,
     name,
@@ -46,10 +38,6 @@ const defaultTypesResponse = {
     data: [makeBusinessType(1, 'Restaurante'), makeBusinessType(2, 'Tienda')],
     pagination: { current_page: 1, per_page: 10, total: 2, last_page: 1, has_next: false, has_prev: false },
 };
-
-// =================================================================
-// useBusinessTypes
-// =================================================================
 
 describe('useBusinessTypes', () => {
     beforeEach(() => {
@@ -141,10 +129,6 @@ describe('useBusinessTypes', () => {
     });
 });
 
-// =================================================================
-// useBusinessTypeForm
-// =================================================================
-
 describe('useBusinessTypeForm', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -173,7 +157,7 @@ describe('useBusinessTypeForm', () => {
     });
 
     it('debería llamar createBusinessTypeAction sin initialData', async () => {
-        vi.mocked(createBusinessTypeAction).mockResolvedValue({ success: true, message: 'OK', data: {} });
+        vi.mocked(createBusinessTypeAction).mockResolvedValue({ success: true, message: 'OK', data: makeBusinessType(1, 'Restaurante') });
 
         const { result } = renderHook(() => useBusinessTypeForm());
 
@@ -188,7 +172,7 @@ describe('useBusinessTypeForm', () => {
     });
 
     it('debería llamar updateBusinessTypeAction con initialData', async () => {
-        vi.mocked(updateBusinessTypeAction).mockResolvedValue({ success: true, message: 'OK', data: {} });
+        vi.mocked(updateBusinessTypeAction).mockResolvedValue({ success: true, message: 'OK', data: makeBusinessType(1, 'Restaurante') });
         const data = makeBusinessType(5, 'Tienda');
 
         const { result } = renderHook(() => useBusinessTypeForm(data));
@@ -204,7 +188,7 @@ describe('useBusinessTypeForm', () => {
     });
 
     it('debería retornar true y llamar onSuccess al crear exitosamente', async () => {
-        vi.mocked(createBusinessTypeAction).mockResolvedValue({ success: true, message: 'OK', data: {} });
+        vi.mocked(createBusinessTypeAction).mockResolvedValue({ success: true, message: 'OK', data: makeBusinessType(1, 'Restaurante') });
         const onSuccess = vi.fn();
 
         const { result } = renderHook(() => useBusinessTypeForm(undefined, onSuccess));
@@ -248,7 +232,7 @@ describe('useBusinessTypeForm', () => {
         expect(result.current.loading).toBe(true);
 
         await act(async () => {
-            resolvePromise!({ success: true, message: 'OK', data: {} });
+            resolvePromise!({ success: true, message: 'OK', data: makeBusinessType(1, 'Restaurante') });
             await submitPromise!;
         });
 

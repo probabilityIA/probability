@@ -2,10 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useIntegrations } from './useIntegrations';
 
-// -----------------------------------------------------------------
-// Mocks
-// -----------------------------------------------------------------
-
 vi.mock('../../infra/actions', () => ({
     getIntegrationsAction: vi.fn(),
     deleteIntegrationAction: vi.fn(),
@@ -36,10 +32,6 @@ import {
     syncOrdersAction,
 } from '../../infra/actions';
 
-// -----------------------------------------------------------------
-// Helpers
-// -----------------------------------------------------------------
-
 const makeIntegration = (id: number, name: string) => ({
     id, name, code: name.toLowerCase(), integration_type_id: 1, type: 'shopify',
     category: 'ecommerce', business_id: 1, is_active: true, is_default: false,
@@ -52,10 +44,6 @@ const defaultResponse = {
     data: [makeIntegration(1, 'Shopify A'), makeIntegration(2, 'WhatsApp B')],
     total: 2, page: 1, page_size: 10, total_pages: 1,
 };
-
-// -----------------------------------------------------------------
-// Suite principal
-// -----------------------------------------------------------------
 
 describe('useIntegrations', () => {
     beforeEach(() => {
@@ -140,7 +128,7 @@ describe('useIntegrations', () => {
 
     it('debería establecer como default', async () => {
         vi.mocked(getIntegrationsAction).mockResolvedValue(defaultResponse);
-        vi.mocked(setAsDefaultAction).mockResolvedValue({ success: true, message: 'OK', data: makeIntegration(1, 'x') });
+        vi.mocked(setAsDefaultAction).mockResolvedValue({ success: true, message: 'OK' });
         const { result } = renderHook(() => useIntegrations());
         await waitFor(() => expect(result.current.loading).toBe(false));
 

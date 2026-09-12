@@ -3,10 +3,6 @@ import { WebsiteConfigUseCases } from './use-cases';
 import { IWebsiteConfigRepository } from '../domain/ports';
 import { WebsiteConfigData, UpdateWebsiteConfigDTO } from '../domain/types';
 
-// -----------------------------------------------------------------
-// Helpers: datos de prueba reutilizables
-// -----------------------------------------------------------------
-
 const makeConfig = (overrides: Partial<WebsiteConfigData> = {}): WebsiteConfigData => ({
     id: 1,
     business_id: 5,
@@ -30,20 +26,15 @@ const makeConfig = (overrides: Partial<WebsiteConfigData> = {}): WebsiteConfigDa
     ...overrides,
 });
 
-// -----------------------------------------------------------------
-// Mock del repositorio
-// -----------------------------------------------------------------
-
 function createMockRepository(): IWebsiteConfigRepository {
     return {
         getConfig: vi.fn(),
         updateConfig: vi.fn(),
+        uploadImage: vi.fn(),
+        deleteImage: vi.fn(),
+        getCategories: vi.fn(),
     };
 }
-
-// -----------------------------------------------------------------
-// Suite principal
-// -----------------------------------------------------------------
 
 describe('WebsiteConfigUseCases', () => {
     let repo: ReturnType<typeof createMockRepository>;
@@ -54,9 +45,6 @@ describe('WebsiteConfigUseCases', () => {
         useCases = new WebsiteConfigUseCases(repo as unknown as IWebsiteConfigRepository);
     });
 
-    // ---------------------------------------------------------------
-    // getConfig
-    // ---------------------------------------------------------------
     describe('getConfig', () => {
         it('debería retornar la configuración del sitio web cuando el repositorio tiene éxito', async () => {
             const config = makeConfig();
@@ -87,9 +75,6 @@ describe('WebsiteConfigUseCases', () => {
         });
     });
 
-    // ---------------------------------------------------------------
-    // updateConfig
-    // ---------------------------------------------------------------
     describe('updateConfig', () => {
         const updateDto: UpdateWebsiteConfigDTO = {
             show_hero: false,
