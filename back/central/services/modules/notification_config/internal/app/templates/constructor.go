@@ -30,6 +30,11 @@ type IUseCase interface {
 
 	ListFlows(ctx context.Context, sourceTemplateID, businessID uint) ([]entities.TemplateFlow, error)
 	ListBusinessFlows(ctx context.Context, businessID uint) ([]entities.TemplateFlow, error)
+	ListFlowGroups(ctx context.Context, businessID uint) ([]entities.Flow, error)
+	CreateFlowGroup(ctx context.Context, dto dtos.CreateFlowDTO) (*entities.Flow, error)
+	UpdateFlowGroup(ctx context.Context, dto dtos.UpdateFlowDTO) (*entities.Flow, error)
+	DeleteFlowGroup(ctx context.Context, id, businessID uint) error
+	ListFlowTransitions(ctx context.Context, flowID, businessID uint) ([]entities.TemplateFlow, error)
 	ReplaceFlows(ctx context.Context, dto dtos.ReplaceTemplateFlowsDTO) ([]entities.TemplateFlow, error)
 	HandleButtonReply(ctx context.Context, event dtos.ButtonReplyEvent) error
 }
@@ -37,6 +42,7 @@ type IUseCase interface {
 type useCase struct {
 	repository     ports.ITemplateRepository
 	flowRepository ports.ITemplateFlowRepository
+	flowGroups     ports.IFlowRepository
 	segments       ports.ISegmentQuerier
 	publisher      ISubmissionPublisher
 	flowPublisher  IFlowPublisher
@@ -46,6 +52,7 @@ type useCase struct {
 func New(
 	repository ports.ITemplateRepository,
 	flowRepository ports.ITemplateFlowRepository,
+	flowGroups ports.IFlowRepository,
 	segments ports.ISegmentQuerier,
 	publisher ISubmissionPublisher,
 	flowPublisher IFlowPublisher,
@@ -54,6 +61,7 @@ func New(
 	return &useCase{
 		repository:     repository,
 		flowRepository: flowRepository,
+		flowGroups:     flowGroups,
 		segments:       segments,
 		publisher:      publisher,
 		flowPublisher:  flowPublisher,

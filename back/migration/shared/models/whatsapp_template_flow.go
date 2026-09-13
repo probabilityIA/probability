@@ -10,6 +10,9 @@ type WhatsappTemplateFlow struct {
 	BusinessID uint     `gorm:"not null;index:idx_wa_flow_source_button,priority:1"`
 	Business   Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
+	FlowID *uint        `gorm:"index"`
+	Flow   WhatsappFlow `gorm:"foreignKey:FlowID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+
 	SourceTemplateID uint             `gorm:"not null;index:idx_wa_flow_source_button,priority:2"`
 	SourceTemplate   WhatsappTemplate `gorm:"foreignKey:SourceTemplateID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 

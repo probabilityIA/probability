@@ -28,6 +28,7 @@ func NewTemplateFlowRepository(database db.IDatabase, logger log.ILogger) ports.
 type flowRow struct {
 	ID                   uint
 	BusinessID           uint
+	FlowID               *uint
 	SourceTemplateID     uint
 	ButtonText           string
 	TargetTemplateID     uint
@@ -40,7 +41,7 @@ type flowRow struct {
 }
 
 const flowSelect = `
-	f.id, f.business_id, f.source_template_id, f.button_text, f.target_template_id, f.enabled,
+	f.id, f.business_id, f.flow_id, f.source_template_id, f.button_text, f.target_template_id, f.enabled,
 	s.name AS source_name,
 	t.name AS target_name,
 	t.language AS target_language,
@@ -81,6 +82,21 @@ func (r *templateFlowRepository) ListByBusiness(ctx context.Context, businessID 
 		Scan(&rows).Error; err != nil {
 		r.logger.Error().Err(err).Uint("business_id", businessID).
 			Msg("Error listando flujos del negocio")
+		return nil, err
+	}
+
+	return toFlowEntities(rows), nil
+}
+
+func (r *templateFlowRepository) ListByFlow(ctx context.Context, businessID, flowID uint) ([]entities.TemplateFlow, error) {
+	var rows []flowRow
+
+	if err := r.baseQuery(ctx).
+		Where("f.business_id = ? AND f.flow_id = ?", businessID, flowID).
+		Order("f.source_template_id ASC, f.id ASC").
+		Scan(&rows).Error; err != nil {
+		r.logger.Error().Err(err).Uint("flow_id", flowID).
+			Msg("Error listando las transiciones del flujo")
 		return nil, err
 	}
 
@@ -128,6 +144,7 @@ func (r *templateFlowRepository) ReplaceForSource(ctx context.Context, businessI
 		for _, flow := range flows {
 			rows = append(rows, models.WhatsappTemplateFlow{
 				BusinessID:       businessID,
+				FlowID:           flow.FlowID,
 				SourceTemplateID: sourceTemplateID,
 				ButtonText:       flow.ButtonText,
 				TargetTemplateID: flow.TargetTemplateID,
@@ -172,6 +189,7 @@ func toFlowEntity(row flowRow) entities.TemplateFlow {
 	return entities.TemplateFlow{
 		ID:                   row.ID,
 		BusinessID:           row.BusinessID,
+		FlowID:               row.FlowID,
 		SourceTemplateID:     row.SourceTemplateID,
 		ButtonText:           row.ButtonText,
 		TargetTemplateID:     row.TargetTemplateID,

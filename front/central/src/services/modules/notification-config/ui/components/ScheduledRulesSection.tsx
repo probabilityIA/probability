@@ -7,12 +7,10 @@ import { useToast } from "@/shared/providers/toast-provider";
 import {
   ScheduledRule,
   TEMPLATE_STATUS_LABEL,
-  TemplateFlow,
   WhatsappTemplate,
 } from "../../domain/scheduled-types";
 import {
   getTemplateVariablesAction,
-  listAllTemplateFlowsAction,
   listTemplatesAction,
   submitTemplateForReviewAction,
 } from "../../infra/actions/whatsapp-templates";
@@ -22,7 +20,6 @@ import {
   runScheduledRuleNowAction,
 } from "../../infra/actions/scheduled-rules";
 import { TemplateForm } from "./TemplateForm";
-import { TemplateFlowView } from "./TemplateFlowView";
 import { ScheduledRuleForm } from "./ScheduledRuleForm";
 
 interface ScheduledRulesSectionProps {
@@ -52,24 +49,20 @@ export function ScheduledRulesSection({
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
   const [rules, setRules] = useState<ScheduledRule[]>([]);
   const [catalog, setCatalog] = useState<Record<string, string>>({});
-  const [flows, setFlows] = useState<TemplateFlow[]>([]);
   const [editingTemplate, setEditingTemplate] = useState<WhatsappTemplate | null>(null);
-  const [isFlowOpen, setIsFlowOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
 
-    const [templatesResult, rulesResult, catalogResult, flowsResult] = await Promise.all([
+    const [templatesResult, rulesResult, catalogResult] = await Promise.all([
       listTemplatesAction(businessId, "scheduled"),
       listScheduledRulesAction(businessId),
       getTemplateVariablesAction(businessId),
-      listAllTemplateFlowsAction(businessId),
     ]);
 
     if (templatesResult.success) setTemplates(templatesResult.data);
     if (rulesResult.success) setRules(rulesResult.data);
     if (catalogResult.success) setCatalog(catalogResult.data);
-    if (flowsResult.success) setFlows(flowsResult.data);
 
     setLoading(false);
   }, [businessId]);
@@ -136,25 +129,16 @@ export function ScheduledRulesSection({
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold">{"Plantillas propias"}</h3>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsFlowOpen(true)}
-              className="rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200"
-            >
-              {"Ver flujo"}
-            </button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => {
-                setEditingTemplate(null);
-                setPanel("template");
-              }}
-            >
-              {"Nueva plantilla"}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              setEditingTemplate(null);
+              setPanel("template");
+            }}
+          >
+            {"Nueva plantilla"}
+          </Button>
         </div>
 
         {templates.length === 0 ? (
@@ -260,31 +244,6 @@ export function ScheduledRulesSection({
           </ul>
         )}
       </section>
-
-      <Modal
-        isOpen={isFlowOpen}
-        onClose={() => setIsFlowOpen(false)}
-        title={(
-          <span className="flex w-full flex-col items-start pr-8">
-            <span className="text-lg font-semibold">{"Flujo de plantillas"}</span>
-            <span className="text-[13px] font-normal text-gray-400">
-              {"Qué responde cada botón"}
-            </span>
-          </span>
-        )}
-        size="6xl"
-        zIndex={60}
-      >
-        {isFlowOpen && (
-          <TemplateFlowView
-            templates={templates}
-            flows={flows}
-            businessId={businessId}
-            variableCatalog={catalog}
-            onChanged={load}
-          />
-        )}
-      </Modal>
 
       <Modal
         isOpen={panel === "template"}

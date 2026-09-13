@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { env } from "@/shared/config/env";
 import {
   CreateTemplateDTO,
+  Flow,
+  FlowInput,
   PaginatedResult,
   TemplateFlow,
   TemplateFlowInput,
@@ -201,10 +203,110 @@ export async function listAllTemplateFlowsAction(businessId?: number) {
   }
 }
 
+export async function listFlowsAction(businessId?: number) {
+  try {
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-flows`, businessId);
+    const response = await fetch(url, { headers: await authHeaders(), cache: "no-store" });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error listando los flujos", data: [] };
+    }
+
+    return { success: true, data: (body.data || []) as Flow[] };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message, data: [] };
+  }
+}
+
+export async function createFlowAction(input: FlowInput, businessId?: number) {
+  try {
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-flows`, businessId);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify(input),
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error creando el flujo" };
+    }
+
+    revalidatePath("/notification-config");
+    return { success: true, data: body.data as Flow };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message };
+  }
+}
+
+export async function updateFlowAction(id: number, input: FlowInput, businessId?: number) {
+  try {
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-flows/${id}`, businessId);
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: await authHeaders(),
+      body: JSON.stringify(input),
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error editando el flujo" };
+    }
+
+    revalidatePath("/notification-config");
+    return { success: true, data: body.data as Flow };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message };
+  }
+}
+
+export async function deleteFlowAction(id: number, businessId?: number) {
+  try {
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-flows/${id}`, businessId);
+    const response = await fetch(url, { method: "DELETE", headers: await authHeaders() });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error eliminando el flujo" };
+    }
+
+    revalidatePath("/notification-config");
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message };
+  }
+}
+
+export async function listFlowTransitionsAction(flowId: number, businessId?: number) {
+  try {
+    const url = withBusiness(
+      `${env.API_BASE_URL}/whatsapp-flows/${flowId}/transitions`,
+      businessId,
+    );
+    const response = await fetch(url, { headers: await authHeaders(), cache: "no-store" });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error cargando el flujo", data: [] };
+    }
+
+    return { success: true, data: (body.data || []) as TemplateFlow[] };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message, data: [] };
+  }
+}
+
 export async function replaceTemplateFlowsAction(
   templateId: number,
   flows: TemplateFlowInput[],
   businessId?: number,
+  flowId?: number,
 ) {
   try {
     const url = withBusiness(
@@ -214,7 +316,7 @@ export async function replaceTemplateFlowsAction(
     const response = await fetch(url, {
       method: "PUT",
       headers: await authHeaders(),
-      body: JSON.stringify({ flows }),
+      body: JSON.stringify({ flow_id: flowId ?? null, flows }),
     });
 
     const body = await response.json();

@@ -9,6 +9,7 @@ type TemplateFlowDTO struct {
 type ReplaceTemplateFlowsDTO struct {
 	BusinessID       uint              `json:"-"`
 	SourceTemplateID uint              `json:"-"`
+	FlowID           *uint             `json:"flow_id"`
 	Flows            []TemplateFlowDTO `json:"flows"`
 }
 

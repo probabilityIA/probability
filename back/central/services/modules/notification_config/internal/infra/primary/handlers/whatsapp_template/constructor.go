@@ -23,6 +23,11 @@ type IHandler interface {
 	ListAllFlows(c *gin.Context)
 	GetFlows(c *gin.Context)
 	ReplaceFlows(c *gin.Context)
+	ListFlowGroups(c *gin.Context)
+	CreateFlowGroup(c *gin.Context)
+	UpdateFlowGroup(c *gin.Context)
+	DeleteFlowGroup(c *gin.Context)
+	ListFlowTransitions(c *gin.Context)
 }
 
 type handler struct {

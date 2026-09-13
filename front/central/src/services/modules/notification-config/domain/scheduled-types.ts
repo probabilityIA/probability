@@ -84,9 +84,30 @@ export interface UpdateTemplateDTO {
   buttons?: Array<{ type: string; text: string; url?: string }>;
 }
 
+export interface Flow {
+  ID: number;
+  BusinessID: number;
+  Name: string;
+  Description: string;
+  RootTemplateID: number | null;
+  Enabled: boolean;
+  RootTemplateName: string;
+  RootTemplateStatus: TemplateStatus | "";
+  StepCount: number;
+  PendingCount: number;
+}
+
+export interface FlowInput {
+  name: string;
+  description?: string;
+  root_template_id?: number | null;
+  enabled?: boolean;
+}
+
 export interface TemplateFlow {
   ID: number;
   BusinessID: number;
+  FlowID: number | null;
   SourceTemplateID: number;
   ButtonText: string;
   TargetTemplateID: number;

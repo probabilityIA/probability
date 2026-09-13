@@ -7,6 +7,7 @@ import { WhatsAppConversations } from './WhatsAppConversations';
 import { IntegrationRulesForm, RULES_TABS_SLOT_ID } from './IntegrationRulesForm';
 import { CampaignsSection } from './CampaignsSection';
 import { TemplatesSection } from './TemplatesSection';
+import { FlowsSection } from './FlowsSection';
 import { NOTIFICATION_STATS_REFRESH_EVENT } from './NotificationSummaryKpis';
 import { NOTIFICATIONS_TABS_SLOT_ID } from '@/shared/ui/notifications-subnavbar';
 import { Modal } from '@/shared/ui/modal';
@@ -18,6 +19,7 @@ const tabs = [
   { key: 'audit' as const, label: 'Auditoria' },
   { key: 'campaigns' as const, label: 'Campañas' },
   { key: 'templates' as const, label: 'Plantillas WhatsApp' },
+  { key: 'flows' as const, label: 'Flujos' },
 ];
 
 export function NotificationDashboard() {
@@ -26,7 +28,7 @@ export function NotificationDashboard() {
 
   const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
-  const [activeTab, setActiveTab] = useState<'audit' | 'conversations' | 'campaigns' | 'templates'>('conversations');
+  const [activeTab, setActiveTab] = useState<'audit' | 'conversations' | 'campaigns' | 'templates' | 'flows'>('conversations');
 
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [configRefreshKey, setConfigRefreshKey] = useState(0);
@@ -108,6 +110,10 @@ export function NotificationDashboard() {
 
           {activeTab === 'templates' && (
             <TemplatesSection businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
+          )}
+
+          {activeTab === 'flows' && (
+            <FlowsSection businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
           )}
 
           <Modal

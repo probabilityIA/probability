@@ -17,6 +17,8 @@ interface TemplateFlowViewProps {
   flows: TemplateFlow[];
   businessId?: number;
   variableCatalog: Record<string, string>;
+  flowId?: number;
+  rootTemplateId?: number;
   onChanged: () => void;
 }
 
@@ -51,6 +53,8 @@ export function TemplateFlowView({
   flows,
   businessId,
   variableCatalog,
+  flowId,
+  rootTemplateId,
   onChanged,
 }: TemplateFlowViewProps) {
   const { showToast } = useToast();
@@ -74,7 +78,10 @@ export function TemplateFlowView({
       userButtons(item).length > 0 || childrenBySource.has(item.ID) || parentCount.has(item.ID),
   );
 
-  const roots = participates.filter((item) => !parentCount.has(item.ID));
+  const explicitRoot = rootTemplateId ? byID.get(rootTemplateId) : undefined;
+  const roots = explicitRoot
+    ? [explicitRoot]
+    : participates.filter((item) => !parentCount.has(item.ID));
 
   const linkResponse = async (created: WhatsappTemplate) => {
     if (!pending) return;
@@ -95,7 +102,7 @@ export function TemplateFlowView({
     ];
 
     setSaving(true);
-    const result = await replaceTemplateFlowsAction(pending.sourceID, next, businessId);
+    const result = await replaceTemplateFlowsAction(pending.sourceID, next, businessId, flowId);
     setSaving(false);
     setPending(null);
 
@@ -108,12 +115,20 @@ export function TemplateFlowView({
     onChanged();
   };
 
-  if (participates.length === 0) {
+  if (!explicitRoot && participates.length === 0) {
     return (
       <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-600">
         {
           "Ninguna plantilla tiene botones todavía. Agregá botones de respuesta para armar un flujo."
         }
+      </p>
+    );
+  }
+
+  if (rootTemplateId && !explicitRoot) {
+    return (
+      <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-600">
+        {"La plantilla inicial de este flujo ya no existe. Editá el flujo y elegí otra."}
       </p>
     );
   }

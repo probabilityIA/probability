@@ -62,6 +62,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 
 	templateRepo := repository.NewWhatsappTemplateRepository(database, logger)
 	templateFlowRepo := repository.NewTemplateFlowRepository(database, logger)
+	flowGroupRepo := repository.NewFlowRepository(database, logger)
 	segmentQuerier := repository.NewSegmentQuerier(database, logger)
 
 	var templatePublisher templates.ISubmissionPublisher
@@ -74,6 +75,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	templatesUseCase := templates.New(
 		templateRepo,
 		templateFlowRepo,
+		flowGroupRepo,
 		segmentQuerier,
 		templatePublisher,
 		flowPublisher,

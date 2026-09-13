@@ -103,6 +103,7 @@ func (uc *useCase) ReplaceFlows(ctx context.Context, dto dtos.ReplaceTemplateFlo
 
 		flows = append(flows, entities.TemplateFlow{
 			BusinessID:       dto.BusinessID,
+			FlowID:           dto.FlowID,
 			SourceTemplateID: dto.SourceTemplateID,
 			ButtonText:       buttonText,
 			TargetTemplateID: item.TargetTemplateID,

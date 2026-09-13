@@ -50,6 +50,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWhatsappTemplateFlows(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateWhatsappFlows(ctx); err != nil {
+		return err
+	}
 	return r.migrateOrderAddressFields(ctx)
 }
 

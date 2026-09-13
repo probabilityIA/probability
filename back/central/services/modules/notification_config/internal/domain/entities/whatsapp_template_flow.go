@@ -5,6 +5,7 @@ const MaxFlowDepth = 4
 type TemplateFlow struct {
 	ID               uint
 	BusinessID       uint
+	FlowID           *uint
 	SourceTemplateID uint
 	ButtonText       string
 	TargetTemplateID uint

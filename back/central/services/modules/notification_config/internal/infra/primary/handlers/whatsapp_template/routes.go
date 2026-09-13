@@ -21,4 +21,14 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		group.DELETE("/:id", h.Delete)
 		group.POST("/:id/submit", h.SubmitForReview)
 	}
+
+	flows := router.Group("/whatsapp-flows")
+	flows.Use(middleware.JWT())
+	{
+		flows.GET("", h.ListFlowGroups)
+		flows.POST("", h.CreateFlowGroup)
+		flows.PUT("/:id", h.UpdateFlowGroup)
+		flows.DELETE("/:id", h.DeleteFlowGroup)
+		flows.GET("/:id/transitions", h.ListFlowTransitions)
+	}
 }
