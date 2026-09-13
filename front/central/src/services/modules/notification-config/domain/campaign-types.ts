@@ -30,6 +30,7 @@ export interface Campaign {
   AudienceType: CampaignAudienceType;
   AudienceParams: {
     City: string;
+    State: string;
     CreatedFromDays: number;
     OnlyWithoutOrder: boolean;
     ClientIDs: number[] | null;
@@ -84,6 +85,12 @@ export interface CampaignAudienceClient {
   city: string;
 }
 
+export interface CampaignAudienceLocation {
+  city: string;
+  state: string;
+  clients: number;
+}
+
 export interface CampaignAudiencePreview {
   total: number;
   opted_out: number;
@@ -101,6 +108,7 @@ export interface CreateCampaignDTO {
   sender_name?: string;
   audience_type: CampaignAudienceType;
   city?: string;
+  state?: string;
   created_from_days?: number;
   only_without_order?: boolean;
   client_ids?: number[];

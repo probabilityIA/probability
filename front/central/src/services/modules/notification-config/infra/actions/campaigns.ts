@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { env } from "@/shared/config/env";
 import {
   Campaign,
+  CampaignAudienceLocation,
   CampaignAudiencePreview,
   CampaignSend,
   CreateCampaignDTO,
@@ -24,6 +25,29 @@ function withBusiness(path: string, businessId?: number) {
   if (!businessId) return path;
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}business_id=${businessId}`;
+}
+
+export async function listCampaignAudienceLocationsAction(businessId?: number) {
+  try {
+    const url = withBusiness(
+      `${env.API_BASE_URL}/whatsapp-campaigns/audience-locations`,
+      businessId,
+    );
+    const response = await fetch(url, {
+      headers: await authHeaders(),
+      cache: "no-store",
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error cargando las ubicaciones" };
+    }
+
+    return { success: true, data: (body.data || []) as CampaignAudienceLocation[] };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message };
+  }
 }
 
 export async function listCampaignsAction(

@@ -22,8 +22,52 @@ type campaignCandidateRow struct {
 	City       string
 }
 
-const campaignAudienceBase = `
-	WITH base AS (
+type audienceLocationRow struct {
+	CityName  string
+	StateName string
+	Clients   uint
+}
+
+func locationKey(expression string) string {
+	normalized := "lower(unaccent(trim(" + expression + ")))"
+	return "btrim(replace(replace(" + normalized + ", ', d.c.', ''), ' d.c.', ''))"
+}
+
+var (
+	rawCityExpression = "COALESCE(NULLIF(geo.geo_city, ''), COALESCE(addr.city, ''))"
+	stateExpression   = "COALESCE(NULLIF(keyed.geo_state, ''), cat.state_name, '')"
+
+	campaignAudienceBase = `
+	WITH city_catalog AS (
+		SELECT norm_name, min(city_name) AS city_name, min(state_name) AS state_name
+		FROM (
+			SELECT
+				` + locationKey("gc.name") + ` AS norm_name,
+				gc.name AS city_name,
+				gs.name AS state_name
+			FROM geozones gc
+			JOIN geozones gs ON gs.id = gc.parent_id AND gs.type = 'state'
+			WHERE gc.type = 'city'
+			  AND gc.deleted_at IS NULL
+			  AND gc.business_id = 0
+		) catalog
+		GROUP BY norm_name
+		HAVING count(*) = 1
+	),
+	client_geo AS (
+		SELECT DISTINCT ON (o.customer_id)
+			o.customer_id,
+			COALESCE(gc.name, '') AS geo_city,
+			COALESCE(gs.name, '') AS geo_state
+		FROM orders o
+		LEFT JOIN geozones gc ON gc.id = o.geozone_city_id
+		LEFT JOIN geozones gs ON gs.id = o.geozone_state_id
+		WHERE o.business_id = @business_id
+		  AND o.deleted_at IS NULL
+		  AND o.geozone_city_id IS NOT NULL
+		ORDER BY o.customer_id, o.id DESC
+	),
+	raw AS (
 		SELECT
 			c.id AS client_id,
 			c.business_id,
@@ -31,7 +75,8 @@ const campaignAudienceBase = `
 			regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g') AS phone_key,
 			COALESCE(c.phone, '') AS phone,
 			c.accepts_marketing,
-			COALESCE(addr.city, '') AS city
+			` + rawCityExpression + ` AS city,
+			COALESCE(geo.geo_state, '') AS geo_state
 		FROM client c
 		LEFT JOIN LATERAL (
 			SELECT city
@@ -40,10 +85,31 @@ const campaignAudienceBase = `
 			ORDER BY is_primary DESC, times_used DESC, id DESC
 			LIMIT 1
 		) addr ON true
+		LEFT JOIN client_geo geo ON geo.customer_id = c.id
 		WHERE c.business_id = @business_id
 		  AND c.deleted_at IS NULL
+	),
+	keyed AS (
+		SELECT raw.*, ` + locationKey("raw.city") + ` AS city_key
+		FROM raw
+	),
+	base AS (
+		SELECT
+			keyed.client_id,
+			keyed.business_id,
+			keyed.name,
+			keyed.phone_key,
+			keyed.phone,
+			keyed.accepts_marketing,
+			keyed.city_key,
+			COALESCE(NULLIF(cat.city_name, ''), keyed.city) AS city,
+			` + stateExpression + ` AS state,
+			` + locationKey(stateExpression) + ` AS state_key
+		FROM keyed
+		LEFT JOIN city_catalog cat ON cat.norm_name = keyed.city_key
 	)
 `
+)
 
 func (q *campaignAudienceQuerier) buildFilters(params entities.CampaignAudienceParams, audienceType string) (string, map[string]any) {
 	conditions := []string{}
@@ -51,8 +117,12 @@ func (q *campaignAudienceQuerier) buildFilters(params entities.CampaignAudienceP
 
 	if audienceType == entities.CampaignAudienceFiltered {
 		if strings.TrimSpace(params.City) != "" {
-			conditions = append(conditions, "city ILIKE @city")
-			args["city"] = "%" + strings.TrimSpace(params.City) + "%"
+			conditions = append(conditions, "city_key = "+locationKey("@city"))
+			args["city"] = strings.TrimSpace(params.City)
+		}
+		if strings.TrimSpace(params.State) != "" {
+			conditions = append(conditions, "state_key = "+locationKey("@state"))
+			args["state"] = strings.TrimSpace(params.State)
 		}
 		if params.CreatedFromDays > 0 {
 			conditions = append(conditions, "client_id IN (SELECT id FROM client WHERE business_id = @business_id AND created_at >= NOW() - make_interval(days => @created_from_days))")
@@ -204,6 +274,40 @@ func (q *campaignAudienceQuerier) CountCampaignAudience(ctx context.Context, bus
 	}
 
 	return result.Total, result.OptedOut, result.NoPhone, result.Reachable, nil
+}
+
+func (q *campaignAudienceQuerier) ListAudienceLocations(ctx context.Context, businessID uint) ([]entities.AudienceLocation, error) {
+	args := map[string]any{"business_id": businessID}
+
+	query := campaignAudienceBase + `
+		SELECT
+			initcap(lower(max(city))) AS city_name,
+			initcap(lower(max(state))) AS state_name,
+			COUNT(DISTINCT phone_key) AS clients
+		FROM base
+		WHERE accepts_marketing = true
+		  AND phone_key <> ''
+		  AND length(phone_key) >= 10
+		  AND city_key <> ''
+		GROUP BY city_key, state_key
+		ORDER BY clients DESC, city_name`
+
+	var rows []audienceLocationRow
+	if err := q.db.Conn(ctx).Raw(query, args).Scan(&rows).Error; err != nil {
+		q.logger.Error().Err(err).Uint("business_id", businessID).Msg("Error listing audience locations")
+		return nil, err
+	}
+
+	out := make([]entities.AudienceLocation, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, entities.AudienceLocation{
+			City:    row.CityName,
+			State:   row.StateName,
+			Clients: row.Clients,
+		})
+	}
+
+	return out, nil
 }
 
 func firstName(fullName string) string {

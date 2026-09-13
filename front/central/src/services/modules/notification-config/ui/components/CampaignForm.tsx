@@ -10,12 +10,14 @@ import { CustomerInfo } from "@/services/modules/customers/domain/types";
 import { getCustomersAction } from "@/services/modules/customers/infra/actions";
 import {
   Campaign,
+  CampaignAudienceLocation,
   CampaignAudiencePreview,
   CampaignAudienceType,
   CreateCampaignDTO,
 } from "../../domain/campaign-types";
 import {
   createCampaignAction,
+  listCampaignAudienceLocationsAction,
   previewCampaignAudienceAction,
   updateCampaignAction,
 } from "../../infra/actions/campaigns";
@@ -49,6 +51,7 @@ const localDate = (date: Date) =>
 const localTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
 type FilterKey =
+  | "state"
   | "city"
   | "created_from_days"
   | "registered_before_days"
@@ -60,32 +63,33 @@ type FilterKey =
 interface FilterDef {
   key: FilterKey;
   label: string;
-  kind: "text" | "number" | "bool";
+  kind: "text" | "number" | "bool" | "select";
   suffix?: string;
   placeholder?: string;
 }
 
 const FILTER_DEFS: FilterDef[] = [
-  { key: "city", label: "Ciudad", kind: "text", placeholder: "Bogotá" },
-  { key: "created_from_days", label: "Registrado en los últimos", kind: "number", suffix: "días" },
-  { key: "registered_before_days", label: "Registrado hace más de", kind: "number", suffix: "días" },
+  { key: "state", label: "Departamento", kind: "select" },
+  { key: "city", label: "Ciudad", kind: "select" },
+  { key: "created_from_days", label: "Registrado en los \u00faltimos", kind: "number", suffix: "d\u00edas" },
+  { key: "registered_before_days", label: "Registrado hace m\u00e1s de", kind: "number", suffix: "d\u00edas" },
   { key: "only_without_order", label: "Nunca me ha comprado", kind: "bool" },
   { key: "min_orders", label: "Con al menos", kind: "number", suffix: "compras" },
   { key: "min_spent", label: "Ha gastado al menos", kind: "number", suffix: "$" },
   {
     key: "last_purchase_before_days",
-    label: "Sin comprar hace más de",
+    label: "Sin comprar hace m\u00e1s de",
     kind: "number",
-    suffix: "días",
+    suffix: "d\u00edas",
   },
 ];
 
 const TEMPLATE_STATUS_LABEL: Record<string, string> = {
   draft: "borrador",
-  pending: "en revisión de Meta",
+  pending: "en revisi\u00f3n de Meta",
   paused: "pausada por Meta",
   disabled: "deshabilitada",
-  failed: "falló el envío a Meta",
+  failed: "fall\u00f3 el env\u00edo a Meta",
 };
 
 export function CampaignForm({
@@ -124,6 +128,7 @@ export function CampaignForm({
     const params = campaign?.AudienceParams;
     const initial: Partial<Record<FilterKey, string>> = {};
     if (!params) return initial;
+    if (params.State) initial.state = params.State;
     if (params.City) initial.city = params.City;
     if (params.CreatedFromDays) initial.created_from_days = String(params.CreatedFromDays);
     if (params.RegisteredBeforeDays)
@@ -167,6 +172,26 @@ export function CampaignForm({
   const [startDate, setStartDate] = useState(scheduledAt ? localDate(scheduledAt) : "");
   const [startTime, setStartTime] = useState(scheduledAt ? localTime(scheduledAt) : "09:00");
 
+  const [locations, setLocations] = useState<CampaignAudienceLocation[]>([]);
+
+  const stateOptions = useMemo(() => {
+    const totals = new Map<string, number>();
+    locations.forEach((item) => {
+      if (!item.state) return;
+      totals.set(item.state, (totals.get(item.state) || 0) + item.clients);
+    });
+    return Array.from(totals.entries())
+      .map(([value, clients]) => ({ value, clients }))
+      .sort((a, b) => b.clients - a.clients);
+  }, [locations]);
+
+  const cityOptions = useMemo(() => {
+    const chosenState = filters.state || "";
+    return locations
+      .filter((item) => !chosenState || item.state === chosenState)
+      .map((item) => ({ value: item.city, clients: item.clients }));
+  }, [locations, filters.state]);
+
   const [preview, setPreview] = useState<CampaignAudiencePreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showAudience, setShowAudience] = useState(false);
@@ -198,6 +223,7 @@ export function CampaignForm({
     audience_type: audienceType,
     client_ids: audienceMode === "manual" ? selectedIds : [],
     city: audienceMode === "filters" ? (filters.city || "").trim() : "",
+    state: audienceMode === "filters" ? (filters.state || "").trim() : "",
     created_from_days: audienceMode === "filters" ? filterNumber("created_from_days") : 0,
     registered_before_days:
       audienceMode === "filters" ? filterNumber("registered_before_days") : 0,
@@ -218,6 +244,14 @@ export function CampaignForm({
         : null,
     variable_values: senderName.trim() ? { "sender.name": senderName.trim() } : undefined,
   });
+
+  useEffect(() => {
+    const loadLocations = async () => {
+      const result = await listCampaignAudienceLocationsAction(businessId);
+      if (result.success && result.data) setLocations(result.data);
+    };
+    loadLocations();
+  }, [businessId]);
 
   useEffect(() => {
     const loadPreview = async () => {
@@ -271,7 +305,7 @@ export function CampaignForm({
     e.preventDefault();
 
     if (!name.trim()) {
-      showToast("Ponle un nombre a la campaña", "error");
+      showToast("Ponle un nombre a la campa\u00f1a", "error");
       return;
     }
     if (mode === "flow" && !flowId) {
@@ -283,11 +317,11 @@ export function CampaignForm({
       return;
     }
     if (startMode === "scheduled" && !startDate) {
-      showToast("Elegí la fecha en la que arranca la campaña", "error");
+      showToast("Eleg\u00ed la fecha en la que arranca la campa\u00f1a", "error");
       return;
     }
     if (mode === "flow" && !effectiveTemplateId) {
-      showToast("Ese flujo no tiene plantilla inicial. Editalo y elegí una.", "error");
+      showToast("Ese flujo no tiene plantilla inicial. Editalo y eleg\u00ed una.", "error");
       return;
     }
 
@@ -298,11 +332,11 @@ export function CampaignForm({
     setSaving(false);
 
     if (!result.success) {
-      showToast(result.error || "No se pudo guardar la campaña", "error");
+      showToast(result.error || "No se pudo guardar la campa\u00f1a", "error");
       return;
     }
 
-    showToast(campaign ? "Campaña actualizada" : "Campaña creada como borrador", "success");
+    showToast(campaign ? "Campa\u00f1a actualizada" : "Campa\u00f1a creada como borrador", "success");
     onSuccess();
   };
 
@@ -370,7 +404,7 @@ export function CampaignForm({
                           : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                       }`}
                     >
-                      {"Mensaje único"}
+                      {"Mensaje \u00fanico"}
                     </button>
                     <button
                       type="button"
@@ -403,7 +437,7 @@ export function CampaignForm({
                     </select>
                     {flows.length === 0 ? (
                       <p className="mt-1 text-xs text-amber-600">
-                        {"Todavía no tienes flujos. Crea uno en la pestaña Flujos."}
+                        {"Todav\u00eda no tienes flujos. Crea uno en la pesta\u00f1a Flujos."}
                       </p>
                     ) : selectedFlow ? (
                       <p className="mt-1 text-xs text-gray-500">
@@ -411,7 +445,7 @@ export function CampaignForm({
                       </p>
                     ) : (
                       <p className="mt-1 text-xs text-gray-500">
-                        {"El primer mensaje abre la conversación y los botones encadenan el resto."}
+                        {"El primer mensaje abre la conversaci\u00f3n y los botones encadenan el resto."}
                       </p>
                     )}
                     {selectedFlow && selectedFlow.PendingCount > 0 && (
@@ -571,7 +605,29 @@ export function CampaignForm({
                           {def.label}
                         </span>
 
-                        {def.kind !== "bool" && (
+                        {def.kind === "select" ? (
+                          <select
+                            value={filters[def.key] ?? ""}
+                            onChange={(e) =>
+                              setFilters((current) => ({
+                                ...current,
+                                [def.key]: e.target.value,
+                              }))
+                            }
+                            className="min-w-48 rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
+                          >
+                            <option value="">
+                              {def.key === "state" ? "Todos" : "Todas"}
+                            </option>
+                            {(def.key === "state" ? stateOptions : cityOptions).map(
+                              (option) => (
+                                <option key={option.value} value={option.value}>
+                                  {`${option.value} (${option.clients})`}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        ) : def.kind !== "bool" ? (
                           <input
                             type={def.kind === "number" ? "number" : "text"}
                             min={def.kind === "number" ? 0 : undefined}
@@ -585,7 +641,7 @@ export function CampaignForm({
                             }
                             className="w-28 rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
                           />
-                        )}
+                        ) : null}
 
                         {def.suffix && (
                           <span className="text-xs text-gray-400">{def.suffix}</span>

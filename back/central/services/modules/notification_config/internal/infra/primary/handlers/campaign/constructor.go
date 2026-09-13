@@ -17,6 +17,7 @@ type IHandler interface {
 	Update(c *gin.Context)
 	Delete(c *gin.Context)
 	PreviewAudience(c *gin.Context)
+	ListAudienceLocations(c *gin.Context)
 	Launch(c *gin.Context)
 	Pause(c *gin.Context)
 	Resume(c *gin.Context)

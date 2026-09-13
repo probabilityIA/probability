@@ -13,6 +13,7 @@ type CreateCampaignDTO struct {
 
 	AudienceType     string `json:"audience_type"`
 	City             string `json:"city"`
+	State            string `json:"state"`
 	CreatedFromDays  int    `json:"created_from_days"`
 	OnlyWithoutOrder bool   `json:"only_without_order"`
 	ClientIDs        []uint `json:"client_ids"`
@@ -48,6 +49,12 @@ type CampaignAudienceClientDTO struct {
 	Name     string `json:"name"`
 	Phone    string `json:"phone"`
 	City     string `json:"city"`
+}
+
+type AudienceLocationDTO struct {
+	City    string `json:"city"`
+	State   string `json:"state"`
+	Clients uint   `json:"clients"`
 }
 
 type CampaignAudiencePreviewDTO struct {

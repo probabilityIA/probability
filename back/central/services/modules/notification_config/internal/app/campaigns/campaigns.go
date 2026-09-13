@@ -449,9 +449,32 @@ func (uc *useCase) build(ctx context.Context, dto dtos.CreateCampaignDTO) (*enti
 	}, nil
 }
 
+func (uc *useCase) ListAudienceLocations(ctx context.Context, businessID uint) ([]dtos.AudienceLocationDTO, error) {
+	if businessID == 0 {
+		return nil, fmt.Errorf("business_id es obligatorio")
+	}
+
+	locations, err := uc.audience.ListAudienceLocations(ctx, businessID)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]dtos.AudienceLocationDTO, 0, len(locations))
+	for _, location := range locations {
+		out = append(out, dtos.AudienceLocationDTO{
+			City:    location.City,
+			State:   location.State,
+			Clients: location.Clients,
+		})
+	}
+
+	return out, nil
+}
+
 func buildAudienceParams(dto dtos.CreateCampaignDTO) entities.CampaignAudienceParams {
 	return entities.CampaignAudienceParams{
 		City:              strings.TrimSpace(dto.City),
+		State:             strings.TrimSpace(dto.State),
 		CreatedFromDays:   dto.CreatedFromDays,
 		OnlyWithoutOrder:  dto.OnlyWithoutOrder,
 		ClientIDs:         dto.ClientIDs,

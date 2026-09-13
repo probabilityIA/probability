@@ -30,6 +30,7 @@ type ICampaignSendRepository interface {
 type ICampaignAudienceQuerier interface {
 	FindCampaignCandidates(ctx context.Context, businessID uint, params entities.CampaignAudienceParams, audienceType string, limit int) ([]entities.CampaignCandidate, error)
 	CountCampaignAudience(ctx context.Context, businessID uint, params entities.CampaignAudienceParams, audienceType string) (total, optedOut, noPhone, reachable uint, err error)
+	ListAudienceLocations(ctx context.Context, businessID uint) ([]entities.AudienceLocation, error)
 }
 
 type ICampaignSenderQuerier interface {

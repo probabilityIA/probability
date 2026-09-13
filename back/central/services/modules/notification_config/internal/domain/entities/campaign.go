@@ -32,8 +32,15 @@ const (
 	CampaignMaxBatchSize    = 200
 )
 
+type AudienceLocation struct {
+	City    string
+	State   string
+	Clients uint
+}
+
 type CampaignAudienceParams struct {
 	City             string
+	State            string
 	CreatedFromDays  int
 	OnlyWithoutOrder bool
 	ClientIDs        []uint

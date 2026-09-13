@@ -189,6 +189,10 @@ func (m *audienceMock) FindCampaignCandidates(_ context.Context, _ uint, _ entit
 	return m.candidates, nil
 }
 
+func (m *audienceMock) ListAudienceLocations(_ context.Context, _ uint) ([]entities.AudienceLocation, error) {
+	return nil, nil
+}
+
 func (m *audienceMock) CountCampaignAudience(_ context.Context, _ uint, _ entities.CampaignAudienceParams, _ string) (uint, uint, uint, uint, error) {
 	if m.failCount {
 		return 0, 0, 0, 0, errBoom

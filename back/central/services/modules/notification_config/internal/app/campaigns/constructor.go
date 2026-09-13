@@ -20,6 +20,7 @@ type IUseCase interface {
 	List(ctx context.Context, businessID uint, status string, page, pageSize int) ([]entities.Campaign, int64, error)
 	Delete(ctx context.Context, id, businessID uint) error
 	PreviewAudience(ctx context.Context, dto dtos.CreateCampaignDTO) (*dtos.CampaignAudiencePreviewDTO, error)
+	ListAudienceLocations(ctx context.Context, businessID uint) ([]dtos.AudienceLocationDTO, error)
 	Launch(ctx context.Context, id, businessID uint) (*entities.Campaign, error)
 	Pause(ctx context.Context, id, businessID uint) (*entities.Campaign, error)
 	Resume(ctx context.Context, id, businessID uint) (*entities.Campaign, error)
