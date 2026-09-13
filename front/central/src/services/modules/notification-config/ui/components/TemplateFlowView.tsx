@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Modal } from "@/shared/ui/modal";
 import { useToast } from "@/shared/providers/toast-provider";
 import {
@@ -34,6 +34,8 @@ interface PendingResponse {
 const OPT_OUT_TEXT = "Dejar de recibir";
 const MAX_DEPTH = 10;
 const FLOW_BLOCKED_SOURCES = ["sender.name", "campaign.name"];
+const MIN_SCALE = 0.3;
+const MAX_SCALE = 2;
 
 const STATUS_STYLE: Record<string, string> = {
   approved: "bg-green-100 text-green-700",
@@ -68,6 +70,48 @@ export function TemplateFlowView({
   const [pending, setPending] = useState<PendingResponse | null>(null);
   const [picking, setPicking] = useState<PendingResponse | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const dragFrom = useRef<{ x: number; y: number; offsetX: number; offsetY: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const clampScale = (value: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+
+  const handleWheel = (event: React.WheelEvent) => {
+    if (event.deltaY === 0) return;
+    setScale((current) => clampScale(current - event.deltaY * 0.0015));
+  };
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    dragFrom.current = {
+      x: event.clientX,
+      y: event.clientY,
+      offsetX: offset.x,
+      offsetY: offset.y,
+    };
+    setDragging(true);
+  };
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    const from = dragFrom.current;
+    if (!from) return;
+    setOffset({
+      x: from.offsetX + (event.clientX - from.x),
+      y: from.offsetY + (event.clientY - from.y),
+    });
+  };
+
+  const stopDragging = () => {
+    dragFrom.current = null;
+    setDragging(false);
+  };
+
+  const resetView = () => {
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+  };
 
   const byID = new Map(templates.map((item) => [item.ID, item]));
 
@@ -338,11 +382,54 @@ export function TemplateFlowView({
           )}
         </div>
 
-        <div className="overflow-x-auto pb-2">
-          <div className="flex min-w-max flex-col gap-5">
-            {roots.map((root) => (
-              <div key={root.ID}>{renderNode(root, 1, [root.ID])}</div>
-            ))}
+        <div className="relative">
+          <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              onClick={() => setScale((current) => clampScale(current - 0.15))}
+              className="h-6 w-6 rounded text-sm font-semibold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              {"-"}
+            </button>
+            <span className="w-10 text-center text-[11px] text-gray-500">
+              {`${Math.round(scale * 100)}%`}
+            </span>
+            <button
+              type="button"
+              onClick={() => setScale((current) => clampScale(current + 0.15))}
+              className="h-6 w-6 rounded text-sm font-semibold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              {"+"}
+            </button>
+            <button
+              type="button"
+              onClick={resetView}
+              className="rounded px-1.5 text-[11px] font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              {"Centrar"}
+            </button>
+          </div>
+
+          <div
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={stopDragging}
+            onMouseLeave={stopDragging}
+            style={{ cursor: dragging ? "grabbing" : "grab" }}
+            className="h-[520px] overflow-hidden rounded-lg border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/30"
+          >
+            <div
+              style={{
+                transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+                transformOrigin: "top left",
+              }}
+              className="flex min-w-max flex-col gap-5 p-4"
+            >
+              {roots.map((root) => (
+                <div key={root.ID}>{renderNode(root, 1, [root.ID])}</div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

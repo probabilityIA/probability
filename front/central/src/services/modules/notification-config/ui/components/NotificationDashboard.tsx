@@ -7,7 +7,7 @@ import { WhatsAppConversations } from './WhatsAppConversations';
 import { IntegrationRulesForm, RULES_TABS_SLOT_ID } from './IntegrationRulesForm';
 import { CampaignsSection } from './CampaignsSection';
 import { TemplatesSection } from './TemplatesSection';
-import { FlowsSection } from './FlowsSection';
+import { FlowsSection, NOTIFICATIONS_ACTIONS_SLOT_ID } from './FlowsSection';
 import { NOTIFICATION_STATS_REFRESH_EVENT } from './NotificationSummaryKpis';
 import { NOTIFICATIONS_TABS_SLOT_ID } from '@/shared/ui/notifications-subnavbar';
 import { Modal } from '@/shared/ui/modal';
@@ -72,17 +72,21 @@ export function NotificationDashboard() {
         ))}
       </nav>
 
-      <button
-        type="button"
-        onClick={() => setIsRulesModalOpen(true)}
-        className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
-        style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}
-      >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-        </svg>
-        Reglas
-      </button>
+      <div className="flex items-center gap-2">
+        <span id={NOTIFICATIONS_ACTIONS_SLOT_ID} className="inline-flex items-center empty:hidden" />
+
+        <button
+          type="button"
+          onClick={() => setIsRulesModalOpen(true)}
+          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
+          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+          Reglas
+        </button>
+      </div>
     </div>
   );
 

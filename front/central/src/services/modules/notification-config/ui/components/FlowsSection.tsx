@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Modal } from "@/shared/ui/modal";
 import { useToast } from "@/shared/providers/toast-provider";
 import { Flow, TemplateFlow, WhatsappTemplate } from "../../domain/scheduled-types";
@@ -14,6 +15,8 @@ import {
   updateFlowAction,
 } from "../../infra/actions/whatsapp-templates";
 import { TemplateFlowView } from "./TemplateFlowView";
+
+export const NOTIFICATIONS_ACTIONS_SLOT_ID = "notifications-actions-slot";
 
 interface FlowsSectionProps {
   businessId?: number;
@@ -39,6 +42,11 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(0);
+  const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setActionsSlot(document.getElementById(NOTIFICATIONS_ACTIONS_SLOT_ID));
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -166,25 +174,21 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-baseline gap-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            {"Flujos de conversación"}
-          </h3>
-          <span className="text-xs text-gray-400">{`${flows.length}`}</span>
-        </div>
-        <button
-          type="button"
-          onClick={startCreate}
-          style={{
-            backgroundColor: "var(--color-primary)",
-            color: "var(--color-on-primary, white)",
-          }}
-          className="rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
-        >
-          {"Nuevo flujo"}
-        </button>
-      </div>
+      {actionsSlot &&
+        createPortal(
+          <button
+            type="button"
+            onClick={startCreate}
+            style={{
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-on-primary, white)",
+            }}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
+          >
+            {"Nuevo flujo"}
+          </button>,
+          actionsSlot,
+        )}
 
       {flows.length === 0 ? (
         <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-600">
