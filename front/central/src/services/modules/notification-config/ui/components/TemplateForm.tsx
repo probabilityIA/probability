@@ -140,12 +140,12 @@ function initialButtons(
     flows.map((flow) => [flow.ButtonText.trim().toLowerCase(), flow.TargetTemplateID]),
   );
 
-  return template.Buttons.filter(
-    (button) => button.text.trim().toLowerCase() !== OPT_OUT_TEXT.toLowerCase(),
-  ).map((button) => ({
-    text: button.text,
-    targetTemplateID: targetByText.get(button.text.trim().toLowerCase()) ?? 0,
-  }));
+  return template.Buttons.map((button) => (button.Text ?? "").trim())
+    .filter((text) => text && text.toLowerCase() !== OPT_OUT_TEXT.toLowerCase())
+    .map((text) => ({
+      text,
+      targetTemplateID: targetByText.get(text.toLowerCase()) ?? 0,
+    }));
 }
 
 function initialVariables(template?: WhatsappTemplate | null): VariableRow[] {

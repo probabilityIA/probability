@@ -21,9 +21,9 @@ export interface TemplateVariable {
 }
 
 export interface TemplateButton {
-  type: string;
-  text: string;
-  url: string;
+  Type: string;
+  Text: string;
+  URL: string;
 }
 
 export interface WhatsappTemplate {

@@ -26,9 +26,9 @@ const STATUS_STYLE: Record<string, string> = {
 
 function userButtons(template: WhatsappTemplate): string[] {
   if (!template.Buttons) return [];
-  return template.Buttons.filter(
-    (button) => button.text.trim().toLowerCase() !== OPT_OUT_TEXT.toLowerCase(),
-  ).map((button) => button.text.trim());
+  return template.Buttons.map((button) => (button.Text ?? "").trim()).filter(
+    (text) => text && text.toLowerCase() !== OPT_OUT_TEXT.toLowerCase(),
+  );
 }
 
 export function TemplateFlowView({ templates, flows }: TemplateFlowViewProps) {
