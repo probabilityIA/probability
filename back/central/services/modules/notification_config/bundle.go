@@ -117,6 +117,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 		campaignAudience,
 		campaignSender,
 		templateRepo,
+		flowGroupRepo,
+		templateFlowRepo,
 		campaignPublisher,
 		logger,
 	)

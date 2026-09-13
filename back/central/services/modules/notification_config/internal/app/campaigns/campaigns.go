@@ -258,12 +258,67 @@ func (uc *useCase) requireOwnNumber(ctx context.Context, businessID uint) error 
 	return nil
 }
 
+func (uc *useCase) flowRoot(ctx context.Context, businessID, flowID uint) (*uint, error) {
+	if uc.flows == nil {
+		return nil, fmt.Errorf("los flujos no estan disponibles")
+	}
+
+	flow, err := uc.flows.GetByID(ctx, flowID, businessID)
+	if err != nil {
+		return nil, err
+	}
+	if flow == nil {
+		return nil, fmt.Errorf("el flujo de la campana ya no existe")
+	}
+	if flow.RootTemplateID == nil || *flow.RootTemplateID == 0 {
+		return nil, fmt.Errorf("el flujo %q no tiene plantilla inicial", flow.Name)
+	}
+
+	return flow.RootTemplateID, nil
+}
+
+func (uc *useCase) assertFlowApproved(ctx context.Context, businessID, flowID uint) error {
+	if uc.steps == nil {
+		return nil
+	}
+
+	steps, err := uc.steps.ListByFlow(ctx, businessID, flowID)
+	if err != nil {
+		return err
+	}
+
+	for _, step := range steps {
+		if step.TargetStatus != entities.TemplateStatusApproved {
+			return fmt.Errorf(
+				"la respuesta %q del flujo esta en estado %s: esa rama no contestaria, esperá a que Meta la apruebe",
+				step.TargetName,
+				step.TargetStatus,
+			)
+		}
+	}
+
+	return nil
+}
+
 func (uc *useCase) resolveTemplate(ctx context.Context, campaign *entities.Campaign) (*entities.WhatsappTemplate, error) {
-	if campaign.WhatsappTemplateID == nil || *campaign.WhatsappTemplateID == 0 {
+	templateID := campaign.WhatsappTemplateID
+
+	if campaign.FlowID != nil && *campaign.FlowID > 0 {
+		root, err := uc.flowRoot(ctx, campaign.BusinessID, *campaign.FlowID)
+		if err != nil {
+			return nil, err
+		}
+		if err := uc.assertFlowApproved(ctx, campaign.BusinessID, *campaign.FlowID); err != nil {
+			return nil, err
+		}
+		templateID = root
+	}
+
+	if templateID == nil || *templateID == 0 {
 		return nil, fmt.Errorf("la campana no tiene plantilla asociada")
 	}
 
-	template, err := uc.templates.GetTemplateByID(ctx, *campaign.WhatsappTemplateID)
+	template, err := uc.templates.GetTemplateByID(ctx, *templateID)
 	if err != nil {
 		return nil, err
 	}
@@ -295,11 +350,21 @@ func (uc *useCase) build(ctx context.Context, dto dtos.CreateCampaignDTO) (*enti
 		return nil, fmt.Errorf("audiencia no soportada: %s", audienceType)
 	}
 
-	if dto.WhatsappTemplateID == nil || *dto.WhatsappTemplateID == 0 {
-		return nil, fmt.Errorf("la campana necesita una plantilla de WhatsApp")
+	templateID := dto.WhatsappTemplateID
+
+	if dto.FlowID != nil && *dto.FlowID > 0 {
+		root, err := uc.flowRoot(ctx, dto.BusinessID, *dto.FlowID)
+		if err != nil {
+			return nil, err
+		}
+		templateID = root
 	}
 
-	template, err := uc.templates.GetTemplateByID(ctx, *dto.WhatsappTemplateID)
+	if templateID == nil || *templateID == 0 {
+		return nil, fmt.Errorf("la campana necesita una plantilla o un flujo de WhatsApp")
+	}
+
+	template, err := uc.templates.GetTemplateByID(ctx, *templateID)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +417,8 @@ func (uc *useCase) build(ctx context.Context, dto dtos.CreateCampaignDTO) (*enti
 	return &entities.Campaign{
 		BusinessID:         dto.BusinessID,
 		IntegrationID:      dto.IntegrationID,
-		WhatsappTemplateID: dto.WhatsappTemplateID,
+		WhatsappTemplateID: templateID,
+		FlowID:             dto.FlowID,
 		Name:               name,
 		Description:        strings.TrimSpace(dto.Description),
 		SenderName:         strings.TrimSpace(dto.SenderName),

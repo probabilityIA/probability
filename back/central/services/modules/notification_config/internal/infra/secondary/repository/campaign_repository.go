@@ -47,6 +47,7 @@ func (r *campaignRepository) UpdateCampaign(ctx context.Context, campaign *entit
 		Updates(map[string]any{
 			"integration_id":       model.IntegrationID,
 			"whatsapp_template_id": model.WhatsappTemplateID,
+			"flow_id":              model.FlowID,
 			"name":                 model.Name,
 			"description":          model.Description,
 			"sender_name":          model.SenderName,
@@ -204,6 +205,7 @@ func campaignToModel(campaign *entities.Campaign) (*models.WhatsappCampaign, err
 		BusinessID:         campaign.BusinessID,
 		IntegrationID:      campaign.IntegrationID,
 		WhatsappTemplateID: campaign.WhatsappTemplateID,
+		FlowID:             campaign.FlowID,
 		Name:               campaign.Name,
 		Description:        campaign.Description,
 		SenderName:         campaign.SenderName,
@@ -231,6 +233,7 @@ func campaignToDomain(model *models.WhatsappCampaign) (*entities.Campaign, error
 		BusinessID:         model.BusinessID,
 		IntegrationID:      model.IntegrationID,
 		WhatsappTemplateID: model.WhatsappTemplateID,
+		FlowID:             model.FlowID,
 		Name:               model.Name,
 		Description:        model.Description,
 		SenderName:         model.SenderName,

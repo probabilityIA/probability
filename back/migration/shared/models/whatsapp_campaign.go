@@ -45,6 +45,9 @@ type WhatsappCampaign struct {
 	WhatsappTemplateID *uint            `gorm:"index"`
 	WhatsappTemplate   WhatsappTemplate `gorm:"foreignKey:WhatsappTemplateID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
+	FlowID *uint        `gorm:"index"`
+	Flow   WhatsappFlow `gorm:"foreignKey:FlowID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+
 	Name        string `gorm:"size:160;not null"`
 	Description string `gorm:"size:500"`
 

@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/shared/ui/modal";
-import { WhatsappTemplate } from "../../domain/scheduled-types";
+import { Flow, WhatsappTemplate } from "../../domain/scheduled-types";
 import { Campaign } from "../../domain/campaign-types";
 import { listCampaignsAction, deleteCampaignAction } from "../../infra/actions/campaigns";
 import {
   getTemplateVariablesAction,
+  listFlowsAction,
   listTemplatesAction,
 } from "../../infra/actions/whatsapp-templates";
 import { useToast } from "@/shared/providers/toast-provider";
@@ -33,6 +34,7 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
+  const [flows, setFlows] = useState<Flow[]>([]);
   const [variableCatalog, setVariableCatalog] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
@@ -43,16 +45,18 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [campaignsResult, templatesResult, catalogResult] = await Promise.all([
+    const [campaignsResult, templatesResult, catalogResult, flowsResult] = await Promise.all([
       listCampaignsAction(businessId, undefined, 1, 50),
-      listTemplatesAction(businessId, "campaign", undefined, 1, 100),
+      listTemplatesAction(businessId, "all", undefined, 1, 100),
       getTemplateVariablesAction(businessId),
+      listFlowsAction(businessId),
     ]);
     setLoading(false);
 
     if (campaignsResult.success) setCampaigns(campaignsResult.data);
     if (templatesResult.success) setTemplates(templatesResult.data);
     if (catalogResult.success) setVariableCatalog(catalogResult.data);
+    if (flowsResult.success) setFlows(flowsResult.data);
   }, [businessId]);
 
   useEffect(() => {
@@ -206,6 +210,7 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
           <CampaignForm
             businessId={businessId}
             templates={templates}
+            flows={flows}
             campaign={editing}
             onSuccess={() => {
               setIsFormOpen(false);

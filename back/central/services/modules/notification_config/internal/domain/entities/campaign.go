@@ -45,6 +45,7 @@ type Campaign struct {
 	IntegrationID *uint
 
 	WhatsappTemplateID *uint
+	FlowID             *uint
 
 	Name        string
 	Description string

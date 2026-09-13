@@ -35,6 +35,8 @@ type useCase struct {
 	audience  ports.ICampaignAudienceQuerier
 	sender    ports.ICampaignSenderQuerier
 	templates ports.ITemplateRepository
+	flows     ports.IFlowRepository
+	steps     ports.ITemplateFlowRepository
 	publisher ICampaignPublisher
 	logger    log.ILogger
 }
@@ -45,6 +47,8 @@ func New(
 	audience ports.ICampaignAudienceQuerier,
 	sender ports.ICampaignSenderQuerier,
 	templates ports.ITemplateRepository,
+	flows ports.IFlowRepository,
+	steps ports.ITemplateFlowRepository,
 	publisher ICampaignPublisher,
 	logger log.ILogger,
 ) IUseCase {
@@ -54,6 +58,8 @@ func New(
 		audience:  audience,
 		sender:    sender,
 		templates: templates,
+		flows:     flows,
+		steps:     steps,
 		publisher: publisher,
 		logger:    logger.WithModule("whatsapp_campaigns_usecase"),
 	}

@@ -5,7 +5,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/providers/toast-provider";
-import { WhatsappTemplate } from "../../domain/scheduled-types";
+import { Flow, WhatsappTemplate } from "../../domain/scheduled-types";
 import {
   Campaign,
   CampaignAudiencePreview,
@@ -23,6 +23,7 @@ import { CampaignRules } from "./CampaignRules";
 interface CampaignFormProps {
   businessId?: number;
   templates: WhatsappTemplate[];
+  flows?: Flow[];
   campaign?: Campaign | null;
   onSuccess: () => void;
   onCancel: () => void;
@@ -49,6 +50,7 @@ const TEMPLATE_STATUS_LABEL: Record<string, string> = {
 export function CampaignForm({
   businessId,
   templates,
+  flows = [],
   campaign,
   onSuccess,
   onCancel,
@@ -58,6 +60,8 @@ export function CampaignForm({
   const [name, setName] = useState(campaign?.Name || "");
   const [senderName, setSenderName] = useState(campaign?.SenderName || "");
   const [templateId, setTemplateId] = useState<number>(campaign?.WhatsappTemplateID || 0);
+  const [flowId, setFlowId] = useState<number>(campaign?.FlowID || 0);
+  const [mode, setMode] = useState<"template" | "flow">(campaign?.FlowID ? "flow" : "template");
   const [audienceType, setAudienceType] = useState<CampaignAudienceType>(
     campaign?.AudienceType || "filtered_clients",
   );
@@ -82,13 +86,22 @@ export function CampaignForm({
     [templates],
   );
 
+  const selectedFlow = useMemo(
+    () => flows.find((flow) => flow.ID === flowId) || null,
+    [flows, flowId],
+  );
+
+  const effectiveTemplateId =
+    mode === "flow" ? selectedFlow?.RootTemplateID ?? 0 : templateId;
+
   const selected = useMemo(
-    () => templates.find((template) => template.ID === templateId) || null,
-    [templates, templateId],
+    () => templates.find((template) => template.ID === effectiveTemplateId) || null,
+    [templates, effectiveTemplateId],
   );
 
   const buildDTO = (): CreateCampaignDTO => ({
-    whatsapp_template_id: templateId,
+    whatsapp_template_id: effectiveTemplateId,
+    flow_id: mode === "flow" ? flowId || null : null,
     name: name.trim(),
     sender_name: senderName.trim(),
     audience_type: audienceType,
@@ -106,7 +119,7 @@ export function CampaignForm({
     const loadPreview = async () => {
       setPreviewLoading(true);
       const result = await previewCampaignAudienceAction(
-        { ...buildDTO(), whatsapp_template_id: templateId || 0 },
+        { ...buildDTO(), whatsapp_template_id: effectiveTemplateId || 0 },
         businessId,
       );
       setPreviewLoading(false);
@@ -136,8 +149,16 @@ export function CampaignForm({
       showToast("Ponle un nombre a la campaña", "error");
       return;
     }
-    if (!templateId) {
+    if (mode === "flow" && !flowId) {
+      showToast("Elige el flujo que se va a enviar", "error");
+      return;
+    }
+    if (mode === "template" && !templateId) {
       showToast("Elige la plantilla que se va a enviar", "error");
+      return;
+    }
+    if (mode === "flow" && !effectiveTemplateId) {
+      showToast("Ese flujo no tiene plantilla inicial. Editalo y elegí una.", "error");
       return;
     }
 
@@ -206,7 +227,72 @@ export function CampaignForm({
               </div>
 
               <div>
-                <Label htmlFor="campaign-template">{"Plantilla"}</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="campaign-template">
+                    {mode === "flow" ? "Flujo" : "Plantilla"}
+                  </Label>
+                  <span className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setMode("template")}
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                        mode === "template"
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      {"Mensaje único"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode("flow")}
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                        mode === "flow"
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      {"Flujo"}
+                    </button>
+                  </span>
+                </div>
+
+                {mode === "flow" ? (
+                  <>
+                    <select
+                      id="campaign-template"
+                      value={flowId}
+                      onChange={(e) => setFlowId(Number(e.target.value))}
+                      className="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value={0}>{"Seleccionar..."}</option>
+                      {flows.map((flow) => (
+                        <option key={flow.ID} value={flow.ID}>
+                          {flow.Name}
+                        </option>
+                      ))}
+                    </select>
+                    {flows.length === 0 ? (
+                      <p className="mt-1 text-xs text-amber-600">
+                        {"Todavía no tienes flujos. Crea uno en la pestaña Flujos."}
+                      </p>
+                    ) : selectedFlow ? (
+                      <p className="mt-1 text-xs text-gray-500">
+                        {`Arranca con ${selectedFlow.RootTemplateName || "su plantilla inicial"} y sigue por los botones. ${selectedFlow.StepCount} paso(s).`}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-gray-500">
+                        {"El primer mensaje abre la conversación y los botones encadenan el resto."}
+                      </p>
+                    )}
+                    {selectedFlow && selectedFlow.PendingCount > 0 && (
+                      <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-500">
+                        {`${selectedFlow.PendingCount} respuesta(s) sin aprobar: no vas a poder lanzar hasta que Meta las apruebe.`}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
                 <select
                   id="campaign-template"
                   value={templateId}
@@ -243,6 +329,8 @@ export function CampaignForm({
                   <p className="mt-1 text-xs text-gray-500">
                     {"Meta tiene que haberla aprobado para poder lanzar."}
                   </p>
+                )}
+                  </>
                 )}
               </div>
             </div>

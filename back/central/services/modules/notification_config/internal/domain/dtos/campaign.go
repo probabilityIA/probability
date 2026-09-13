@@ -6,6 +6,7 @@ type CreateCampaignDTO struct {
 	BusinessID         uint   `json:"business_id"`
 	IntegrationID      *uint  `json:"integration_id"`
 	WhatsappTemplateID *uint  `json:"whatsapp_template_id"`
+	FlowID             *uint  `json:"flow_id"`
 	Name               string `json:"name"`
 	Description        string `json:"description"`
 	SenderName         string `json:"sender_name"`

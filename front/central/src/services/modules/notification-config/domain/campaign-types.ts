@@ -23,6 +23,7 @@ export interface Campaign {
   BusinessID: number;
   IntegrationID: number | null;
   WhatsappTemplateID: number | null;
+  FlowID: number | null;
   Name: string;
   Description: string;
   SenderName: string;
@@ -80,6 +81,7 @@ export interface CampaignAudiencePreview {
 
 export interface CreateCampaignDTO {
   whatsapp_template_id: number;
+  flow_id?: number | null;
   name: string;
   description?: string;
   sender_name?: string;

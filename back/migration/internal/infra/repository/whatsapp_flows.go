@@ -10,7 +10,11 @@ import (
 func (r *Repository) migrateWhatsappFlows(ctx context.Context) error {
 	db := r.db.Conn(ctx)
 
-	if err := db.AutoMigrate(&models.WhatsappFlow{}, &models.WhatsappTemplateFlow{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.WhatsappFlow{},
+		&models.WhatsappTemplateFlow{},
+		&models.WhatsappCampaign{},
+	); err != nil {
 		return fmt.Errorf("failed to auto-migrate whatsapp flows: %w", err)
 	}
 

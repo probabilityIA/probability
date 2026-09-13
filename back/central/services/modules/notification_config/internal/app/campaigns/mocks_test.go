@@ -297,7 +297,7 @@ func newHarness() *harness {
 		publisher: &publisherMock{},
 	}
 
-	h.uc = New(h.campaigns, h.sends, h.audience, h.sender, h.templates, h.publisher, log.New())
+	h.uc = New(h.campaigns, h.sends, h.audience, h.sender, h.templates, nil, nil, h.publisher, log.New())
 	h.impl = h.uc.(*useCase)
 
 	return h

@@ -318,6 +318,13 @@ func (u *usecases) getOrCreateInboundConversation(
 }
 
 func (u *usecases) processConversationFlow(ctx context.Context, conversation *entities.Conversation, userResponse string) error {
+	if conversation.CurrentState == entities.StateHandoffToHuman {
+		u.log.Debug(ctx).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - conversacion en manos de un humano: no aplica el flujo de pedidos")
+		return nil
+	}
+
 	u.log.Info(ctx).
 		Str("conversation_id", conversation.ID).
 		Str("current_state", string(conversation.CurrentState)).
