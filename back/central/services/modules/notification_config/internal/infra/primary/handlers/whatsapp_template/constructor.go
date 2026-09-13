@@ -17,7 +17,7 @@ type IHandler interface {
 	GetByID(c *gin.Context)
 	Update(c *gin.Context)
 	Delete(c *gin.Context)
-	Resubmit(c *gin.Context)
+	SubmitForReview(c *gin.Context)
 	Variables(c *gin.Context)
 	UploadMedia(c *gin.Context)
 }

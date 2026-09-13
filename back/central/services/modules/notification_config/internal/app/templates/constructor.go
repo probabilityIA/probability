@@ -19,7 +19,7 @@ type IUseCase interface {
 	GetByID(ctx context.Context, id, businessID uint) (*entities.WhatsappTemplate, error)
 	List(ctx context.Context, businessID uint, scope, status string, page, pageSize int) ([]entities.WhatsappTemplate, int64, error)
 	Delete(ctx context.Context, id, businessID uint) error
-	Resubmit(ctx context.Context, id, businessID uint) (*entities.WhatsappTemplate, error)
+	SubmitForReview(ctx context.Context, id, businessID uint) (*entities.WhatsappTemplate, error)
 	ApplySubmissionResult(ctx context.Context, result dtos.TemplateSubmissionResult) error
 	ApplyMetaStatus(ctx context.Context, wabaID, name, language, event, reason string) error
 	VariableCatalog() map[string]string

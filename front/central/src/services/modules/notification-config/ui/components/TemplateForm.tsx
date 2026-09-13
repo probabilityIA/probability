@@ -31,6 +31,10 @@ interface VariableRow {
   fallback: string;
 }
 
+interface ButtonRow {
+  text: string;
+}
+
 const PLACEHOLDER = /\{\{(\d+)\}\}/g;
 
 const SAMPLE_VALUES: Record<string, string> = {
@@ -58,6 +62,9 @@ const SOURCE_ORDER = [
 const MAX_BODY = 1024;
 const MAX_HEADER = 60;
 const MAX_FOOTER = 60;
+const MAX_BUTTONS = 3;
+const MAX_BUTTON_TEXT = 25;
+const OPT_OUT_TEXT = "Dejar de recibir";
 
 const inputCls =
   "w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-[var(--color-primary)] dark:bg-gray-800 dark:text-white";
@@ -118,6 +125,13 @@ function slugify(value: string): string {
     .slice(0, 60);
 }
 
+function initialButtons(template?: WhatsappTemplate | null): ButtonRow[] {
+  if (!template?.Buttons) return [];
+  return template.Buttons.filter(
+    (button) => button.text.trim().toLowerCase() !== OPT_OUT_TEXT.toLowerCase(),
+  ).map((button) => ({ text: button.text }));
+}
+
 function initialVariables(template?: WhatsappTemplate | null): VariableRow[] {
   if (!template?.Variables) return [];
   return template.Variables.map((variable) => ({
@@ -151,8 +165,10 @@ export function TemplateForm({
   const [bodyText, setBodyText] = useState(template?.BodyText ?? "");
   const [footerText, setFooterText] = useState(template?.FooterText ?? "");
   const [variables, setVariables] = useState<VariableRow[]>(initialVariables(template));
+  const [buttons, setButtons] = useState<ButtonRow[]>(initialButtons(template));
 
   const sources = orderSources(variableCatalog);
+  const maxButtons = category === "MARKETING" ? MAX_BUTTONS - 1 : MAX_BUTTONS;
 
   const placeholders = countPlaceholders(bodyText);
   const slug = slugify(displayName);
@@ -169,6 +185,11 @@ export function TemplateForm({
   const bodyPreview =
     bodyText.replace(PLACEHOLDER, (_, position: string) => sampleFor(Number(position))) ||
     "Tu mensaje aparecerá aquí…";
+
+  const previewButtons = [
+    ...buttons.map((item) => item.text.trim()).filter(Boolean),
+    ...(category === "MARKETING" ? [OPT_OUT_TEXT] : []),
+  ];
 
   const insertVariable = (source: string) => {
     const next = variables.length + 1;
@@ -235,6 +256,20 @@ export function TemplateForm({
       return;
     }
 
+    const filledButtons = buttons.map((item) => item.text.trim()).filter(Boolean);
+    const uniqueButtons = new Set(filledButtons.map((text) => text.toLowerCase()));
+
+    if (uniqueButtons.size !== filledButtons.length) {
+      showToast("Hay dos botones con el mismo texto", "error");
+      return;
+    }
+    if (filledButtons.some((text) => text.toLowerCase() === OPT_OUT_TEXT.toLowerCase())) {
+      showToast(`"${OPT_OUT_TEXT}" lo agrega Meta solo en marketing`, "error");
+      return;
+    }
+
+    const mappedButtons = filledButtons.map((text) => ({ type: "QUICK_REPLY", text }));
+
     const mappedVariables = variables.map((item) => ({
       position: item.position,
       source: item.source,
@@ -253,6 +288,7 @@ export function TemplateForm({
         body_text: bodyText.trim(),
         footer_text: footerText.trim(),
         variables: mappedVariables,
+        buttons: mappedButtons,
       };
 
       const result = await updateTemplateAction(template.ID, dto, businessId);
@@ -263,7 +299,12 @@ export function TemplateForm({
         return;
       }
 
-      showToast("Cambios enviados a Meta. La plantilla vuelve a revisión.", "success");
+      showToast(
+        template.Status === "approved"
+          ? "Cambios enviados a Meta. La plantilla vuelve a revisión."
+          : "Cambios guardados en el borrador.",
+        "success",
+      );
       onSuccess();
       return;
     }
@@ -279,6 +320,7 @@ export function TemplateForm({
       body_text: bodyText.trim(),
       footer_text: footerText.trim(),
       variables: mappedVariables,
+      buttons: mappedButtons,
     };
 
     const result = await createTemplateAction(dto, businessId);
@@ -289,7 +331,7 @@ export function TemplateForm({
       return;
     }
 
-    showToast("Plantilla enviada a Meta. Queda en revisión.", "success");
+    showToast("Plantilla guardada como borrador.", "success");
     onSuccess();
   };
 
@@ -356,7 +398,12 @@ export function TemplateForm({
                   <button
                     key={option.key}
                     type="button"
-                    onClick={() => setCategory(option.key)}
+                    onClick={() => {
+                      setCategory(option.key);
+                      const limit =
+                        option.key === "MARKETING" ? MAX_BUTTONS - 1 : MAX_BUTTONS;
+                      setButtons((current) => current.slice(0, limit));
+                    }}
                     style={active ? { color: "var(--color-primary)" } : {}}
                     className={`flex-1 rounded-[7px] px-3 py-2 text-[13px] transition-colors ${
                       active
@@ -556,6 +603,62 @@ export function TemplateForm({
               />
             </div>
 
+            <div className="mt-1 flex flex-col gap-1.5">
+              <div className="flex items-baseline justify-between">
+                <label className="text-[13px] font-semibold text-gray-900 dark:text-white">
+                  {"Botones de respuesta "}
+                  <span className="font-normal text-gray-400">{"(opcional)"}</span>
+                </label>
+                <span className="text-[12px] text-gray-400">
+                  {`${buttons.length}/${maxButtons}`}
+                </span>
+              </div>
+
+              {buttons.map((button, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    value={button.text}
+                    maxLength={MAX_BUTTON_TEXT}
+                    onChange={(e) =>
+                      setButtons(
+                        buttons.map((item, i) =>
+                          i === index ? { text: e.target.value } : item,
+                        ),
+                      )
+                    }
+                    placeholder={"Saber más"}
+                    className={`${inputCls} border-gray-300 py-1.5 text-[13px] dark:border-gray-600`}
+                  />
+                  <span className="w-10 shrink-0 text-right text-[11px] text-gray-400">
+                    {`${button.text.length}/${MAX_BUTTON_TEXT}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setButtons(buttons.filter((_, i) => i !== index))}
+                    className="text-[12px] text-red-500 hover:underline"
+                  >
+                    {"Quitar"}
+                  </button>
+                </div>
+              ))}
+
+              {buttons.length < maxButtons && (
+                <button
+                  type="button"
+                  onClick={() => setButtons([...buttons, { text: "" }])}
+                  className="self-start rounded-full border border-dashed border-gray-300 px-2.5 py-1 text-[12px] font-medium text-gray-800 transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] dark:border-gray-600 dark:text-gray-100"
+                >
+                  {"+ Agregar botón"}
+                </button>
+              )}
+
+              <span className="text-[12px] text-gray-400">
+                {category === "MARKETING"
+                  ? "En marketing solo caben 2: el botón de baja ocupa el tercero."
+                  : "Hasta 3 botones. El cliente responde tocándolos."}
+              </span>
+            </div>
+
             {mismatch && (
               <span className="text-[12px] text-red-600">
                 {`El cuerpo usa ${placeholders} variable(s) y hay ${variables.length} declarada(s). Meta la rechaza si no coinciden.`}
@@ -595,14 +698,15 @@ export function TemplateForm({
               <p className="mt-1 text-right text-[10px] text-[#667781]">
                 {new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
               </p>
-              {category === "MARKETING" && (
+              {previewButtons.map((text) => (
                 <div
+                  key={text}
                   className="mt-2 border-t pt-2 text-center text-[13px] font-medium text-[#00a5f4]"
                   style={{ borderColor: "rgba(17,27,33,0.12)" }}
                 >
-                  {"Dejar de recibir"}
+                  {text}
                 </div>
-              )}
+              ))}
             </div>
           </div>
           <span className="text-[12px] leading-snug text-gray-400">
@@ -613,7 +717,7 @@ export function TemplateForm({
 
       <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-7 py-4 dark:border-gray-700 dark:bg-gray-900/40">
         <span className="text-[13px] text-gray-400">
-          {"Meta puede tardar hasta 24 h en aprobarla"}
+          {"Queda como borrador. La enviás a revisión cuando el flujo esté listo."}
         </span>
         <div className="flex gap-2.5">
           <button
@@ -633,7 +737,7 @@ export function TemplateForm({
             }}
             className="rounded-lg px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-40"
           >
-            {loading ? "Enviando..." : isEdit ? "Guardar y enviar a Meta" : "Crear y enviar a Meta"}
+            {loading ? "Guardando..." : isEdit ? "Guardar cambios" : "Guardar borrador"}
           </button>
         </div>
       </div>

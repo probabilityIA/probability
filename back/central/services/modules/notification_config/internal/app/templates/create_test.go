@@ -98,14 +98,26 @@ func TestUtilityTemplateDoesNotGetOptOutButton(t *testing.T) {
 	}
 }
 
-func TestOptOutButtonIsNotDuplicated(t *testing.T) {
+func TestOptOutButtonCannotBeTypedByHand(t *testing.T) {
 	dto := baseDTO()
 	dto.Buttons = []dtos.TemplateButtonDTO{{Type: "QUICK_REPLY", Text: OptOutButtonText}}
 
-	template, err := buildTemplate(dto)
+	if _, err := buildTemplate(dto); err == nil {
+		t.Fatal("se esperaba error: el boton de baja lo agrega Meta solo")
+	}
+}
+
+func TestOptOutButtonIsNotDuplicated(t *testing.T) {
+	template, err := buildTemplate(baseDTO())
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
+
+	template.Buttons = append(template.Buttons, entities.TemplateButton{
+		Type: entities.TemplateButtonTypeQuickReply,
+		Text: OptOutButtonText,
+	})
+	template.Components = BuildMetaComponents(template)
 
 	count := 0
 	for _, component := range template.Components {
@@ -122,6 +134,71 @@ func TestOptOutButtonIsNotDuplicated(t *testing.T) {
 
 	if count != 1 {
 		t.Fatalf("se esperaba un solo boton de baja, hay %d", count)
+	}
+}
+
+func TestMarketingAllowsOnlyTwoUserButtons(t *testing.T) {
+	dto := baseDTO()
+	dto.Buttons = []dtos.TemplateButtonDTO{
+		{Text: "Saber mas"},
+		{Text: "Ver catalogo"},
+		{Text: "Hablar con asesor"},
+	}
+
+	if _, err := buildTemplate(dto); err == nil {
+		t.Fatal("se esperaba error: en marketing el boton de baja ocupa el tercer lugar")
+	}
+}
+
+func TestUtilityAllowsThreeButtons(t *testing.T) {
+	dto := baseDTO()
+	dto.Category = entities.TemplateCategoryUtility
+	dto.Buttons = []dtos.TemplateButtonDTO{
+		{Text: "Saber mas"},
+		{Text: "Ver catalogo"},
+		{Text: "Hablar con asesor"},
+	}
+
+	template, err := buildTemplate(dto)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if len(template.Buttons) != 3 {
+		t.Fatalf("se esperaban 3 botones, quedaron %d", len(template.Buttons))
+	}
+}
+
+func TestButtonTextHasLimit(t *testing.T) {
+	dto := baseDTO()
+	dto.Buttons = []dtos.TemplateButtonDTO{
+		{Text: "Un texto demasiado largo para un boton de whatsapp"},
+	}
+
+	if _, err := buildTemplate(dto); err == nil {
+		t.Fatal("se esperaba error por texto de boton muy largo")
+	}
+}
+
+func TestButtonTextsMustBeUnique(t *testing.T) {
+	dto := baseDTO()
+	dto.Buttons = []dtos.TemplateButtonDTO{
+		{Text: "Saber mas"},
+		{Text: "saber mas"},
+	}
+
+	if _, err := buildTemplate(dto); err == nil {
+		t.Fatal("se esperaba error por botones con el mismo texto")
+	}
+}
+
+func TestURLButtonNeedsURL(t *testing.T) {
+	dto := baseDTO()
+	dto.Buttons = []dtos.TemplateButtonDTO{
+		{Type: entities.TemplateButtonTypeURL, Text: "Ver catalogo"},
+	}
+
+	if _, err := buildTemplate(dto); err == nil {
+		t.Fatal("se esperaba error: un boton de enlace necesita URL")
 	}
 }
 

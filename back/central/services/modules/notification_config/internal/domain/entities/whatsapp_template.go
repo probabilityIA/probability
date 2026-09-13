@@ -29,10 +29,27 @@ type TemplateVariable struct {
 	Fallback string
 }
 
+const (
+	TemplateButtonTypeQuickReply = "QUICK_REPLY"
+	TemplateButtonTypeURL        = "URL"
+)
+
+const (
+	MaxTemplateButtons       = 3
+	MaxTemplateButtonTextLen = 25
+)
+
 type TemplateButton struct {
 	Type string
 	Text string
 	URL  string
+}
+
+func MaxUserButtons(category string) int {
+	if category == TemplateCategoryMarketing {
+		return MaxTemplateButtons - 1
+	}
+	return MaxTemplateButtons
 }
 
 const (

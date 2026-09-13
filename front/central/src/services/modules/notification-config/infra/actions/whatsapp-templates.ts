@@ -177,9 +177,9 @@ export async function deleteTemplateAction(id: number, businessId?: number) {
   }
 }
 
-export async function resubmitTemplateAction(id: number, businessId?: number) {
+export async function submitTemplateForReviewAction(id: number, businessId?: number) {
   try {
-    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-templates/${id}/resubmit`, businessId);
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-templates/${id}/submit`, businessId);
     const response = await fetch(url, {
       method: "POST",
       headers: await authHeaders(),
@@ -187,7 +187,7 @@ export async function resubmitTemplateAction(id: number, businessId?: number) {
 
     const body = await response.json();
     if (!response.ok) {
-      return { success: false, error: body.error || "Error reenviando la plantilla" };
+      return { success: false, error: body.error || "Error enviando la plantilla a revisión" };
     }
 
     revalidatePath("/notification-config");

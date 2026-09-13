@@ -97,14 +97,11 @@ func (uc *useCase) Update(ctx context.Context, dto dtos.UpdateTemplateDTO) (*ent
 		return nil, err
 	}
 
-	if rebuilt.MetaTemplateID == "" {
-		if err := uc.submit(ctx, rebuilt); err != nil {
-			return rebuilt, err
-		}
+	if current.Status != entities.TemplateStatusApproved {
 		return rebuilt, nil
 	}
 
-	if err := uc.submitEdit(ctx, rebuilt); err != nil {
+	if err := uc.sendToMeta(ctx, rebuilt); err != nil {
 		return rebuilt, err
 	}
 
@@ -140,7 +137,7 @@ func (uc *useCase) Delete(ctx context.Context, id, businessID uint) error {
 	return uc.repository.DeleteTemplate(ctx, id)
 }
 
-func (uc *useCase) Resubmit(ctx context.Context, id, businessID uint) (*entities.WhatsappTemplate, error) {
+func (uc *useCase) SubmitForReview(ctx context.Context, id, businessID uint) (*entities.WhatsappTemplate, error) {
 	template, err := uc.GetByID(ctx, id, businessID)
 	if err != nil {
 		return nil, err
@@ -155,7 +152,7 @@ func (uc *useCase) Resubmit(ctx context.Context, id, businessID uint) (*entities
 		return nil, fmt.Errorf("la plantilla ya esta aprobada")
 	}
 
-	if err := uc.submit(ctx, template); err != nil {
+	if err := uc.sendToMeta(ctx, template); err != nil {
 		return template, err
 	}
 

@@ -41,11 +41,14 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateTemplateDTO) (*ent
 		return nil, err
 	}
 
-	if err := uc.submit(ctx, template); err != nil {
-		return template, err
-	}
-
 	return template, nil
+}
+
+func (uc *useCase) sendToMeta(ctx context.Context, template *entities.WhatsappTemplate) error {
+	if template.MetaTemplateID != "" {
+		return uc.submitEdit(ctx, template)
+	}
+	return uc.submit(ctx, template)
 }
 
 func (uc *useCase) submitEdit(ctx context.Context, template *entities.WhatsappTemplate) error {
@@ -212,17 +215,9 @@ func buildTemplate(dto dtos.CreateTemplateDTO) (*entities.WhatsappTemplate, erro
 		return nil, err
 	}
 
-	buttons := make([]entities.TemplateButton, 0, len(dto.Buttons))
-	for _, button := range dto.Buttons {
-		text := strings.TrimSpace(button.Text)
-		if text == "" {
-			return nil, fmt.Errorf("un boton no puede ir sin texto")
-		}
-		buttons = append(buttons, entities.TemplateButton{
-			Type: strings.ToUpper(strings.TrimSpace(button.Type)),
-			Text: text,
-			URL:  strings.TrimSpace(button.URL),
-		})
+	buttons, err := buildButtonList(dto.Buttons, category)
+	if err != nil {
+		return nil, err
 	}
 
 	businessID := dto.BusinessID
@@ -253,6 +248,63 @@ func buildTemplate(dto dtos.CreateTemplateDTO) (*entities.WhatsappTemplate, erro
 	template.Components = BuildMetaComponents(template)
 
 	return template, nil
+}
+
+func buildButtonList(input []dtos.TemplateButtonDTO, category string) ([]entities.TemplateButton, error) {
+	limit := entities.MaxUserButtons(category)
+	if len(input) > limit {
+		if category == entities.TemplateCategoryMarketing {
+			return nil, fmt.Errorf("en marketing solo caben %d botones: el de baja ocupa el tercero", limit)
+		}
+		return nil, fmt.Errorf("una plantilla admite maximo %d botones", limit)
+	}
+
+	buttons := make([]entities.TemplateButton, 0, len(input))
+	seen := make(map[string]bool, len(input))
+
+	for _, button := range input {
+		text := strings.TrimSpace(button.Text)
+		if text == "" {
+			return nil, fmt.Errorf("un boton no puede ir sin texto")
+		}
+		if len(text) > entities.MaxTemplateButtonTextLen {
+			return nil, fmt.Errorf("el boton %q supera %d caracteres", text, entities.MaxTemplateButtonTextLen)
+		}
+
+		key := strings.ToLower(text)
+		if seen[key] {
+			return nil, fmt.Errorf("hay dos botones con el texto %q", text)
+		}
+		if strings.EqualFold(text, OptOutButtonText) {
+			return nil, fmt.Errorf("%q lo agrega Meta solo en las plantillas de marketing", OptOutButtonText)
+		}
+		seen[key] = true
+
+		buttonType := strings.ToUpper(strings.TrimSpace(button.Type))
+		if buttonType == "" {
+			buttonType = entities.TemplateButtonTypeQuickReply
+		}
+
+		url := strings.TrimSpace(button.URL)
+		switch buttonType {
+		case entities.TemplateButtonTypeQuickReply:
+			url = ""
+		case entities.TemplateButtonTypeURL:
+			if url == "" {
+				return nil, fmt.Errorf("el boton %q es de enlace y no tiene URL", text)
+			}
+		default:
+			return nil, fmt.Errorf("tipo de boton no soportado: %s", buttonType)
+		}
+
+		buttons = append(buttons, entities.TemplateButton{
+			Type: buttonType,
+			Text: text,
+			URL:  url,
+		})
+	}
+
+	return buttons, nil
 }
 
 func buildVariables(input []dtos.TemplateVariableDTO, body string) ([]entities.TemplateVariable, error) {

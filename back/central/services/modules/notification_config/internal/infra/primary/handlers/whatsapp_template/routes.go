@@ -16,6 +16,6 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		group.GET("/:id", h.GetByID)
 		group.PUT("/:id", h.Update)
 		group.DELETE("/:id", h.Delete)
-		group.POST("/:id/resubmit", h.Resubmit)
+		group.POST("/:id/submit", h.SubmitForReview)
 	}
 }

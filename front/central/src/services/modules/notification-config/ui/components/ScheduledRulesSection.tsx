@@ -12,6 +12,7 @@ import {
 import {
   getTemplateVariablesAction,
   listTemplatesAction,
+  submitTemplateForReviewAction,
 } from "../../infra/actions/whatsapp-templates";
 import {
   deleteScheduledRuleAction,
@@ -69,6 +70,16 @@ export function ScheduledRulesSection({
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleSubmitTemplate = async (template: WhatsappTemplate) => {
+    const result = await submitTemplateForReviewAction(template.ID, businessId);
+    if (!result.success) {
+      showToast(result.error || "No se pudo enviar la plantilla", "error");
+      return;
+    }
+    showToast("Plantilla enviada a revisión de Meta", "success");
+    load();
+  };
 
   const handleRunNow = async (rule: ScheduledRule) => {
     const result = await runScheduledRuleNowAction(rule.ID, businessId);
@@ -163,6 +174,15 @@ export function ScheduledRulesSection({
                   >
                     {"Editar"}
                   </button>
+                  {["draft", "rejected", "failed"].includes(template.Status) && (
+                    <button
+                      type="button"
+                      onClick={() => handleSubmitTemplate(template)}
+                      className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+                    >
+                      {"Enviar a revisión"}
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
