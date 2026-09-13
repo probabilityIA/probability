@@ -19,6 +19,9 @@ interface TemplateFlowViewProps {
   variableCatalog: Record<string, string>;
   flowId?: number;
   rootTemplateId?: number;
+  title?: string;
+  subtitle?: string;
+  actions?: React.ReactNode;
   onChanged: () => void;
 }
 
@@ -56,6 +59,9 @@ export function TemplateFlowView({
   variableCatalog,
   flowId,
   rootTemplateId,
+  title,
+  subtitle,
+  actions,
   onChanged,
 }: TemplateFlowViewProps) {
   const { showToast } = useToast();
@@ -276,8 +282,22 @@ export function TemplateFlowView({
     );
   };
 
-  const notApproved = participates.filter((item) => item.Status !== "approved").length;
-  const looseEnds = participates.reduce((total, item) => {
+  const reachable = new Set<number>();
+  const collect = (id: number, depth: number) => {
+    if (reachable.has(id) || depth > MAX_DEPTH) return;
+    reachable.add(id);
+    for (const step of childrenBySource.get(id) || []) {
+      collect(step.TargetTemplateID, depth + 1);
+    }
+  };
+  for (const root of roots) {
+    collect(root.ID, 1);
+  }
+
+  const scoped = templates.filter((item) => reachable.has(item.ID));
+
+  const notApproved = scoped.filter((item) => item.Status !== "approved").length;
+  const looseEnds = scoped.reduce((total, item) => {
     const children = childrenBySource.get(item.ID) || [];
     const linked = new Set(children.map((flow) => flow.ButtonText.trim().toLowerCase()));
     return total + userButtons(item).filter((text) => !linked.has(text.toLowerCase())).length;
@@ -285,9 +305,23 @@ export function TemplateFlowView({
 
   return (
     <div className="flex flex-col gap-4">
+      {title && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+              {title}
+            </p>
+            {subtitle && (
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+            )}
+          </div>
+          {actions && <div className="ml-auto flex items-center gap-3">{actions}</div>}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-4 px-1 text-[12px]">
         <span className="text-gray-500 dark:text-gray-400">
-          {`${participates.length} plantilla(s) en el flujo`}
+          {`${scoped.length} plantilla(s) en el flujo`}
         </span>
         {notApproved > 0 && (
           <span className="text-amber-600 dark:text-amber-400">

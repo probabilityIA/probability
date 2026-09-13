@@ -155,6 +155,44 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
 
   const selected = flows.find((flow) => flow.ID === selectedId) || null;
 
+  const flowActions = (flow: Flow) =>
+    confirmDelete ? (
+      <>
+        <span className="text-[12px] text-red-600">{"¿Eliminar el flujo?"}</span>
+        <button
+          type="button"
+          onClick={() => handleDelete(flow)}
+          className="text-xs font-medium text-red-600 hover:underline"
+        >
+          {"Sí"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(false)}
+          className="text-xs font-medium text-gray-500 hover:underline"
+        >
+          {"No"}
+        </button>
+      </>
+    ) : (
+      <>
+        <button
+          type="button"
+          onClick={() => startEdit(flow)}
+          className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+        >
+          {"Editar flujo"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          className="text-xs font-medium text-red-500 hover:underline"
+        >
+          {"Eliminar"}
+        </button>
+      </>
+    );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -210,58 +248,14 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
         </p>
       ) : selected ? (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 pb-3 dark:border-gray-700">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+          {selected.RootTemplateID ? null : (
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {selected.Name}
               </p>
-              {selected.Description && (
-                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                  {selected.Description}
-                </p>
-              )}
+              <div className="ml-auto flex items-center gap-3">{flowActions(selected)}</div>
             </div>
-
-            <div className="ml-auto flex items-center gap-3">
-              {confirmDelete ? (
-                <>
-                  <span className="text-[12px] text-red-600">{"¿Eliminar el flujo?"}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(selected)}
-                    className="text-xs font-medium text-red-600 hover:underline"
-                  >
-                    {"Sí"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(false)}
-                    className="text-xs font-medium text-gray-500 hover:underline"
-                  >
-                    {"No"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(selected)}
-                    className="text-xs font-medium text-[var(--color-primary)] hover:underline"
-                  >
-                    {"Editar flujo"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(true)}
-                    className="text-xs font-medium text-red-500 hover:underline"
-                  >
-                    {"Eliminar"}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
+          )}
           {selected.RootTemplateID ? (
             <TemplateFlowView
               templates={templates}
@@ -270,6 +264,9 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
               variableCatalog={catalog}
               flowId={selected.ID}
               rootTemplateId={selected.RootTemplateID}
+              title={selected.Name}
+              subtitle={selected.Description}
+              actions={flowActions(selected)}
               onChanged={() => {
                 loadTransitions(selected.ID);
                 load();
