@@ -22,6 +22,7 @@ import {
   runScheduledRuleNowAction,
 } from "../../infra/actions/scheduled-rules";
 import { TemplateForm } from "./TemplateForm";
+import { TemplateFlowView } from "./TemplateFlowView";
 import { ScheduledRuleForm } from "./ScheduledRuleForm";
 
 interface ScheduledRulesSectionProps {
@@ -53,6 +54,7 @@ export function ScheduledRulesSection({
   const [catalog, setCatalog] = useState<Record<string, string>>({});
   const [flows, setFlows] = useState<TemplateFlow[]>([]);
   const [editingTemplate, setEditingTemplate] = useState<WhatsappTemplate | null>(null);
+  const [isFlowOpen, setIsFlowOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -134,16 +136,25 @@ export function ScheduledRulesSection({
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold">{"Plantillas propias"}</h3>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => {
-              setEditingTemplate(null);
-              setPanel("template");
-            }}
-          >
-            {"Nueva plantilla"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsFlowOpen(true)}
+              className="rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200"
+            >
+              {"Ver flujo"}
+            </button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setEditingTemplate(null);
+                setPanel("template");
+              }}
+            >
+              {"Nueva plantilla"}
+            </Button>
+          </div>
         </div>
 
         {templates.length === 0 ? (
@@ -249,6 +260,23 @@ export function ScheduledRulesSection({
           </ul>
         )}
       </section>
+
+      <Modal
+        isOpen={isFlowOpen}
+        onClose={() => setIsFlowOpen(false)}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{"Flujo de plantillas"}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {"Qué responde cada botón"}
+            </span>
+          </span>
+        )}
+        size="4xl"
+        zIndex={60}
+      >
+        {isFlowOpen && <TemplateFlowView templates={templates} flows={flows} />}
+      </Modal>
 
       <Modal
         isOpen={panel === "template"}
