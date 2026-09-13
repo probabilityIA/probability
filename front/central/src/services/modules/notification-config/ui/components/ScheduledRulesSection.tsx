@@ -275,7 +275,15 @@ export function ScheduledRulesSection({
         size="4xl"
         zIndex={60}
       >
-        {isFlowOpen && <TemplateFlowView templates={templates} flows={flows} />}
+        {isFlowOpen && (
+          <TemplateFlowView
+            templates={templates}
+            flows={flows}
+            businessId={businessId}
+            variableCatalog={catalog}
+            onChanged={load}
+          />
+        )}
       </Modal>
 
       <Modal
