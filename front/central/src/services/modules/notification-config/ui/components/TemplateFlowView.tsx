@@ -32,7 +32,7 @@ interface PendingResponse {
 }
 
 const OPT_OUT_TEXT = "Dejar de recibir";
-const MAX_DEPTH = 4;
+const MAX_DEPTH = 10;
 const FLOW_BLOCKED_SOURCES = ["sender.name", "campaign.name"];
 
 const STATUS_STYLE: Record<string, string> = {

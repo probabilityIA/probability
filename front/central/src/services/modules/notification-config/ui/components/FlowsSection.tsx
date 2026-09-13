@@ -8,7 +8,7 @@ import {
   createFlowAction,
   deleteFlowAction,
   getTemplateVariablesAction,
-  listFlowTransitionsAction,
+  listAllTemplateFlowsAction,
   listFlowsAction,
   listTemplatesAction,
   updateFlowAction,
@@ -26,12 +26,10 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
   const { showToast } = useToast();
 
   const [flows, setFlows] = useState<Flow[]>([]);
+  const [transitions, setTransitions] = useState<TemplateFlow[]>([]);
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
   const [catalog, setCatalog] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-
-  const [selectedId, setSelectedId] = useState(0);
-  const [transitions, setTransitions] = useState<TemplateFlow[]>([]);
 
   const [editing, setEditing] = useState<Flow | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -40,50 +38,30 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
   const [rootTemplateID, setRootTemplateID] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
 
-    const [flowsResult, templatesResult, catalogResult] = await Promise.all([
+    const [flowsResult, transitionsResult, templatesResult, catalogResult] = await Promise.all([
       listFlowsAction(businessId),
+      listAllTemplateFlowsAction(businessId),
       listTemplatesAction(businessId, "all", undefined, 1, 100),
       getTemplateVariablesAction(businessId),
     ]);
 
-    if (flowsResult.success) {
-      setFlows(flowsResult.data);
-      setSelectedId((current) => {
-        if (current && flowsResult.data.some((flow) => flow.ID === current)) return current;
-        return flowsResult.data[0]?.ID ?? 0;
-      });
-    }
+    if (flowsResult.success) setFlows(flowsResult.data);
+    if (transitionsResult.success) setTransitions(transitionsResult.data);
     if (templatesResult.success) setTemplates(templatesResult.data);
     if (catalogResult.success) setCatalog(catalogResult.data);
 
-    setConfirmDelete(false);
+    setConfirmDelete(0);
     setLoading(false);
   }, [businessId]);
 
   useEffect(() => {
     load();
   }, [load]);
-
-  const loadTransitions = useCallback(
-    async (flowId: number) => {
-      if (!flowId) {
-        setTransitions([]);
-        return;
-      }
-      const result = await listFlowTransitionsAction(flowId, businessId);
-      if (result.success) setTransitions(result.data);
-    },
-    [businessId],
-  );
-
-  useEffect(() => {
-    loadTransitions(selectedId);
-  }, [selectedId, loadTransitions]);
 
   const startCreate = () => {
     setEditing(null);
@@ -129,10 +107,6 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
       return;
     }
 
-    if (!editing && result.data?.ID) {
-      setSelectedId(result.data.ID);
-    }
-
     setIsFormOpen(false);
     showToast(editing ? "Flujo actualizado" : "Flujo creado", "success");
     load();
@@ -144,7 +118,6 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
       showToast(result.error || "No se pudo eliminar el flujo", "error");
       return;
     }
-    setSelectedId(0);
     showToast("Flujo eliminado", "success");
     load();
   };
@@ -153,10 +126,8 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
     return <p className="py-10 text-center text-sm text-gray-500">{"Cargando..."}</p>;
   }
 
-  const selected = flows.find((flow) => flow.ID === selectedId) || null;
-
   const flowActions = (flow: Flow) =>
-    confirmDelete ? (
+    confirmDelete === flow.ID ? (
       <>
         <span className="text-[12px] text-red-600">{"¿Eliminar el flujo?"}</span>
         <button
@@ -168,7 +139,7 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
         </button>
         <button
           type="button"
-          onClick={() => setConfirmDelete(false)}
+          onClick={() => setConfirmDelete(0)}
           className="text-xs font-medium text-gray-500 hover:underline"
         >
           {"No"}
@@ -185,7 +156,7 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
         </button>
         <button
           type="button"
-          onClick={() => setConfirmDelete(true)}
+          onClick={() => setConfirmDelete(flow.ID)}
           className="text-xs font-medium text-red-500 hover:underline"
         >
           {"Eliminar"}
@@ -194,39 +165,14 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
     );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {flows.map((flow) => {
-            const active = flow.ID === selectedId;
-            return (
-              <button
-                key={flow.ID}
-                type="button"
-                onClick={() => setSelectedId(flow.ID)}
-                style={
-                  active
-                    ? {
-                        backgroundColor: "var(--color-primary)",
-                        color: "var(--color-on-primary, white)",
-                      }
-                    : {}
-                }
-                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  active
-                    ? ""
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
-                }`}
-              >
-                {flow.Name}
-                <span className={`text-[11px] ${active ? "opacity-80" : "text-gray-400"}`}>
-                  {`${flow.StepCount}`}
-                </span>
-              </button>
-            );
-          })}
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-3">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {"Flujos de conversación"}
+          </h3>
+          <span className="text-xs text-gray-400">{`${flows.length}`}</span>
         </div>
-
         <button
           type="button"
           onClick={startCreate}
@@ -246,46 +192,55 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
             "Todavía no hay flujos. Un flujo agrupa una plantilla inicial y las respuestas que se encadenan a sus botones."
           }
         </p>
-      ) : selected ? (
-        <div className="space-y-3">
-          {selected.RootTemplateID ? null : (
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                {selected.Name}
-              </p>
-              <div className="ml-auto flex items-center gap-3">{flowActions(selected)}</div>
-            </div>
-          )}
-          {selected.RootTemplateID ? (
+      ) : (
+        flows.map((flow) =>
+          flow.RootTemplateID ? (
             <TemplateFlowView
+              key={flow.ID}
               templates={templates}
-              flows={transitions}
+              flows={transitions.filter((item) => item.FlowID === flow.ID)}
               businessId={businessId}
               variableCatalog={catalog}
-              flowId={selected.ID}
-              rootTemplateId={selected.RootTemplateID}
-              actions={flowActions(selected)}
-              onChanged={() => {
-                loadTransitions(selected.ID);
-                load();
-              }}
+              flowId={flow.ID}
+              rootTemplateId={flow.RootTemplateID}
+              title={flow.Name}
+              subtitle={flow.Description}
+              actions={flowActions(flow)}
+              onChanged={load}
             />
           ) : (
-            <div className="rounded-md border border-dashed border-gray-300 p-6 text-center dark:border-gray-600">
+            <div
+              key={flow.ID}
+              className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+            >
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                    {flow.Name}
+                  </p>
+                  {flow.Description && (
+                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                      {flow.Description}
+                    </p>
+                  )}
+                </div>
+                <div className="ml-auto flex items-center gap-3">{flowActions(flow)}</div>
+              </div>
+
               <p className="text-sm text-gray-500">
                 {"Este flujo no tiene plantilla inicial: es el mensaje con el que arranca."}
               </p>
               <button
                 type="button"
-                onClick={() => startEdit(selected)}
-                className="mt-2 text-sm font-medium text-[var(--color-primary)] hover:underline"
+                onClick={() => startEdit(flow)}
+                className="mt-1 text-sm font-medium text-[var(--color-primary)] hover:underline"
               >
                 {"Elegir plantilla inicial"}
               </button>
             </div>
-          )}
-        </div>
-      ) : null}
+          ),
+        )
+      )}
 
       <Modal
         isOpen={isFormOpen}

@@ -111,7 +111,7 @@ func (uc *useCase) ReplaceFlows(ctx context.Context, dto dtos.ReplaceTemplateFlo
 		})
 	}
 
-	if err := uc.validateGraph(ctx, dto.BusinessID, dto.SourceTemplateID, flows); err != nil {
+	if err := uc.validateGraph(ctx, dto.BusinessID, dto.SourceTemplateID, dto.FlowID, flows); err != nil {
 		return nil, err
 	}
 
@@ -122,8 +122,20 @@ func (uc *useCase) ReplaceFlows(ctx context.Context, dto dtos.ReplaceTemplateFlo
 	return uc.flowRepository.ListBySource(ctx, dto.BusinessID, dto.SourceTemplateID)
 }
 
-func (uc *useCase) validateGraph(ctx context.Context, businessID, sourceTemplateID uint, incoming []entities.TemplateFlow) error {
-	existing, err := uc.flowRepository.ListByBusiness(ctx, businessID)
+func (uc *useCase) validateGraph(
+	ctx context.Context,
+	businessID, sourceTemplateID uint,
+	flowID *uint,
+	incoming []entities.TemplateFlow,
+) error {
+	var existing []entities.TemplateFlow
+	var err error
+
+	if flowID != nil && *flowID > 0 {
+		existing, err = uc.flowRepository.ListByFlow(ctx, businessID, *flowID)
+	} else {
+		existing, err = uc.flowRepository.ListByBusiness(ctx, businessID)
+	}
 	if err != nil {
 		return err
 	}

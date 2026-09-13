@@ -1,6 +1,6 @@
 package entities
 
-const MaxFlowDepth = 4
+const MaxFlowDepth = 10
 
 type TemplateFlow struct {
 	ID               uint
