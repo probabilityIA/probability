@@ -272,7 +272,7 @@ export function ScheduledRulesSection({
             </span>
           </span>
         )}
-        size="4xl"
+        size="6xl"
         zIndex={60}
       >
         {isFlowOpen && (
