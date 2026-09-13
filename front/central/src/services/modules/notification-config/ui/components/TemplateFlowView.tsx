@@ -420,7 +420,21 @@ export function TemplateFlowView({
           )}
         </div>
 
-        <div className={`relative ${collapsed ? "hidden" : ""}`}>
+        {!studio && (
+          <div
+            className={`max-h-[420px] overflow-auto rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/30 ${
+              collapsed ? "hidden" : ""
+            }`}
+          >
+            <div className="flex min-w-max flex-col gap-5">
+              {roots.map((root) => (
+                <div key={root.ID}>{renderNode(root, 1, [root.ID])}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className={`relative ${studio ? "" : "hidden"}`}>
           <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <button
               type="button"
@@ -462,11 +476,7 @@ export function TemplateFlowView({
               backgroundSize: studio ? `${24 * scale}px ${24 * scale}px` : undefined,
               backgroundPosition: studio ? `${offset.x}px ${offset.y}px` : undefined,
             }}
-            className={`overflow-hidden rounded-lg border border-gray-100 dark:border-gray-700 ${
-              studio
-                ? "h-[calc(90vh-230px)] bg-[#f4f1ec] dark:bg-gray-900"
-                : "h-[420px] bg-gray-50 dark:bg-gray-900/30"
-            }`}
+            className="h-[calc(90vh-230px)] overflow-hidden rounded-lg border border-gray-100 bg-[#f4f1ec] dark:border-gray-700 dark:bg-gray-900"
           >
             <div
               style={{
