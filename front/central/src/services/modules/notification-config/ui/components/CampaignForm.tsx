@@ -6,6 +6,8 @@ import { Label } from "@/shared/ui/label";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/providers/toast-provider";
 import { Flow, WhatsappTemplate } from "../../domain/scheduled-types";
+import { CustomerInfo } from "@/services/modules/customers/domain/types";
+import { getCustomersAction } from "@/services/modules/customers/infra/actions";
 import {
   Campaign,
   CampaignAudiencePreview,
@@ -65,12 +67,11 @@ export function CampaignForm({
   const [audienceType, setAudienceType] = useState<CampaignAudienceType>(
     campaign?.AudienceType || "filtered_clients",
   );
-  const [city, setCity] = useState(campaign?.AudienceParams?.City || "");
-  const [createdFromDays, setCreatedFromDays] = useState(
-    campaign?.AudienceParams?.CreatedFromDays || 0,
-  );
-  const [onlyWithoutOrder, setOnlyWithoutOrder] = useState(
-    campaign?.AudienceParams?.OnlyWithoutOrder || false,
+  const [customers, setCustomers] = useState<CustomerInfo[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<number[]>(
+    campaign?.AudienceParams?.ClientIDs || [],
   );
   const [windowStart, setWindowStart] = useState(campaign?.SendWindowStart || "09:00");
   const [windowEnd, setWindowEnd] = useState(campaign?.SendWindowEnd || "19:00");
@@ -105,9 +106,7 @@ export function CampaignForm({
     name: name.trim(),
     sender_name: senderName.trim(),
     audience_type: audienceType,
-    city: audienceType === "filtered_clients" ? city.trim() : "",
-    created_from_days: audienceType === "filtered_clients" ? createdFromDays : 0,
-    only_without_order: audienceType === "filtered_clients" ? onlyWithoutOrder : false,
+    client_ids: audienceType === "filtered_clients" ? selectedIds : [],
     send_window_start: windowStart,
     send_window_end: windowEnd,
     daily_send_cap: dailyCap,
@@ -130,7 +129,28 @@ export function CampaignForm({
 
     const timer = setTimeout(loadPreview, 400);
     return () => clearTimeout(timer);
-  }, [audienceType, city, createdFromDays, onlyWithoutOrder, businessId]);
+  }, [audienceType, selectedIds, businessId]);
+
+  useEffect(() => {
+    const loadCustomers = async () => {
+      setCustomersLoading(true);
+      try {
+        const result = await getCustomersAction({
+          business_id: businessId,
+          page: 1,
+          page_size: 200,
+          search: customerSearch.trim() || undefined,
+        });
+        setCustomers(result.data || []);
+      } catch {
+        setCustomers([]);
+      }
+      setCustomersLoading(false);
+    };
+
+    const timer = setTimeout(loadCustomers, 350);
+    return () => clearTimeout(timer);
+  }, [businessId, customerSearch]);
 
   const sampleValues: Record<number, string> = {};
   for (const variable of selected?.Variables || []) {
@@ -362,42 +382,72 @@ export function CampaignForm({
                       : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                   }`}
                 >
-                  {"Filtrar"}
+                  {"Elegir"}
                 </button>
               </span>,
             )}
 
             {audienceType === "filtered_clients" ? (
-              <div className="grid items-end gap-4 md:grid-cols-3">
-                <div>
-                  <Label htmlFor="campaign-city">{"Ciudad"}</Label>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-3">
                   <Input
-                    id="campaign-city"
-                    className="mt-1.5"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder={"Bogot\u00e1"}
+                    className="max-w-xs"
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder={"Buscar cliente por nombre o celular"}
                   />
+                  <span className="text-xs text-gray-500">
+                    {`${selectedIds.length} elegido(s)`}
+                  </span>
+                  {selectedIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds([])}
+                      className="text-xs font-medium text-red-500 hover:underline"
+                    >
+                      {"Quitar todos"}
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <Label htmlFor="campaign-days">{"Cargados hace (d\u00edas)"}</Label>
-                  <Input
-                    id="campaign-days"
-                    className="mt-1.5"
-                    type="number"
-                    min={0}
-                    value={createdFromDays}
-                    onChange={(e) => setCreatedFromDays(Number(e.target.value))}
-                  />
+
+                <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                  {customersLoading ? (
+                    <p className="p-4 text-center text-xs text-gray-400">{"Cargando..."}</p>
+                  ) : customers.length === 0 ? (
+                    <p className="p-4 text-center text-xs text-gray-400">
+                      {"No hay clientes cargados que coincidan."}
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {customers.map((customer) => {
+                        const checked = selectedIds.includes(customer.id);
+                        return (
+                          <li key={customer.id}>
+                            <label className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() =>
+                                  setSelectedIds((current) =>
+                                    checked
+                                      ? current.filter((id) => id !== customer.id)
+                                      : [...current, customer.id],
+                                  )
+                                }
+                              />
+                              <span className="min-w-0 flex-1 truncate text-xs text-gray-800 dark:text-gray-100">
+                                {customer.name}
+                              </span>
+                              <span className="shrink-0 text-[11px] text-gray-400">
+                                {customer.phone}
+                              </span>
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
-                <label className="flex items-center gap-2 pb-3 text-xs text-gray-600 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    checked={onlyWithoutOrder}
-                    onChange={(e) => setOnlyWithoutOrder(e.target.checked)}
-                  />
-                  {"Solo los que todav\u00eda no me han comprado"}
-                </label>
               </div>
             ) : (
               <p className="text-xs text-gray-500">
