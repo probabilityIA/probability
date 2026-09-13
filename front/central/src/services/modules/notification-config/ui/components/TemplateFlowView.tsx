@@ -5,6 +5,7 @@ import {
   TemplateFlow,
   WhatsappTemplate,
 } from "../../domain/scheduled-types";
+import { TemplateBubble, fillPlaceholders } from "./TemplateBubble";
 
 interface TemplateFlowViewProps {
   templates: WhatsappTemplate[];
@@ -94,6 +95,19 @@ export function TemplateFlowView({ templates, flows }: TemplateFlowViewProps) {
             </span>
           )}
         </div>
+
+        <TemplateBubble
+          headerType={template.HeaderType}
+          headerMediaURL={template.HeaderMediaURL}
+          headerText={template.HeaderText}
+          bodyText={fillPlaceholders(template.BodyText, template.Variables)}
+          footerText={template.FooterText}
+          buttons={
+            template.Category === "MARKETING" ? [...buttons, OPT_OUT_TEXT] : buttons
+          }
+          className="w-full max-w-[220px]"
+          compact
+        />
 
         {buttons.length === 0 ? (
           <span className="pl-3 text-[12px] text-gray-400">{"Sin botones"}</span>

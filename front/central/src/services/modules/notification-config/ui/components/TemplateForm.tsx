@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Modal } from "@/shared/ui/modal";
+import { SAMPLE_VALUES, TemplateBubble } from "./TemplateBubble";
 import { useToast } from "@/shared/providers/toast-provider";
 import {
   CreateTemplateDTO,
@@ -43,17 +44,6 @@ interface ButtonRow {
 }
 
 const PLACEHOLDER = /\{\{(\d+)\}\}/g;
-
-const SAMPLE_VALUES: Record<string, string> = {
-  "customer.first_name": "Ana",
-  "customer.full_name": "Ana Ramirez",
-  "customer.days_inactive": "45",
-  "customer.last_product": "Camiseta blanca",
-  "customer.total_orders": "3",
-  "business.name": "Mi Tienda",
-  "sender.name": "Tu nombre",
-  "campaign.name": "Ruta 30",
-};
 
 const SOURCE_ORDER = [
   "customer.first_name",
@@ -795,39 +785,14 @@ export function TemplateForm({
             <span className="self-center rounded-full bg-gray-50 px-2.5 py-0.5 text-[11px] text-gray-500 dark:bg-gray-800">
               {"Hoy"}
             </span>
-            <div
-              className="max-w-[85%] self-start rounded-[10px] rounded-bl-[3px] p-3 shadow-sm"
-              style={{ backgroundColor: "#dcf8c6" }}
-            >
-              {headerType === "IMAGE" && headerMediaURL && (
-                <img
-                  src={headerMediaURL}
-                  alt="Encabezado"
-                  className="mb-2 max-h-40 w-full rounded-[6px] object-cover"
-                />
-              )}
-              {headerType === "TEXT" && headerText.trim() && (
-                <p className="mb-1 text-sm font-bold text-[#111b21]">{headerText}</p>
-              )}
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#111b21]">
-                {bodyPreview}
-              </p>
-              {footerText.trim() && (
-                <p className="mt-1 text-[12px] text-[#667781]">{footerText}</p>
-              )}
-              <p className="mt-1 text-right text-[10px] text-[#667781]">
-                {new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
-              </p>
-              {previewButtons.map((text) => (
-                <div
-                  key={text}
-                  className="mt-2 border-t pt-2 text-center text-[13px] font-medium text-[#00a5f4]"
-                  style={{ borderColor: "rgba(17,27,33,0.12)" }}
-                >
-                  {text}
-                </div>
-              ))}
-            </div>
+            <TemplateBubble
+              headerType={headerType}
+              headerMediaURL={headerMediaURL}
+              headerText={headerText}
+              bodyText={bodyPreview}
+              footerText={footerText}
+              buttons={previewButtons}
+            />
           </div>
           <span className="text-[12px] leading-snug text-gray-400">
             {"Los datos son de ejemplo. En el envío real se reemplazan por los del cliente."}
