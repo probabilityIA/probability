@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DayPicker } from "react-day-picker";
+import { es } from "date-fns/locale";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Button } from "@/shared/ui/button";
@@ -13,6 +15,8 @@ import {
   CampaignAudienceLocation,
   CampaignAudiencePreview,
   CampaignAudienceType,
+  CampaignDeliveryMode,
+  CampaignScheduleMode,
   CreateCampaignDTO,
 } from "../../domain/campaign-types";
 import {
@@ -49,6 +53,14 @@ const localDate = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
 const localTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+const parseLocalDate = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, (month || 1) - 1, day || 1);
+};
+
+const shortDate = (value: string) =>
+  parseLocalDate(value).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
 
 type FilterKey =
   | "state"
@@ -162,6 +174,21 @@ export function CampaignForm({
   const [startDate, setStartDate] = useState(scheduledAt ? localDate(scheduledAt) : "");
   const [startTime, setStartTime] = useState(scheduledAt ? localTime(scheduledAt) : "09:00");
 
+  const [scheduleMode, setScheduleMode] = useState<CampaignScheduleMode>(
+    campaign?.ScheduleMode || "daily",
+  );
+  const [intervalDays, setIntervalDays] = useState(campaign?.IntervalDays || 7);
+  const [sendDates, setSendDates] = useState<string[]>(campaign?.SendDates || []);
+  const [deliveryMode, setDeliveryMode] = useState<CampaignDeliveryMode>(
+    campaign?.DeliveryMode || "distribute",
+  );
+  const [limitOccurrences, setLimitOccurrences] = useState((campaign?.Occurrences || 0) > 0);
+  const [occurrences, setOccurrences] = useState(campaign?.Occurrences || 4);
+
+  const needsOccurrences = scheduleMode !== "dates" && deliveryMode === "repeat";
+  const usesOccurrences = scheduleMode !== "dates" && (limitOccurrences || needsOccurrences);
+  const sortedDates = useMemo(() => [...sendDates].sort(), [sendDates]);
+
   const [locations, setLocations] = useState<CampaignAudienceLocation[]>([]);
 
   const stateOptions = useMemo(() => {
@@ -222,8 +249,13 @@ export function CampaignForm({
     send_window_end: windowEnd,
     daily_send_cap: dailyCap,
     batch_size: batchSize,
+    schedule_mode: scheduleMode,
+    interval_days: scheduleMode === "interval" ? intervalDays : 0,
+    send_dates: scheduleMode === "dates" ? sortedDates : [],
+    delivery_mode: deliveryMode,
+    occurrences: usesOccurrences ? occurrences : 0,
     scheduled_at:
-      startMode === "scheduled" && startDate
+      scheduleMode !== "dates" && startMode === "scheduled" && startDate
         ? new Date(`${startDate}T${startTime || "00:00"}`).toISOString()
         : null,
     variable_values: senderName.trim() ? { "sender.name": senderName.trim() } : undefined,
@@ -296,7 +328,19 @@ export function CampaignForm({
       showToast("Elige el flujo que se va a enviar", "error");
       return;
     }
-    if (startMode === "scheduled" && !startDate) {
+    if (scheduleMode === "dates" && sendDates.length === 0) {
+      showToast("Marca en el calendario los d\u00edas en que sale la campa\u00f1a", "error");
+      return;
+    }
+    if (scheduleMode === "interval" && (!intervalDays || intervalDays < 1)) {
+      showToast("Indica cada cu\u00e1ntos d\u00edas se env\u00eda", "error");
+      return;
+    }
+    if (usesOccurrences && (!occurrences || occurrences < 1)) {
+      showToast("Indica cu\u00e1ntas veces se env\u00eda", "error");
+      return;
+    }
+    if (scheduleMode !== "dates" && startMode === "scheduled" && !startDate) {
       showToast("Eleg\u00ed la fecha en la que arranca la campa\u00f1a", "error");
       return;
     }
@@ -637,8 +681,8 @@ export function CampaignForm({
             {step(
               "3",
               "Cu\u00e1ndo sale",
-              "Fecha de arranque y ritmo de las tandas",
-              <span className="flex gap-1.5">
+              "D\u00edas de env\u00edo, franja y ritmo de las tandas",
+              scheduleMode === "dates" ? undefined : <span className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={() => setStartMode("now")}
@@ -664,7 +708,173 @@ export function CampaignForm({
               </span>,
             )}
 
-            {startMode === "scheduled" ? (
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {([
+                { key: "daily" as const, label: "Todos los d\u00edas" },
+                { key: "interval" as const, label: "Cada cierto tiempo" },
+                { key: "dates" as const, label: "Fechas del calendario" },
+              ]).map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setScheduleMode(option.key)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                    scheduleMode === option.key
+                      ? "bg-[var(--color-primary)] text-white"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {scheduleMode === "interval" && (
+              <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                {"Sale cada"}
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={intervalDays}
+                  onChange={(e) => setIntervalDays(Number(e.target.value))}
+                  className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
+                />
+                {"d\u00edas, contando desde el d\u00eda de arranque. Con 7 es una vez por semana."}
+              </div>
+            )}
+
+            {scheduleMode === "dates" && (
+              <div className="mb-4 grid gap-4 md:grid-cols-[auto_minmax(0,1fr)]">
+                <div className="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                  <DayPicker
+                    mode="multiple"
+                    locale={es}
+                    selected={sendDates.map(parseLocalDate)}
+                    onSelect={(dates) => setSendDates((dates || []).map(localDate))}
+                    disabled={{ before: new Date() }}
+                    classNames={{
+                      months: "relative",
+                      month_caption: "mb-2 flex h-8 items-center justify-center text-sm font-semibold capitalize text-gray-900 dark:text-gray-100",
+                      nav: "absolute inset-x-0 top-0 flex h-8 items-center justify-between",
+                      button_previous: "rounded p-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30 dark:text-gray-300 dark:hover:bg-gray-700",
+                      button_next: "rounded p-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30 dark:text-gray-300 dark:hover:bg-gray-700",
+                      chevron: "h-4 w-4 fill-current",
+                      weekday: "w-9 pb-1 text-[10px] font-semibold uppercase text-gray-400",
+                      day: "p-0.5 text-center",
+                      day_button: "h-8 w-8 rounded-md text-xs text-gray-800 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-700",
+                      selected: "[&>button]:bg-[var(--color-primary)] [&>button]:font-semibold [&>button]:text-white",
+                      today: "[&>button]:ring-1 [&>button]:ring-[var(--color-primary)]",
+                      disabled: "[&>button]:cursor-not-allowed [&>button]:opacity-30",
+                      outside: "opacity-40",
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
+                    {sortedDates.length === 0
+                      ? "Toca los d\u00edas en que debe salir. Solo se env\u00eda en esas fechas."
+                      : `${sortedDates.length} fecha(s) elegida(s):`}
+                  </p>
+                  {sortedDates.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {sortedDates.map((date) => (
+                        <span
+                          key={date}
+                          className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                        >
+                          {shortDate(date)}
+                          <button
+                            type="button"
+                            onClick={() => setSendDates((current) => current.filter((item) => item !== date))}
+                            className="text-gray-400 hover:text-red-500"
+                            aria-label={`Quitar ${date}`}
+                          >
+                            {"\u00d7"}
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="mt-3 text-[11px] text-gray-400">
+                    {"Cada fecha arranca dentro de la franja horaria que elijas abajo."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4 grid gap-2 md:grid-cols-2">
+              {([
+                {
+                  key: "distribute" as const,
+                  title: "Repartir la audiencia",
+                  note: "Cada d\u00eda de env\u00edo sigue con los siguientes de la lista, hasta el m\u00e1ximo diario. A cada cliente le llega una sola vez.",
+                },
+                {
+                  key: "repeat" as const,
+                  title: "Repetir a toda la audiencia",
+                  note: "Cada d\u00eda de env\u00edo vuelve a escribirle a todos, hasta el m\u00e1ximo diario. Si no alcanzan ese d\u00eda, se omiten en esa vuelta.",
+                },
+              ]).map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setDeliveryMode(option.key)}
+                  className={`rounded-lg border p-3 text-left ${
+                    deliveryMode === option.key
+                      ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+                      : "border-gray-200 dark:border-gray-700"
+                  }`}
+                >
+                  <span className="block text-xs font-semibold text-gray-900 dark:text-gray-100">
+                    {option.title}
+                  </span>
+                  <span className="mt-1 block text-[11px] text-gray-500">{option.note}</span>
+                </button>
+              ))}
+            </div>
+
+            {deliveryMode === "repeat" && capEnabled && (
+              <p className="mb-4 rounded-lg bg-amber-50 p-2 text-[11px] text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                {"Ojo: el tope de frecuencia del paso 2 tambi\u00e9n cuenta los env\u00edos de esta campa\u00f1a y puede dejar por fuera a quien recibi\u00f3 la vuelta anterior."}
+              </p>
+            )}
+
+            {scheduleMode !== "dates" && (
+              <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                {needsOccurrences ? (
+                  <span>{"Se env\u00eda"}</span>
+                ) : (
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={limitOccurrences}
+                      onChange={(e) => setLimitOccurrences(e.target.checked)}
+                    />
+                    {"Terminar despu\u00e9s de"}
+                  </label>
+                )}
+                {usesOccurrences ? (
+                  <>
+                    <input
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={occurrences}
+                      onChange={(e) => setOccurrences(Number(e.target.value))}
+                      className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
+                    />
+                    {scheduleMode === "daily" ? "d\u00edas de env\u00edo" : "env\u00edos"}
+                  </>
+                ) : (
+                  <span className="text-gray-400">
+                    {"(si no, sigue hasta que le llegue a toda la audiencia)"}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {scheduleMode === "dates" ? null : startMode === "scheduled" ? (
               <div className="mb-4 grid gap-4 md:grid-cols-4">
                 <div>
                   <Label htmlFor="campaign-start-date">{"Fecha de inicio"}</Label>

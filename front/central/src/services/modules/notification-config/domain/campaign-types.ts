@@ -8,6 +8,10 @@ export type CampaignStatus =
 
 export type CampaignAudienceType = "all_clients" | "filtered_clients";
 
+export type CampaignScheduleMode = "daily" | "interval" | "dates";
+
+export type CampaignDeliveryMode = "distribute" | "repeat";
+
 export type CampaignSendStatus =
   | "pending"
   | "queued"
@@ -48,6 +52,12 @@ export interface Campaign {
   ScheduledAt: string | null;
   DailySendCap: number;
   BatchSize: number;
+  ScheduleMode: CampaignScheduleMode;
+  IntervalDays: number;
+  SendDates: string[] | null;
+  DeliveryMode: CampaignDeliveryMode;
+  Occurrences: number;
+  CurrentRound: number;
   Status: CampaignStatus;
   AudienceCount: number;
   QueuedCount: number;
@@ -65,6 +75,7 @@ export interface Campaign {
 export interface CampaignSend {
   ID: number;
   CampaignID: number;
+  Round: number;
   ClientID: number;
   Phone: string;
   ClientName: string;
@@ -125,4 +136,9 @@ export interface CreateCampaignDTO {
   scheduled_at?: string | null;
   daily_send_cap?: number;
   batch_size?: number;
+  schedule_mode?: CampaignScheduleMode;
+  interval_days?: number;
+  send_dates?: string[];
+  delivery_mode?: CampaignDeliveryMode;
+  occurrences?: number;
 }

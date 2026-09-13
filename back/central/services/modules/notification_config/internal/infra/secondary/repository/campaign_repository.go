@@ -60,6 +60,12 @@ func (r *campaignRepository) UpdateCampaign(ctx context.Context, campaign *entit
 			"scheduled_at":         model.ScheduledAt,
 			"daily_send_cap":       model.DailySendCap,
 			"batch_size":           model.BatchSize,
+			"schedule_mode":        model.ScheduleMode,
+			"interval_days":        model.IntervalDays,
+			"send_dates":           model.SendDates,
+			"delivery_mode":        model.DeliveryMode,
+			"occurrences":          model.Occurrences,
+			"current_round":        model.CurrentRound,
 			"status":               model.Status,
 			"audience_count":       model.AudienceCount,
 			"started_at":           model.StartedAt,
@@ -201,6 +207,15 @@ func campaignToModel(campaign *entities.Campaign) (*models.WhatsappCampaign, err
 		return nil, err
 	}
 
+	dates := campaign.SendDates
+	if dates == nil {
+		dates = []string{}
+	}
+	sendDates, err := json.Marshal(dates)
+	if err != nil {
+		return nil, err
+	}
+
 	return &models.WhatsappCampaign{
 		BusinessID:         campaign.BusinessID,
 		IntegrationID:      campaign.IntegrationID,
@@ -218,6 +233,12 @@ func campaignToModel(campaign *entities.Campaign) (*models.WhatsappCampaign, err
 		ScheduledAt:        campaign.ScheduledAt,
 		DailySendCap:       campaign.DailySendCap,
 		BatchSize:          campaign.BatchSize,
+		ScheduleMode:       campaign.ScheduleMode,
+		IntervalDays:       campaign.IntervalDays,
+		SendDates:          datatypes.JSON(sendDates),
+		DeliveryMode:       campaign.DeliveryMode,
+		Occurrences:        campaign.Occurrences,
+		CurrentRound:       campaign.CurrentRound,
 		Status:             campaign.Status,
 		AudienceCount:      campaign.AudienceCount,
 		StartedAt:          campaign.StartedAt,
@@ -244,6 +265,11 @@ func campaignToDomain(model *models.WhatsappCampaign) (*entities.Campaign, error
 		ScheduledAt:        model.ScheduledAt,
 		DailySendCap:       model.DailySendCap,
 		BatchSize:          model.BatchSize,
+		ScheduleMode:       model.ScheduleMode,
+		IntervalDays:       model.IntervalDays,
+		DeliveryMode:       model.DeliveryMode,
+		Occurrences:        model.Occurrences,
+		CurrentRound:       model.CurrentRound,
 		Status:             model.Status,
 		AudienceCount:      model.AudienceCount,
 		QueuedCount:        model.QueuedCount,
@@ -262,6 +288,12 @@ func campaignToDomain(model *models.WhatsappCampaign) (*entities.Campaign, error
 
 	if len(model.AudienceParams) > 0 {
 		if err := json.Unmarshal(model.AudienceParams, &campaign.AudienceParams); err != nil {
+			return nil, err
+		}
+	}
+
+	if len(model.SendDates) > 0 {
+		if err := json.Unmarshal(model.SendDates, &campaign.SendDates); err != nil {
 			return nil, err
 		}
 	}

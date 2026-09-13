@@ -53,7 +53,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWhatsappFlows(ctx); err != nil {
 		return err
 	}
-	return r.migrateOrderAddressFields(ctx)
+	if err := r.migrateOrderAddressFields(ctx); err != nil {
+		return err
+	}
+	return r.migrateWhatsappCampaignSchedule(ctx)
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {

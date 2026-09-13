@@ -56,6 +56,9 @@ func (uc *useCase) Update(ctx context.Context, dto dtos.UpdateCampaignDTO) (*ent
 	campaign.CreatedByID = current.CreatedByID
 	campaign.StartedAt = current.StartedAt
 	campaign.FinishedAt = current.FinishedAt
+	campaign.AudienceCount = current.AudienceCount
+	campaign.CurrentRound = current.CurrentRound
+	campaign.LastBatchAt = current.LastBatchAt
 
 	if err := uc.campaigns.UpdateCampaign(ctx, campaign); err != nil {
 		return nil, err
@@ -178,6 +181,16 @@ func (uc *useCase) Launch(ctx context.Context, id, businessID uint) (*entities.C
 		return nil, err
 	}
 
+	now := time.Now()
+	if campaign.ScheduledAt == nil {
+		campaign.ScheduledAt = &now
+	}
+	if campaign.OccurrenceAt(now).Exhausted {
+		return nil, fmt.Errorf("ya pasaron todas las fechas de envio de la campana: agrega fechas futuras antes de lanzarla")
+	}
+
+	campaign.CurrentRound = 1
+
 	queued, err := uc.materializeAudience(ctx, campaign)
 	if err != nil {
 		return nil, err
@@ -186,13 +199,9 @@ func (uc *useCase) Launch(ctx context.Context, id, businessID uint) (*entities.C
 		return nil, fmt.Errorf("la audiencia quedo vacia: nadie cumple los filtros o ninguno acepta marketing")
 	}
 
-	now := time.Now()
 	campaign.Status = entities.CampaignStatusScheduled
 	campaign.AudienceCount = uint(queued)
 	campaign.StartedAt = &now
-	if campaign.ScheduledAt == nil {
-		campaign.ScheduledAt = &now
-	}
 
 	if err := uc.campaigns.UpdateCampaign(ctx, campaign); err != nil {
 		return nil, err
@@ -215,6 +224,10 @@ func (uc *useCase) Resume(ctx context.Context, id, businessID uint) (*entities.C
 		if campaign.Status != entities.CampaignStatusPaused {
 			return fmt.Errorf("solo se puede reanudar una campana pausada")
 		}
+		if campaign.StartedAt != nil && campaign.OccurrenceAt(time.Now()).Exhausted {
+			return fmt.Errorf("ya pasaron todas las fechas de envio: agrega fechas nuevas antes de reanudar")
+		}
+		campaign.ErrorMessage = ""
 		return nil
 	})
 }
@@ -303,7 +316,7 @@ func (uc *useCase) assertFlowApproved(ctx context.Context, businessID, flowID ui
 	for _, step := range steps {
 		if step.TargetStatus != entities.TemplateStatusApproved {
 			return fmt.Errorf(
-				"la respuesta %q del flujo esta en estado %s: esa rama no contestaria, esperá a que Meta la apruebe",
+				"la respuesta %q del flujo esta en estado %s: esa rama no contestaria, esper\u00e1 a que Meta la apruebe",
 				step.TargetName,
 				step.TargetStatus,
 			)
@@ -426,6 +439,11 @@ func (uc *useCase) build(ctx context.Context, dto dtos.CreateCampaignDTO) (*enti
 		batchSize = dailyCap
 	}
 
+	schedule, err := buildSchedule(dto)
+	if err != nil {
+		return nil, err
+	}
+
 	return &entities.Campaign{
 		BusinessID:         dto.BusinessID,
 		IntegrationID:      dto.IntegrationID,
@@ -443,6 +461,11 @@ func (uc *useCase) build(ctx context.Context, dto dtos.CreateCampaignDTO) (*enti
 		ScheduledAt:        dto.ScheduledAt,
 		DailySendCap:       dailyCap,
 		BatchSize:          batchSize,
+		ScheduleMode:       schedule.ScheduleMode,
+		IntervalDays:       schedule.IntervalDays,
+		SendDates:          schedule.SendDates,
+		DeliveryMode:       schedule.DeliveryMode,
+		Occurrences:        schedule.Occurrences,
 		CreatedByID:        dto.CreatedBy,
 		Template:           template,
 	}, nil
@@ -485,6 +508,64 @@ func buildAudienceParams(dto dtos.CreateCampaignDTO) entities.CampaignAudiencePa
 		MinSpent:               dto.MinSpent,
 		LastPurchaseBeforeDays: dto.LastPurchaseBeforeDays,
 	}
+}
+
+func buildSchedule(dto dtos.CreateCampaignDTO) (*entities.Campaign, error) {
+	mode := strings.TrimSpace(dto.ScheduleMode)
+	if mode == "" {
+		mode = entities.CampaignScheduleDaily
+	}
+
+	delivery := strings.TrimSpace(dto.DeliveryMode)
+	if delivery == "" {
+		delivery = entities.CampaignDeliveryDistribute
+	}
+	if delivery != entities.CampaignDeliveryDistribute && delivery != entities.CampaignDeliveryRepeat {
+		return nil, fmt.Errorf("modo de entrega no soportado: %s", delivery)
+	}
+
+	if dto.Occurrences > entities.CampaignMaxOccurrences {
+		return nil, fmt.Errorf("la campana no puede repetirse mas de %d veces", entities.CampaignMaxOccurrences)
+	}
+
+	schedule := &entities.Campaign{
+		ScheduleMode: mode,
+		DeliveryMode: delivery,
+		Occurrences:  dto.Occurrences,
+		SendDates:    []string{},
+	}
+
+	switch mode {
+	case entities.CampaignScheduleDaily:
+	case entities.CampaignScheduleInterval:
+		if dto.IntervalDays < 1 || dto.IntervalDays > entities.CampaignMaxIntervalDays {
+			return nil, fmt.Errorf("el intervalo debe estar entre 1 y %d dias", entities.CampaignMaxIntervalDays)
+		}
+		schedule.IntervalDays = dto.IntervalDays
+	case entities.CampaignScheduleDates:
+		for _, value := range dto.SendDates {
+			if !entities.IsValidCampaignDate(value) {
+				return nil, fmt.Errorf("fecha invalida (formato AAAA-MM-DD): %s", value)
+			}
+		}
+		dates := entities.NormalizeCampaignDates(dto.SendDates)
+		if len(dates) == 0 {
+			return nil, fmt.Errorf("elige al menos una fecha de envio en el calendario")
+		}
+		if len(dates) > entities.CampaignMaxSendDates {
+			return nil, fmt.Errorf("la campana no puede tener mas de %d fechas", entities.CampaignMaxSendDates)
+		}
+		schedule.SendDates = dates
+		schedule.Occurrences = 0
+	default:
+		return nil, fmt.Errorf("programacion no soportada: %s", mode)
+	}
+
+	if delivery == entities.CampaignDeliveryRepeat && schedule.TotalOccurrences() == 0 {
+		return nil, fmt.Errorf("para repetir el envio indica cuantas veces se repite")
+	}
+
+	return schedule, nil
 }
 
 func normalizeAudienceType(value string) string {

@@ -28,8 +28,22 @@ const (
 )
 
 const (
+	CampaignScheduleDaily    = "daily"
+	CampaignScheduleInterval = "interval"
+	CampaignScheduleDates    = "dates"
+)
+
+const (
+	CampaignDeliveryDistribute = "distribute"
+	CampaignDeliveryRepeat     = "repeat"
+)
+
+const (
 	CampaignMaxDailySendCap = 1000
 	CampaignMaxBatchSize    = 200
+	CampaignMaxIntervalDays = 365
+	CampaignMaxSendDates    = 120
+	CampaignMaxOccurrences  = 365
 )
 
 type AudienceLocation struct {
@@ -78,6 +92,13 @@ type Campaign struct {
 	DailySendCap uint
 	BatchSize    uint
 
+	ScheduleMode string
+	IntervalDays uint
+	SendDates    []string
+	DeliveryMode string
+	Occurrences  uint
+	CurrentRound uint
+
 	Status string
 
 	AudienceCount uint
@@ -112,6 +133,7 @@ type CampaignCandidate struct {
 type CampaignSend struct {
 	ID             uint
 	CampaignID     uint
+	Round          uint
 	ClientID       uint
 	BusinessID     uint
 	Phone          string
@@ -128,7 +150,11 @@ type CampaignSend struct {
 }
 
 func (c *Campaign) IsEditable() bool {
-	return c.Status == CampaignStatusDraft || c.Status == CampaignStatusScheduled
+	return c.Status == CampaignStatusDraft || c.Status == CampaignStatusScheduled || c.Status == CampaignStatusPaused
+}
+
+func (c *Campaign) IsRepeat() bool {
+	return c.DeliveryMode == CampaignDeliveryRepeat
 }
 
 func (c *Campaign) IsFinished() bool {

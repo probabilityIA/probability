@@ -116,6 +116,10 @@ type sendRepoMock struct {
 	failQueued   bool
 	failResult   bool
 	queuedErrFor uint
+	pendingCount int64
+	skippedFrom  []uint
+	failSkip     bool
+	failPendCnt  bool
 }
 
 func (m *sendRepoMock) BulkCreateSends(_ context.Context, sends []entities.CampaignSend) (int, error) {
@@ -167,6 +171,21 @@ func (m *sendRepoMock) CountSentSince(_ context.Context, _ uint, _ time.Time) (i
 		return 0, errBoom
 	}
 	return m.sentSince, nil
+}
+
+func (m *sendRepoMock) CountPendingSends(_ context.Context, _ uint) (int64, error) {
+	if m.failPendCnt {
+		return 0, errBoom
+	}
+	return m.pendingCount, nil
+}
+
+func (m *sendRepoMock) SkipPendingSends(_ context.Context, _, beforeRound uint) error {
+	if m.failSkip {
+		return errBoom
+	}
+	m.skippedFrom = append(m.skippedFrom, beforeRound)
+	return nil
 }
 
 type audienceMock struct {

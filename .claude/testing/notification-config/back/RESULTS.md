@@ -83,3 +83,20 @@ El dato sin embargo si esta: los webhooks de estado actualizan
 - **`integration:platform_creds:2` se repuebla al arrancar el backend** desde
   `integration_types.platform_credentials_encrypted`. Apuntar el mock escribiendo
   esa clave hay que hacerlo *despues* de levantar el backend, o se pierde.
+
+## 2026-09-13 - Programacion por dias y modo de entrega (rama feat/campanas-programacion-dias)
+
+Contra base local y el mock de WhatsApp, backend local.
+
+| Caso | Resultado |
+|---|---|
+| Repetir sin cantidad de veces | OK: 400 "para repetir el envio indica cuantas veces se repite" |
+| Fecha mal escrita (`15/09/2026`) | OK: rechazada |
+| Intervalo en 0 | OK: rechazado |
+| Lanzar con todas las fechas pasadas (campana 4) | OK: rechazado al lanzar |
+| Solo manana (campana 5) | OK: lanza, envio queda `pending` hoy, no sale nada |
+| Repetir hoy + en 7 dias (campana 6) | OK: vuelta 1 sale al mock (`round=1`, `sent`, con wamid) |
+
+No probado en E2E (cubierto solo por tests unitarios): cambio de vuelta al
+llegar la segunda fecha, pausa al acabarse las fechas con pendientes, y
+completar tras la ultima fecha. Requieren esperar dias o escribir la base.

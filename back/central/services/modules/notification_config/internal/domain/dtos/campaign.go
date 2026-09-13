@@ -36,6 +36,12 @@ type CreateCampaignDTO struct {
 	DailySendCap uint `json:"daily_send_cap"`
 	BatchSize    uint `json:"batch_size"`
 
+	ScheduleMode string   `json:"schedule_mode"`
+	IntervalDays uint     `json:"interval_days"`
+	SendDates    []string `json:"send_dates"`
+	DeliveryMode string   `json:"delivery_mode"`
+	Occurrences  uint     `json:"occurrences"`
+
 	CreatedBy *uint `json:"-"`
 }
 

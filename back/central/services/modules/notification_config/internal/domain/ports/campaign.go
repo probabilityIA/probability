@@ -25,6 +25,8 @@ type ICampaignSendRepository interface {
 	MarkSendQueued(ctx context.Context, sendID uint, queuedAt time.Time) error
 	MarkSendResult(ctx context.Context, sendID uint, status, messageID, errorMessage string) error
 	CountSentSince(ctx context.Context, campaignID uint, since time.Time) (int64, error)
+	CountPendingSends(ctx context.Context, campaignID uint) (int64, error)
+	SkipPendingSends(ctx context.Context, campaignID, beforeRound uint) error
 }
 
 type ICampaignAudienceQuerier interface {

@@ -23,8 +23,13 @@ func (r *campaignSendRepository) BulkCreateSends(ctx context.Context, sends []en
 
 	rows := make([]models.WhatsappCampaignSend, 0, len(sends))
 	for _, send := range sends {
+		round := send.Round
+		if round == 0 {
+			round = 1
+		}
 		rows = append(rows, models.WhatsappCampaignSend{
 			CampaignID: send.CampaignID,
+			Round:      round,
 			ClientID:   send.ClientID,
 			BusinessID: send.BusinessID,
 			Phone:      send.Phone,
@@ -34,7 +39,7 @@ func (r *campaignSendRepository) BulkCreateSends(ctx context.Context, sends []en
 
 	result := r.db.Conn(ctx).
 		Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "campaign_id"}, {Name: "client_id"}},
+			Columns:   []clause.Column{{Name: "campaign_id"}, {Name: "round"}, {Name: "client_id"}},
 			DoNothing: true,
 		}).
 		CreateInBatches(&rows, 200)
@@ -172,6 +177,37 @@ func (r *campaignSendRepository) CountSentSince(ctx context.Context, campaignID 
 	return count, nil
 }
 
+func (r *campaignSendRepository) CountPendingSends(ctx context.Context, campaignID uint) (int64, error) {
+	var count int64
+
+	if err := r.db.Conn(ctx).Model(&models.WhatsappCampaignSend{}).
+		Where("campaign_id = ? AND status = ?", campaignID, models.CampaignSendStatusPending).
+		Count(&count).Error; err != nil {
+		r.logger.Error().Err(err).Uint("campaign_id", campaignID).Msg("Error counting pending campaign sends")
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *campaignSendRepository) SkipPendingSends(ctx context.Context, campaignID, beforeRound uint) error {
+	query := r.db.Conn(ctx).Model(&models.WhatsappCampaignSend{}).
+		Where("campaign_id = ? AND status = ?", campaignID, models.CampaignSendStatusPending)
+	if beforeRound > 0 {
+		query = query.Where("round < ?", beforeRound)
+	}
+
+	if err := query.Updates(map[string]any{
+		"status":        models.CampaignSendStatusSkipped,
+		"error_message": "no alcanzo a salir en su fecha",
+	}).Error; err != nil {
+		r.logger.Error().Err(err).Uint("campaign_id", campaignID).Msg("Error skipping pending campaign sends")
+		return err
+	}
+
+	return nil
+}
+
 func sendsToDomain(rows []models.WhatsappCampaignSend) []entities.CampaignSend {
 	out := make([]entities.CampaignSend, 0, len(rows))
 	for i := range rows {
@@ -186,6 +222,7 @@ func sendsToDomain(rows []models.WhatsappCampaignSend) []entities.CampaignSend {
 		out = append(out, entities.CampaignSend{
 			ID:             row.ID,
 			CampaignID:     row.CampaignID,
+			Round:          row.Round,
 			ClientID:       row.ClientID,
 			BusinessID:     row.BusinessID,
 			Phone:          row.Phone,

@@ -2,6 +2,7 @@ package campaigns
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -32,10 +33,16 @@ func (uc *useCase) materializeAudience(ctx context.Context, campaign *entities.C
 		return 0, nil
 	}
 
+	round := campaign.CurrentRound
+	if round == 0 {
+		round = 1
+	}
+
 	sends := make([]entities.CampaignSend, 0, len(candidates))
 	for _, candidate := range candidates {
 		sends = append(sends, entities.CampaignSend{
 			CampaignID: campaign.ID,
+			Round:      round,
 			ClientID:   candidate.ClientID,
 			BusinessID: campaign.BusinessID,
 			Phone:      candidate.Phone,
@@ -53,9 +60,28 @@ func (uc *useCase) RunDueCampaigns(ctx context.Context) error {
 
 	for i := range campaigns {
 		campaign := campaigns[i]
+		now := time.Now()
 
-		if !uc.isInsideWindow(&campaign, time.Now()) {
+		occurrence := campaign.OccurrenceAt(now)
+		if occurrence.Exhausted {
+			if err := uc.finishSchedule(ctx, &campaign); err != nil {
+				uc.logger.Error().Err(err).Uint("campaign_id", campaign.ID).
+					Msg("Error cerrando la campana al terminar sus fechas")
+			}
 			continue
+		}
+
+		if !occurrence.SendDay || !uc.isInsideWindow(&campaign, now) {
+			continue
+		}
+
+		if campaign.IsRepeat() && occurrence.Round > campaign.CurrentRound {
+			if err := uc.startRound(ctx, &campaign, occurrence.Round); err != nil {
+				uc.logger.Error().Err(err).Uint("campaign_id", campaign.ID).
+					Uint("round", occurrence.Round).
+					Msg("Error preparando la vuelta de la campana")
+				continue
+			}
 		}
 
 		if err := uc.dispatchBatch(ctx, &campaign); err != nil {
@@ -91,6 +117,9 @@ func (uc *useCase) dispatchBatch(ctx context.Context, campaign *entities.Campaig
 	}
 
 	if len(pending) == 0 {
+		if campaign.IsRepeat() && !campaign.OccurrenceAt(time.Now()).Last {
+			return nil
+		}
 		return uc.completeCampaign(ctx, campaign)
 	}
 
@@ -129,6 +158,56 @@ func (uc *useCase) dispatchBatch(ctx context.Context, campaign *entities.Campaig
 	if err := uc.campaigns.MarkCampaignBatch(ctx, campaign.ID, now); err != nil {
 		return err
 	}
+	if err := uc.campaigns.UpdateCampaign(ctx, campaign); err != nil {
+		return err
+	}
+
+	return uc.campaigns.UpdateCampaignCounters(ctx, campaign.ID)
+}
+
+func (uc *useCase) startRound(ctx context.Context, campaign *entities.Campaign, round uint) error {
+	if err := uc.sends.SkipPendingSends(ctx, campaign.ID, round); err != nil {
+		return err
+	}
+
+	campaign.CurrentRound = round
+
+	queued, err := uc.materializeAudience(ctx, campaign)
+	if err != nil {
+		return err
+	}
+
+	campaign.AudienceCount = uint(queued)
+
+	if err := uc.campaigns.UpdateCampaign(ctx, campaign); err != nil {
+		return err
+	}
+
+	return uc.campaigns.UpdateCampaignCounters(ctx, campaign.ID)
+}
+
+func (uc *useCase) finishSchedule(ctx context.Context, campaign *entities.Campaign) error {
+	if campaign.IsRepeat() {
+		if err := uc.sends.SkipPendingSends(ctx, campaign.ID, 0); err != nil {
+			return err
+		}
+		return uc.completeCampaign(ctx, campaign)
+	}
+
+	pending, err := uc.sends.CountPendingSends(ctx, campaign.ID)
+	if err != nil {
+		return err
+	}
+	if pending == 0 {
+		return uc.completeCampaign(ctx, campaign)
+	}
+
+	campaign.Status = entities.CampaignStatusPaused
+	campaign.ErrorMessage = fmt.Sprintf(
+		"se acabaron las fechas de envio y quedaron %d mensajes sin salir: agrega fechas y reanuda la campana",
+		pending,
+	)
+
 	if err := uc.campaigns.UpdateCampaign(ctx, campaign); err != nil {
 		return err
 	}

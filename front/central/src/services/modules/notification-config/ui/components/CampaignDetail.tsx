@@ -41,6 +41,14 @@ const SEND_STATUS_LABEL: Record<string, string> = {
   skipped: "Omitido",
 };
 
+const formatDate = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, (month || 1) - 1, day || 1).toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "short",
+  });
+};
+
 export function CampaignDetail({
   campaign,
   businessId,
@@ -115,6 +123,17 @@ export function CampaignDetail({
       : null,
   ].filter((row): row is { label: string; value: string } => row !== null);
 
+  const isRepeat = campaign.DeliveryMode === "repeat";
+  const dates = campaign.SendDates || [];
+  const totalRounds = campaign.ScheduleMode === "dates" ? dates.length : campaign.Occurrences;
+
+  const scheduleLabel =
+    campaign.ScheduleMode === "dates"
+      ? dates.map(formatDate).join(", ") || "Sin fechas"
+      : campaign.ScheduleMode === "interval"
+        ? `Cada ${campaign.IntervalDays} d\u00edas`
+        : "Todos los d\u00edas";
+
   const configGroups = [
     {
       title: "Qué se envía",
@@ -142,11 +161,27 @@ export function CampaignDetail({
     {
       title: "Cuándo sale",
       rows: [
+        { label: "D\u00edas de env\u00edo", value: scheduleLabel },
+        ...(campaign.ScheduleMode === "dates"
+          ? []
+          : [
+              {
+                label: "Arranque",
+                value: campaign.ScheduledAt
+                  ? new Date(campaign.ScheduledAt).toLocaleString("es-CO")
+                  : "Al lanzarla",
+              },
+            ]),
         {
-          label: "Arranque",
-          value: campaign.ScheduledAt
-            ? new Date(campaign.ScheduledAt).toLocaleString("es-CO")
-            : "Al lanzarla",
+          label: "Entrega",
+          value: isRepeat ? "Repetir a toda la audiencia" : "Repartir la audiencia",
+        },
+        {
+          label: "Termina",
+          value:
+            totalRounds > 0
+              ? `Despu\u00e9s de ${totalRounds} env\u00edo(s)`
+              : "Al llegarle a toda la audiencia",
         },
         {
           label: "Franja horaria",
@@ -231,9 +266,17 @@ export function CampaignDetail({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className={`grid grid-cols-2 gap-2 ${isRepeat ? "sm:grid-cols-6" : "sm:grid-cols-5"}`}>
         {[
-          { label: "Audiencia", value: campaign.AudienceCount },
+          ...(isRepeat
+            ? [
+                {
+                  label: "Vuelta",
+                  value: `${campaign.CurrentRound || 0} de ${totalRounds}`,
+                },
+              ]
+            : []),
+          { label: isRepeat ? "Audiencia por vuelta" : "Audiencia", value: campaign.AudienceCount },
           { label: "Enviados", value: campaign.SentCount },
           { label: "En cola", value: campaign.QueuedCount },
           { label: "Respondieron", value: campaign.RepliedCount },
@@ -320,7 +363,14 @@ export function CampaignDetail({
             <table className="w-full">
               <thead style={{ backgroundColor: "var(--color-primary)" }}>
                 <tr>
-                  {["Cliente", "Celular", "Estado", "Enviado", "Detalle"].map((column) => (
+                  {[
+                    ...(isRepeat ? ["Vuelta"] : []),
+                    "Cliente",
+                    "Celular",
+                    "Estado",
+                    "Enviado",
+                    "Detalle",
+                  ].map((column) => (
                     <th
                       key={column}
                       style={{ color: "var(--color-on-primary, white)" }}
@@ -337,6 +387,7 @@ export function CampaignDetail({
                     key={send.ID}
                     className="border-b border-gray-100 text-xs dark:border-gray-700"
                   >
+                    {isRepeat && <td className="px-3 py-2 text-gray-500">{send.Round}</td>}
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-200">
                       {send.ClientName || "-"}
                     </td>
