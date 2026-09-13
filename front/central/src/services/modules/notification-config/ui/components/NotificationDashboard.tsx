@@ -13,8 +13,8 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNotificationBusiness } from '@/shared/contexts/notification-business-context';
 
 const tabs = [
-  { key: 'audit' as const, label: 'Auditoria' },
   { key: 'conversations' as const, label: 'Conversaciones' },
+  { key: 'audit' as const, label: 'Auditoria' },
   { key: 'campaigns' as const, label: 'Campañas' },
 ];
 
@@ -24,7 +24,7 @@ export function NotificationDashboard() {
 
   const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
-  const [activeTab, setActiveTab] = useState<'audit' | 'conversations' | 'campaigns'>('audit');
+  const [activeTab, setActiveTab] = useState<'audit' | 'conversations' | 'campaigns'>('conversations');
 
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [configRefreshKey, setConfigRefreshKey] = useState(0);
