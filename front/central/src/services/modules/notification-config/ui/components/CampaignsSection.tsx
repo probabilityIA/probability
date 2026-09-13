@@ -236,7 +236,6 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
           <TemplateForm
             businessId={businessId}
             variableCatalog={variableCatalog}
-            templates={templates}
             scope="campaign"
             onSuccess={() => {
               setIsTemplateOpen(false);

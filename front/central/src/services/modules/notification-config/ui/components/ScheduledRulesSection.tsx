@@ -312,8 +312,6 @@ export function ScheduledRulesSection({
             businessId={businessId}
             variableCatalog={catalog}
             template={editingTemplate}
-            templates={templates}
-            flows={flows.filter((flow) => flow.SourceTemplateID === editingTemplate?.ID)}
             onSuccess={() => {
               setPanel("none");
               setEditingTemplate(null);

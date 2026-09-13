@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Modal } from "@/shared/ui/modal";
 import { SAMPLE_VALUES, TemplateBubble } from "./TemplateBubble";
 import { useToast } from "@/shared/providers/toast-provider";
 import {
   CreateTemplateDTO,
   TemplateCategory,
-  TemplateFlow,
   TemplateHeaderType,
   TemplateScope,
   UpdateTemplateDTO,
@@ -15,7 +13,6 @@ import {
 } from "../../domain/scheduled-types";
 import {
   createTemplateAction,
-  replaceTemplateFlowsAction,
   updateTemplateAction,
   uploadTemplateMediaAction,
 } from "../../infra/actions/whatsapp-templates";
@@ -25,8 +22,6 @@ interface TemplateFormProps {
   variableCatalog: Record<string, string>;
   scope?: TemplateScope;
   template?: WhatsappTemplate | null;
-  templates?: WhatsappTemplate[];
-  flows?: TemplateFlow[];
   asFlowResponse?: boolean;
   onSuccess: (created?: WhatsappTemplate) => void;
   onCancel: () => void;
@@ -40,7 +35,6 @@ interface VariableRow {
 
 interface ButtonRow {
   text: string;
-  targetTemplateID: number;
 }
 
 const PLACEHOLDER = /\{\{(\d+)\}\}/g;
@@ -122,22 +116,12 @@ function slugify(value: string): string {
     .slice(0, 60);
 }
 
-function initialButtons(
-  template?: WhatsappTemplate | null,
-  flows: TemplateFlow[] = [],
-): ButtonRow[] {
+function initialButtons(template?: WhatsappTemplate | null): ButtonRow[] {
   if (!template?.Buttons) return [];
-
-  const targetByText = new Map(
-    flows.map((flow) => [flow.ButtonText.trim().toLowerCase(), flow.TargetTemplateID]),
-  );
 
   return template.Buttons.map((button) => (button.Text ?? "").trim())
     .filter((text) => text && text.toLowerCase() !== OPT_OUT_TEXT.toLowerCase())
-    .map((text) => ({
-      text,
-      targetTemplateID: targetByText.get(text.toLowerCase()) ?? 0,
-    }));
+    .map((text) => ({ text }));
 }
 
 function initialVariables(template?: WhatsappTemplate | null): VariableRow[] {
@@ -154,8 +138,6 @@ export function TemplateForm({
   variableCatalog,
   scope = "scheduled",
   template = null,
-  templates = [],
-  flows = [],
   asFlowResponse = false,
   onSuccess,
   onCancel,
@@ -176,16 +158,10 @@ export function TemplateForm({
   const [bodyText, setBodyText] = useState(template?.BodyText ?? "");
   const [footerText, setFooterText] = useState(template?.FooterText ?? "");
   const [variables, setVariables] = useState<VariableRow[]>(initialVariables(template));
-  const [buttons, setButtons] = useState<ButtonRow[]>(initialButtons(template, flows));
-  const [extraTargets, setExtraTargets] = useState<WhatsappTemplate[]>([]);
-  const [nestedIndex, setNestedIndex] = useState<number | null>(null);
+  const [buttons, setButtons] = useState<ButtonRow[]>(initialButtons(template));
 
   const sources = orderSources(variableCatalog);
   const maxButtons = category === "MARKETING" ? MAX_BUTTONS - 1 : MAX_BUTTONS;
-
-  const flowTargets = [...templates, ...extraTargets].filter(
-    (item) => item.ID !== template?.ID && (item.Variables?.length ?? 0) === 0,
-  );
 
   const placeholders = countPlaceholders(bodyText);
   const slug = slugify(displayName);
@@ -244,25 +220,6 @@ export function TemplateForm({
     }
 
     setHeaderMediaURL(result.url);
-  };
-
-  const persistFlows = async (templateId: number): Promise<boolean> => {
-    const payload = buttons
-      .filter((item) => item.text.trim() && item.targetTemplateID > 0)
-      .map((item) => ({
-        button_text: item.text.trim(),
-        target_template_id: item.targetTemplateID,
-      }));
-
-    if (payload.length === 0 && !isEdit) return true;
-
-    const result = await replaceTemplateFlowsAction(templateId, payload, businessId);
-    if (!result.success) {
-      showToast(result.error || "La plantilla se guardó pero el encadenado no", "error");
-      return false;
-    }
-
-    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -335,18 +292,10 @@ export function TemplateForm({
       };
 
       const result = await updateTemplateAction(template.ID, dto, businessId);
-
-      if (!result.success) {
-        setLoading(false);
-        showToast(result.error || "No se pudo editar la plantilla", "error");
-        return;
-      }
-
-      const flowsOk = await persistFlows(template.ID);
       setLoading(false);
 
-      if (!flowsOk) {
-        onSuccess();
+      if (!result.success) {
+        showToast(result.error || "No se pudo editar la plantilla", "error");
         return;
       }
 
@@ -375,23 +324,13 @@ export function TemplateForm({
     };
 
     const result = await createTemplateAction(dto, businessId);
+    setLoading(false);
 
     if (!result.success) {
-      setLoading(false);
       showToast(result.error || "No se pudo crear la plantilla", "error");
       return;
     }
 
-    if (result.data?.ID) {
-      const flowsOk = await persistFlows(result.data.ID);
-      if (!flowsOk) {
-        setLoading(false);
-        onSuccess();
-        return;
-      }
-    }
-
-    setLoading(false);
     showToast("Plantilla guardada como borrador.", "success");
     onSuccess(result.data);
   };
@@ -678,84 +617,37 @@ export function TemplateForm({
               </div>
 
               {buttons.map((button, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col gap-1.5 rounded-lg border border-gray-200 p-2 dark:border-gray-700"
-                >
-                  <div className="flex items-center gap-2">
-                    <input
-                      value={button.text}
-                      maxLength={MAX_BUTTON_TEXT}
-                      onChange={(e) =>
-                        setButtons(
-                          buttons.map((item, i) =>
-                            i === index ? { ...item, text: e.target.value } : item,
-                          ),
-                        )
-                      }
-                      placeholder={"Saber más"}
-                      className={`${inputCls} border-gray-300 py-1.5 text-[13px] dark:border-gray-600`}
-                    />
-                    <span className="w-10 shrink-0 text-right text-[11px] text-gray-400">
-                      {`${button.text.length}/${MAX_BUTTON_TEXT}`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setButtons(buttons.filter((_, i) => i !== index))}
-                      className="text-[12px] text-red-500 hover:underline"
-                    >
-                      {"Quitar"}
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="shrink-0 text-[11px] text-gray-400">
-                      {"Al tocarlo responde con"}
-                    </span>
-                    <select
-                      value={button.targetTemplateID}
-                      onChange={(e) =>
-                        setButtons(
-                          buttons.map((item, i) =>
-                            i === index
-                              ? { ...item, targetTemplateID: Number(e.target.value) }
-                              : item,
-                          ),
-                        )
-                      }
-                      style={{
-                        height: 28,
-                        fontSize: 12,
-                        lineHeight: "18px",
-                        padding: "0 8px",
-                        borderRadius: 6,
-                      }}
-                      className="min-w-0 flex-1 border border-gray-300 bg-white text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                    >
-                      <option value={0}>{"Nada"}</option>
-                      {flowTargets.map((item) => (
-                        <option key={item.ID} value={item.ID}>
-                          {item.Name}
-                        </option>
-                      ))}
-                    </select>
-                    {!asFlowResponse && (
-                      <button
-                        type="button"
-                        onClick={() => setNestedIndex(index)}
-                        className="shrink-0 text-[12px] font-medium text-[var(--color-primary)] hover:underline"
-                      >
-                        {"Diseñar"}
-                      </button>
-                    )}
-                  </div>
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    value={button.text}
+                    maxLength={MAX_BUTTON_TEXT}
+                    onChange={(e) =>
+                      setButtons(
+                        buttons.map((item, i) =>
+                          i === index ? { ...item, text: e.target.value } : item,
+                        ),
+                      )
+                    }
+                    placeholder={"Saber más"}
+                    className={`${inputCls} border-gray-300 py-1.5 text-[13px] dark:border-gray-600`}
+                  />
+                  <span className="w-10 shrink-0 text-right text-[11px] text-gray-400">
+                    {`${button.text.length}/${MAX_BUTTON_TEXT}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setButtons(buttons.filter((_, i) => i !== index))}
+                    className="text-[12px] text-red-500 hover:underline"
+                  >
+                    {"Quitar"}
+                  </button>
                 </div>
               ))}
 
               {buttons.length < maxButtons && (
                 <button
                   type="button"
-                  onClick={() => setButtons([...buttons, { text: "", targetTemplateID: 0 }])}
+                  onClick={() => setButtons([...buttons, { text: "" }])}
                   className="self-start rounded-full border border-dashed border-gray-300 px-2.5 py-1 text-[12px] font-medium text-gray-800 transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] dark:border-gray-600 dark:text-gray-100"
                 >
                   {"+ Agregar botón"}
@@ -766,6 +658,9 @@ export function TemplateForm({
                 {category === "MARKETING"
                   ? "En marketing solo caben 2: el botón de baja ocupa el tercero."
                   : "Hasta 3 botones. El cliente responde tocándolos."}
+              </span>
+              <span className="text-[12px] text-gray-400">
+                {"Qué responde cada botón se arma en el diagrama de flujo."}
               </span>
             </div>
 
@@ -826,46 +721,6 @@ export function TemplateForm({
           </button>
         </div>
       </div>
-
-      <Modal
-        isOpen={nestedIndex !== null}
-        onClose={() => setNestedIndex(null)}
-        title={(
-          <span className="flex w-full flex-col items-start pr-8">
-            <span className="text-lg font-semibold">{"Plantilla de respuesta"}</span>
-            <span className="text-[13px] font-normal text-gray-400">
-              {nestedIndex !== null && buttons[nestedIndex]?.text
-                ? `Se envía al tocar "${buttons[nestedIndex].text}"`
-                : "Se envía al tocar el botón"}
-            </span>
-          </span>
-        )}
-        size="4xl"
-        zIndex={80}
-        noPadding
-        noBodyScroll
-      >
-        {nestedIndex !== null && (
-          <TemplateForm
-            businessId={businessId}
-            variableCatalog={variableCatalog}
-            scope={scope}
-            asFlowResponse
-            onSuccess={(created) => {
-              if (created) {
-                setExtraTargets((current) => [...current, created]);
-                setButtons((current) =>
-                  current.map((item, i) =>
-                    i === nestedIndex ? { ...item, targetTemplateID: created.ID } : item,
-                  ),
-                );
-              }
-              setNestedIndex(null);
-            }}
-            onCancel={() => setNestedIndex(null)}
-          />
-        )}
-      </Modal>
     </form>
   );
 }
