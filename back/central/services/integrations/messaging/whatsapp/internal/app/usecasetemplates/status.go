@@ -84,8 +84,7 @@ func (u *usecase) HandleStatusUpdate(ctx context.Context, wabaID, name, language
 		u.log.Warn(ctx).Err(err).
 			Str("waba_id", wabaID).
 			Str("template", name).
-			Msg("no se pudo actualizar el estado de la plantilla en cache")
-		return nil
+			Msg("no se pudo actualizar el estado de la plantilla en cache, se persiste igual")
 	}
 
 	u.log.Info(ctx).

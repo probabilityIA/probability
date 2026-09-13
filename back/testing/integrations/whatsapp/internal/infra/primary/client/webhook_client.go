@@ -42,7 +42,7 @@ func New(config env.IConfig, logger log.ILogger) *WebhookClient {
 
 // SendWebhook envía un webhook de WhatsApp al sistema real
 func (c *WebhookClient) SendWebhook(payload domain.WebhookPayload) error {
-	url := fmt.Sprintf("%s/api/integrations/whatsapp/webhook", c.baseURL)
+	url := fmt.Sprintf("%s/api/v1/integrations/whatsapp/webhook", c.baseURL)
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
