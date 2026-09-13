@@ -42,6 +42,7 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(0);
+  const [studioFlow, setStudioFlow] = useState<Flow | null>(null);
   const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
@@ -161,10 +162,17 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
       <>
         <button
           type="button"
-          onClick={() => startEdit(flow)}
+          onClick={() => setStudioFlow(flow)}
           className="text-xs font-medium text-[var(--color-primary)] hover:underline"
         >
           {"Editar flujo"}
+        </button>
+        <button
+          type="button"
+          onClick={() => startEdit(flow)}
+          className="text-xs font-medium text-gray-600 hover:underline dark:text-gray-300"
+        >
+          {"Ajustes"}
         </button>
         <button
           type="button"
@@ -216,6 +224,7 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
               actions={flowActions(flow)}
               collapsed={!expanded[flow.ID]}
               onToggleCollapsed={() => toggleExpanded(flow.ID)}
+              readOnly
               onChanged={load}
             />
           ) : (
@@ -273,6 +282,36 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
           ),
         )
       )}
+
+      <Modal
+        isOpen={studioFlow !== null}
+        onClose={() => setStudioFlow(null)}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{studioFlow?.Name ?? ""}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {"Arrastrá para moverte, rueda para acercar"}
+            </span>
+          </span>
+        )}
+        size="full"
+        zIndex={60}
+      >
+        {studioFlow !== null && studioFlow.RootTemplateID && (
+          <div className="flex h-full min-h-0 flex-col p-6">
+            <TemplateFlowView
+              templates={templates}
+              flows={transitions.filter((item) => item.FlowID === studioFlow.ID)}
+              businessId={businessId}
+              variableCatalog={catalog}
+              flowId={studioFlow.ID}
+              rootTemplateId={studioFlow.RootTemplateID}
+              studio
+              onChanged={load}
+            />
+          </div>
+        )}
+      </Modal>
 
       <Modal
         isOpen={isFormOpen}

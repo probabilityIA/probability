@@ -24,6 +24,8 @@ interface TemplateFlowViewProps {
   actions?: React.ReactNode;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  readOnly?: boolean;
+  studio?: boolean;
   onChanged: () => void;
 }
 
@@ -68,6 +70,8 @@ export function TemplateFlowView({
   actions,
   collapsed = false,
   onToggleCollapsed,
+  readOnly = false,
+  studio = false,
   onChanged,
 }: TemplateFlowViewProps) {
   const { showToast } = useToast();
@@ -283,7 +287,13 @@ export function TemplateFlowView({
                     </span>
                   )}
 
-                  {!flow && !tooDeep && (
+                  {!flow && readOnly && (
+                    <span className="whitespace-nowrap text-[11px] text-amber-600 dark:text-amber-400">
+                      {"sin respuesta"}
+                    </span>
+                  )}
+
+                  {!flow && !readOnly && !tooDeep && (
                     <div className="flex shrink-0 flex-col gap-1 rounded-lg border border-dashed border-gray-300 p-1.5 dark:border-gray-600">
                       <button
                         type="button"
@@ -316,7 +326,7 @@ export function TemplateFlowView({
                     </div>
                   )}
 
-                  {!flow && tooDeep && (
+                  {!flow && !readOnly && tooDeep && (
                     <span className="whitespace-nowrap text-[11px] text-gray-400">
                       {`Máximo ${MAX_DEPTH} niveles`}
                     </span>
@@ -353,7 +363,13 @@ export function TemplateFlowView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+      <div
+        className={
+          studio
+            ? "flex min-h-0 flex-1 flex-col"
+            : "rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+        }
+      >
         {(title || actions || onToggleCollapsed) && (
           <div className="mb-3 flex flex-wrap items-center gap-3">
             {onToggleCollapsed && (
@@ -438,8 +454,19 @@ export function TemplateFlowView({
             onMouseMove={handleMouseMove}
             onMouseUp={stopDragging}
             onMouseLeave={stopDragging}
-            style={{ cursor: dragging ? "grabbing" : "grab" }}
-            className="h-[520px] overflow-hidden rounded-lg border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/30"
+            style={{
+              cursor: dragging ? "grabbing" : "grab",
+              backgroundImage: studio
+                ? "radial-gradient(circle, rgba(17,27,33,0.16) 1px, transparent 1px)"
+                : undefined,
+              backgroundSize: studio ? `${24 * scale}px ${24 * scale}px` : undefined,
+              backgroundPosition: studio ? `${offset.x}px ${offset.y}px` : undefined,
+            }}
+            className={`overflow-hidden rounded-lg border border-gray-100 dark:border-gray-700 ${
+              studio
+                ? "h-[calc(90vh-230px)] bg-[#f4f1ec] dark:bg-gray-900"
+                : "h-[420px] bg-gray-50 dark:bg-gray-900/30"
+            }`}
           >
             <div
               style={{
