@@ -35,6 +35,10 @@ export interface Campaign {
     ClientIDs: number[] | null;
     ExcludeRecentDays: number;
     ExcludeRecentMax: number;
+    RegisteredBeforeDays: number;
+    MinOrders: number;
+    MinSpent: number;
+    LastPurchaseBeforeDays: number;
   };
   VariableValues: Record<string, string> | null;
   Timezone: string;
@@ -102,6 +106,10 @@ export interface CreateCampaignDTO {
   client_ids?: number[];
   exclude_recent_days?: number;
   exclude_recent_max?: number;
+  registered_before_days?: number;
+  min_orders?: number;
+  min_spent?: number;
+  last_purchase_before_days?: number;
   variable_values?: Record<string, string>;
   timezone?: string;
   send_window_start?: string;

@@ -457,6 +457,11 @@ func buildAudienceParams(dto dtos.CreateCampaignDTO) entities.CampaignAudiencePa
 		ClientIDs:         dto.ClientIDs,
 		ExcludeRecentDays: dto.ExcludeRecentDays,
 		ExcludeRecentMax:  dto.ExcludeRecentMax,
+
+		RegisteredBeforeDays:   dto.RegisteredBeforeDays,
+		MinOrders:              dto.MinOrders,
+		MinSpent:               dto.MinSpent,
+		LastPurchaseBeforeDays: dto.LastPurchaseBeforeDays,
 	}
 }
 

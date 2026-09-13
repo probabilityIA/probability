@@ -48,6 +48,38 @@ const localDate = (date: Date) =>
 
 const localTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
+type FilterKey =
+  | "city"
+  | "created_from_days"
+  | "registered_before_days"
+  | "only_without_order"
+  | "min_orders"
+  | "min_spent"
+  | "last_purchase_before_days";
+
+interface FilterDef {
+  key: FilterKey;
+  label: string;
+  kind: "text" | "number" | "bool";
+  suffix?: string;
+  placeholder?: string;
+}
+
+const FILTER_DEFS: FilterDef[] = [
+  { key: "city", label: "Ciudad", kind: "text", placeholder: "Bogotá" },
+  { key: "created_from_days", label: "Registrado en los últimos", kind: "number", suffix: "días" },
+  { key: "registered_before_days", label: "Registrado hace más de", kind: "number", suffix: "días" },
+  { key: "only_without_order", label: "Nunca me ha comprado", kind: "bool" },
+  { key: "min_orders", label: "Con al menos", kind: "number", suffix: "compras" },
+  { key: "min_spent", label: "Ha gastado al menos", kind: "number", suffix: "$" },
+  {
+    key: "last_purchase_before_days",
+    label: "Sin comprar hace más de",
+    kind: "number",
+    suffix: "días",
+  },
+];
+
 const TEMPLATE_STATUS_LABEL: Record<string, string> = {
   draft: "borrador",
   pending: "en revisión de Meta",
@@ -71,9 +103,14 @@ export function CampaignForm({
   const [templateId, setTemplateId] = useState<number>(campaign?.WhatsappTemplateID || 0);
   const [flowId, setFlowId] = useState<number>(campaign?.FlowID || 0);
   const [mode, setMode] = useState<"template" | "flow">(campaign?.FlowID ? "flow" : "template");
-  const [audienceType, setAudienceType] = useState<CampaignAudienceType>(
-    campaign?.AudienceType || "filtered_clients",
-  );
+  const [audienceMode, setAudienceMode] = useState<"all" | "filters" | "manual">(() => {
+    if (!campaign) return "all";
+    if (campaign.AudienceType === "all_clients") return "all";
+    return (campaign.AudienceParams?.ClientIDs?.length || 0) > 0 ? "manual" : "filters";
+  });
+
+  const audienceType: CampaignAudienceType =
+    audienceMode === "all" ? "all_clients" : "filtered_clients";
   const [customers, setCustomers] = useState<CustomerInfo[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
@@ -82,6 +119,39 @@ export function CampaignForm({
   );
   const [capDays, setCapDays] = useState(campaign?.AudienceParams?.ExcludeRecentDays || 15);
   const [capMax, setCapMax] = useState(campaign?.AudienceParams?.ExcludeRecentMax || 1);
+
+  const [filters, setFilters] = useState<Partial<Record<FilterKey, string>>>(() => {
+    const params = campaign?.AudienceParams;
+    const initial: Partial<Record<FilterKey, string>> = {};
+    if (!params) return initial;
+    if (params.City) initial.city = params.City;
+    if (params.CreatedFromDays) initial.created_from_days = String(params.CreatedFromDays);
+    if (params.RegisteredBeforeDays)
+      initial.registered_before_days = String(params.RegisteredBeforeDays);
+    if (params.OnlyWithoutOrder) initial.only_without_order = "1";
+    if (params.MinOrders) initial.min_orders = String(params.MinOrders);
+    if (params.MinSpent) initial.min_spent = String(params.MinSpent);
+    if (params.LastPurchaseBeforeDays)
+      initial.last_purchase_before_days = String(params.LastPurchaseBeforeDays);
+    return initial;
+  });
+
+  const activeFilters = FILTER_DEFS.filter((def) => filters[def.key] !== undefined);
+  const availableFilters = FILTER_DEFS.filter((def) => filters[def.key] === undefined);
+
+  const addFilter = (key: FilterKey) => {
+    const def = FILTER_DEFS.find((item) => item.key === key);
+    setFilters((current) => ({ ...current, [key]: def?.kind === "bool" ? "1" : "" }));
+  };
+
+  const removeFilter = (key: FilterKey) =>
+    setFilters((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+
+  const filterNumber = (key: FilterKey) => Number(filters[key] || 0) || 0;
   const [selectedIds, setSelectedIds] = useState<number[]>(
     campaign?.AudienceParams?.ClientIDs || [],
   );
@@ -126,7 +196,16 @@ export function CampaignForm({
     name: name.trim(),
     sender_name: senderName.trim(),
     audience_type: audienceType,
-    client_ids: audienceType === "filtered_clients" ? selectedIds : [],
+    client_ids: audienceMode === "manual" ? selectedIds : [],
+    city: audienceMode === "filters" ? (filters.city || "").trim() : "",
+    created_from_days: audienceMode === "filters" ? filterNumber("created_from_days") : 0,
+    registered_before_days:
+      audienceMode === "filters" ? filterNumber("registered_before_days") : 0,
+    only_without_order: audienceMode === "filters" && filters.only_without_order === "1",
+    min_orders: audienceMode === "filters" ? filterNumber("min_orders") : 0,
+    min_spent: audienceMode === "filters" ? filterNumber("min_spent") : 0,
+    last_purchase_before_days:
+      audienceMode === "filters" ? filterNumber("last_purchase_before_days") : 0,
     exclude_recent_days: capEnabled ? capDays : 0,
     exclude_recent_max: capEnabled ? capMax : 0,
     send_window_start: windowStart,
@@ -155,7 +234,7 @@ export function CampaignForm({
 
     const timer = setTimeout(loadPreview, 400);
     return () => clearTimeout(timer);
-  }, [audienceType, selectedIds, capEnabled, capDays, capMax, businessId]);
+  }, [audienceMode, selectedIds, filters, capEnabled, capDays, capMax, businessId]);
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -392,32 +471,28 @@ export function CampaignForm({
               "A qui\u00e9n le llega",
               "Clientes cargados en el m\u00f3dulo de Clientes",
               <span className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setAudienceType("all_clients")}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                    audienceType === "all_clients"
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                  }`}
-                >
-                  {"Todos"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAudienceType("filtered_clients")}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                    audienceType === "filtered_clients"
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                  }`}
-                >
-                  {"Elegir"}
-                </button>
+                {([
+                  { key: "all" as const, label: "Todos" },
+                  { key: "filters" as const, label: "Filtrar" },
+                  { key: "manual" as const, label: "Elegir a mano" },
+                ]).map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setAudienceMode(option.key)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                      audienceMode === option.key
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </span>,
             )}
 
-            {audienceType === "filtered_clients" ? (
+            {audienceMode === "manual" ? (
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-3">
                   <Input
@@ -478,6 +553,73 @@ export function CampaignForm({
                     </ul>
                   )}
                 </div>
+              </div>
+            ) : audienceMode === "filters" ? (
+              <div className="space-y-2">
+                {activeFilters.length === 0 ? (
+                  <p className="text-xs text-gray-500">
+                    {"Sin filtros le llega a todos. Agreg\u00e1 uno para acotar la audiencia."}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {activeFilters.map((def) => (
+                      <div
+                        key={def.key}
+                        className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700"
+                      >
+                        <span className="text-xs text-gray-700 dark:text-gray-200">
+                          {def.label}
+                        </span>
+
+                        {def.kind !== "bool" && (
+                          <input
+                            type={def.kind === "number" ? "number" : "text"}
+                            min={def.kind === "number" ? 0 : undefined}
+                            value={filters[def.key] ?? ""}
+                            placeholder={def.placeholder}
+                            onChange={(e) =>
+                              setFilters((current) => ({
+                                ...current,
+                                [def.key]: e.target.value,
+                              }))
+                            }
+                            className="w-28 rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
+                          />
+                        )}
+
+                        {def.suffix && (
+                          <span className="text-xs text-gray-400">{def.suffix}</span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => removeFilter(def.key)}
+                          className="ml-auto text-xs font-medium text-red-500 hover:underline"
+                        >
+                          {"Quitar"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {availableFilters.length > 0 && (
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) addFilter(e.target.value as FilterKey);
+                    }}
+                    style={{ height: 32, fontSize: 12, padding: "0 8px", borderRadius: 8 }}
+                    className="border border-dashed border-gray-300 bg-white text-gray-700 outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                  >
+                    <option value="">{"+ Agregar filtro"}</option>
+                    {availableFilters.map((def) => (
+                      <option key={def.key} value={def.key}>
+                        {def.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             ) : (
               <p className="text-xs text-gray-500">

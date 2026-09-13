@@ -20,6 +20,11 @@ type CreateCampaignDTO struct {
 	ExcludeRecentDays int `json:"exclude_recent_days"`
 	ExcludeRecentMax  int `json:"exclude_recent_max"`
 
+	RegisteredBeforeDays   int     `json:"registered_before_days"`
+	MinOrders              int     `json:"min_orders"`
+	MinSpent               float64 `json:"min_spent"`
+	LastPurchaseBeforeDays int     `json:"last_purchase_before_days"`
+
 	VariableValues map[string]string `json:"variable_values"`
 
 	Timezone        string     `json:"timezone"`

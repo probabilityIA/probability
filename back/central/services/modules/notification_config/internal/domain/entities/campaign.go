@@ -40,6 +40,11 @@ type CampaignAudienceParams struct {
 
 	ExcludeRecentDays int
 	ExcludeRecentMax  int
+
+	RegisteredBeforeDays   int
+	MinOrders              int
+	MinSpent               float64
+	LastPurchaseBeforeDays int
 }
 
 type Campaign struct {

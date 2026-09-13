@@ -65,6 +65,41 @@ func (q *campaignAudienceQuerier) buildFilters(params entities.CampaignAudienceP
 			conditions = append(conditions, "client_id IN @client_ids")
 			args["client_ids"] = params.ClientIDs
 		}
+		if params.RegisteredBeforeDays > 0 {
+			conditions = append(conditions, "client_id IN (SELECT id FROM client WHERE business_id = @business_id AND created_at <= NOW() - make_interval(days => @registered_before_days))")
+			args["registered_before_days"] = params.RegisteredBeforeDays
+		}
+		if params.MinOrders > 0 {
+			conditions = append(conditions, `EXISTS (
+				SELECT 1 FROM customer_summary cs
+				WHERE cs.customer_id = base.client_id
+				  AND cs.business_id = @business_id
+				  AND cs.deleted_at IS NULL
+				  AND cs.total_orders >= @min_orders
+			)`)
+			args["min_orders"] = params.MinOrders
+		}
+		if params.MinSpent > 0 {
+			conditions = append(conditions, `EXISTS (
+				SELECT 1 FROM customer_summary cs
+				WHERE cs.customer_id = base.client_id
+				  AND cs.business_id = @business_id
+				  AND cs.deleted_at IS NULL
+				  AND cs.total_spent >= @min_spent
+			)`)
+			args["min_spent"] = params.MinSpent
+		}
+		if params.LastPurchaseBeforeDays > 0 {
+			conditions = append(conditions, `EXISTS (
+				SELECT 1 FROM customer_summary cs
+				WHERE cs.customer_id = base.client_id
+				  AND cs.business_id = @business_id
+				  AND cs.deleted_at IS NULL
+				  AND cs.last_order_at IS NOT NULL
+				  AND cs.last_order_at <= NOW() - make_interval(days => @last_purchase_before_days)
+			)`)
+			args["last_purchase_before_days"] = params.LastPurchaseBeforeDays
+		}
 	}
 
 	if params.ExcludeRecentDays > 0 {
