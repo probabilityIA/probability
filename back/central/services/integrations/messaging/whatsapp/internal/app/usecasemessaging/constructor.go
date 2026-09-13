@@ -33,6 +33,11 @@ type IUseCase interface {
 	IsTerminalState(state entities.ConversationState) bool
 }
 
+type IUseCaseMutable interface {
+	IUseCase
+	SetButtonReplyPublisher(publisher ports.IButtonReplyPublisher)
+}
+
 type WhatsAppClientFactory func(baseURL string) ports.IWhatsApp
 
 type usecases struct {
@@ -44,8 +49,13 @@ type usecases struct {
 	publisher         ports.IEventPublisher
 	ssePublisher      ports.ISSEEventPublisher
 	aiForwarder       ports.IAIForwarder
+	buttonReplyPub    ports.IButtonReplyPublisher
 	log               log.ILogger
 	config            env.IConfig
+}
+
+func (u *usecases) SetButtonReplyPublisher(publisher ports.IButtonReplyPublisher) {
+	u.buttonReplyPub = publisher
 }
 
 func New(
@@ -59,7 +69,7 @@ func New(
 	aiForwarder ports.IAIForwarder,
 	ssePublisher ports.ISSEEventPublisher,
 	clientFactory ...WhatsAppClientFactory,
-) IUseCase {
+) IUseCaseMutable {
 	uc := &usecases{
 		whatsApp:          whatsApp,
 		conversationCache: conversationCache,

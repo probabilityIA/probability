@@ -44,6 +44,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateClientAddressFields(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateWhatsappTemplateHeaderMedia(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateWhatsappTemplateFlows(ctx); err != nil {
+		return err
+	}
 	return r.migrateOrderAddressFields(ctx)
 }
 
@@ -289,9 +295,6 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 		return err
 	}
 	if err := r.migrateSubscriptionCourtesyUntil(ctx); err != nil {
-		return err
-	}
-	if err := r.migrateWhatsappTemplateHeaderMedia(ctx); err != nil {
 		return err
 	}
 	return r.seedCommercialProspects(ctx)

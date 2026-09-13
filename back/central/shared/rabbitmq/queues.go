@@ -217,6 +217,10 @@ const (
 
 	QueueScheduledNotificationResults = "notification.scheduled.results"
 
+	QueueWhatsAppButtonReplies = "whatsapp.button_reply.received"
+
+	QueueWhatsAppFlowSends = "whatsapp.flow.sends"
+
 	QueueCampaignSends = "notification.campaign.sends"
 
 	QueueCampaignResults = "notification.campaign.results"

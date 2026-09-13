@@ -13,6 +13,10 @@ type ISubmissionPublisher interface {
 	PublishTemplateSubmission(ctx context.Context, message dtos.TemplateSubmissionMessage) error
 }
 
+type IFlowPublisher interface {
+	PublishFlowSend(ctx context.Context, message dtos.FlowSendMessage) error
+}
+
 type IUseCase interface {
 	Create(ctx context.Context, dto dtos.CreateTemplateDTO) (*entities.WhatsappTemplate, error)
 	Update(ctx context.Context, dto dtos.UpdateTemplateDTO) (*entities.WhatsappTemplate, error)
@@ -23,18 +27,33 @@ type IUseCase interface {
 	ApplySubmissionResult(ctx context.Context, result dtos.TemplateSubmissionResult) error
 	ApplyMetaStatus(ctx context.Context, wabaID, name, language, event, reason string) error
 	VariableCatalog() map[string]string
+
+	ListFlows(ctx context.Context, sourceTemplateID, businessID uint) ([]entities.TemplateFlow, error)
+	ListBusinessFlows(ctx context.Context, businessID uint) ([]entities.TemplateFlow, error)
+	ReplaceFlows(ctx context.Context, dto dtos.ReplaceTemplateFlowsDTO) ([]entities.TemplateFlow, error)
+	HandleButtonReply(ctx context.Context, event dtos.ButtonReplyEvent) error
 }
 
 type useCase struct {
-	repository ports.ITemplateRepository
-	publisher  ISubmissionPublisher
-	logger     log.ILogger
+	repository     ports.ITemplateRepository
+	flowRepository ports.ITemplateFlowRepository
+	publisher      ISubmissionPublisher
+	flowPublisher  IFlowPublisher
+	logger         log.ILogger
 }
 
-func New(repository ports.ITemplateRepository, publisher ISubmissionPublisher, logger log.ILogger) IUseCase {
+func New(
+	repository ports.ITemplateRepository,
+	flowRepository ports.ITemplateFlowRepository,
+	publisher ISubmissionPublisher,
+	flowPublisher IFlowPublisher,
+	logger log.ILogger,
+) IUseCase {
 	return &useCase{
-		repository: repository,
-		publisher:  publisher,
-		logger:     logger.WithModule("whatsapp_templates_usecase"),
+		repository:     repository,
+		flowRepository: flowRepository,
+		publisher:      publisher,
+		flowPublisher:  flowPublisher,
+		logger:         logger.WithModule("whatsapp_templates_usecase"),
 	}
 }

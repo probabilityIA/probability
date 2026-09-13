@@ -84,6 +84,26 @@ export interface UpdateTemplateDTO {
   buttons?: Array<{ type: string; text: string; url?: string }>;
 }
 
+export interface TemplateFlow {
+  ID: number;
+  BusinessID: number;
+  SourceTemplateID: number;
+  ButtonText: string;
+  TargetTemplateID: number;
+  Enabled: boolean;
+  SourceName: string;
+  TargetName: string;
+  TargetLanguage: string;
+  TargetStatus: TemplateStatus;
+  TargetHeaderMediaURL: string;
+}
+
+export interface TemplateFlowInput {
+  button_text: string;
+  target_template_id: number;
+  enabled?: boolean;
+}
+
 export interface ScheduledRule {
   ID: number;
   BusinessID: number;

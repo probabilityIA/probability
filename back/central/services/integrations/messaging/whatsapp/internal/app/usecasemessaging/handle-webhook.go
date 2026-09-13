@@ -46,6 +46,8 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		Str("type", message.Type).
 		Msg("[WhatsApp Webhook] - procesando mensaje del usuario")
 
+	u.publishButtonReply(ctx, message, metadata, messageText)
+
 	conversation, err := u.conversationCache.GetActiveByPhone(ctx, phoneNumber)
 	if err != nil {
 		u.log.Debug(ctx).
@@ -150,6 +152,44 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 	}
 
 	return nil
+}
+
+func (u *usecases) publishButtonReply(
+	ctx context.Context,
+	message dtos.WebhookMessageDTO,
+	metadata dtos.WebhookMetadataDTO,
+	messageText string,
+) {
+	if u.buttonReplyPub == nil || !message.IsButtonResponse() || messageText == "" {
+		return
+	}
+
+	contextMessageID := ""
+	if message.Context != nil {
+		contextMessageID = message.Context.ID
+	}
+	if contextMessageID == "" {
+		return
+	}
+
+	owner := u.resolveBusinessByPhoneNumberID(ctx, metadata.PhoneNumberID)
+	if owner == nil {
+		return
+	}
+
+	event := ports.ButtonReplyEvent{
+		BusinessID:       owner.BusinessID,
+		PhoneNumber:      message.From,
+		ButtonText:       messageText,
+		ContextMessageID: contextMessageID,
+		MessageID:        message.ID,
+	}
+
+	if err := u.buttonReplyPub.PublishButtonReply(ctx, event); err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("button_text", messageText).
+			Msg("[WhatsApp Webhook] - error publicando la respuesta de boton para el flujo")
+	}
 }
 
 func (u *usecases) resolveBusinessByPhoneNumberID(ctx context.Context, phoneNumberID string) *ports.IntegrationOwner {

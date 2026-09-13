@@ -15,6 +15,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_type"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/scheduled_rule"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/whatsapp_template"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/button_reply_consumer"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/campaign_result_consumer"
 	deliveryConsumer "github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/consumer"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/scheduled_result_consumer"
@@ -31,11 +32,9 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-// New inicializa y registra el módulo de configuración de notificaciones
 func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient.IRedis, logger log.ILogger, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service) {
 	logger = logger.WithModule("notification_config")
 
-	// 1. Infraestructura secundaria (adaptadores de salida)
 	repo := repository.New(database, logger)
 	notificationTypeRepo := repository.NewNotificationTypeRepository(database, logger)
 	notificationEventTypeRepo := repository.NewNotificationEventTypeRepository(database, logger)
@@ -43,35 +42,35 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	messageAuditQuerier := repository.NewMessageAuditQuerier(database, logger)
 	deliveryLogRepo := repository.NewDeliveryLogRepository(database, logger)
 
-	// Cache Manager
 	cacheManager := cache.New(redisClient, repo, orderStatusQuerier, logger)
 
-	// AI Pause Checker (lee estado de IA pausada desde Redis)
 	aiPauseChecker := cache.NewAIPauseChecker(redisClient)
 
-	// Warmup inicial del cache
 	ctx := context.Background()
 	if err := cacheManager.WarmupCache(ctx); err != nil {
 		logger.Error().
 			Err(err).
-			Msg("❌ Error en warmup de cache de notification configs - sistema continuará sin cache")
+			Msg("Error en warmup de cache de notification configs - sistema continuara sin cache")
 	}
 
-	// 2. Capa de aplicación (casos de uso) - inyectar cache manager
 	useCase := app.New(repo, notificationTypeRepo, notificationEventTypeRepo, cacheManager, messageAuditQuerier, aiPauseChecker, logger)
 
-	// 3. Infraestructura primaria (adaptadores de entrada)
 	configHandler := notification_config.New(useCase, logger)
 	typeHandler := notification_type.New(useCase, logger)
 	eventTypeHandler := notification_event_type.New(useCase, logger)
 	auditHandler := message_audit.New(useCase, logger)
 
 	templateRepo := repository.NewWhatsappTemplateRepository(database, logger)
+	templateFlowRepo := repository.NewTemplateFlowRepository(database, logger)
+
 	var templatePublisher templates.ISubmissionPublisher
+	var flowPublisher templates.IFlowPublisher
 	if rabbitMQ != nil {
 		templatePublisher = queue.NewTemplatePublisher(rabbitMQ, logger)
+		flowPublisher = queue.NewFlowSendPublisher(rabbitMQ, logger)
 	}
-	templatesUseCase := templates.New(templateRepo, templatePublisher, logger)
+
+	templatesUseCase := templates.New(templateRepo, templateFlowRepo, templatePublisher, flowPublisher, logger)
 	templateHandler := whatsapp_template.New(templatesUseCase, s3, logger)
 
 	scheduledRuleRepo := repository.NewScheduledRuleRepository(database, logger)
@@ -114,7 +113,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	)
 	campaignHandler := campaign.New(campaignsUseCase, logger)
 
-	// 4. Registrar rutas HTTP
 	configHandler.RegisterRoutes(router)
 	typeHandler.RegisterRoutes(router)
 	eventTypeHandler.RegisterRoutes(router)
@@ -123,7 +121,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	scheduledHandler.RegisterRoutes(router)
 	campaignHandler.RegisterRoutes(router)
 
-	// 5. Consumer de resultados de entrega (email, SMS futuro, etc.)
 	if rabbitMQ != nil {
 		consumer := deliveryConsumer.New(rabbitMQ, deliveryLogRepo, logger)
 		go func() {
@@ -151,6 +148,15 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 				logger.Error(ctx).
 					Err(err).
 					Msg("Error al iniciar consumer de resultados de plantillas")
+			}
+		}()
+
+		buttonReplyConsumer := button_reply_consumer.New(rabbitMQ, templatesUseCase, logger)
+		go func() {
+			if err := buttonReplyConsumer.Start(context.Background()); err != nil {
+				logger.Error(ctx).
+					Err(err).
+					Msg("Error al iniciar consumer de respuestas de botones")
 			}
 		}()
 

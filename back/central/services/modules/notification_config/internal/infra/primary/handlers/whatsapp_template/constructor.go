@@ -20,6 +20,9 @@ type IHandler interface {
 	SubmitForReview(c *gin.Context)
 	Variables(c *gin.Context)
 	UploadMedia(c *gin.Context)
+	ListAllFlows(c *gin.Context)
+	GetFlows(c *gin.Context)
+	ReplaceFlows(c *gin.Context)
 }
 
 type handler struct {

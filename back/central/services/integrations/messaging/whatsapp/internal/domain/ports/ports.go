@@ -58,6 +58,18 @@ type IEventPublisher interface {
 	PublishHandoffRequested(ctx context.Context, orderNumber, phoneNumber string, businessID uint, conversationID string) error
 }
 
+type ButtonReplyEvent struct {
+	BusinessID       uint
+	PhoneNumber      string
+	ButtonText       string
+	ContextMessageID string
+	MessageID        string
+}
+
+type IButtonReplyPublisher interface {
+	PublishButtonReply(ctx context.Context, event ButtonReplyEvent) error
+}
+
 type WhatsAppConfig struct {
 	PhoneNumberID uint
 	AccessToken   string

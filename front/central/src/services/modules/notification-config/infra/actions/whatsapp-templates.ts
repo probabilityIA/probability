@@ -6,6 +6,8 @@ import { env } from "@/shared/config/env";
 import {
   CreateTemplateDTO,
   PaginatedResult,
+  TemplateFlow,
+  TemplateFlowInput,
   TemplateScope,
   UpdateTemplateDTO,
   WhatsappTemplate,
@@ -150,6 +152,78 @@ export async function uploadTemplateMediaAction(formData: FormData, businessId?:
     }
 
     return { success: true, url: (body.data?.url || "") as string };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message };
+  }
+}
+
+export async function listTemplateFlowsAction(templateId: number, businessId?: number) {
+  try {
+    const url = withBusiness(
+      `${env.API_BASE_URL}/whatsapp-templates/${templateId}/flows`,
+      businessId,
+    );
+    const response = await fetch(url, {
+      headers: await authHeaders(),
+      cache: "no-store",
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error listando el flujo", data: [] };
+    }
+
+    return { success: true, data: (body.data || []) as TemplateFlow[] };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message, data: [] };
+  }
+}
+
+export async function listAllTemplateFlowsAction(businessId?: number) {
+  try {
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-templates/flows`, businessId);
+    const response = await fetch(url, {
+      headers: await authHeaders(),
+      cache: "no-store",
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error listando los flujos", data: [] };
+    }
+
+    return { success: true, data: (body.data || []) as TemplateFlow[] };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message, data: [] };
+  }
+}
+
+export async function replaceTemplateFlowsAction(
+  templateId: number,
+  flows: TemplateFlowInput[],
+  businessId?: number,
+) {
+  try {
+    const url = withBusiness(
+      `${env.API_BASE_URL}/whatsapp-templates/${templateId}/flows`,
+      businessId,
+    );
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: await authHeaders(),
+      body: JSON.stringify({ flows }),
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error guardando el flujo" };
+    }
+
+    revalidatePath("/notification-config");
+    return { success: true, data: (body.data || []) as TemplateFlow[] };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error desconocido";
     return { success: false, error: message };
