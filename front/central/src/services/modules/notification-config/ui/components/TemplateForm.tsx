@@ -147,6 +147,7 @@ export function TemplateForm({
   const lockedByReview = template?.Status === "pending";
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [displayName, setDisplayName] = useState(template?.Name ?? "");
   const [category, setCategory] = useState<TemplateCategory>(template?.Category ?? "UTILITY");
   const [headerText, setHeaderText] = useState(template?.HeaderText ?? "");
@@ -215,43 +216,43 @@ export function TemplateForm({
     setUploading(false);
 
     if (!result.success || !result.url) {
-      showToast(result.error || "No se pudo subir la imagen", "error");
+      setError(result.error || "No se pudo subir la imagen");
       return;
     }
 
+    setError("");
     setHeaderMediaURL(result.url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (!templateName) {
-      showToast("El nombre de la plantilla es obligatorio", "error");
+      setError("El nombre de la plantilla es obligatorio");
       return;
     }
     if (!bodyText.trim()) {
-      showToast("El cuerpo del mensaje es obligatorio", "error");
+      setError("El cuerpo del mensaje es obligatorio");
       return;
     }
     if (mismatch) {
-      showToast(
+      setError(
         `El cuerpo usa ${placeholders} variable(s) y declaraste ${variables.length}`,
-        "error",
       );
       return;
     }
     if (variables.some((item) => !item.source)) {
-      showToast("Toda variable necesita un dato asociado", "error");
+      setError("Toda variable necesita un dato asociado");
       return;
     }
     if (headerType === "IMAGE" && !headerMediaURL) {
-      showToast("Subí la imagen del encabezado o volvé a encabezado de texto", "error");
+      setError("Subí la imagen del encabezado o volvé a encabezado de texto");
       return;
     }
     if (asFlowResponse && variables.length > 0) {
-      showToast(
+      setError(
         "Una plantilla de respuesta no puede usar variables: al tocar un botón no hay datos del cliente",
-        "error",
       );
       return;
     }
@@ -260,11 +261,11 @@ export function TemplateForm({
     const uniqueButtons = new Set(filledButtons.map((text) => text.toLowerCase()));
 
     if (uniqueButtons.size !== filledButtons.length) {
-      showToast("Hay dos botones con el mismo texto", "error");
+      setError("Hay dos botones con el mismo texto");
       return;
     }
     if (filledButtons.some((text) => text.toLowerCase() === OPT_OUT_TEXT.toLowerCase())) {
-      showToast(`"${OPT_OUT_TEXT}" lo agrega Meta solo en marketing`, "error");
+      setError(`"${OPT_OUT_TEXT}" lo agrega Meta solo en las plantillas de marketing`);
       return;
     }
 
@@ -295,7 +296,7 @@ export function TemplateForm({
       setLoading(false);
 
       if (!result.success) {
-        showToast(result.error || "No se pudo editar la plantilla", "error");
+        setError(result.error || "No se pudo editar la plantilla");
         return;
       }
 
@@ -327,7 +328,7 @@ export function TemplateForm({
     setLoading(false);
 
     if (!result.success) {
-      showToast(result.error || "No se pudo crear la plantilla", "error");
+      setError(result.error || "No se pudo crear la plantilla");
       return;
     }
 
@@ -696,9 +697,28 @@ export function TemplateForm({
       </div>
 
       <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-7 py-4 dark:border-gray-700 dark:bg-gray-900/40">
-        <span className="text-[13px] text-gray-400">
-          {"Queda como borrador. La enviás a revisión cuando el flujo esté listo."}
-        </span>
+        {error ? (
+          <span className="flex min-w-0 items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[13px] font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            <svg
+              className="mt-0.5 h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              />
+            </svg>
+            <span>{error}</span>
+          </span>
+        ) : (
+          <span className="text-[13px] text-gray-400">
+            {"Queda como borrador. La enviás a revisión cuando el flujo esté listo."}
+          </span>
+        )}
         <div className="flex gap-2.5">
           <button
             type="button"
