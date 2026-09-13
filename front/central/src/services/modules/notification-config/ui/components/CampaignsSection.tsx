@@ -86,6 +86,7 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
       <CampaignDetail
         campaign={selected}
         businessId={businessId}
+        flows={flows}
         onChanged={fetchAll}
         onBack={() => setSelected(null)}
       />

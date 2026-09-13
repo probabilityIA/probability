@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/shared/providers/toast-provider";
 import { Campaign, CampaignSend } from "../../domain/campaign-types";
+import { Flow } from "../../domain/scheduled-types";
 import {
   cancelCampaignAction,
   launchCampaignAction,
@@ -15,6 +16,7 @@ import { WhatsAppConversations } from "./WhatsAppConversations";
 interface CampaignDetailProps {
   campaign: Campaign;
   businessId?: number;
+  flows?: Flow[];
   onChanged: () => void;
   onBack: () => void;
 }
@@ -42,11 +44,12 @@ const SEND_STATUS_LABEL: Record<string, string> = {
 export function CampaignDetail({
   campaign,
   businessId,
+  flows = [],
   onChanged,
   onBack,
 }: CampaignDetailProps) {
   const { showToast } = useToast();
-  const [tab, setTab] = useState<"results" | "chat">("results");
+  const [tab, setTab] = useState<"results" | "chat" | "config">("results");
   const [sends, setSends] = useState<CampaignSend[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
@@ -81,6 +84,80 @@ export function CampaignDetail({
   };
 
   const status = STATUS_LABEL[campaign.Status] || STATUS_LABEL.draft;
+
+  const params = campaign.AudienceParams;
+  const flowName = flows.find((flow) => flow.ID === campaign.FlowID)?.Name;
+  const manualCount = params?.ClientIDs?.length || 0;
+
+  const audienceLabel =
+    campaign.AudienceType === "all_clients"
+      ? "Todos los clientes"
+      : manualCount > 0
+        ? `${manualCount} elegidos a mano`
+        : "Filtrada";
+
+  const filterRows = [
+    params?.State ? { label: "Departamento", value: params.State } : null,
+    params?.City ? { label: "Ciudad", value: params.City } : null,
+    params?.CreatedFromDays
+      ? { label: "Registrado en los últimos", value: `${params.CreatedFromDays} días` }
+      : null,
+    params?.RegisteredBeforeDays
+      ? { label: "Registrado hace más de", value: `${params.RegisteredBeforeDays} días` }
+      : null,
+    params?.OnlyWithoutOrder ? { label: "Nunca me ha comprado", value: "Sí" } : null,
+    params?.MinOrders ? { label: "Con al menos", value: `${params.MinOrders} compras` } : null,
+    params?.MinSpent
+      ? { label: "Ha gastado al menos", value: `$${params.MinSpent.toLocaleString("es-CO")}` }
+      : null,
+    params?.LastPurchaseBeforeDays
+      ? { label: "Sin comprar hace más de", value: `${params.LastPurchaseBeforeDays} días` }
+      : null,
+  ].filter((row): row is { label: string; value: string } => row !== null);
+
+  const configGroups = [
+    {
+      title: "Qué se envía",
+      rows: [
+        {
+          label: "Flujo",
+          value: flowName || (campaign.FlowID ? `#${campaign.FlowID}` : "Sin flujo"),
+        },
+        { label: "Remitente", value: campaign.SenderName || "-" },
+      ],
+    },
+    {
+      title: "A quién le llega",
+      rows: [
+        { label: "Audiencia", value: audienceLabel },
+        ...(filterRows.length > 0 ? filterRows : [{ label: "Filtros", value: "Sin filtros" }]),
+        {
+          label: "Tope de frecuencia",
+          value: params?.ExcludeRecentDays
+            ? `Máximo ${params.ExcludeRecentMax || 1} en ${params.ExcludeRecentDays} días`
+            : "Sin tope",
+        },
+      ],
+    },
+    {
+      title: "Cuándo sale",
+      rows: [
+        {
+          label: "Arranque",
+          value: campaign.ScheduledAt
+            ? new Date(campaign.ScheduledAt).toLocaleString("es-CO")
+            : "Al lanzarla",
+        },
+        {
+          label: "Franja horaria",
+          value: `${campaign.SendWindowStart} a ${campaign.SendWindowEnd}`,
+        },
+        { label: "Zona horaria", value: campaign.Timezone },
+        { label: "Tope diario", value: String(campaign.DailySendCap) },
+        { label: "Tamaño de tanda", value: String(campaign.BatchSize) },
+      ],
+    },
+  ];
 
   return (
     <div className="space-y-4">
@@ -195,9 +272,43 @@ export function CampaignDetail({
         >
           {"Conversaciones"}
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("config")}
+          className={`px-4 py-2 text-sm font-medium ${
+            tab === "config"
+              ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
+              : "text-gray-500"
+          }`}
+        >
+          {"Configuración"}
+        </button>
       </div>
 
-      {tab === "results" ? (
+      {tab === "config" ? (
+        <div className="space-y-3">
+          {configGroups.map((group) => (
+            <div
+              key={group.title}
+              className="rounded-lg border border-gray-200 p-3 dark:border-gray-600"
+            >
+              <p className="mb-2 text-xs font-semibold text-gray-900 dark:text-white">
+                {group.title}
+              </p>
+              <dl className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+                {group.rows.map((row) => (
+                  <div key={row.label} className="flex justify-between gap-3 text-xs">
+                    <dt className="text-gray-500">{row.label}</dt>
+                    <dd className="text-right font-medium text-gray-800 dark:text-gray-100">
+                      {row.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      ) : tab === "results" ? (
         loading ? (
           <p className="py-6 text-center text-sm text-gray-500">{"Cargando..."}</p>
         ) : sends.length === 0 ? (
