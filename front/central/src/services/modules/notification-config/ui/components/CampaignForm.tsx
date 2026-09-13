@@ -41,6 +41,13 @@ const SAMPLE_BY_SOURCE: Record<string, string> = {
   "campaign.name": "Ruta 30",
 };
 
+const pad = (value: number) => String(value).padStart(2, "0");
+
+const localDate = (date: Date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
+const localTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
 const TEMPLATE_STATUS_LABEL: Record<string, string> = {
   draft: "borrador",
   pending: "en revisión de Meta",
@@ -78,6 +85,13 @@ export function CampaignForm({
   const [dailyCap, setDailyCap] = useState(campaign?.DailySendCap || 250);
   const [batchSize, setBatchSize] = useState(campaign?.BatchSize || 50);
 
+  const scheduledAt = campaign?.ScheduledAt ? new Date(campaign.ScheduledAt) : null;
+  const [startMode, setStartMode] = useState<"now" | "scheduled">(
+    scheduledAt ? "scheduled" : "now",
+  );
+  const [startDate, setStartDate] = useState(scheduledAt ? localDate(scheduledAt) : "");
+  const [startTime, setStartTime] = useState(scheduledAt ? localTime(scheduledAt) : "09:00");
+
   const [preview, setPreview] = useState<CampaignAudiencePreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -111,6 +125,10 @@ export function CampaignForm({
     send_window_end: windowEnd,
     daily_send_cap: dailyCap,
     batch_size: batchSize,
+    scheduled_at:
+      startMode === "scheduled" && startDate
+        ? new Date(`${startDate}T${startTime || "00:00"}`).toISOString()
+        : null,
     variable_values: senderName.trim() ? { "sender.name": senderName.trim() } : undefined,
   });
 
@@ -175,6 +193,10 @@ export function CampaignForm({
     }
     if (mode === "template" && !templateId) {
       showToast("Elige la plantilla que se va a enviar", "error");
+      return;
+    }
+    if (startMode === "scheduled" && !startDate) {
+      showToast("Elegí la fecha en la que arranca la campaña", "error");
       return;
     }
     if (mode === "flow" && !effectiveTemplateId) {
@@ -457,7 +479,68 @@ export function CampaignForm({
           </div>
 
           <div className={band}>
-            {step("3", "Ritmo de env\u00edo", "Sale por tandas dentro de la franja")}
+            {step(
+              "3",
+              "Cu\u00e1ndo sale",
+              "Fecha de arranque y ritmo de las tandas",
+              <span className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setStartMode("now")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                    startMode === "now"
+                      ? "bg-[var(--color-primary)] text-white"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {"Al lanzarla"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStartMode("scheduled")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                    startMode === "scheduled"
+                      ? "bg-[var(--color-primary)] text-white"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {"Programar"}
+                </button>
+              </span>,
+            )}
+
+            {startMode === "scheduled" ? (
+              <div className="mb-4 grid gap-4 md:grid-cols-4">
+                <div>
+                  <Label htmlFor="campaign-start-date">{"Fecha de inicio"}</Label>
+                  <Input
+                    id="campaign-start-date"
+                    className="mt-1.5"
+                    type="date"
+                    min={localDate(new Date())}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="campaign-start-time">{"Hora de inicio"}</Label>
+                  <Input
+                    id="campaign-start-time"
+                    className="mt-1.5"
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </div>
+                <p className="self-end pb-3 text-xs text-gray-500 md:col-span-2">
+                  {"La primera tanda sale a esa hora, siempre que caiga dentro de la franja."}
+                </p>
+              </div>
+            ) : (
+              <p className="mb-4 text-xs text-gray-500">
+                {"Empieza apenas la lances, dentro de la franja horaria que elijas abajo."}
+              </p>
+            )}
 
             <div className="grid gap-4 md:grid-cols-4">
               <div>
