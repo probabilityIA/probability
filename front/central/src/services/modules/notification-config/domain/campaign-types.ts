@@ -71,12 +71,20 @@ export interface CampaignSend {
   RepliedAt: string | null;
 }
 
+export interface CampaignAudienceClient {
+  client_id: number;
+  name: string;
+  phone: string;
+  city: string;
+}
+
 export interface CampaignAudiencePreview {
   total: number;
   opted_out: number;
   no_phone: number;
   reachable: number;
   sample_names: string[] | null;
+  clients: CampaignAudienceClient[] | null;
 }
 
 export interface CreateCampaignDTO {

@@ -127,14 +127,26 @@ func (uc *useCase) PreviewAudience(ctx context.Context, dto dtos.CreateCampaignD
 		return nil, err
 	}
 
-	candidates, err := uc.audience.FindCampaignCandidates(ctx, dto.BusinessID, params, audienceType, audienceSampleSize)
+	const previewListSize = 200
+
+	candidates, err := uc.audience.FindCampaignCandidates(ctx, dto.BusinessID, params, audienceType, previewListSize)
 	if err != nil {
 		return nil, err
 	}
 
-	names := make([]string, 0, len(candidates))
+	names := make([]string, 0, audienceSampleSize)
+	clients := make([]dtos.CampaignAudienceClientDTO, 0, len(candidates))
+
 	for _, candidate := range candidates {
-		names = append(names, candidate.Name)
+		if len(names) < audienceSampleSize {
+			names = append(names, candidate.Name)
+		}
+		clients = append(clients, dtos.CampaignAudienceClientDTO{
+			ClientID: candidate.ClientID,
+			Name:     candidate.Name,
+			Phone:    candidate.Phone,
+			City:     candidate.City,
+		})
 	}
 
 	return &dtos.CampaignAudiencePreviewDTO{
@@ -143,6 +155,7 @@ func (uc *useCase) PreviewAudience(ctx context.Context, dto dtos.CreateCampaignD
 		NoPhone:    noPhone,
 		Reachable:  reachable,
 		SampleName: names,
+		Clients:    clients,
 	}, nil
 }
 

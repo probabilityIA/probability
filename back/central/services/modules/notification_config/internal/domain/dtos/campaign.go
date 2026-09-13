@@ -35,12 +35,20 @@ type UpdateCampaignDTO struct {
 	CreateCampaignDTO
 }
 
+type CampaignAudienceClientDTO struct {
+	ClientID uint   `json:"client_id"`
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
+	City     string `json:"city"`
+}
+
 type CampaignAudiencePreviewDTO struct {
-	Total      uint     `json:"total"`
-	OptedOut   uint     `json:"opted_out"`
-	NoPhone    uint     `json:"no_phone"`
-	Reachable  uint     `json:"reachable"`
-	SampleName []string `json:"sample_names"`
+	Total      uint                        `json:"total"`
+	OptedOut   uint                        `json:"opted_out"`
+	NoPhone    uint                        `json:"no_phone"`
+	Reachable  uint                        `json:"reachable"`
+	SampleName []string                    `json:"sample_names"`
+	Clients    []CampaignAudienceClientDTO `json:"clients"`
 }
 
 type CampaignSendMessage struct {

@@ -94,6 +94,7 @@ export function CampaignForm({
 
   const [preview, setPreview] = useState<CampaignAudiencePreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [showAudience, setShowAudience] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const selectable = useMemo(
@@ -611,26 +612,71 @@ export function CampaignForm({
                     {"personas reciben el mensaje"}
                   </span>
                 </div>
-                <div className="mt-3 flex gap-5 border-t border-gray-200 pt-3 dark:border-gray-700">
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+
+                <dl className="mt-3 space-y-1 border-t border-gray-200 pt-3 text-[11px] dark:border-gray-700">
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">{"coinciden"}</dt>
+                    <dd className="font-semibold text-gray-900 dark:text-gray-100">
                       {preview.total}
-                    </div>
-                    <div className="text-[11px] text-gray-500">{"coinciden"}</div>
+                    </dd>
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {preview.opted_out}
-                    </div>
-                    <div className="text-[11px] text-gray-500">{"de baja"}</div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">{"reciben"}</dt>
+                    <dd className="font-semibold text-gray-900 dark:text-gray-100">
+                      {preview.reachable}
+                    </dd>
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {preview.no_phone}
-                    </div>
-                    <div className="text-[11px] text-gray-500">{"sin celular"}</div>
+                  <div className="flex justify-between">
+                    <dt className="text-amber-600 dark:text-amber-400">{"quedan fuera"}</dt>
+                    <dd className="font-semibold text-amber-600 dark:text-amber-400">
+                      {Math.max(0, preview.total - preview.reachable)}
+                    </dd>
                   </div>
-                </div>
+                  <div className="flex justify-between pl-3">
+                    <dt className="text-gray-400">{"sin celular"}</dt>
+                    <dd className="text-gray-500">{preview.no_phone}</dd>
+                  </div>
+                  <div className="flex justify-between pl-3">
+                    <dt className="text-gray-400">{"dados de baja"}</dt>
+                    <dd className="text-gray-500">{preview.opted_out}</dd>
+                  </div>
+                </dl>
+
+                {(preview.clients?.length ?? 0) > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setShowAudience((current) => !current)}
+                      className="mt-3 text-xs font-medium text-[var(--color-primary)] hover:underline"
+                    >
+                      {showAudience ? "Ocultar clientes" : "Ver clientes"}
+                    </button>
+
+                    {showAudience && (
+                      <ul className="mt-2 max-h-56 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+                        {(preview.clients || []).map((client) => (
+                          <li
+                            key={client.client_id}
+                            className="flex items-center gap-2 px-2.5 py-1.5"
+                          >
+                            <span className="min-w-0 flex-1 truncate text-[11px] text-gray-800 dark:text-gray-100">
+                              {client.name}
+                            </span>
+                            <span className="shrink-0 text-[10px] text-gray-400">
+                              {client.phone}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {preview.reachable > (preview.clients?.length ?? 0) && showAudience && (
+                      <p className="mt-1 text-[10px] text-gray-400">
+                        {`Se muestran los primeros ${preview.clients?.length ?? 0}.`}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             ) : (
               <p className="text-xs text-gray-400">{"Ajusta los filtros para ver el alcance."}</p>
