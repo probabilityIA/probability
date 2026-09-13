@@ -306,16 +306,18 @@ export function TemplateFlowView({
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-        {title && (
-          <div className="mb-3 flex flex-wrap items-center gap-3 border-b border-gray-100 pb-3 dark:border-gray-700">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                {title}
-              </p>
-              {subtitle && (
-                <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
-              )}
-            </div>
+        {(title || actions) && (
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            {title && (
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                  {title}
+                </p>
+                {subtitle && (
+                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+                )}
+              </div>
+            )}
             {actions && <div className="ml-auto flex items-center gap-3">{actions}</div>}
           </div>
         )}

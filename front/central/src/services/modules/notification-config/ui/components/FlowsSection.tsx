@@ -264,8 +264,6 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
               variableCatalog={catalog}
               flowId={selected.ID}
               rootTemplateId={selected.RootTemplateID}
-              title={selected.Name}
-              subtitle={selected.Description}
               actions={flowActions(selected)}
               onChanged={() => {
                 loadTransitions(selected.ID);
