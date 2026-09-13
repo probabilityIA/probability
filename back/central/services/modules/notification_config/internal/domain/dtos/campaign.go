@@ -17,6 +17,9 @@ type CreateCampaignDTO struct {
 	OnlyWithoutOrder bool   `json:"only_without_order"`
 	ClientIDs        []uint `json:"client_ids"`
 
+	ExcludeRecentDays int `json:"exclude_recent_days"`
+	ExcludeRecentMax  int `json:"exclude_recent_max"`
+
 	VariableValues map[string]string `json:"variable_values"`
 
 	Timezone        string     `json:"timezone"`

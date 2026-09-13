@@ -77,6 +77,11 @@ export function CampaignForm({
   const [customers, setCustomers] = useState<CustomerInfo[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
+  const [capEnabled, setCapEnabled] = useState(
+    (campaign?.AudienceParams?.ExcludeRecentDays || 0) > 0,
+  );
+  const [capDays, setCapDays] = useState(campaign?.AudienceParams?.ExcludeRecentDays || 15);
+  const [capMax, setCapMax] = useState(campaign?.AudienceParams?.ExcludeRecentMax || 1);
   const [selectedIds, setSelectedIds] = useState<number[]>(
     campaign?.AudienceParams?.ClientIDs || [],
   );
@@ -122,6 +127,8 @@ export function CampaignForm({
     sender_name: senderName.trim(),
     audience_type: audienceType,
     client_ids: audienceType === "filtered_clients" ? selectedIds : [],
+    exclude_recent_days: capEnabled ? capDays : 0,
+    exclude_recent_max: capEnabled ? capMax : 0,
     send_window_start: windowStart,
     send_window_end: windowEnd,
     daily_send_cap: dailyCap,
@@ -148,7 +155,7 @@ export function CampaignForm({
 
     const timer = setTimeout(loadPreview, 400);
     return () => clearTimeout(timer);
-  }, [audienceType, selectedIds, businessId]);
+  }, [audienceType, selectedIds, capEnabled, capDays, capMax, businessId]);
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -477,6 +484,47 @@ export function CampaignForm({
                 {"Le llega a todos tus clientes con celular v\u00e1lido que no se hayan dado de baja."}
               </p>
             )}
+
+            <div className="mt-4 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-200">
+                <input
+                  type="checkbox"
+                  checked={capEnabled}
+                  onChange={(e) => setCapEnabled(e.target.checked)}
+                />
+                {"No repetirle a quien ya recibi\u00f3 campa\u00f1as hace poco"}
+              </label>
+
+              {capEnabled && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                  {"Excluir a quien ya recibi\u00f3"}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={capMax}
+                    onChange={(e) => setCapMax(Number(e.target.value))}
+                    className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
+                  />
+                  {"o m\u00e1s campa\u00f1as en los \u00faltimos"}
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={capDays}
+                    onChange={(e) => setCapDays(Number(e.target.value))}
+                    className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800"
+                  />
+                  {"d\u00edas"}
+                </div>
+              )}
+
+              <p className="mt-2 text-[11px] text-gray-400">
+                {
+                  "Cuenta los mensajes de campa\u00f1as que s\u00ed salieron. Evita quemar la l\u00ednea escribi\u00e9ndole tres veces a la misma persona."
+                }
+              </p>
+            </div>
           </div>
 
           <div className={band}>

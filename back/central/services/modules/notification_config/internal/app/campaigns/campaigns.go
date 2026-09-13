@@ -451,10 +451,12 @@ func (uc *useCase) build(ctx context.Context, dto dtos.CreateCampaignDTO) (*enti
 
 func buildAudienceParams(dto dtos.CreateCampaignDTO) entities.CampaignAudienceParams {
 	return entities.CampaignAudienceParams{
-		City:             strings.TrimSpace(dto.City),
-		CreatedFromDays:  dto.CreatedFromDays,
-		OnlyWithoutOrder: dto.OnlyWithoutOrder,
-		ClientIDs:        dto.ClientIDs,
+		City:              strings.TrimSpace(dto.City),
+		CreatedFromDays:   dto.CreatedFromDays,
+		OnlyWithoutOrder:  dto.OnlyWithoutOrder,
+		ClientIDs:         dto.ClientIDs,
+		ExcludeRecentDays: dto.ExcludeRecentDays,
+		ExcludeRecentMax:  dto.ExcludeRecentMax,
 	}
 }
 

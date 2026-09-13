@@ -33,6 +33,8 @@ export interface Campaign {
     CreatedFromDays: number;
     OnlyWithoutOrder: boolean;
     ClientIDs: number[] | null;
+    ExcludeRecentDays: number;
+    ExcludeRecentMax: number;
   };
   VariableValues: Record<string, string> | null;
   Timezone: string;
@@ -98,6 +100,8 @@ export interface CreateCampaignDTO {
   created_from_days?: number;
   only_without_order?: boolean;
   client_ids?: number[];
+  exclude_recent_days?: number;
+  exclude_recent_max?: number;
   variable_values?: Record<string, string>;
   timezone?: string;
   send_window_start?: string;

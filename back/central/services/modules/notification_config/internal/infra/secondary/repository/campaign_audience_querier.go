@@ -67,6 +67,26 @@ func (q *campaignAudienceQuerier) buildFilters(params entities.CampaignAudienceP
 		}
 	}
 
+	if params.ExcludeRecentDays > 0 {
+		maxMessages := params.ExcludeRecentMax
+		if maxMessages <= 0 {
+			maxMessages = 1
+		}
+
+		conditions = append(conditions, `(
+			SELECT count(*)
+			FROM whatsapp_campaign_sends s
+			WHERE s.client_id = base.client_id
+			  AND s.business_id = @business_id
+			  AND s.deleted_at IS NULL
+			  AND s.status IN ('sent', 'delivered', 'read', 'replied')
+			  AND s.sent_at >= NOW() - make_interval(days => @exclude_recent_days)
+		) < @exclude_recent_max`)
+
+		args["exclude_recent_days"] = params.ExcludeRecentDays
+		args["exclude_recent_max"] = maxMessages
+	}
+
 	if len(conditions) == 0 {
 		return "", args
 	}

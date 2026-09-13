@@ -37,6 +37,9 @@ type CampaignAudienceParams struct {
 	CreatedFromDays  int
 	OnlyWithoutOrder bool
 	ClientIDs        []uint
+
+	ExcludeRecentDays int
+	ExcludeRecentMax  int
 }
 
 type Campaign struct {
