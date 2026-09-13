@@ -84,14 +84,6 @@ const FILTER_DEFS: FilterDef[] = [
   },
 ];
 
-const TEMPLATE_STATUS_LABEL: Record<string, string> = {
-  draft: "borrador",
-  pending: "en revisi\u00f3n de Meta",
-  paused: "pausada por Meta",
-  disabled: "deshabilitada",
-  failed: "fall\u00f3 el env\u00edo a Meta",
-};
-
 export function CampaignForm({
   businessId,
   templates,
@@ -104,9 +96,7 @@ export function CampaignForm({
 
   const [name, setName] = useState(campaign?.Name || "");
   const [senderName, setSenderName] = useState(campaign?.SenderName || "");
-  const [templateId, setTemplateId] = useState<number>(campaign?.WhatsappTemplateID || 0);
   const [flowId, setFlowId] = useState<number>(campaign?.FlowID || 0);
-  const [mode, setMode] = useState<"template" | "flow">(campaign?.FlowID ? "flow" : "template");
   const [audienceMode, setAudienceMode] = useState<"all" | "filters" | "manual">(() => {
     if (!campaign) return "all";
     if (campaign.AudienceType === "all_clients") return "all";
@@ -197,18 +187,12 @@ export function CampaignForm({
   const [showAudience, setShowAudience] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const selectable = useMemo(
-    () => templates.filter((template) => template.Status !== "rejected"),
-    [templates],
-  );
-
   const selectedFlow = useMemo(
     () => flows.find((flow) => flow.ID === flowId) || null,
     [flows, flowId],
   );
 
-  const effectiveTemplateId =
-    mode === "flow" ? selectedFlow?.RootTemplateID ?? 0 : templateId;
+  const effectiveTemplateId = selectedFlow?.RootTemplateID ?? 0;
 
   const selected = useMemo(
     () => templates.find((template) => template.ID === effectiveTemplateId) || null,
@@ -217,7 +201,7 @@ export function CampaignForm({
 
   const buildDTO = (): CreateCampaignDTO => ({
     whatsapp_template_id: effectiveTemplateId,
-    flow_id: mode === "flow" ? flowId || null : null,
+    flow_id: flowId || null,
     name: name.trim(),
     sender_name: senderName.trim(),
     audience_type: audienceType,
@@ -308,19 +292,15 @@ export function CampaignForm({
       showToast("Ponle un nombre a la campa\u00f1a", "error");
       return;
     }
-    if (mode === "flow" && !flowId) {
+    if (!flowId) {
       showToast("Elige el flujo que se va a enviar", "error");
-      return;
-    }
-    if (mode === "template" && !templateId) {
-      showToast("Elige la plantilla que se va a enviar", "error");
       return;
     }
     if (startMode === "scheduled" && !startDate) {
       showToast("Eleg\u00ed la fecha en la que arranca la campa\u00f1a", "error");
       return;
     }
-    if (mode === "flow" && !effectiveTemplateId) {
+    if (!effectiveTemplateId) {
       showToast("Ese flujo no tiene plantilla inicial. Editalo y eleg\u00ed una.", "error");
       return;
     }
@@ -390,38 +370,8 @@ export function CampaignForm({
               </div>
 
               <div>
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="campaign-template">
-                    {mode === "flow" ? "Flujo" : "Plantilla"}
-                  </Label>
-                  <span className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setMode("template")}
-                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                        mode === "template"
-                          ? "bg-[var(--color-primary)] text-white"
-                          : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {"Mensaje \u00fanico"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMode("flow")}
-                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                        mode === "flow"
-                          ? "bg-[var(--color-primary)] text-white"
-                          : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {"Flujo"}
-                    </button>
-                  </span>
-                </div>
+                <Label htmlFor="campaign-template">{"Flujo"}</Label>
 
-                {mode === "flow" ? (
-                  <>
                     <select
                       id="campaign-template"
                       value={flowId}
@@ -453,48 +403,6 @@ export function CampaignForm({
                         {`${selectedFlow.PendingCount} respuesta(s) sin aprobar: no vas a poder lanzar hasta que Meta las apruebe.`}
                       </p>
                     )}
-                  </>
-                ) : (
-                  <>
-                <select
-                  id="campaign-template"
-                  value={templateId}
-                  onChange={(e) => setTemplateId(Number(e.target.value))}
-                  className="mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value={0}>{"Seleccionar..."}</option>
-                  {selectable.map((template) => (
-                    <option key={template.ID} value={template.ID}>
-                      {template.Name}
-                    </option>
-                  ))}
-                </select>
-                {selectable.length === 0 ? (
-                  <p className="mt-1 text-xs text-amber-600">
-                    {"Todav\u00eda no tienes plantillas de campa\u00f1a. Crea una primero."}
-                  </p>
-                ) : selected && selected.Status !== "approved" ? (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-500">
-                    <svg
-                      className="h-3.5 w-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2.2}
-                      strokeLinecap="round"
-                    >
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 7v5l3 2" />
-                    </svg>
-                    {TEMPLATE_STATUS_LABEL[selected.Status] || selected.Status}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-xs text-gray-500">
-                    {"Meta tiene que haberla aprobado para poder lanzar."}
-                  </p>
-                )}
-                  </>
-                )}
               </div>
             </div>
           </div>

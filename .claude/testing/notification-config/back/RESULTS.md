@@ -10,6 +10,7 @@ mock de WhatsApp `:9103`. **Ningun mensaje salio a Meta.**
 | CU-01 rama "Si" (cadena completa) | OK | 4 envios encadenados |
 | CU-01 rama "No" (corta) | OK | 2 envios, termina donde debe |
 | Aprobacion de plantillas por mock | OK | tras corregir un bug, ver abajo |
+| CU-02 tarea programada con flujo | OK | regla 2, flujo 1, cadena de 4 |
 
 ### Rama "Si" - campana 2, cliente 548378 (+573164489436)
 
@@ -74,10 +75,11 @@ El dato sin embargo si esta: los webhooks de estado actualizan
   (por defecto 09:00-19:00) el despachador salta la campana en silencio.
 - **Los contadores van un tick atras**: `UpdateCampaignCounters` solo corre al
   despachar un lote o al completar, cada 2 minutos.
-- **Las tareas programadas (`scheduled_notification_rules`) no soportan flujos**:
-  la entidad solo tiene `WhatsappTemplateID`. Lo que si acepta flujo es la
-  campana, y desde la fase 1 se puede programar con fecha y hora, que es lo que
-  se uso aca.
+- **Las tareas programadas ya aceptan flujos** (corregido el 2026-09-12, ver
+  CU-02). Antes solo apuntaban a una plantilla suelta. Ahora el orden es el
+  mismo en los dos caminos: plantillas -> flujo -> campana o tarea programada.
+  Las reglas viejas con `flow_id` nulo siguen andando por compatibilidad, pero
+  no se pueden crear nuevas sin flujo.
 - **`integration:platform_creds:2` se repuebla al arrancar el backend** desde
   `integration_types.platform_credentials_encrypted`. Apuntar el mock escribiendo
   esa clave hay que hacerlo *despues* de levantar el backend, o se pierde.

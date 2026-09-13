@@ -5,12 +5,14 @@ import { Button } from "@/shared/ui/button";
 import { Modal } from "@/shared/ui/modal";
 import { useToast } from "@/shared/providers/toast-provider";
 import {
+  Flow,
   ScheduledRule,
   TEMPLATE_STATUS_LABEL,
   WhatsappTemplate,
 } from "../../domain/scheduled-types";
 import {
   getTemplateVariablesAction,
+  listFlowsAction,
   listTemplatesAction,
   submitTemplateForReviewAction,
 } from "../../infra/actions/whatsapp-templates";
@@ -47,6 +49,7 @@ export function ScheduledRulesSection({
   const [loading, setLoading] = useState(true);
   const [panel, setPanel] = useState<Panel>("none");
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
+  const [flows, setFlows] = useState<Flow[]>([]);
   const [rules, setRules] = useState<ScheduledRule[]>([]);
   const [catalog, setCatalog] = useState<Record<string, string>>({});
   const [editingTemplate, setEditingTemplate] = useState<WhatsappTemplate | null>(null);
@@ -54,13 +57,15 @@ export function ScheduledRulesSection({
   const load = useCallback(async () => {
     setLoading(true);
 
-    const [templatesResult, rulesResult, catalogResult] = await Promise.all([
+    const [templatesResult, rulesResult, catalogResult, flowsResult] = await Promise.all([
       listTemplatesAction(businessId, "scheduled"),
       listScheduledRulesAction(businessId),
       getTemplateVariablesAction(businessId),
+      listFlowsAction(businessId),
     ]);
 
     if (templatesResult.success) setTemplates(templatesResult.data);
+    if (flowsResult.success) setFlows(flowsResult.data);
     if (rulesResult.success) setRules(rulesResult.data);
     if (catalogResult.success) setCatalog(catalogResult.data);
 
@@ -114,7 +119,7 @@ export function ScheduledRulesSection({
       <ScheduledRuleForm
         businessId={businessId}
         whatsappTypeId={whatsappTypeId}
-        templates={templates}
+        flows={flows}
         onSuccess={() => {
           setPanel("none");
           load();

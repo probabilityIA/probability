@@ -31,6 +31,8 @@ type useCase struct {
 	sends     ports.IScheduledSendRepository
 	segments  ports.ISegmentQuerier
 	templates ports.ITemplateRepository
+	flows     ports.IFlowRepository
+	steps     ports.ITemplateFlowRepository
 	publisher ISendPublisher
 	logger    log.ILogger
 }
@@ -41,6 +43,8 @@ func New(
 	sends ports.IScheduledSendRepository,
 	segments ports.ISegmentQuerier,
 	templates ports.ITemplateRepository,
+	flows ports.IFlowRepository,
+	steps ports.ITemplateFlowRepository,
 	publisher ISendPublisher,
 	logger log.ILogger,
 ) IUseCase {
@@ -50,6 +54,8 @@ func New(
 		sends:     sends,
 		segments:  segments,
 		templates: templates,
+		flows:     flows,
+		steps:     steps,
 		publisher: publisher,
 		logger:    logger.WithModule("scheduled_notifications_usecase"),
 	}

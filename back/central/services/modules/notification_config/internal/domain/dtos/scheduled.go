@@ -5,6 +5,7 @@ type CreateScheduledRuleDTO struct {
 	IntegrationID      *uint  `json:"integration_id"`
 	NotificationTypeID uint   `json:"notification_type_id"`
 	WhatsappTemplateID *uint  `json:"whatsapp_template_id"`
+	FlowID             *uint  `json:"flow_id"`
 	Name               string `json:"name"`
 	Description        string `json:"description"`
 

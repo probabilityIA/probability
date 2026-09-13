@@ -14,6 +14,7 @@ func (r *Repository) migrateWhatsappFlows(ctx context.Context) error {
 		&models.WhatsappFlow{},
 		&models.WhatsappTemplateFlow{},
 		&models.WhatsappCampaign{},
+		&models.ScheduledNotificationRule{},
 	); err != nil {
 		return fmt.Errorf("failed to auto-migrate whatsapp flows: %w", err)
 	}

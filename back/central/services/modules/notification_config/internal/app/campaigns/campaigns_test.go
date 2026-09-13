@@ -16,6 +16,7 @@ func templateID(id uint) *uint {
 func baseDTO() dtos.CreateCampaignDTO {
 	return dtos.CreateCampaignDTO{
 		BusinessID:         26,
+		FlowID:             templateID(3),
 		WhatsappTemplateID: templateID(7),
 		Name:               "Ruta 30 septiembre",
 		SenderName:         "Isabel Rojas",
@@ -92,13 +93,22 @@ func TestCreateDefaultsAudienceWhenEmpty(t *testing.T) {
 	}
 }
 
-func TestCreateRejectsMissingTemplate(t *testing.T) {
+func TestCreateRejectsMissingFlow(t *testing.T) {
 	h := newHarness()
 	dto := baseDTO()
-	dto.WhatsappTemplateID = nil
+	dto.FlowID = nil
 
 	if _, err := h.uc.Create(context.Background(), dto); err == nil {
-		t.Fatal("se esperaba error por plantilla faltante")
+		t.Fatal("se esperaba error por flujo faltante")
+	}
+}
+
+func TestCreateRejectsFlowWithoutRootTemplate(t *testing.T) {
+	h := newHarness()
+	h.flows.flow.RootTemplateID = nil
+
+	if _, err := h.uc.Create(context.Background(), baseDTO()); err == nil {
+		t.Fatal("se esperaba error por flujo sin plantilla inicial")
 	}
 }
 

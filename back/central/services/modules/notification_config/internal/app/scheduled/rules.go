@@ -135,11 +135,16 @@ func (uc *useCase) buildRule(ctx context.Context, dto dtos.CreateScheduledRuleDT
 		return nil, fmt.Errorf("notification_type_id es obligatorio")
 	}
 
-	if dto.WhatsappTemplateID == nil || *dto.WhatsappTemplateID == 0 {
-		return nil, fmt.Errorf("la regla necesita una plantilla de WhatsApp")
+	if dto.FlowID == nil || *dto.FlowID == 0 {
+		return nil, fmt.Errorf("la tarea programada necesita un flujo: crea primero las plantillas, despues el flujo, y recien ahi la tarea")
 	}
 
-	template, err := uc.templates.GetTemplateByID(ctx, *dto.WhatsappTemplateID)
+	templateID, err := uc.flowRoot(ctx, dto.BusinessID, *dto.FlowID)
+	if err != nil {
+		return nil, err
+	}
+
+	template, err := uc.templates.GetTemplateByID(ctx, *templateID)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +215,8 @@ func (uc *useCase) buildRule(ctx context.Context, dto dtos.CreateScheduledRuleDT
 		BusinessID:         dto.BusinessID,
 		IntegrationID:      dto.IntegrationID,
 		NotificationTypeID: dto.NotificationTypeID,
-		WhatsappTemplateID: dto.WhatsappTemplateID,
+		WhatsappTemplateID: templateID,
+		FlowID:             dto.FlowID,
 		Name:               name,
 		Description:        strings.TrimSpace(dto.Description),
 		SegmentType:        segmentType,

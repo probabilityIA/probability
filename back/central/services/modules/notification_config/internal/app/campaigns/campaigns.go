@@ -363,18 +363,17 @@ func (uc *useCase) build(ctx context.Context, dto dtos.CreateCampaignDTO) (*enti
 		return nil, fmt.Errorf("audiencia no soportada: %s", audienceType)
 	}
 
-	templateID := dto.WhatsappTemplateID
+	if dto.FlowID == nil || *dto.FlowID == 0 {
+		return nil, fmt.Errorf("la campana necesita un flujo: crea primero las plantillas, despues el flujo, y recien ahi la campana")
+	}
 
-	if dto.FlowID != nil && *dto.FlowID > 0 {
-		root, err := uc.flowRoot(ctx, dto.BusinessID, *dto.FlowID)
-		if err != nil {
-			return nil, err
-		}
-		templateID = root
+	templateID, err := uc.flowRoot(ctx, dto.BusinessID, *dto.FlowID)
+	if err != nil {
+		return nil, err
 	}
 
 	if templateID == nil || *templateID == 0 {
-		return nil, fmt.Errorf("la campana necesita una plantilla o un flujo de WhatsApp")
+		return nil, fmt.Errorf("el flujo no tiene plantilla inicial")
 	}
 
 	template, err := uc.templates.GetTemplateByID(ctx, *templateID)

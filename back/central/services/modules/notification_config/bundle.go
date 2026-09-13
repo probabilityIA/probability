@@ -97,6 +97,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 		scheduledSendRepo,
 		segmentQuerier,
 		templateRepo,
+		flowGroupRepo,
+		templateFlowRepo,
 		scheduledPublisher,
 		logger,
 	)

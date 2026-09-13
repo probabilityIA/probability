@@ -200,6 +200,58 @@ func (m *audienceMock) CountCampaignAudience(_ context.Context, _ uint, _ entiti
 	return m.total, m.optedOut, m.noPhone, m.reachable, nil
 }
 
+type flowRepoMock struct {
+	flow *entities.Flow
+	fail bool
+}
+
+func (m *flowRepoMock) Create(_ context.Context, _ *entities.Flow) error { return nil }
+
+func (m *flowRepoMock) Update(_ context.Context, _ *entities.Flow) error { return nil }
+
+func (m *flowRepoMock) GetByID(_ context.Context, _, _ uint) (*entities.Flow, error) {
+	if m.fail {
+		return nil, errBoom
+	}
+	return m.flow, nil
+}
+
+func (m *flowRepoMock) List(_ context.Context, _ uint) ([]entities.Flow, error) { return nil, nil }
+
+func (m *flowRepoMock) Delete(_ context.Context, _, _ uint) error { return nil }
+
+func (m *flowRepoMock) ExistsByName(_ context.Context, _ uint, _ string, _ uint) (bool, error) {
+	return false, nil
+}
+
+type flowStepsMock struct {
+	steps []entities.TemplateFlow
+}
+
+func (m *flowStepsMock) ListBySource(_ context.Context, _, _ uint) ([]entities.TemplateFlow, error) {
+	return m.steps, nil
+}
+
+func (m *flowStepsMock) ListByBusiness(_ context.Context, _ uint) ([]entities.TemplateFlow, error) {
+	return m.steps, nil
+}
+
+func (m *flowStepsMock) ListByFlow(_ context.Context, _, _ uint) ([]entities.TemplateFlow, error) {
+	return m.steps, nil
+}
+
+func (m *flowStepsMock) ReplaceForSource(_ context.Context, _, _ uint, _ []entities.TemplateFlow) error {
+	return nil
+}
+
+func (m *flowStepsMock) Resolve(_ context.Context, _, _ uint, _ string) (*entities.TemplateFlow, error) {
+	return nil, nil
+}
+
+func (m *flowStepsMock) TemplateNameByOutboundMessageID(_ context.Context, _ string) (string, error) {
+	return "", nil
+}
+
 type senderMock struct {
 	integrationID uint
 	phone         string
@@ -270,6 +322,8 @@ type harness struct {
 	audience  *audienceMock
 	sender    *senderMock
 	templates *templateRepoMock
+	flows     *flowRepoMock
+	steps     *flowStepsMock
 	publisher *publisherMock
 }
 
@@ -298,10 +352,17 @@ func newHarness() *harness {
 		audience:  &audienceMock{},
 		sender:    &senderMock{integrationID: 99, phone: "573001112233"},
 		templates: &templateRepoMock{template: approvedTemplate(businessID)},
+		flows: &flowRepoMock{flow: &entities.Flow{
+			ID:             3,
+			BusinessID:     businessID,
+			Name:           "Ruta 30",
+			RootTemplateID: templateID(7),
+		}},
+		steps:     &flowStepsMock{},
 		publisher: &publisherMock{},
 	}
 
-	h.uc = New(h.campaigns, h.sends, h.audience, h.sender, h.templates, nil, nil, h.publisher, log.New())
+	h.uc = New(h.campaigns, h.sends, h.audience, h.sender, h.templates, h.flows, h.steps, h.publisher, log.New())
 	h.impl = h.uc.(*useCase)
 
 	return h

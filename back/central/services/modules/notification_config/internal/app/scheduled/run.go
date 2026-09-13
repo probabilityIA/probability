@@ -183,11 +183,24 @@ func (uc *useCase) execute(ctx context.Context, rule *entities.ScheduledRule) (*
 }
 
 func (uc *useCase) resolveTemplate(ctx context.Context, rule *entities.ScheduledRule) (*entities.WhatsappTemplate, error) {
-	if rule.WhatsappTemplateID == nil || *rule.WhatsappTemplateID == 0 {
-		return nil, fmt.Errorf("la regla no tiene plantilla asociada")
+	templateID := rule.WhatsappTemplateID
+
+	if rule.FlowID != nil && *rule.FlowID > 0 {
+		root, err := uc.flowRoot(ctx, rule.BusinessID, *rule.FlowID)
+		if err != nil {
+			return nil, err
+		}
+		if err := uc.assertFlowApproved(ctx, rule.BusinessID, *rule.FlowID); err != nil {
+			return nil, err
+		}
+		templateID = root
 	}
 
-	template, err := uc.templates.GetTemplateByID(ctx, *rule.WhatsappTemplateID)
+	if templateID == nil || *templateID == 0 {
+		return nil, fmt.Errorf("la regla no tiene flujo asociado")
+	}
+
+	template, err := uc.templates.GetTemplateByID(ctx, *templateID)
 	if err != nil {
 		return nil, err
 	}

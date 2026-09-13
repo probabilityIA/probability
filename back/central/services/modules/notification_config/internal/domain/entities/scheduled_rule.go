@@ -32,6 +32,7 @@ type ScheduledRule struct {
 
 	NotificationTypeID uint
 	WhatsappTemplateID *uint
+	FlowID             *uint
 
 	Name        string
 	Description string

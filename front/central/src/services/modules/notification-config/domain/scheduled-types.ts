@@ -130,6 +130,7 @@ export interface ScheduledRule {
   BusinessID: number;
   NotificationTypeID: number;
   WhatsappTemplateID: number | null;
+  FlowID: number | null;
   Name: string;
   Description: string;
   SegmentType: string;
@@ -153,7 +154,7 @@ export interface ScheduledRule {
 
 export interface CreateScheduledRuleDTO {
   notification_type_id: number;
-  whatsapp_template_id: number;
+  flow_id: number;
   name: string;
   description?: string;
   segment_type: string;
