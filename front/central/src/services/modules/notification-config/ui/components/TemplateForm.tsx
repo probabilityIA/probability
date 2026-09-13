@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Modal } from "@/shared/ui/modal";
 import { useToast } from "@/shared/providers/toast-provider";
 import {
   CreateTemplateDTO,
@@ -25,7 +26,8 @@ interface TemplateFormProps {
   template?: WhatsappTemplate | null;
   templates?: WhatsappTemplate[];
   flows?: TemplateFlow[];
-  onSuccess: () => void;
+  asFlowResponse?: boolean;
+  onSuccess: (created?: WhatsappTemplate) => void;
   onCancel: () => void;
 }
 
@@ -164,6 +166,7 @@ export function TemplateForm({
   template = null,
   templates = [],
   flows = [],
+  asFlowResponse = false,
   onSuccess,
   onCancel,
 }: TemplateFormProps) {
@@ -184,11 +187,13 @@ export function TemplateForm({
   const [footerText, setFooterText] = useState(template?.FooterText ?? "");
   const [variables, setVariables] = useState<VariableRow[]>(initialVariables(template));
   const [buttons, setButtons] = useState<ButtonRow[]>(initialButtons(template, flows));
+  const [extraTargets, setExtraTargets] = useState<WhatsappTemplate[]>([]);
+  const [nestedIndex, setNestedIndex] = useState<number | null>(null);
 
   const sources = orderSources(variableCatalog);
   const maxButtons = category === "MARKETING" ? MAX_BUTTONS - 1 : MAX_BUTTONS;
 
-  const flowTargets = templates.filter(
+  const flowTargets = [...templates, ...extraTargets].filter(
     (item) => item.ID !== template?.ID && (item.Variables?.length ?? 0) === 0,
   );
 
@@ -296,6 +301,13 @@ export function TemplateForm({
       showToast("Subí la imagen del encabezado o volvé a encabezado de texto", "error");
       return;
     }
+    if (asFlowResponse && variables.length > 0) {
+      showToast(
+        "Una plantilla de respuesta no puede usar variables: al tocar un botón no hay datos del cliente",
+        "error",
+      );
+      return;
+    }
 
     const filledButtons = buttons.map((item) => item.text.trim()).filter(Boolean);
     const uniqueButtons = new Set(filledButtons.map((text) => text.toLowerCase()));
@@ -391,7 +403,7 @@ export function TemplateForm({
 
     setLoading(false);
     showToast("Plantilla guardada como borrador.", "success");
-    onSuccess();
+    onSuccess(result.data);
   };
 
   if (lockedByReview) {
@@ -608,7 +620,9 @@ export function TemplateForm({
               ))}
             </div>
             <span className="text-[12px] text-gray-400">
-              {"Tocá una variable para insertarla — no escribas las llaves a mano."}
+              {asFlowResponse
+                ? "Una plantilla de respuesta no puede usar variables: al tocar un botón no hay datos del cliente."
+                : "Tocá una variable para insertarla — no escribas las llaves a mano."}
             </span>
 
             {variables.length > 0 && (
@@ -735,6 +749,15 @@ export function TemplateForm({
                         </option>
                       ))}
                     </select>
+                    {!asFlowResponse && (
+                      <button
+                        type="button"
+                        onClick={() => setNestedIndex(index)}
+                        className="shrink-0 text-[12px] font-medium text-[var(--color-primary)] hover:underline"
+                      >
+                        {"Diseñar"}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -838,6 +861,46 @@ export function TemplateForm({
           </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={nestedIndex !== null}
+        onClose={() => setNestedIndex(null)}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{"Plantilla de respuesta"}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {nestedIndex !== null && buttons[nestedIndex]?.text
+                ? `Se envía al tocar "${buttons[nestedIndex].text}"`
+                : "Se envía al tocar el botón"}
+            </span>
+          </span>
+        )}
+        size="4xl"
+        zIndex={80}
+        noPadding
+        noBodyScroll
+      >
+        {nestedIndex !== null && (
+          <TemplateForm
+            businessId={businessId}
+            variableCatalog={variableCatalog}
+            scope={scope}
+            asFlowResponse
+            onSuccess={(created) => {
+              if (created) {
+                setExtraTargets((current) => [...current, created]);
+                setButtons((current) =>
+                  current.map((item, i) =>
+                    i === nestedIndex ? { ...item, targetTemplateID: created.ID } : item,
+                  ),
+                );
+              }
+              setNestedIndex(null);
+            }}
+            onCancel={() => setNestedIndex(null)}
+          />
+        )}
+      </Modal>
     </form>
   );
 }
