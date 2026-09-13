@@ -124,6 +124,86 @@ func (q *segmentQuerier) FindInactiveCustomers(
 	return out, nil
 }
 
+const candidateByPhoneQuery = `
+SELECT
+	c.id AS client_id,
+	c.business_id,
+	c.name,
+	c.phone,
+	COALESCE(CURRENT_DATE - cs.last_order_at::date, 0) AS days_inactive,
+	COALESCE(cs.total_orders, 0) AS total_orders,
+	b.name AS business_name
+FROM client c
+JOIN business b ON b.id = c.business_id
+LEFT JOIN customer_summary cs
+	ON cs.customer_id = c.id AND cs.business_id = c.business_id AND cs.deleted_at IS NULL
+WHERE c.business_id = @business_id
+	AND c.deleted_at IS NULL
+	AND right(regexp_replace(c.phone, '\D', '', 'g'), 10) = @phone_key
+ORDER BY cs.last_order_at DESC NULLS LAST, c.id DESC
+LIMIT 1
+`
+
+func (q *segmentQuerier) FindCandidateByPhone(ctx context.Context, businessID uint, phone string) (*entities.SegmentCandidate, error) {
+	key := phoneKey(phone)
+	if key == "" {
+		return nil, nil
+	}
+
+	type row struct {
+		ClientID     uint
+		BusinessID   uint
+		Name         string
+		Phone        string
+		DaysInactive int
+		TotalOrders  int
+		BusinessName string
+	}
+
+	var rows []row
+
+	if err := q.db.Conn(ctx).Raw(candidateByPhoneQuery, map[string]any{
+		"business_id": businessID,
+		"phone_key":   key,
+	}).Scan(&rows).Error; err != nil {
+		q.logger.Error().Err(err).Uint("business_id", businessID).
+			Msg("Error buscando el cliente por telefono")
+		return nil, err
+	}
+
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	item := rows[0]
+
+	return &entities.SegmentCandidate{
+		ClientID:     item.ClientID,
+		BusinessID:   item.BusinessID,
+		Name:         item.Name,
+		Phone:        NormalizePhone(item.Phone),
+		DaysInactive: item.DaysInactive,
+		TotalOrders:  item.TotalOrders,
+		BusinessName: item.BusinessName,
+	}, nil
+}
+
+func phoneKey(phone string) string {
+	var digits strings.Builder
+	for _, char := range phone {
+		if char >= '0' && char <= '9' {
+			digits.WriteRune(char)
+		}
+	}
+
+	value := digits.String()
+	if len(value) < 10 {
+		return ""
+	}
+
+	return value[len(value)-10:]
+}
+
 func NormalizePhone(phone string) string {
 	var digits strings.Builder
 	for _, char := range phone {

@@ -86,11 +86,14 @@ func (uc *useCase) ReplaceFlows(ctx context.Context, dto dtos.ReplaceTemplateFlo
 		if target == nil {
 			return nil, fmt.Errorf("la plantilla de respuesta del boton %q no existe", buttonText)
 		}
-		if len(target.Variables) > 0 {
-			return nil, fmt.Errorf(
-				"la plantilla %s usa variables y no sirve como respuesta: al responder un boton no hay datos del cliente para reemplazarlas",
-				target.Name,
-			)
+		for _, variable := range target.Variables {
+			if entities.IsFlowBlockedVariable(variable.Source) {
+				return nil, fmt.Errorf(
+					"la plantilla %s usa la variable %q, que no existe al responder un boton",
+					target.Name,
+					variable.Label,
+				)
+			}
 		}
 
 		enabled := true
@@ -166,6 +169,32 @@ func (uc *useCase) validateGraph(ctx context.Context, businessID, sourceTemplate
 	return nil
 }
 
+func (uc *useCase) resolveFlowParameters(
+	ctx context.Context,
+	event dtos.ButtonReplyEvent,
+	targetTemplateID uint,
+) []string {
+	target, err := uc.repository.GetTemplateByID(ctx, targetTemplateID)
+	if err != nil || target == nil || len(target.Variables) == 0 {
+		return nil
+	}
+
+	candidate := entities.SegmentCandidate{BusinessID: event.BusinessID}
+
+	if uc.segments != nil {
+		found, err := uc.segments.FindCandidateByPhone(ctx, event.BusinessID, event.PhoneNumber)
+		if err != nil {
+			uc.logger.Warn().Err(err).
+				Uint("business_id", event.BusinessID).
+				Msg("No se pudo resolver el cliente por telefono: la respuesta usa los valores por defecto")
+		} else if found != nil {
+			candidate = *found
+		}
+	}
+
+	return entities.BuildTemplateParameters(target, candidate)
+}
+
 func (uc *useCase) HandleButtonReply(ctx context.Context, event dtos.ButtonReplyEvent) error {
 	if uc.flowRepository == nil || uc.flowPublisher == nil {
 		return nil
@@ -213,6 +242,7 @@ func (uc *useCase) HandleButtonReply(ctx context.Context, event dtos.ButtonReply
 		Phone:          event.PhoneNumber,
 		TemplateName:   flow.TargetName,
 		Language:       flow.TargetLanguage,
+		Parameters:     uc.resolveFlowParameters(ctx, event, flow.TargetTemplateID),
 		HeaderImageURL: flow.TargetHeaderMediaURL,
 	}
 

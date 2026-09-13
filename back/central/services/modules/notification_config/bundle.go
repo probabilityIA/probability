@@ -62,6 +62,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 
 	templateRepo := repository.NewWhatsappTemplateRepository(database, logger)
 	templateFlowRepo := repository.NewTemplateFlowRepository(database, logger)
+	segmentQuerier := repository.NewSegmentQuerier(database, logger)
 
 	var templatePublisher templates.ISubmissionPublisher
 	var flowPublisher templates.IFlowPublisher
@@ -70,13 +71,19 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 		flowPublisher = queue.NewFlowSendPublisher(rabbitMQ, logger)
 	}
 
-	templatesUseCase := templates.New(templateRepo, templateFlowRepo, templatePublisher, flowPublisher, logger)
+	templatesUseCase := templates.New(
+		templateRepo,
+		templateFlowRepo,
+		segmentQuerier,
+		templatePublisher,
+		flowPublisher,
+		logger,
+	)
 	templateHandler := whatsapp_template.New(templatesUseCase, s3, logger)
 
 	scheduledRuleRepo := repository.NewScheduledRuleRepository(database, logger)
 	scheduledRunRepo := repository.NewScheduledRunRepository(database, logger)
 	scheduledSendRepo := repository.NewScheduledSendRepository(database, logger)
-	segmentQuerier := repository.NewSegmentQuerier(database, logger)
 
 	var scheduledPublisher scheduled.ISendPublisher
 	if rabbitMQ != nil {

@@ -11,11 +11,12 @@ import (
 )
 
 type flowSend struct {
-	BusinessID     uint   `json:"business_id"`
-	Phone          string `json:"phone"`
-	TemplateName   string `json:"template_name"`
-	Language       string `json:"language"`
-	HeaderImageURL string `json:"header_image_url"`
+	BusinessID     uint     `json:"business_id"`
+	Phone          string   `json:"phone"`
+	TemplateName   string   `json:"template_name"`
+	Language       string   `json:"language"`
+	Parameters     []string `json:"parameters"`
+	HeaderImageURL string   `json:"header_image_url"`
 }
 
 type Consumer struct {
@@ -58,7 +59,7 @@ func (c *Consumer) Start(ctx context.Context) error {
 			send.TemplateName,
 			send.Language,
 			send.Phone,
-			nil,
+			send.Parameters,
 			send.HeaderImageURL,
 			send.BusinessID,
 		)

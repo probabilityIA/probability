@@ -41,4 +41,5 @@ type IScheduledSendRepository interface {
 
 type ISegmentQuerier interface {
 	FindInactiveCustomers(ctx context.Context, businessID uint, params entities.SegmentParams, requiresOptIn bool, cooldownDays uint, ruleID uint, limit int) ([]entities.SegmentCandidate, error)
+	FindCandidateByPhone(ctx context.Context, businessID uint, phone string) (*entities.SegmentCandidate, error)
 }

@@ -73,6 +73,8 @@ const VARIABLE_CLASS: Record<string, string> = {
 
 const CLASS_ORDER = ["Nombre", "Cantidad", "Texto"];
 
+const FLOW_BLOCKED_SOURCES = ["sender.name", "campaign.name"];
+
 function groupSources(
   sources: Array<[string, string]>,
 ): Array<[string, Array<[string, string]>]> {
@@ -161,7 +163,9 @@ export function TemplateForm({
   const [variables, setVariables] = useState<VariableRow[]>(initialVariables(template));
   const [buttons, setButtons] = useState<ButtonRow[]>(initialButtons(template));
 
-  const sources = orderSources(variableCatalog);
+  const sources = orderSources(variableCatalog).filter(
+    ([key]) => !asFlowResponse || !FLOW_BLOCKED_SOURCES.includes(key),
+  );
   const maxButtons = category === "MARKETING" ? MAX_BUTTONS - 1 : MAX_BUTTONS;
 
   const placeholders = countPlaceholders(bodyText);
@@ -250,13 +254,6 @@ export function TemplateForm({
       setError("Subí la imagen del encabezado o volvé a encabezado de texto");
       return;
     }
-    if (asFlowResponse && variables.length > 0) {
-      setError(
-        "Una plantilla de respuesta no puede usar variables: al tocar un botón no hay datos del cliente",
-      );
-      return;
-    }
-
     const filledButtons = buttons.map((item) => item.text.trim()).filter(Boolean);
     const uniqueButtons = new Set(filledButtons.map((text) => text.toLowerCase()));
 
@@ -551,7 +548,7 @@ export function TemplateForm({
             </div>
             <span className="text-[12px] text-gray-400">
               {asFlowResponse
-                ? "Una plantilla de respuesta no puede usar variables: al tocar un botón no hay datos del cliente."
+                ? "El cliente se identifica por su teléfono. Si no está registrado se usa lo que pongas en el campo de respaldo."
                 : "Tocá una variable para insertarla — no escribas las llaves a mano."}
             </span>
 

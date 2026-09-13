@@ -3,8 +3,6 @@ package scheduled
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/dtos"
@@ -235,45 +233,5 @@ func (uc *useCase) isInsideWindow(rule *entities.ScheduledRule, now time.Time) b
 }
 
 func buildParameters(template *entities.WhatsappTemplate, candidate entities.SegmentCandidate) []string {
-	parameters := make([]string, 0, len(template.Variables))
-
-	for _, variable := range template.Variables {
-		value := resolveVariable(variable, candidate)
-		if value == "" {
-			value = variable.Fallback
-		}
-		if value == "" {
-			value = "-"
-		}
-		parameters = append(parameters, value)
-	}
-
-	return parameters
-}
-
-func resolveVariable(variable entities.TemplateVariable, candidate entities.SegmentCandidate) string {
-	switch variable.Source {
-	case "customer.first_name":
-		return firstName(candidate.Name)
-	case "customer.full_name":
-		return strings.TrimSpace(candidate.Name)
-	case "customer.days_inactive":
-		return strconv.Itoa(candidate.DaysInactive)
-	case "customer.total_orders":
-		return strconv.Itoa(candidate.TotalOrders)
-	case "customer.last_product":
-		return strings.TrimSpace(candidate.LastProduct)
-	case "business.name":
-		return strings.TrimSpace(candidate.BusinessName)
-	default:
-		return ""
-	}
-}
-
-func firstName(name string) string {
-	fields := strings.Fields(strings.TrimSpace(name))
-	if len(fields) == 0 {
-		return ""
-	}
-	return fields[0]
+	return entities.BuildTemplateParameters(template, candidate)
 }
