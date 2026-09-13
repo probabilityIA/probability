@@ -30,6 +30,7 @@ interface PendingResponse {
 
 const OPT_OUT_TEXT = "Dejar de recibir";
 const MAX_DEPTH = 4;
+const FLOW_BLOCKED_SOURCES = ["sender.name", "campaign.name"];
 
 const STATUS_STYLE: Record<string, string> = {
   approved: "bg-green-100 text-green-700",
@@ -59,6 +60,7 @@ export function TemplateFlowView({
 }: TemplateFlowViewProps) {
   const { showToast } = useToast();
   const [pending, setPending] = useState<PendingResponse | null>(null);
+  const [picking, setPicking] = useState<PendingResponse | null>(null);
   const [saving, setSaving] = useState(false);
 
   const byID = new Map(templates.map((item) => [item.ID, item]));
@@ -83,11 +85,12 @@ export function TemplateFlowView({
     ? [explicitRoot]
     : participates.filter((item) => !parentCount.has(item.ID));
 
-  const linkResponse = async (created: WhatsappTemplate) => {
-    if (!pending) return;
+  const linkResponse = async (created: WhatsappTemplate, target?: PendingResponse) => {
+    const pendingLink = target ?? pending;
+    if (!pendingLink) return;
 
     const existing = flows
-      .filter((flow) => flow.SourceTemplateID === pending.sourceID)
+      .filter((flow) => flow.SourceTemplateID === pendingLink.sourceID)
       .map((flow) => ({
         button_text: flow.ButtonText,
         target_template_id: flow.TargetTemplateID,
@@ -96,22 +99,28 @@ export function TemplateFlowView({
 
     const next = [
       ...existing.filter(
-        (item) => item.button_text.toLowerCase() !== pending.buttonText.toLowerCase(),
+        (item) => item.button_text.toLowerCase() !== pendingLink.buttonText.toLowerCase(),
       ),
-      { button_text: pending.buttonText, target_template_id: created.ID },
+      { button_text: pendingLink.buttonText, target_template_id: created.ID },
     ];
 
     setSaving(true);
-    const result = await replaceTemplateFlowsAction(pending.sourceID, next, businessId, flowId);
+    const result = await replaceTemplateFlowsAction(
+      pendingLink.sourceID,
+      next,
+      businessId,
+      flowId,
+    );
     setSaving(false);
     setPending(null);
+    setPicking(null);
 
     if (!result.success) {
-      showToast(result.error || "La plantilla se creó pero no quedó enlazada", "error");
+      showToast(result.error || "No quedó enlazada", "error");
       return;
     }
 
-    showToast(`"${pending.buttonText}" ahora responde con ${created.Name}`, "success");
+    showToast(`"${pendingLink.buttonText}" ahora responde con ${created.Name}`, "success");
     onChanged();
   };
 
@@ -221,20 +230,36 @@ export function TemplateFlowView({
                   )}
 
                   {!flow && !tooDeep && (
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() =>
-                        setPending({
-                          sourceID: template.ID,
-                          sourceName: template.Name,
-                          buttonText,
-                        })
-                      }
-                      className="whitespace-nowrap rounded-lg border border-dashed border-gray-300 px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-primary)] transition-colors hover:border-[var(--color-primary)] disabled:opacity-40 dark:border-gray-600"
-                    >
-                      {"+ Crear respuesta"}
-                    </button>
+                    <div className="flex shrink-0 flex-col gap-1 rounded-lg border border-dashed border-gray-300 p-1.5 dark:border-gray-600">
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() =>
+                          setPending({
+                            sourceID: template.ID,
+                            sourceName: template.Name,
+                            buttonText,
+                          })
+                        }
+                        className="whitespace-nowrap px-1 text-[11px] font-medium text-[var(--color-primary)] hover:underline disabled:opacity-40"
+                      >
+                        {"+ Crear respuesta"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() =>
+                          setPicking({
+                            sourceID: template.ID,
+                            sourceName: template.Name,
+                            buttonText,
+                          })
+                        }
+                        className="whitespace-nowrap px-1 text-[11px] font-medium text-gray-600 hover:underline disabled:opacity-40 dark:text-gray-300"
+                      >
+                        {"Elegir existente"}
+                      </button>
+                    </div>
                   )}
 
                   {!flow && tooDeep && (
@@ -323,6 +348,94 @@ export function TemplateFlowView({
           />
         )}
       </Modal>
+
+      <Modal
+        isOpen={picking !== null}
+        onClose={() => setPicking(null)}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{"Elegir plantilla existente"}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {picking
+                ? `Se envía cuando el cliente toca "${picking.buttonText}" en ${picking.sourceName}`
+                : ""}
+            </span>
+          </span>
+        )}
+        size="4xl"
+        zIndex={80}
+      >
+        {picking !== null && (
+          <PickTemplate
+            templates={templates.filter(
+              (item) =>
+                item.ID !== picking.sourceID &&
+                item.Origin === "business" &&
+                !(item.Variables ?? []).some((variable) =>
+                  FLOW_BLOCKED_SOURCES.includes(variable.Source),
+                ),
+            )}
+            saving={saving}
+            onPick={(template) => linkResponse(template, picking)}
+          />
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+interface PickTemplateProps {
+  templates: WhatsappTemplate[];
+  saving: boolean;
+  onPick: (template: WhatsappTemplate) => void;
+}
+
+function PickTemplate({ templates, saving, onPick }: PickTemplateProps) {
+  if (templates.length === 0) {
+    return (
+      <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-600">
+        {"No hay plantillas que sirvan como respuesta. Creá una nueva desde el botón anterior."}
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {templates.map((template) => (
+        <button
+          key={template.ID}
+          type="button"
+          disabled={saving}
+          onClick={() => onPick(template)}
+          className="flex flex-col gap-2 rounded-xl border border-gray-200 p-2.5 text-left transition-colors hover:border-[var(--color-primary)] disabled:opacity-40 dark:border-gray-700"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-[12px] font-semibold text-gray-900 dark:text-white">
+              {template.Name}
+            </span>
+            <span
+              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] ${
+                STATUS_STYLE[template.Status] || "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {TEMPLATE_STATUS_LABEL[template.Status] || template.Status}
+            </span>
+          </div>
+
+          <div className="rounded-lg bg-[#e9e2d9] p-2 dark:bg-[#2a2724]">
+            <TemplateBubble
+              headerType={template.HeaderType}
+              headerMediaURL={template.HeaderMediaURL}
+              headerText={template.HeaderText}
+              bodyText={fillPlaceholders(template.BodyText, template.Variables)}
+              footerText={template.FooterText}
+              buttons={userButtons(template)}
+              className="w-full"
+              compact
+            />
+          </div>
+        </button>
+      ))}
     </div>
   );
 }
