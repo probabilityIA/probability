@@ -64,6 +64,7 @@ type WhatsAppConfig struct {
 	IntegrationID uint
 	WhatsAppURL   string
 	WABAID        string
+	AppID         string
 	OwnNumber     bool
 }
 
@@ -109,6 +110,8 @@ type WABATemplatesSnapshot struct {
 type ITemplateAPI interface {
 	ListTemplates(ctx context.Context, wabaID, accessToken string) ([]TemplateDefinitionRemote, error)
 	CreateTemplate(ctx context.Context, wabaID, accessToken string, template TemplateDefinitionRemote) (string, error)
+	UpdateTemplate(ctx context.Context, accessToken, metaTemplateID string, template TemplateDefinitionRemote) error
+	UploadMedia(ctx context.Context, appID, accessToken, contentType string, data []byte) (string, error)
 	DeleteTemplate(ctx context.Context, wabaID, accessToken, name, metaTemplateID string) error
 	ListPhoneNumbers(ctx context.Context, wabaID, accessToken string) ([]WABAPhoneNumber, error)
 }

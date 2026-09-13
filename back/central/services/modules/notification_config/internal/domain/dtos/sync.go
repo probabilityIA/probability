@@ -19,8 +19,8 @@ type SyncNotificationConfigsDTO struct {
 
 // SyncNotificationConfigsResponseDTO representa la respuesta del sync
 type SyncNotificationConfigsResponseDTO struct {
-	Created int                           `json:"created"`
-	Updated int                           `json:"updated"`
-	Deleted int                           `json:"deleted"`
+	Created int                             `json:"created"`
+	Updated int                             `json:"updated"`
+	Deleted int                             `json:"deleted"`
 	Configs []NotificationConfigResponseDTO `json:"configs"`
 }

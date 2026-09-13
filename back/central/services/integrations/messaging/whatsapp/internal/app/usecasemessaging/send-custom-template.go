@@ -14,6 +14,7 @@ func (u *usecases) SendCustomTemplate(
 	language string,
 	phoneNumber string,
 	parameters []string,
+	headerImageURL string,
 	businessID uint,
 ) (string, error) {
 	templateName = strings.TrimSpace(templateName)
@@ -36,6 +37,16 @@ func (u *usecases) SendCustomTemplate(
 	}
 
 	components := []entities.TemplateComponent{}
+
+	if headerImage := strings.TrimSpace(headerImageURL); headerImage != "" {
+		components = append(components, entities.TemplateComponent{
+			Type: "header",
+			Parameters: []entities.TemplateParameter{
+				{Type: "image", ImageLink: headerImage},
+			},
+		})
+	}
+
 	if len(parameters) > 0 {
 		bodyParams := make([]entities.TemplateParameter, 0, len(parameters))
 		for _, value := range parameters {

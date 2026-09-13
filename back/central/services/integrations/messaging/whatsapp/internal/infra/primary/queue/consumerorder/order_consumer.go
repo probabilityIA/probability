@@ -238,7 +238,6 @@ func formatTotalAmount(amount float64, _ string) string {
 	return "$" + formatted
 }
 
-
 func requiereMapa(templateName string) bool {
 	return strings.HasSuffix(templateName, "_mapa")
 }

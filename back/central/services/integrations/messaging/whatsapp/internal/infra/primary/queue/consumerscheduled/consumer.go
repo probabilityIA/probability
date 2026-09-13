@@ -11,14 +11,15 @@ import (
 )
 
 type scheduledSend struct {
-	SendID       uint     `json:"send_id"`
-	RuleID       uint     `json:"rule_id"`
-	BusinessID   uint     `json:"business_id"`
-	ClientID     uint     `json:"client_id"`
-	Phone        string   `json:"phone"`
-	TemplateName string   `json:"template_name"`
-	Language     string   `json:"language"`
-	Parameters   []string `json:"parameters"`
+	SendID         uint     `json:"send_id"`
+	RuleID         uint     `json:"rule_id"`
+	BusinessID     uint     `json:"business_id"`
+	ClientID       uint     `json:"client_id"`
+	Phone          string   `json:"phone"`
+	TemplateName   string   `json:"template_name"`
+	Language       string   `json:"language"`
+	Parameters     []string `json:"parameters"`
+	HeaderImageURL string   `json:"header_image_url"`
 }
 
 type scheduledResult struct {
@@ -73,6 +74,7 @@ func (c *Consumer) Start(ctx context.Context) error {
 			send.Language,
 			send.Phone,
 			send.Parameters,
+			send.HeaderImageURL,
 			send.BusinessID,
 		)
 

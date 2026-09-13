@@ -9,6 +9,8 @@ export type TemplateStatus =
 
 export type TemplateCategory = "MARKETING" | "UTILITY";
 
+export type TemplateHeaderType = "TEXT" | "IMAGE";
+
 export type TemplateScope = "order_event" | "scheduled" | "campaign";
 
 export interface TemplateVariable {
@@ -33,6 +35,8 @@ export interface WhatsappTemplate {
   BodyText: string;
   HeaderText: string;
   FooterText: string;
+  HeaderType: TemplateHeaderType;
+  HeaderMediaURL: string;
   Origin: string;
   Scope: string;
   Variables: TemplateVariable[] | null;
@@ -51,6 +55,24 @@ export interface CreateTemplateDTO {
   language: string;
   category: TemplateCategory;
   header_text?: string;
+  header_type?: TemplateHeaderType;
+  header_media_url?: string;
+  body_text: string;
+  footer_text?: string;
+  variables: Array<{
+    position: number;
+    source: string;
+    label?: string;
+    fallback?: string;
+  }>;
+  buttons?: Array<{ type: string; text: string; url?: string }>;
+}
+
+export interface UpdateTemplateDTO {
+  category: TemplateCategory;
+  header_text?: string;
+  header_type?: TemplateHeaderType;
+  header_media_url?: string;
   body_text: string;
   footer_text?: string;
   variables: Array<{

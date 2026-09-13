@@ -43,15 +43,16 @@ type CampaignAudiencePreviewDTO struct {
 }
 
 type CampaignSendMessage struct {
-	SendID       uint              `json:"send_id"`
-	CampaignID   uint              `json:"campaign_id"`
-	BusinessID   uint              `json:"business_id"`
-	ClientID     uint              `json:"client_id"`
-	Phone        string            `json:"phone"`
-	TemplateName string            `json:"template_name"`
-	Language     string            `json:"language"`
-	Parameters   []string          `json:"parameters"`
-	Context      map[string]string `json:"context"`
+	SendID         uint              `json:"send_id"`
+	CampaignID     uint              `json:"campaign_id"`
+	BusinessID     uint              `json:"business_id"`
+	ClientID       uint              `json:"client_id"`
+	Phone          string            `json:"phone"`
+	TemplateName   string            `json:"template_name"`
+	Language       string            `json:"language"`
+	Parameters     []string          `json:"parameters"`
+	HeaderImageURL string            `json:"header_image_url"`
+	Context        map[string]string `json:"context"`
 }
 
 type CampaignSendResult struct {

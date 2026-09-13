@@ -13,7 +13,7 @@ import { useToast } from "@/shared/providers/toast-provider";
 import { CampaignForm } from "./CampaignForm";
 import { CampaignDetail } from "./CampaignDetail";
 import { CampaignRules } from "./CampaignRules";
-import { TemplateBuilder } from "./TemplateBuilder";
+import { TemplateForm } from "./TemplateForm";
 
 interface CampaignsSectionProps {
   businessId?: number;
@@ -219,11 +219,21 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
       <Modal
         isOpen={isTemplateOpen}
         onClose={() => setIsTemplateOpen(false)}
-        title="Nueva plantilla de campaña"
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{"Nueva plantilla de campaña"}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {"Plantilla de mensaje para WhatsApp · Meta"}
+            </span>
+          </span>
+        )}
         size="4xl"
+        zIndex={60}
+        noPadding
+        noBodyScroll
       >
         {isTemplateOpen && (
-          <TemplateBuilder
+          <TemplateForm
             businessId={businessId}
             variableCatalog={variableCatalog}
             scope="campaign"

@@ -72,7 +72,7 @@ func (uc *useCase) DeleteNotificationEventType(ctx context.Context, id uint) err
 			}
 			return errors.New("no se puede eliminar el evento porque está siendo usado por " +
 				fmt.Sprintf("%d configuración(es) activa(s): %s. Desactiva o elimina estas configuraciones primero",
-				len(activeConfigs), configList))
+					len(activeConfigs), configList))
 		}
 	}
 

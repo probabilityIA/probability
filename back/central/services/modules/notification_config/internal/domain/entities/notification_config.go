@@ -17,9 +17,9 @@ type IntegrationNotificationConfig struct {
 	UpdatedAt               time.Time
 
 	// Campos adicionales para frontend (incluyen datos de relaciones preload)
-	EventTypeDeprecated   string              // DEPRECATED - campo event_type de BD (temporal)
-	Channels              []string            // DEPRECATED - campo channels JSONB de BD (temporal)
-	NotificationType      *NotificationType   // Relación preload con tipo de notificación
+	EventTypeDeprecated   string                 // DEPRECATED - campo event_type de BD (temporal)
+	Channels              []string               // DEPRECATED - campo channels JSONB de BD (temporal)
+	NotificationType      *NotificationType      // Relación preload con tipo de notificación
 	NotificationEventType *NotificationEventType // Relación preload con tipo de evento
 }
 

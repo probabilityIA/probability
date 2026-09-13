@@ -291,5 +291,8 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateSubscriptionCourtesyUntil(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateWhatsappTemplateHeaderMedia(ctx); err != nil {
+		return err
+	}
 	return r.seedCommercialProspects(ctx)
 }

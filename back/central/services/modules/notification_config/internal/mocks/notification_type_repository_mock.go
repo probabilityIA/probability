@@ -8,12 +8,12 @@ import (
 
 // NotificationTypeRepositoryMock - Mock del repositorio de tipos de notificaciones
 type NotificationTypeRepositoryMock struct {
-	GetAllFn   func(ctx context.Context) ([]entities.NotificationType, error)
-	GetByIDFn  func(ctx context.Context, id uint) (*entities.NotificationType, error)
+	GetAllFn    func(ctx context.Context) ([]entities.NotificationType, error)
+	GetByIDFn   func(ctx context.Context, id uint) (*entities.NotificationType, error)
 	GetByCodeFn func(ctx context.Context, code string) (*entities.NotificationType, error)
-	CreateFn   func(ctx context.Context, notificationType *entities.NotificationType) error
-	UpdateFn   func(ctx context.Context, notificationType *entities.NotificationType) error
-	DeleteFn   func(ctx context.Context, id uint) error
+	CreateFn    func(ctx context.Context, notificationType *entities.NotificationType) error
+	UpdateFn    func(ctx context.Context, notificationType *entities.NotificationType) error
+	DeleteFn    func(ctx context.Context, id uint) error
 }
 
 func (m *NotificationTypeRepositoryMock) GetAll(ctx context.Context) ([]entities.NotificationType, error) {

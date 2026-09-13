@@ -12,6 +12,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		group.POST("", h.Create)
 		group.GET("", h.List)
 		group.GET("/variables", h.Variables)
+		group.POST("/media", h.UploadMedia)
 		group.GET("/:id", h.GetByID)
 		group.PUT("/:id", h.Update)
 		group.DELETE("/:id", h.Delete)

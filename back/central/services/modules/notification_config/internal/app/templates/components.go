@@ -22,7 +22,16 @@ var sampleValues = map[string]string{
 func BuildMetaComponents(template *entities.WhatsappTemplate) []map[string]any {
 	components := make([]map[string]any, 0, 4)
 
-	if header := strings.TrimSpace(template.HeaderText); header != "" {
+	if template.HeaderType == entities.TemplateHeaderTypeImage {
+		header := map[string]any{
+			"type":   "HEADER",
+			"format": "IMAGE",
+		}
+		if handle := strings.TrimSpace(template.HeaderMediaHandle); handle != "" {
+			header["example"] = map[string]any{"header_handle": []string{handle}}
+		}
+		components = append(components, header)
+	} else if header := strings.TrimSpace(template.HeaderText); header != "" {
 		components = append(components, map[string]any{
 			"type":   "HEADER",
 			"format": "TEXT",

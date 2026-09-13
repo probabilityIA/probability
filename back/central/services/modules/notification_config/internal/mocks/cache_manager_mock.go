@@ -8,12 +8,12 @@ import (
 
 // CacheManagerMock - Mock del cache manager de configuraciones de notificaciones
 type CacheManagerMock struct {
-	WarmupCacheFn                      func(ctx context.Context) error
-	CacheConfigFn                      func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
-	UpdateConfigInCacheFn              func(ctx context.Context, oldConfig, newConfig *entities.IntegrationNotificationConfig) error
-	RemoveConfigFromCacheFn            func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
-	InvalidateConfigsByIntegrationFn   func(ctx context.Context, integrationID uint) error
-	InvalidateAllFn                    func(ctx context.Context) error
+	WarmupCacheFn                    func(ctx context.Context) error
+	CacheConfigFn                    func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
+	UpdateConfigInCacheFn            func(ctx context.Context, oldConfig, newConfig *entities.IntegrationNotificationConfig) error
+	RemoveConfigFromCacheFn          func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
+	InvalidateConfigsByIntegrationFn func(ctx context.Context, integrationID uint) error
+	InvalidateAllFn                  func(ctx context.Context) error
 }
 
 func (m *CacheManagerMock) WarmupCache(ctx context.Context) error {

@@ -9,13 +9,13 @@ import (
 
 // RepositoryMock - Mock del repositorio de configuraciones de notificaciones
 type RepositoryMock struct {
-	CreateFn                                   func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
-	UpdateFn                                   func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
-	GetByIDFn                                  func(ctx context.Context, id uint) (*entities.IntegrationNotificationConfig, error)
-	ListFn                                     func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error)
-	DeleteFn                                   func(ctx context.Context, id uint) error
-	GetActiveConfigsByIntegrationAndTriggerFn  func(ctx context.Context, integrationID uint, trigger string) ([]entities.IntegrationNotificationConfig, error)
-	SyncConfigsFn                              func(ctx context.Context, businessID uint, integrationID uint, toCreate []*entities.IntegrationNotificationConfig, toUpdate []*entities.IntegrationNotificationConfig, toDeleteIDs []uint) error
+	CreateFn                                  func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
+	UpdateFn                                  func(ctx context.Context, config *entities.IntegrationNotificationConfig) error
+	GetByIDFn                                 func(ctx context.Context, id uint) (*entities.IntegrationNotificationConfig, error)
+	ListFn                                    func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error)
+	DeleteFn                                  func(ctx context.Context, id uint) error
+	GetActiveConfigsByIntegrationAndTriggerFn func(ctx context.Context, integrationID uint, trigger string) ([]entities.IntegrationNotificationConfig, error)
+	SyncConfigsFn                             func(ctx context.Context, businessID uint, integrationID uint, toCreate []*entities.IntegrationNotificationConfig, toUpdate []*entities.IntegrationNotificationConfig, toDeleteIDs []uint) error
 }
 
 func (m *RepositoryMock) Create(ctx context.Context, config *entities.IntegrationNotificationConfig) error {

@@ -15,4 +15,3 @@ func New(redis redis.IRedis, repo ports.IRepository, orderStatusQuerier ports.IO
 		logger:             logger.WithModule("notification-config-cache"),
 	}
 }
-

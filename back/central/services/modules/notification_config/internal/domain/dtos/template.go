@@ -14,28 +14,32 @@ type TemplateButtonDTO struct {
 }
 
 type CreateTemplateDTO struct {
-	BusinessID uint                  `json:"business_id"`
-	Scope      string                `json:"scope"`
-	Name       string                `json:"name"`
-	Language   string                `json:"language"`
-	Category   string                `json:"category"`
-	HeaderText string                `json:"header_text"`
-	BodyText   string                `json:"body_text"`
-	FooterText string                `json:"footer_text"`
-	Variables  []TemplateVariableDTO `json:"variables"`
-	Buttons    []TemplateButtonDTO   `json:"buttons"`
-	CreatedBy  *uint                 `json:"-"`
+	BusinessID     uint                  `json:"business_id"`
+	Scope          string                `json:"scope"`
+	Name           string                `json:"name"`
+	Language       string                `json:"language"`
+	Category       string                `json:"category"`
+	HeaderText     string                `json:"header_text"`
+	HeaderType     string                `json:"header_type"`
+	HeaderMediaURL string                `json:"header_media_url"`
+	BodyText       string                `json:"body_text"`
+	FooterText     string                `json:"footer_text"`
+	Variables      []TemplateVariableDTO `json:"variables"`
+	Buttons        []TemplateButtonDTO   `json:"buttons"`
+	CreatedBy      *uint                 `json:"-"`
 }
 
 type UpdateTemplateDTO struct {
-	ID         uint                  `json:"-"`
-	BusinessID uint                  `json:"business_id"`
-	HeaderText string                `json:"header_text"`
-	BodyText   string                `json:"body_text"`
-	FooterText string                `json:"footer_text"`
-	Category   string                `json:"category"`
-	Variables  []TemplateVariableDTO `json:"variables"`
-	Buttons    []TemplateButtonDTO   `json:"buttons"`
+	ID             uint                  `json:"-"`
+	BusinessID     uint                  `json:"business_id"`
+	HeaderText     string                `json:"header_text"`
+	HeaderType     string                `json:"header_type"`
+	HeaderMediaURL string                `json:"header_media_url"`
+	BodyText       string                `json:"body_text"`
+	FooterText     string                `json:"footer_text"`
+	Category       string                `json:"category"`
+	Variables      []TemplateVariableDTO `json:"variables"`
+	Buttons        []TemplateButtonDTO   `json:"buttons"`
 }
 
 type TemplateSubmissionMessage struct {
@@ -46,17 +50,19 @@ type TemplateSubmissionMessage struct {
 	Language       string           `json:"language"`
 	Category       string           `json:"category"`
 	MetaTemplateID string           `json:"meta_template_id"`
+	HeaderMediaURL string           `json:"header_media_url"`
 	Components     []map[string]any `json:"components"`
 }
 
 type TemplateSubmissionResult struct {
-	TemplateID     uint   `json:"template_id"`
-	BusinessID     uint   `json:"business_id"`
-	MetaTemplateID string `json:"meta_template_id"`
-	WABAID         string `json:"waba_id"`
-	Name           string `json:"name"`
-	Language       string `json:"language"`
-	Status         string `json:"status"`
-	Reason         string `json:"reason"`
-	ErrorMessage   string `json:"error_message"`
+	TemplateID        uint   `json:"template_id"`
+	BusinessID        uint   `json:"business_id"`
+	MetaTemplateID    string `json:"meta_template_id"`
+	HeaderMediaHandle string `json:"header_media_handle"`
+	WABAID            string `json:"waba_id"`
+	Name              string `json:"name"`
+	Language          string `json:"language"`
+	Status            string `json:"status"`
+	Reason            string `json:"reason"`
+	ErrorMessage      string `json:"error_message"`
 }

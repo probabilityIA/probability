@@ -13,6 +13,7 @@ import (
 
 type templatesClient struct {
 	httpClient *httpclient.Client
+	baseURL    string
 	logger     log.ILogger
 }
 
@@ -31,6 +32,7 @@ func NewTemplatesClient(baseURL string, logger log.ILogger) ports.ITemplateAPI {
 
 	return &templatesClient{
 		httpClient: client,
+		baseURL:    baseURL,
 		logger:     logger.WithModule("whatsapp-templates-client"),
 	}
 }
@@ -175,6 +177,89 @@ func (c *templatesClient) CreateTemplate(ctx context.Context, wabaID, accessToke
 	}
 
 	return result.ID, nil
+}
+
+func (c *templatesClient) UploadMedia(ctx context.Context, appID, accessToken, contentType string, data []byte) (string, error) {
+	if appID == "" {
+		return "", fmt.Errorf("app_id no configurado: sin el Meta no acepta la imagen del encabezado")
+	}
+	if len(data) == 0 {
+		return "", fmt.Errorf("la imagen esta vacia")
+	}
+
+	var sesion uploadSessionResponse
+
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetQueryParams(map[string]string{
+			"file_length":  fmt.Sprintf("%d", len(data)),
+			"file_type":    contentType,
+			"access_token": accessToken,
+		}).
+		SetResult(&sesion).
+		Post(fmt.Sprintf("%s/uploads", appID))
+	if err != nil {
+		return "", fmt.Errorf("error abriendo la sesion de subida: %w", err)
+	}
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return "", parseMetaGraphError(resp.String(), resp.StatusCode(), 0)
+	}
+	if sesion.ID == "" {
+		return "", fmt.Errorf("Meta no devolvio el id de la sesion de subida")
+	}
+
+	var subida uploadFinishResponse
+
+	resp, err = c.httpClient.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "OAuth "+accessToken).
+		SetHeader("file_offset", "0").
+		SetHeader("Content-Type", contentType).
+		SetBody(data).
+		SetResult(&subida).
+		Post(fmt.Sprintf("%s/%s", c.baseURL, sesion.ID))
+	if err != nil {
+		return "", fmt.Errorf("error subiendo la imagen del encabezado: %w", err)
+	}
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return "", parseMetaGraphError(resp.String(), resp.StatusCode(), 0)
+	}
+	if subida.Handle == "" {
+		return "", fmt.Errorf("Meta no devolvio el identificador de la imagen subida")
+	}
+
+	return subida.Handle, nil
+}
+
+func (c *templatesClient) UpdateTemplate(ctx context.Context, accessToken, metaTemplateID string, template ports.TemplateDefinitionRemote) error {
+	if metaTemplateID == "" {
+		return fmt.Errorf("la plantilla no tiene id de Meta: no se puede editar")
+	}
+	if len(template.Components) == 0 {
+		return fmt.Errorf("la plantilla necesita componentes para poder editarse")
+	}
+
+	payload := map[string]any{
+		"components": template.Components,
+	}
+	if template.Category != "" {
+		payload["category"] = template.Category
+	}
+
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "Bearer "+accessToken).
+		SetBody(payload).
+		Post(metaTemplateID)
+	if err != nil {
+		return fmt.Errorf("error editando la plantilla %s: %w", metaTemplateID, err)
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return parseMetaGraphError(resp.String(), resp.StatusCode(), 0)
+	}
+
+	return nil
 }
 
 func (c *templatesClient) DeleteTemplate(ctx context.Context, wabaID, accessToken, name, metaTemplateID string) error {

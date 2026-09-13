@@ -138,14 +138,15 @@ func (uc *useCase) execute(ctx context.Context, rule *entities.ScheduledRule) (*
 		}
 
 		message := dtos.ScheduledSendMessage{
-			SendID:       send.ID,
-			RuleID:       rule.ID,
-			BusinessID:   rule.BusinessID,
-			ClientID:     candidate.ClientID,
-			Phone:        candidate.Phone,
-			TemplateName: template.Name,
-			Language:     template.Language,
-			Parameters:   buildParameters(template, candidate),
+			SendID:         send.ID,
+			RuleID:         rule.ID,
+			BusinessID:     rule.BusinessID,
+			ClientID:       candidate.ClientID,
+			Phone:          candidate.Phone,
+			TemplateName:   template.Name,
+			Language:       template.Language,
+			Parameters:     buildParameters(template, candidate),
+			HeaderImageURL: template.HeaderMediaURL,
 		}
 
 		if uc.publisher == nil {

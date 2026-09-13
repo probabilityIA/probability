@@ -63,15 +63,17 @@ func (uc *useCase) Update(ctx context.Context, dto dtos.UpdateTemplateDTO) (*ent
 	}
 
 	createDTO := dtos.CreateTemplateDTO{
-		BusinessID: dto.BusinessID,
-		Name:       current.Name,
-		Language:   current.Language,
-		Category:   dto.Category,
-		HeaderText: dto.HeaderText,
-		BodyText:   dto.BodyText,
-		FooterText: dto.FooterText,
-		Variables:  dto.Variables,
-		Buttons:    dto.Buttons,
+		BusinessID:     dto.BusinessID,
+		Name:           current.Name,
+		Language:       current.Language,
+		Category:       dto.Category,
+		HeaderText:     dto.HeaderText,
+		HeaderType:     dto.HeaderType,
+		HeaderMediaURL: dto.HeaderMediaURL,
+		BodyText:       dto.BodyText,
+		FooterText:     dto.FooterText,
+		Variables:      dto.Variables,
+		Buttons:        dto.Buttons,
 	}
 
 	rebuilt, err := buildTemplate(createDTO)
@@ -82,7 +84,12 @@ func (uc *useCase) Update(ctx context.Context, dto dtos.UpdateTemplateDTO) (*ent
 	rebuilt.ID = current.ID
 	rebuilt.CreatedByID = current.CreatedByID
 	rebuilt.WABAID = current.WABAID
-	rebuilt.MetaTemplateID = ""
+	rebuilt.MetaTemplateID = current.MetaTemplateID
+
+	if rebuilt.HeaderMediaURL != "" && rebuilt.HeaderMediaURL == current.HeaderMediaURL {
+		rebuilt.HeaderMediaHandle = current.HeaderMediaHandle
+		rebuilt.Components = BuildMetaComponents(rebuilt)
+	}
 	rebuilt.Status = entities.TemplateStatusDraft
 	rebuilt.RejectedReason = ""
 
@@ -90,7 +97,14 @@ func (uc *useCase) Update(ctx context.Context, dto dtos.UpdateTemplateDTO) (*ent
 		return nil, err
 	}
 
-	if err := uc.submit(ctx, rebuilt); err != nil {
+	if rebuilt.MetaTemplateID == "" {
+		if err := uc.submit(ctx, rebuilt); err != nil {
+			return rebuilt, err
+		}
+		return rebuilt, nil
+	}
+
+	if err := uc.submitEdit(ctx, rebuilt); err != nil {
 		return rebuilt, err
 	}
 
@@ -161,6 +175,10 @@ func (uc *useCase) ApplySubmissionResult(ctx context.Context, result dtos.Templa
 
 	template.MetaTemplateID = result.MetaTemplateID
 	template.WABAID = result.WABAID
+
+	if result.HeaderMediaHandle != "" {
+		template.HeaderMediaHandle = result.HeaderMediaHandle
+	}
 
 	if result.ErrorMessage != "" {
 		template.Status = entities.TemplateStatusFailed

@@ -60,7 +60,12 @@ func (c *Consumer) Start(ctx context.Context) error {
 			return nil
 		}
 
-		result := c.useCase.SubmitCustom(ctx, submission)
+		var result usecasetemplates.CustomTemplateResult
+		if submission.Action == "update" {
+			result = c.useCase.UpdateCustom(ctx, submission)
+		} else {
+			result = c.useCase.SubmitCustom(ctx, submission)
+		}
 
 		payload, err := json.Marshal(result)
 		if err != nil {

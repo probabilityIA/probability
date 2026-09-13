@@ -37,8 +37,8 @@ type UseCaseMock struct {
 	DeleteNotificationEventTypeFn     func(ctx context.Context, id uint) error
 
 	// Message Audit
-	ListMessageAuditFn      func(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error)
-	GetMessageAuditStatsFn  func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error)
+	ListMessageAuditFn     func(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error)
+	GetMessageAuditStatsFn func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error)
 }
 
 // Notification Configs

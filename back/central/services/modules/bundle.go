@@ -94,7 +94,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 			}
 		})
 	}
-	notification_config.New(router, database, redisClient, logger, rabbitMQ)
+	notification_config.New(router, database, redisClient, logger, rabbitMQ, s3)
 	push.New(router, database, logger, environment, rabbitMQ)
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)

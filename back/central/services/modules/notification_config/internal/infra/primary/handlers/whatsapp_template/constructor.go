@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app/templates"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 type IHandler interface {
@@ -18,16 +19,19 @@ type IHandler interface {
 	Delete(c *gin.Context)
 	Resubmit(c *gin.Context)
 	Variables(c *gin.Context)
+	UploadMedia(c *gin.Context)
 }
 
 type handler struct {
 	useCase templates.IUseCase
+	s3      storage.IS3Service
 	logger  log.ILogger
 }
 
-func New(useCase templates.IUseCase, logger log.ILogger) IHandler {
+func New(useCase templates.IUseCase, s3 storage.IS3Service, logger log.ILogger) IHandler {
 	return &handler{
 		useCase: useCase,
+		s3:      s3,
 		logger:  logger.WithModule("whatsapp_template_handler"),
 	}
 }

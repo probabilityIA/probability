@@ -7,6 +7,7 @@ import {
   CreateTemplateDTO,
   PaginatedResult,
   TemplateScope,
+  UpdateTemplateDTO,
   WhatsappTemplate,
 } from "../../domain/scheduled-types";
 
@@ -99,6 +100,56 @@ export async function createTemplateAction(dto: CreateTemplateDTO, businessId?: 
 
     revalidatePath("/notification-config");
     return { success: true, data: body.data as WhatsappTemplate };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message };
+  }
+}
+
+export async function updateTemplateAction(
+  id: number,
+  dto: UpdateTemplateDTO,
+  businessId?: number,
+) {
+  try {
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-templates/${id}`, businessId);
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: await authHeaders(),
+      body: JSON.stringify(dto),
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error editando la plantilla" };
+    }
+
+    revalidatePath("/notification-config");
+    return { success: true, data: body.data as WhatsappTemplate };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: message };
+  }
+}
+
+export async function uploadTemplateMediaAction(formData: FormData, businessId?: number) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("session_token")?.value || "";
+
+    const url = withBusiness(`${env.API_BASE_URL}/whatsapp-templates/media`, businessId);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: body.error || "Error subiendo la imagen" };
+    }
+
+    return { success: true, url: (body.data?.url || "") as string };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error desconocido";
     return { success: false, error: message };

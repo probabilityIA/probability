@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button";
+import { Modal } from "@/shared/ui/modal";
 import { useToast } from "@/shared/providers/toast-provider";
 import {
   ScheduledRule,
@@ -17,7 +18,7 @@ import {
   listScheduledRulesAction,
   runScheduledRuleNowAction,
 } from "../../infra/actions/scheduled-rules";
-import { TemplateBuilder } from "./TemplateBuilder";
+import { TemplateForm } from "./TemplateForm";
 import { ScheduledRuleForm } from "./ScheduledRuleForm";
 
 interface ScheduledRulesSectionProps {
@@ -47,6 +48,7 @@ export function ScheduledRulesSection({
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
   const [rules, setRules] = useState<ScheduledRule[]>([]);
   const [catalog, setCatalog] = useState<Record<string, string>>({});
+  const [editingTemplate, setEditingTemplate] = useState<WhatsappTemplate | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,20 +98,6 @@ export function ScheduledRulesSection({
     return <p className="py-6 text-center text-sm text-gray-500">{"Cargando..."}</p>;
   }
 
-  if (panel === "template") {
-    return (
-      <TemplateBuilder
-        businessId={businessId}
-        variableCatalog={catalog}
-        onSuccess={() => {
-          setPanel("none");
-          load();
-        }}
-        onCancel={() => setPanel("none")}
-      />
-    );
-  }
-
   if (panel === "rule") {
     return (
       <ScheduledRuleForm
@@ -130,7 +118,14 @@ export function ScheduledRulesSection({
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold">{"Plantillas propias"}</h3>
-          <Button type="button" size="sm" onClick={() => setPanel("template")}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              setEditingTemplate(null);
+              setPanel("template");
+            }}
+          >
             {"Nueva plantilla"}
           </Button>
         </div>
@@ -150,13 +145,25 @@ export function ScheduledRulesSection({
                     <p className="mt-1 text-xs text-red-600">{template.RejectedReason}</p>
                   )}
                 </div>
-                <span
-                  className={`ml-3 shrink-0 rounded-full px-2 py-1 text-xs ${
-                    STATUS_STYLE[template.Status] || "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {TEMPLATE_STATUS_LABEL[template.Status] || template.Status}
-                </span>
+                <div className="ml-3 flex shrink-0 items-center gap-2">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs ${
+                      STATUS_STYLE[template.Status] || "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {TEMPLATE_STATUS_LABEL[template.Status] || template.Status}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingTemplate(template);
+                      setPanel("template");
+                    }}
+                    className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+                  >
+                    {"Editar"}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -217,6 +224,45 @@ export function ScheduledRulesSection({
           </ul>
         )}
       </section>
+
+      <Modal
+        isOpen={panel === "template"}
+        onClose={() => {
+          setPanel("none");
+          setEditingTemplate(null);
+        }}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">
+              {editingTemplate ? "Editar plantilla" : "Nueva plantilla"}
+            </span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {"Plantilla de mensaje para WhatsApp · Meta"}
+            </span>
+          </span>
+        )}
+        size="4xl"
+        zIndex={60}
+        noPadding
+        noBodyScroll
+      >
+        {panel === "template" && (
+          <TemplateForm
+            businessId={businessId}
+            variableCatalog={catalog}
+            template={editingTemplate}
+            onSuccess={() => {
+              setPanel("none");
+              setEditingTemplate(null);
+              load();
+            }}
+            onCancel={() => {
+              setPanel("none");
+              setEditingTemplate(null);
+            }}
+          />
+        )}
+      </Modal>
     </div>
   );
 }

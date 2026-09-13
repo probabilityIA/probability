@@ -56,6 +56,10 @@ type WhatsappTemplate struct {
 	HeaderText string `gorm:"type:text"`
 	FooterText string `gorm:"type:text"`
 
+	HeaderType        string `gorm:"size:16;not null;default:'TEXT'"`
+	HeaderMediaURL    string `gorm:"type:text"`
+	HeaderMediaHandle string `gorm:"size:512"`
+
 	VariableMapping datatypes.JSON `gorm:"type:jsonb"`
 	Buttons         datatypes.JSON `gorm:"type:jsonb"`
 	Components      datatypes.JSON `gorm:"type:jsonb"`

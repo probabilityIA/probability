@@ -218,6 +218,7 @@ func buildWhatsAppConfig(creds map[string]any, integrationID uint, baseURL strin
 	}
 
 	config.WABAID = stringValue(creds["waba_id"])
+	config.AppID = stringValue(creds["app_id"])
 
 	if url, ok := creds["whatsapp_url"].(string); ok && config.WhatsAppURL == "" {
 		config.WhatsAppURL = strings.TrimSpace(url)

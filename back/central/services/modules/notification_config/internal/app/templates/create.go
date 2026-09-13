@@ -48,6 +48,51 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateTemplateDTO) (*ent
 	return template, nil
 }
 
+func (uc *useCase) submitEdit(ctx context.Context, template *entities.WhatsappTemplate) error {
+	if uc.publisher == nil {
+		uc.logger.Warn().Uint("template_id", template.ID).
+			Msg("Sin publicador de plantillas: el cambio queda en borrador y no se envia a Meta")
+		return nil
+	}
+
+	businessID := uint(0)
+	if template.BusinessID != nil {
+		businessID = *template.BusinessID
+	}
+
+	message := dtos.TemplateSubmissionMessage{
+		Action:         "update",
+		TemplateID:     template.ID,
+		BusinessID:     businessID,
+		Name:           template.Name,
+		Language:       template.Language,
+		Category:       template.Category,
+		MetaTemplateID: template.MetaTemplateID,
+		HeaderMediaURL: template.HeaderMediaURL,
+		Components:     template.Components,
+	}
+
+	if err := uc.publisher.PublishTemplateSubmission(ctx, message); err != nil {
+		uc.logger.Error().Err(err).Uint("template_id", template.ID).
+			Msg("Error publicando la edicion de la plantilla a la cola de Meta")
+		return err
+	}
+
+	now := time.Now()
+	template.Status = entities.TemplateStatusPending
+	template.SubmittedAt = &now
+
+	if err := uc.repository.UpdateTemplate(ctx, template); err != nil {
+		return err
+	}
+
+	uc.logger.Info().Uint("template_id", template.ID).Str("name", template.Name).
+		Str("meta_template_id", template.MetaTemplateID).
+		Msg("Edicion de plantilla encolada para Meta")
+
+	return nil
+}
+
 func (uc *useCase) submit(ctx context.Context, template *entities.WhatsappTemplate) error {
 	if uc.publisher == nil {
 		uc.logger.Warn().Uint("template_id", template.ID).
@@ -61,13 +106,14 @@ func (uc *useCase) submit(ctx context.Context, template *entities.WhatsappTempla
 	}
 
 	message := dtos.TemplateSubmissionMessage{
-		Action:     "create",
-		TemplateID: template.ID,
-		BusinessID: businessID,
-		Name:       template.Name,
-		Language:   template.Language,
-		Category:   template.Category,
-		Components: template.Components,
+		Action:         "create",
+		TemplateID:     template.ID,
+		BusinessID:     businessID,
+		Name:           template.Name,
+		Language:       template.Language,
+		Category:       template.Category,
+		HeaderMediaURL: template.HeaderMediaURL,
+		Components:     template.Components,
 	}
 
 	if err := uc.publisher.PublishTemplateSubmission(ctx, message); err != nil {
@@ -102,6 +148,16 @@ func buildTemplate(dto dtos.CreateTemplateDTO) (*entities.WhatsappTemplate, erro
 		return nil, fmt.Errorf("el nombre solo admite minusculas, numeros y guion bajo: %s", name)
 	}
 
+	if dto.BusinessID > 0 {
+		prefix := fmt.Sprintf("%d_", dto.BusinessID)
+		if !strings.HasPrefix(name, prefix) {
+			name = prefix + name
+		}
+		if len(name) > maxTemplateNameLength {
+			return nil, fmt.Errorf("el nombre de la plantilla supera %d caracteres", maxTemplateNameLength)
+		}
+	}
+
 	body := strings.TrimSpace(dto.BodyText)
 	if body == "" {
 		return nil, fmt.Errorf("el cuerpo de la plantilla es obligatorio")
@@ -113,6 +169,24 @@ func buildTemplate(dto dtos.CreateTemplateDTO) (*entities.WhatsappTemplate, erro
 	header := strings.TrimSpace(dto.HeaderText)
 	if len(header) > maxHeaderLength {
 		return nil, fmt.Errorf("el encabezado supera %d caracteres", maxHeaderLength)
+	}
+
+	headerType := strings.ToUpper(strings.TrimSpace(dto.HeaderType))
+	if headerType == "" {
+		headerType = entities.TemplateHeaderTypeText
+	}
+	if headerType != entities.TemplateHeaderTypeText && headerType != entities.TemplateHeaderTypeImage {
+		return nil, fmt.Errorf("tipo de encabezado no soportado: %s", headerType)
+	}
+
+	headerMediaURL := strings.TrimSpace(dto.HeaderMediaURL)
+	if headerType == entities.TemplateHeaderTypeImage {
+		if headerMediaURL == "" {
+			return nil, fmt.Errorf("el encabezado de imagen necesita una imagen cargada")
+		}
+		header = ""
+	} else {
+		headerMediaURL = ""
 	}
 
 	footer := strings.TrimSpace(dto.FooterText)
@@ -159,19 +233,21 @@ func buildTemplate(dto dtos.CreateTemplateDTO) (*entities.WhatsappTemplate, erro
 	}
 
 	template := &entities.WhatsappTemplate{
-		BusinessID:  &businessID,
-		Origin:      entities.TemplateOriginBusiness,
-		Scope:       scope,
-		Name:        name,
-		Language:    language,
-		Category:    category,
-		BodyText:    body,
-		HeaderText:  header,
-		FooterText:  footer,
-		Variables:   variables,
-		Buttons:     buttons,
-		Status:      entities.TemplateStatusDraft,
-		CreatedByID: dto.CreatedBy,
+		BusinessID:     &businessID,
+		Origin:         entities.TemplateOriginBusiness,
+		Scope:          scope,
+		Name:           name,
+		Language:       language,
+		Category:       category,
+		BodyText:       body,
+		HeaderText:     header,
+		HeaderType:     headerType,
+		HeaderMediaURL: headerMediaURL,
+		FooterText:     footer,
+		Variables:      variables,
+		Buttons:        buttons,
+		Status:         entities.TemplateStatusDraft,
+		CreatedByID:    dto.CreatedBy,
 	}
 
 	template.Components = BuildMetaComponents(template)

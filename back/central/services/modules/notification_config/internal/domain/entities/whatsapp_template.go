@@ -17,6 +17,11 @@ const (
 	TemplateCategoryUtility   = "UTILITY"
 )
 
+const (
+	TemplateHeaderTypeText  = "TEXT"
+	TemplateHeaderTypeImage = "IMAGE"
+)
+
 type TemplateVariable struct {
 	Position int
 	Source   string
@@ -63,6 +68,10 @@ type WhatsappTemplate struct {
 	BodyText   string
 	HeaderText string
 	FooterText string
+
+	HeaderType        string
+	HeaderMediaURL    string
+	HeaderMediaHandle string
 
 	Variables  []TemplateVariable
 	Buttons    []TemplateButton

@@ -99,14 +99,15 @@ func (uc *useCase) dispatchBatch(ctx context.Context, campaign *entities.Campaig
 
 	for _, send := range pending {
 		message := dtos.CampaignSendMessage{
-			SendID:       send.ID,
-			CampaignID:   campaign.ID,
-			BusinessID:   campaign.BusinessID,
-			ClientID:     send.ClientID,
-			Phone:        send.Phone,
-			TemplateName: template.Name,
-			Language:     template.Language,
-			Parameters:   buildParameters(template, campaign, send),
+			SendID:         send.ID,
+			CampaignID:     campaign.ID,
+			BusinessID:     campaign.BusinessID,
+			ClientID:       send.ClientID,
+			Phone:          send.Phone,
+			TemplateName:   template.Name,
+			Language:       template.Language,
+			Parameters:     buildParameters(template, campaign, send),
+			HeaderImageURL: template.HeaderMediaURL,
 		}
 
 		if uc.publisher == nil {

@@ -28,10 +28,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // New inicializa y registra el módulo de configuración de notificaciones
-func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient.IRedis, logger log.ILogger, rabbitMQ rabbitmq.IQueue) {
+func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient.IRedis, logger log.ILogger, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service) {
 	logger = logger.WithModule("notification_config")
 
 	// 1. Infraestructura secundaria (adaptadores de salida)
@@ -71,7 +72,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 		templatePublisher = queue.NewTemplatePublisher(rabbitMQ, logger)
 	}
 	templatesUseCase := templates.New(templateRepo, templatePublisher, logger)
-	templateHandler := whatsapp_template.New(templatesUseCase, logger)
+	templateHandler := whatsapp_template.New(templatesUseCase, s3, logger)
 
 	scheduledRuleRepo := repository.NewScheduledRuleRepository(database, logger)
 	scheduledRunRepo := repository.NewScheduledRunRepository(database, logger)
