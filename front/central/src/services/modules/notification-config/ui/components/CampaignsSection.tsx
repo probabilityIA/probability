@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Modal } from "@/shared/ui/modal";
 import { Flow, WhatsappTemplate } from "../../domain/scheduled-types";
 import { Campaign } from "../../domain/campaign-types";
 import { listCampaignsAction, deleteCampaignAction } from "../../infra/actions/campaigns";
 import {
-  getTemplateVariablesAction,
   listFlowsAction,
   listTemplatesAction,
 } from "../../infra/actions/whatsapp-templates";
@@ -14,7 +14,7 @@ import { useToast } from "@/shared/providers/toast-provider";
 import { CampaignForm } from "./CampaignForm";
 import { CampaignDetail } from "./CampaignDetail";
 import { CampaignRules } from "./CampaignRules";
-import { TemplateForm } from "./TemplateForm";
+import { NOTIFICATIONS_ACTIONS_SLOT_ID } from "./FlowsSection";
 
 interface CampaignsSectionProps {
   businessId?: number;
@@ -35,27 +35,28 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
   const [flows, setFlows] = useState<Flow[]>([]);
-  const [variableCatalog, setVariableCatalog] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const [selected, setSelected] = useState<Campaign | null>(null);
   const [editing, setEditing] = useState<Campaign | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isTemplateOpen, setIsTemplateOpen] = useState(false);
+  const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setActionsSlot(document.getElementById(NOTIFICATIONS_ACTIONS_SLOT_ID));
+  }, []);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [campaignsResult, templatesResult, catalogResult, flowsResult] = await Promise.all([
+    const [campaignsResult, templatesResult, flowsResult] = await Promise.all([
       listCampaignsAction(businessId, undefined, 1, 50),
       listTemplatesAction(businessId, "all", undefined, 1, 100),
-      getTemplateVariablesAction(businessId),
       listFlowsAction(businessId),
     ]);
     setLoading(false);
 
     if (campaignsResult.success) setCampaigns(campaignsResult.data);
     if (templatesResult.success) setTemplates(templatesResult.data);
-    if (catalogResult.success) setVariableCatalog(catalogResult.data);
     if (flowsResult.success) setFlows(flowsResult.data);
   }, [businessId]);
 
@@ -104,27 +105,26 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
             }
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setIsTemplateOpen(true)}
-            className="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)]"
-          >
-            {"Nueva plantilla"}
-          </button>
+      </div>
+
+      {actionsSlot &&
+        createPortal(
           <button
             type="button"
             onClick={() => {
               setEditing(null);
               setIsFormOpen(true);
             }}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-white"
-            style={{ backgroundColor: "var(--color-primary)", color: "var(--color-on-primary, white)" }}
+            style={{
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-on-primary, white)",
+            }}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
           >
             {"Nueva campaña"}
-          </button>
-        </div>
-      </div>
+          </button>,
+          actionsSlot,
+        )}
 
       {loading ? (
         <p className="py-8 text-center text-sm text-gray-500">{"Cargando..."}</p>
@@ -221,35 +221,6 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
         )}
       </Modal>
 
-      <Modal
-        isOpen={isTemplateOpen}
-        onClose={() => setIsTemplateOpen(false)}
-        title={(
-          <span className="flex w-full flex-col items-start pr-8">
-            <span className="text-lg font-semibold">{"Nueva plantilla de campaña"}</span>
-            <span className="text-[13px] font-normal text-gray-400">
-              {"Plantilla de mensaje para WhatsApp · Meta"}
-            </span>
-          </span>
-        )}
-        size="4xl"
-        zIndex={60}
-        noPadding
-        noBodyScroll
-      >
-        {isTemplateOpen && (
-          <TemplateForm
-            businessId={businessId}
-            variableCatalog={variableCatalog}
-            scope="campaign"
-            onSuccess={() => {
-              setIsTemplateOpen(false);
-              fetchAll();
-            }}
-            onCancel={() => setIsTemplateOpen(false)}
-          />
-        )}
-      </Modal>
     </div>
   );
 }
