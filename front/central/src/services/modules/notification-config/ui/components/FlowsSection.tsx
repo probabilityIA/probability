@@ -43,6 +43,10 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(0);
   const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+
+  const toggleCollapsed = (id: number) =>
+    setCollapsed((current) => ({ ...current, [id]: !current[id] }));
 
   useEffect(() => {
     setActionsSlot(document.getElementById(NOTIFICATIONS_ACTIONS_SLOT_ID));
@@ -210,6 +214,8 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
               title={flow.Name}
               subtitle={flow.Description}
               actions={flowActions(flow)}
+              collapsed={Boolean(collapsed[flow.ID])}
+              onToggleCollapsed={() => toggleCollapsed(flow.ID)}
               onChanged={load}
             />
           ) : (
@@ -217,7 +223,25 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
               key={flow.ID}
               className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
             >
-              <div className="mb-3 flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => toggleCollapsed(flow.ID)}
+                  aria-label={collapsed[flow.ID] ? "Expandir" : "Contraer"}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  <svg
+                    className={`h-4 w-4 transition-transform ${
+                      collapsed[flow.ID] ? "" : "rotate-90"
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                     {flow.Name}
@@ -231,16 +255,20 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
                 <div className="ml-auto flex items-center gap-3">{flowActions(flow)}</div>
               </div>
 
-              <p className="text-sm text-gray-500">
-                {"Este flujo no tiene plantilla inicial: es el mensaje con el que arranca."}
-              </p>
-              <button
-                type="button"
-                onClick={() => startEdit(flow)}
-                className="mt-1 text-sm font-medium text-[var(--color-primary)] hover:underline"
-              >
-                {"Elegir plantilla inicial"}
-              </button>
+              {!collapsed[flow.ID] && (
+                <>
+                  <p className="mt-3 text-sm text-gray-500">
+                    {"Este flujo no tiene plantilla inicial: es el mensaje con el que arranca."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(flow)}
+                    className="mt-1 text-sm font-medium text-[var(--color-primary)] hover:underline"
+                  >
+                    {"Elegir plantilla inicial"}
+                  </button>
+                </>
+              )}
             </div>
           ),
         )

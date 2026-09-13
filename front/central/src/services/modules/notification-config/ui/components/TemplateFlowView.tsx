@@ -22,6 +22,8 @@ interface TemplateFlowViewProps {
   title?: string;
   subtitle?: string;
   actions?: React.ReactNode;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
   onChanged: () => void;
 }
 
@@ -64,6 +66,8 @@ export function TemplateFlowView({
   title,
   subtitle,
   actions,
+  collapsed = false,
+  onToggleCollapsed,
   onChanged,
 }: TemplateFlowViewProps) {
   const { showToast } = useToast();
@@ -350,8 +354,26 @@ export function TemplateFlowView({
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-        {(title || actions) && (
+        {(title || actions || onToggleCollapsed) && (
           <div className="mb-3 flex flex-wrap items-center gap-3">
+            {onToggleCollapsed && (
+              <button
+                type="button"
+                onClick={onToggleCollapsed}
+                aria-label={collapsed ? "Expandir" : "Contraer"}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              >
+                <svg
+                  className={`h-4 w-4 transition-transform ${collapsed ? "" : "rotate-90"}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
             {title && (
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
@@ -366,7 +388,7 @@ export function TemplateFlowView({
           </div>
         )}
 
-        <div className="mb-4 flex flex-wrap gap-4 text-[12px]">
+        <div className={`flex flex-wrap gap-4 text-[12px] ${collapsed ? "" : "mb-4"}`}>
           <span className="text-gray-500 dark:text-gray-400">
             {`${scoped.length} plantilla(s) en el flujo`}
           </span>
@@ -382,7 +404,7 @@ export function TemplateFlowView({
           )}
         </div>
 
-        <div className="relative">
+        <div className={`relative ${collapsed ? "hidden" : ""}`}>
           <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <button
               type="button"
