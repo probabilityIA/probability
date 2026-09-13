@@ -159,6 +159,12 @@ export class WhatsAppApiRepository implements IWhatsAppRepository {
         });
     }
 
+    async removeNumber(businessId?: number): Promise<WhatsAppNumberResponse> {
+        return this.request<WhatsAppNumberResponse>(`/integrations/whatsapp/numbers${this.query(businessId)}`, {
+            method: 'DELETE',
+        });
+    }
+
     async getEmbeddedSignupConfig(): Promise<WhatsAppEmbeddedSignupConfigResponse> {
         return this.request<WhatsAppEmbeddedSignupConfigResponse>(
             '/integrations/whatsapp/embedded-signup/config'

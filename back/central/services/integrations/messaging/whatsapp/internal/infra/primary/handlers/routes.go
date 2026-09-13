@@ -24,6 +24,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		whatsapp.POST("/numbers/code", middleware.JWT(), h.RequestNumberCode)
 		whatsapp.POST("/numbers/verify", middleware.JWT(), h.VerifyNumberCode)
 		whatsapp.POST("/numbers/register", middleware.JWT(), h.RegisterNumber)
+		whatsapp.DELETE("/numbers", middleware.JWT(), h.RemoveNumber)
 
 		whatsapp.GET("/embedded-signup/config", middleware.JWT(), h.GetEmbeddedSignupConfig)
 		whatsapp.POST("/embedded-signup", middleware.JWT(), h.CompleteEmbeddedSignup)

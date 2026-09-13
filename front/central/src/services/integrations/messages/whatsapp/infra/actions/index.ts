@@ -129,6 +129,9 @@ export const verifyWhatsAppNumberCodeAction = async (
 export const registerWhatsAppNumberAction = async (businessId?: number, token?: string | null) =>
     numberAction((useCases) => useCases.registerNumber(businessId), token);
 
+export const removeWhatsAppNumberAction = async (businessId?: number, token?: string | null) =>
+    numberAction((useCases) => useCases.removeNumber(businessId), token);
+
 export const getWhatsAppEmbeddedSignupConfigAction = async (
     token?: string | null
 ): Promise<WhatsAppEmbeddedSignupConfigResponse> => {

@@ -121,6 +121,20 @@ func (h *handler) RegisterNumber(c *gin.Context) {
 	h.respondNumber(c, state, err, "registrando el número")
 }
 
+func (h *handler) RemoveNumber(c *gin.Context) {
+	if !h.numbersReady(c) {
+		return
+	}
+
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		return
+	}
+
+	state, err := h.numbersUseCase.RemoveNumber(c.Request.Context(), businessID)
+	h.respondNumber(c, state, err, "quitando el número")
+}
+
 func (h *handler) respondNumber(c *gin.Context, state *usecasenumbers.NumberState, err error, accion string) {
 	ctx := c.Request.Context()
 

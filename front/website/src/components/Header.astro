@@ -1,6 +1,4 @@
 ---
-import ExpandedTabs from './ExpandedTabs';
-
 interface Props {
 	transparentOnTop?: boolean;
 }
@@ -44,12 +42,15 @@ const { transparentOnTop = false } = Astro.props;
 		box-shadow: 0 1px 12px -6px rgba(0, 0, 0, 0.15);
 	}
 
-	.header-logo {
-		transition: filter 0.3s ease;
+.header-logo-text {
+		transition: color 0.3s ease;
+		color: #111827;
+		font-family: 'Poppins', sans-serif;
+		font-weight: 500;
 	}
 
-	.site-header.is-transparent-top:not(.is-scrolled) .header-logo {
-		filter: brightness(0) invert(1);
+	.site-header.is-transparent-top:not(.is-scrolled) .header-logo-text {
+		color: #e5e7eb;
 	}
 
 	.header-register {
@@ -63,6 +64,20 @@ const { transparentOnTop = false } = Astro.props;
 
 	.site-header.is-transparent-top:not(.is-scrolled) .header-register:hover {
 		background-color: rgba(255, 255, 255, 0.1);
+	}
+
+	.header-nav-link {
+		transition: color 0.3s ease, border-color 0.3s ease;
+	}
+
+	.site-header.is-transparent-top:not(.is-scrolled) .header-nav-link {
+		color: #fff;
+		border-color: rgba(255, 255, 255, 0.4);
+	}
+
+	.site-header.is-transparent-top:not(.is-scrolled) .header-nav-link:hover {
+		border-color: #fff;
+		color: #fff;
 	}
 
 	.header-menu-icon {
@@ -83,27 +98,29 @@ const { transparentOnTop = false } = Astro.props;
 <header id="site-header" class={`site-header ${transparentOnTop ? '' : 'sticky'} top-0 z-50 border-b ${transparentOnTop ? 'is-transparent-top' : ''}`}>
 	<nav class="mx-auto px-4 sm:px-6 md:px-10 lg:px-20 py-4 sm:py-5 flex items-center justify-between h-auto sm:h-20">
 		<!-- Logo -->
-		<a href="/website/" class="flex items-center gap-3 cursor-pointer group flex-shrink-0">
-			<img
-				src="https://www.probabilityia.com.co/_next/image?url=%2Flogo2recortado.png&w=1200&q=75"
-				alt="probabilityIA logo"
-				class="header-logo h-10 sm:h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
-			/>
+		<a href="/website/" class="flex items-center gap-2 cursor-pointer group flex-shrink-0">
+			<div class="flex items-center gap-2 group-hover:scale-110 transition-transform duration-300">
+				<img
+					src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/brand/logo-mark-badge.svg"
+					alt="ProbabilityIA"
+					class="h-9 sm:h-10 w-9 sm:w-10 flex-shrink-0"
+				/>
+				<span class="header-logo-text text-lg sm:text-xl">ProbabilityIA</span>
+			</div>
 		</a>
 
-		<!-- Navigation Tabs -->
-		<div class="hidden md:flex items-center gap-6 lg:gap-8">
-			<ExpandedTabs client:load tabs={[
-				{ title: "Producto", iconName: "product", href: "/website/producto" },
-				{ title: "Cómo funciona", iconName: "how", href: "/website/como-funciona" },
-				{ title: "Precios", iconName: "price", href: "/website/precios" },
-				{ title: "Integraciones", iconName: "integration", href: "/website/integraciones" },
-				{ title: "Rastreo", iconName: "tracking", href: "/website/rastreo" },
-			]} />
-		</div>
-
 		<!-- CTA Buttons -->
-		<div class="hidden md:flex items-center gap-2 lg:gap-3">
+		<div class="hidden md:flex items-center gap-2 lg:gap-3 ml-auto">
+			<a
+				href="/website/rastreo"
+				class="header-nav-link flex items-center gap-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg px-4 py-2 hover:text-[#8B5CF6] hover:border-[#8B5CF6] transition-colors"
+			>
+				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+				Rastreo
+			</a>
 			<a
 				href="https://www.probabilityia.com.co/login"
 				class="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white px-4 lg:px-5 py-2 rounded-lg font-medium transition-colors text-xs lg:text-sm"
@@ -129,30 +146,6 @@ const { transparentOnTop = false } = Astro.props;
 	<!-- Mobile Menu -->
 	<div class="mobile-menu hidden md:hidden border-t border-gray-200 bg-white" id="mobile-menu">
 		<div class="px-4 py-4 space-y-3">
-			<a
-				href="/website/producto"
-				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
-			>
-				Producto
-			</a>
-			<a
-				href="/website/como-funciona"
-				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
-			>
-				Cómo funciona
-			</a>
-			<a
-				href="/website/precios"
-				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
-			>
-				Precios
-			</a>
-			<a
-				href="/website/integraciones"
-				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
-			>
-				Integraciones
-			</a>
 			<a
 				href="/website/rastreo"
 				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"

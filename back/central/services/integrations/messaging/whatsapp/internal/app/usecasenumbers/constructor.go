@@ -44,6 +44,7 @@ type IUseCase interface {
 	RequestCode(ctx context.Context, businessID uint, method string) (*NumberState, error)
 	VerifyCode(ctx context.Context, businessID uint, code string) (*NumberState, error)
 	Register(ctx context.Context, businessID uint) (*NumberState, error)
+	RemoveNumber(ctx context.Context, businessID uint) (*NumberState, error)
 	GetProfile(ctx context.Context, businessID uint) (*BusinessProfile, error)
 	UpdateProfile(ctx context.Context, businessID uint, input BusinessProfileInput) (*BusinessProfile, error)
 	UpdateProfilePhoto(ctx context.Context, businessID uint, contentType string, data []byte) (*BusinessProfile, error)

@@ -1,6 +1,6 @@
 export const INTEGRATION_LOGOS = [
   // E-commerce Platforms
-  { name: 'Shopify', src: 'https://www.pngall.com/wp-content/uploads/13/Shopify-Logo-PNG.png', alt: 'Shopify' },
+  { name: 'Shopify', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/shopify-logo.svg', alt: 'Shopify' },
   { name: 'Mercado Libre', src: 'https://cdn.worldvectorlogo.com/logos/mercadolibre.svg', alt: 'Mercado Libre' },
   { name: 'WooCommerce', src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/WooCommerce_logo_%282015%29.svg/3840px-WooCommerce_logo_%282015%29.svg.png', alt: 'WooCommerce' },
 

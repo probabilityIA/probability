@@ -1,0 +1,228 @@
+---
+const channels = [
+  {
+    name: 'Shopify',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/shopify-logo.svg',
+  },
+  {
+    name: 'WooCommerce',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765745053_woocomerce.webp',
+  },
+  {
+    name: 'Mercado Libre',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/mercadolibre-icon.svg',
+  },
+  {
+    name: 'Jumpseller',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/jumpseller-icon.png',
+  },
+  {
+    name: 'Tiendanube',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/tiendanube-icon.png',
+  },
+];
+
+const radius = 38;
+const radialChannels = channels.map((c, i) => {
+  const angleDeg = -90 + i * (360 / channels.length);
+  const angleRad = (angleDeg * Math.PI) / 180;
+  return {
+    ...c,
+    x: 50 + radius * Math.cos(angleRad),
+    y: 50 + radius * Math.sin(angleRad),
+  };
+});
+---
+
+<section id="sales-channels-section" class="sales-channels-section relative w-full overflow-x-clip bg-[#FAF9FD] py-14 sm:py-20 md:py-24">
+  <style>
+    @keyframes channelFlow {
+      to {
+        stroke-dashoffset: -200;
+      }
+    }
+
+    @keyframes channelFlowReverse {
+      to {
+        stroke-dashoffset: 200;
+      }
+    }
+
+    @keyframes channelGlowPulse {
+      0%,
+      100% {
+        opacity: 0.55;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sales-channels-section * {
+        animation: none !important;
+      }
+    }
+
+    .sales-channels-section.is-paused * {
+      animation-play-state: paused !important;
+    }
+
+    .channel-tile {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .channel-tile:hover {
+      transform: translateY(-3px);
+      border-color: rgba(196, 181, 253, 0.6);
+      box-shadow: 0 14px 26px -14px rgba(196, 181, 253, 0.5);
+    }
+
+    .channel-line-base {
+      fill: none;
+      stroke: rgba(139, 92, 246, 0.15);
+      stroke-width: 0.4;
+    }
+
+    .channel-line {
+      fill: none;
+      stroke: #a855f7;
+      stroke-width: 0.5;
+      stroke-linecap: round;
+      stroke-dasharray: 1.6 3.2;
+      filter: drop-shadow(0 0 2.5px rgba(168, 85, 247, 0.85));
+      animation: channelFlow 12s linear infinite, channelGlowPulse 2.4s ease-in-out infinite;
+    }
+
+    .channel-line-reverse {
+      animation: channelFlowReverse 12s linear infinite, channelGlowPulse 2.4s ease-in-out infinite;
+    }
+
+    .metrics-bg {
+      filter: blur(1.5px);
+      z-index: 0;
+    }
+
+    .metrics-figure {
+      position: absolute;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      color: #8B5CF6;
+      opacity: 0.16;
+      white-space: nowrap;
+      transform: translate(-50%, -50%);
+    }
+
+    .metrics-trend {
+      opacity: 0.14;
+    }
+
+  </style>
+
+  <div class="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+    <div class="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
+      <div class="w-full lg:w-[560px] lg:shrink-0 text-center lg:text-left">
+        <div
+          class="inline-flex items-center gap-2 bg-[#F6F3FD] border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-5"
+        >
+          <span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+          <span class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase">
+            Canales de venta
+          </span>
+        </div>
+
+        <h2
+          class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[52px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-6 text-balance"
+        >
+          Todos tus canales de venta,
+          <span class="text-[#7C3AED]">conectados a Probability</span>
+        </h2>
+
+        <p class="text-[#3A2E5C] text-base sm:text-lg mb-7">
+          Sincronizamos tus pedidos e inventario en tiempo real sin importar dónde vendes: hoy conectamos Shopify, WooCommerce, Mercado Libre, Jumpseller y Tiendanube.
+        </p>
+
+        <ul class="flex flex-col gap-3 items-center lg:items-start">
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Sincronización de pedidos en segundos, sin intervención manual
+          </li>
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Sin duplicar catálogo entre canales
+          </li>
+          <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+            Inventario compartido y actualizado en tiempo real
+          </li>
+        </ul>
+      </div>
+
+      <div class="w-full lg:w-[560px] flex justify-center">
+        <div class="relative w-full max-w-[440px] aspect-square">
+          <div class="metrics-bg absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+            <span class="metrics-figure" style="left: 4%; top: 8%; font-size: 15px;">+34%</span>
+            <span class="metrics-figure" style="left: 72%; top: 4%; font-size: 12px;">1.284</span>
+            <span class="metrics-figure" style="left: 82%; top: 22%; font-size: 18px;">↑ 89%</span>
+            <span class="metrics-figure" style="left: 2%; top: 40%; font-size: 12px;">3.2K</span>
+            <span class="metrics-figure" style="left: 86%; top: 52%; font-size: 13px;">+512</span>
+            <span class="metrics-figure" style="left: 6%; top: 68%; font-size: 20px;">↑ 12%</span>
+            <span class="metrics-figure" style="left: 76%; top: 74%; font-size: 12px;">98.4%</span>
+            <span class="metrics-figure" style="left: 10%; top: 88%; font-size: 13px;">+2.5K</span>
+            <span class="metrics-figure" style="left: 66%; top: 90%; font-size: 16px;">↑ 47%</span>
+            <svg viewBox="0 0 100 100" class="absolute inset-0 w-full h-full metrics-trend" preserveAspectRatio="none">
+              <polyline
+                points="2,85 16,70 28,78 42,55 54,62 68,35 80,42 96,10"
+                fill="none"
+                stroke="#8B5CF6"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M88,10 L96,10 L96,18" fill="none" stroke="#8B5CF6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+
+          <svg viewBox="0 0 100 100" class="absolute inset-0 w-full h-full">
+            {radialChannels.map((c) => (
+              <path class="channel-line" d={`M${c.x},${c.y} L50,50`} />
+            ))}
+            {radialChannels.map((c) => (
+              <path class="channel-line channel-line-reverse" d={`M${c.x},${c.y} L50,50`} />
+            ))}
+          </svg>
+
+          <img
+            src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/brand/logo-mark-badge.svg"
+            alt="ProbabilityIA"
+            class="absolute w-16 h-16 sm:w-24 sm:h-24 rounded-full shadow-[0_10px_30px_-8px_rgba(124,58,237,0.6)]"
+            style="left: 50%; top: 50%; transform: translate(-50%, -50%);"
+          />
+
+          {radialChannels.map((c) => (
+            <div
+              class="channel-tile absolute flex items-center justify-center bg-white border border-[#EFEAFB] rounded-xl w-14 h-14 sm:w-20 sm:h-20 p-2 sm:p-3 shadow-[0_6px_16px_-10px_rgba(124,58,237,0.3)]"
+              style={`left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%);`}
+              title={c.name}
+            >
+              <img src={c.src} alt={c.name} class="w-full h-full object-contain" loading="lazy" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const salesChannelsSection = document.getElementById('sales-channels-section');
+  if (salesChannelsSection && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        salesChannelsSection.classList.toggle('is-paused', !entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+    observer.observe(salesChannelsSection);
+  }
+</script>

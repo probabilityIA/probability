@@ -3,14 +3,15 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// WhatsAppConfirmedEvent representa el evento de confirmación desde WhatsApp
 type WhatsAppConfirmedEvent struct {
 	EventType   string `json:"event_type"`
 	OrderNumber string `json:"order_number"`
@@ -20,7 +21,6 @@ type WhatsAppConfirmedEvent struct {
 	Timestamp   int64  `json:"timestamp"`
 }
 
-// WhatsAppCancelledEvent representa el evento de cancelación desde WhatsApp
 type WhatsAppCancelledEvent struct {
 	EventType          string `json:"event_type"`
 	OrderNumber        string `json:"order_number"`
@@ -31,7 +31,6 @@ type WhatsAppCancelledEvent struct {
 	Timestamp          int64  `json:"timestamp"`
 }
 
-// WhatsAppNoveltyEvent representa el evento de novedad desde WhatsApp
 type WhatsAppNoveltyEvent struct {
 	EventType   string `json:"event_type"`
 	OrderNumber string `json:"order_number"`
@@ -42,7 +41,6 @@ type WhatsAppNoveltyEvent struct {
 	Timestamp   int64  `json:"timestamp"`
 }
 
-// WhatsAppConsumer consume eventos de WhatsApp y actualiza órdenes
 type WhatsAppConsumer struct {
 	queue           rabbitmq.IQueue
 	repository      ports.IRepository
@@ -50,7 +48,6 @@ type WhatsAppConsumer struct {
 	log             log.ILogger
 }
 
-// NewWhatsAppConsumer crea un nuevo consumidor de eventos de WhatsApp
 func NewWhatsAppConsumer(
 	queue rabbitmq.IQueue,
 	repository ports.IRepository,
@@ -65,9 +62,7 @@ func NewWhatsAppConsumer(
 	}
 }
 
-// Start inicia el consumidor de eventos de WhatsApp
 func (c *WhatsAppConsumer) Start(ctx context.Context) error {
-	// Declarar colas
 	queues := []string{
 		rabbitmq.QueueWhatsAppOrderConfirmed,
 		rabbitmq.QueueWhatsAppOrderCancelled,
@@ -84,7 +79,6 @@ func (c *WhatsAppConsumer) Start(ctx context.Context) error {
 		}
 	}
 
-	// Consumir de múltiples colas
 	go func() {
 		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderConfirmed, c.handleConfirmed); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming confirmed queue")
@@ -106,12 +100,11 @@ func (c *WhatsAppConsumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleConfirmed procesa eventos de confirmación
 func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 	var event WhatsAppConfirmedEvent
 	if err := json.Unmarshal(msg, &event); err != nil {
-		c.log.Error().Err(err).Msg("Error unmarshaling confirmed event")
-		return err
+		c.log.Warn().Err(err).Msg("Discarding confirmed event: payload malformado (ACK)")
+		return nil
 	}
 
 	ctx := context.Background()
@@ -121,28 +114,32 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		Str("phone_number", event.PhoneNumber).
 		Msg("Processing order confirmation from WhatsApp")
 
-	// Buscar orden por order_number + business_id (evita actualizar orden de otro negocio)
 	order, err := c.repository.GetOrderByOrderNumberAndBusiness(ctx, event.OrderNumber, event.BusinessID)
 	if err != nil {
+		if esPermanente(err) {
+			c.log.Warn().
+				Err(err).
+				Str("order_number", event.OrderNumber).
+				Uint("business_id", event.BusinessID).
+				Msg("Discarding confirmed event: la orden no existe para ese negocio (ACK)")
+			return nil
+		}
 		c.log.Error().
 			Err(err).
 			Str("order_number", event.OrderNumber).
 			Uint("business_id", event.BusinessID).
-			Msg("Error getting order for confirmation")
+			Msg("Error getting order for confirmation - will be retried")
 		return err
 	}
 
-	// Guardar estado anterior para el evento de cambio
 	previousStatus := "pending"
 	if order.OrderStatus != nil {
 		previousStatus = order.OrderStatus.Code
 	}
 
-	// Actualizar IsConfirmed = true
 	confirmed := true
 	order.IsConfirmed = &confirmed
 
-	// Cambiar estado a "processing" (confirmado = en procesamiento)
 	processingStatusID, err := c.repository.GetOrderStatusIDByCode(ctx, "processing")
 	if err != nil {
 		c.log.Warn().Err(err).Msg("Error getting processing status ID, skipping status change")
@@ -150,7 +147,6 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		order.StatusID = processingStatusID
 	}
 
-	// Guardar cambios
 	if err := c.repository.UpdateOrder(ctx, order); err != nil {
 		c.log.Error().
 			Err(err).
@@ -160,7 +156,6 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		return err
 	}
 
-	// Publicar evento al fanout -> SSE + otros consumers
 	if c.rabbitPublisher != nil {
 		go func() {
 			bgCtx := context.Background()
@@ -180,12 +175,11 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 	return nil
 }
 
-// handleCancelled procesa eventos de cancelación
 func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 	var event WhatsAppCancelledEvent
 	if err := json.Unmarshal(msg, &event); err != nil {
-		c.log.Error().Err(err).Msg("Error unmarshaling cancelled event")
-		return err
+		c.log.Warn().Err(err).Msg("Discarding cancelled event: payload malformado (ACK)")
+		return nil
 	}
 
 	c.log.Warn().
@@ -193,21 +187,26 @@ func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 		Str("reason", event.CancellationReason).
 		Msg("Processing order cancellation from WhatsApp")
 
-	// Buscar orden por order_number + business_id
 	order, err := c.repository.GetOrderByOrderNumberAndBusiness(context.Background(), event.OrderNumber, event.BusinessID)
 	if err != nil {
+		if esPermanente(err) {
+			c.log.Warn().
+				Err(err).
+				Str("order_number", event.OrderNumber).
+				Uint("business_id", event.BusinessID).
+				Msg("Discarding cancelled event: la orden no existe para ese negocio (ACK)")
+			return nil
+		}
 		c.log.Error().
 			Err(err).
 			Str("order_number", event.OrderNumber).
-			Msg("Error getting order for cancellation")
+			Msg("Error getting order for cancellation - will be retried")
 		return err
 	}
 
-	// Marcar IsConfirmed = false y guardar motivo en Novelty
 	confirmed := false
 	noveltyText := fmt.Sprintf("Cancelación solicitada vía WhatsApp: %s (Teléfono: %s)", event.CancellationReason, event.PhoneNumber)
 
-	// Si ya existe novedad previa, concatenar
 	if order.Novelty != nil && *order.Novelty != "" {
 		noveltyText = *order.Novelty + " | " + noveltyText
 	}
@@ -215,7 +214,6 @@ func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 	order.IsConfirmed = &confirmed
 	order.Novelty = &noveltyText
 
-	// Guardar cambios
 	if err := c.repository.UpdateOrder(context.Background(), order); err != nil {
 		c.log.Error().
 			Err(err).
@@ -225,7 +223,6 @@ func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 		return err
 	}
 
-	// Publicar evento al fanout (llega a todos los consumers incluyendo events)
 	if c.rabbitPublisher != nil {
 		go func() {
 			if err := c.rabbitPublisher.PublishOrderCancelled(context.Background(), order); err != nil {
@@ -242,12 +239,11 @@ func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 	return nil
 }
 
-// handleNovelty procesa eventos de novedades
 func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 	var event WhatsAppNoveltyEvent
 	if err := json.Unmarshal(msg, &event); err != nil {
-		c.log.Error().Err(err).Msg("Error unmarshaling novelty event")
-		return err
+		c.log.Warn().Err(err).Msg("Discarding novelty event: payload malformado (ACK)")
+		return nil
 	}
 
 	c.log.Info().
@@ -255,13 +251,20 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 		Str("novelty_type", event.NoveltyType).
 		Msg("Processing order novelty from WhatsApp")
 
-	// Buscar orden por order_number + business_id
 	order, err := c.repository.GetOrderByOrderNumberAndBusiness(context.Background(), event.OrderNumber, event.BusinessID)
 	if err != nil {
+		if esPermanente(err) {
+			c.log.Warn().
+				Err(err).
+				Str("order_number", event.OrderNumber).
+				Uint("business_id", event.BusinessID).
+				Msg("Discarding novelty event: la orden no existe para ese negocio (ACK)")
+			return nil
+		}
 		c.log.Error().
 			Err(err).
 			Str("order_number", event.OrderNumber).
-			Msg("Error getting order for novelty")
+			Msg("Error getting order for novelty - will be retried")
 		return err
 	}
 
@@ -277,7 +280,6 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 		noveltyText = fmt.Sprintf("Novedad via WhatsApp: %s (Telefono: %s)", event.NoveltyType, event.PhoneNumber)
 	}
 
-	// Si ya existe novedad previa, concatenar
 	if order.Novelty != nil && *order.Novelty != "" {
 		noveltyText = *order.Novelty + " | " + noveltyText
 	}
@@ -296,7 +298,6 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 		return err
 	}
 
-	// Publicar evento al fanout (llega a todos los consumers incluyendo events)
 	if c.rabbitPublisher != nil {
 		go func() {
 			if err := c.rabbitPublisher.PublishOrderUpdated(context.Background(), order); err != nil {
@@ -312,4 +313,9 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 		Msg("Order novelty recorded successfully")
 
 	return nil
+}
+
+func esPermanente(err error) bool {
+	return errors.Is(err, domainerrors.ErrOrderNotFound) ||
+		errors.Is(err, domainerrors.ErrOrderBusinessDeleted)
 }
