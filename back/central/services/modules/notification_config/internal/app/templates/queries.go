@@ -29,7 +29,9 @@ func (uc *useCase) GetByID(ctx context.Context, id, businessID uint) (*entities.
 
 func (uc *useCase) List(ctx context.Context, businessID uint, scope, status string, page, pageSize int) ([]entities.WhatsappTemplate, int64, error) {
 	scope = strings.TrimSpace(scope)
-	if !entities.IsAllowedScope(scope) {
+	if scope == entities.TemplateScopeAll {
+		scope = ""
+	} else if !entities.IsAllowedScope(scope) {
 		scope = entities.TemplateScopeScheduled
 	}
 

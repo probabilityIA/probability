@@ -112,8 +112,10 @@ func (r *whatsappTemplateRepository) ListTemplates(ctx context.Context, business
 	var total int64
 
 	query := r.db.Conn(ctx).Model(&models.WhatsappTemplate{}).
-		Where("scope = ?", scope).
 		Where("business_id = ? OR business_id IS NULL", businessID)
+	if scope != "" {
+		query = query.Where("scope = ?", scope)
+	}
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}

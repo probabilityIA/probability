@@ -59,6 +59,7 @@ const (
 )
 
 const (
+	TemplateScopeAll        = "all"
 	TemplateScopeOrderEvent = "order_event"
 	TemplateScopeScheduled  = "scheduled"
 	TemplateScopeInternal   = "internal"

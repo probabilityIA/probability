@@ -30,7 +30,7 @@ function withBusiness(path: string, businessId?: number) {
 
 export async function listTemplatesAction(
   businessId?: number,
-  scope: TemplateScope = "scheduled",
+  scope: TemplateScope | "all" = "scheduled",
   status?: string,
   page = 1,
   pageSize = 20,
