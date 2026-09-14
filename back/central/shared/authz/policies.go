@@ -19,6 +19,11 @@ type RoutePolicy struct {
 	Kind     PolicyKind
 	Resource string
 	Action   string
+	AnyOf    []string
+}
+
+func AnyPermission(permissions ...string) RoutePolicy {
+	return RoutePolicy{Kind: PolicyPermission, AnyOf: permissions}
 }
 
 type PrefixRule struct {
@@ -72,7 +77,7 @@ func matchesPrefix(path, prefix string) bool {
 }
 
 func withDefaultAction(p RoutePolicy, method string) RoutePolicy {
-	if p.Kind != PolicyPermission || p.Action != "" {
+	if p.Kind != PolicyPermission || p.Action != "" || len(p.AnyOf) > 0 {
 		return p
 	}
 	p.Action = ActionForMethod(method)

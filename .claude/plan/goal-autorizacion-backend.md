@@ -27,8 +27,8 @@ Entorno: local, BD `127.0.0.1:5434`, backend :3050, front :3000
 | 2 - Enforcement audit | hecha 2026-09-14 | 103e9c44 |
 | 3 - Enforce | hecha 2026-09-14 (local) | ver abajo |
 | 4 - Front y app obedecen | hecha 2026-09-14 | 986811b2 |
-| 5 - Limpieza y docs | pendiente | |
-| Pruebas E2E multi-rol | pendiente | |
+| 5 - Limpieza y docs | hecha 2026-09-14 | cf462299 + cierre |
+| Pruebas E2E multi-rol | hecha 2026-09-14 (local) | ver abajo |
 
 ## Fase 0 - evidencia (local, usuario demo negocio 26)
 
@@ -188,3 +188,45 @@ App movil:
   expone `canNav`. `AppModules` cambia `resources` por `navKey`;
   `isRouteAllowed` y `visibleGroupsFor` filtran por la navegacion del backend.
 - `flutter test` login + navegacion: 70 pruebas OK (4 nuevas).
+
+## Fase 5 - limpieza y documentacion
+
+- Eliminados `RequireRole` y `RequireAnyRole` (y sus tests). README del
+  middleware reescrito.
+- Regla nueva `.claude/rules/autorizacion.md`.
+- Alerta `.claude/alerts/autorizacion-backend.md` actualizada con lo resuelto y
+  lo pendiente para produccion.
+- Bitacora `.claude/bitacora/2026-09-14-autorizacion-backend.md`. NO se agrego
+  al indice `README.md` de la bitacora porque ese archivo tiene cambios sin
+  commitear del usuario; hay que sumar la linea a mano.
+- `RequireModuleAccess` se mantiene a proposito (ver regla).
+
+## Pruebas E2E en navegador (local, AUTHZ_MODE=enforce)
+
+Cada usuario: login por formulario, navegacion, cerrar sesion desde el menu y
+volver a entrar.
+
+| Usuario | Menu lateral | Permitido (verificado) | Bloqueado (verificado) | Denegaciones backend |
+|---|---|---|---|---|
+| Super admin (1) | todo, incluye Tickets, Anuncios, Contabilidad, IAM, Comercial | /tickets, /accounting | - | 0 |
+| Administrador demo (8) | home, wallet, integrations, products, orders, customers, website-config, invoicing, subscription, users | /home, /orders, /customers, /integrations, /website-config, /users (6 filas) | /inventory (plan basico) | 0 tras los ajustes |
+| Rol demo (77) | home, wallet, products, orders, invoicing | /orders (10 filas) en los dos ingresos | /customers, /users | 0 nuevas tras los ajustes |
+| Operador de envios (78) | home, orders, subscription | /orders (10 filas, KPIs), /shipments (274) | /products | 0 |
+
+Hallazgos corregidos durante las pruebas:
+- El boton "Tus Integraciones" se pintaba para roles sin `integrations.read` y
+  disparaba 403: ahora se oculta segun `can`.
+- La lista de ordenes y sus KPIs piden `GET /integrations` y
+  `GET /integrations/stats` para mostrar los canales: politica nueva
+  `AnyPermission("integrations.read", "orders.read")`.
+- "Nueva orden" y "Carga masiva" se veian sin `orders.create`; "Generacion
+  masiva de guias" sin `shipments.create`: ahora obedecen `can`.
+- El enlace de Tienda del sidebar llevaba a /storefront/catalogo sin tener
+  storefront: ahora va a /website-config.
+
+Pendiente fuera del loop (no se puede hacer desde local):
+- Crear el ticket en produccion y enlazar la bitacora.
+- Permisos del Administrador en produccion antes de enforce (ver alerta).
+- Push y PR de la rama.
+- Revisar que `config` de `GET /integrations` no exponga datos sensibles a
+  roles que solo leen ordenes.

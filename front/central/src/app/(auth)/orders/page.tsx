@@ -14,6 +14,7 @@ import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-m
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useToast } from '@/shared/providers/toast-provider';
 import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 
 export default function OrdersPage() {
     const { setActionButtons } = useNavbarActions();
@@ -34,36 +35,46 @@ export default function OrdersPage() {
     const [showMassUploadModal, setShowMassUploadModal] = useState(false);
     const [showMassGuideModal, setShowMassGuideModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+    const { can } = usePermissions();
+    const canCreateOrders = can('orders.create');
+    const canCreateShipments = can('shipments.create');
+
     useEffect(() => {
         const actionButtons = (
             <>
-                <IconActionButton
-                    label="Nueva orden"
-                    variant="tertiary"
-                    tooltipAlign="right"
-                    onClick={() => setShowCreateModal(true)}
-                    icon={<PlusIcon className="w-4 h-4" />}
-                />
-                <IconActionButton
-                    label="Carga masiva de órdenes"
-                    variant="tertiary"
-                    tooltipAlign="right"
-                    onClick={() => setShowMassUploadModal(true)}
-                    icon={<ArrowUpTrayIcon className="w-4 h-4" />}
-                />
-                <IconActionButton
-                    label="Generación masiva de guías"
-                    variant="tertiary"
-                    tooltipAlign="right"
-                    onClick={() => setShowMassGuideModal(true)}
-                    icon={<TruckIcon className="w-4 h-4" />}
-                />
+                {canCreateOrders && (
+                    <IconActionButton
+                        label="Nueva orden"
+                        variant="tertiary"
+                        tooltipAlign="right"
+                        onClick={() => setShowCreateModal(true)}
+                        icon={<PlusIcon className="w-4 h-4" />}
+                    />
+                )}
+                {canCreateOrders && (
+                    <IconActionButton
+                        label="Carga masiva de órdenes"
+                        variant="tertiary"
+                        tooltipAlign="right"
+                        onClick={() => setShowMassUploadModal(true)}
+                        icon={<ArrowUpTrayIcon className="w-4 h-4" />}
+                    />
+                )}
+                {canCreateShipments && (
+                    <IconActionButton
+                        label="Generación masiva de guías"
+                        variant="tertiary"
+                        tooltipAlign="right"
+                        onClick={() => setShowMassGuideModal(true)}
+                        icon={<TruckIcon className="w-4 h-4" />}
+                    />
+                )}
             </>
         );
         setActionButtons(actionButtons);
 
         return () => setActionButtons(null);
-    }, [setActionButtons]);
+    }, [setActionButtons, canCreateOrders, canCreateShipments]);
 
     useEffect(() => {
         if (!deepLinkedOrderId || deepLinkHandled.current === deepLinkedOrderId) return;

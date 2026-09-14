@@ -148,6 +148,18 @@ func (g *Guard) evaluate(c *gin.Context, fullPath string) decision {
 		return decision{allowed: true}
 	}
 
+	if len(policy.AnyOf) > 0 {
+		if suspendedStatuses[access.SubscriptionStatus] {
+			return decision{status: http.StatusPaymentRequired, reason: "subscription_suspended", permission: strings.Join(policy.AnyOf, "|"), module: "any"}
+		}
+		for _, candidate := range policy.AnyOf {
+			if resourceCode, action, ok := splitPermission(candidate); ok && g.uc.Can(access, resourceCode, action) {
+				return decision{allowed: true}
+			}
+		}
+		return decision{status: http.StatusForbidden, reason: "missing_permission", permission: strings.Join(policy.AnyOf, "|"), module: "any"}
+	}
+
 	resource, _ := authz.ResourceByCode(policy.Resource)
 	permission := authz.PermissionCode(policy.Resource, policy.Action)
 
@@ -159,6 +171,14 @@ func (g *Guard) evaluate(c *gin.Context, fullPath string) decision {
 		return decision{status: http.StatusForbidden, reason: "missing_permission", permission: permission, module: resource.Module}
 	}
 	return decision{allowed: true}
+}
+
+func splitPermission(code string) (string, string, bool) {
+	idx := strings.LastIndex(code, ".")
+	if idx <= 0 || idx == len(code)-1 {
+		return "", "", false
+	}
+	return code[:idx], code[idx+1:], true
 }
 
 func Coverage(table *authz.PolicyTable, routes gin.RoutesInfo, apiPrefix string) []string {

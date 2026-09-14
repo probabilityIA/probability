@@ -138,6 +138,25 @@ func TestGuard_Enforce_SuperAdminOnly(t *testing.T) {
 	}
 }
 
+func TestGuard_Enforce_CualquieraDeVariosPermisos(t *testing.T) {
+	table := authz.NewPolicyTable(map[string]authz.RoutePolicy{
+		"GET /integrations": authz.AnyPermission("integrations.read", "orders.read"),
+	}, nil)
+	g := newGuard(adminAccess("orders.read"), ModeEnforce)
+	g.table = table
+	code, reached := runGuard(t, g, http.MethodGet, "/integrations", 26, true)
+	if code != http.StatusOK || !reached {
+		t.Fatalf("con orders.read debe pasar, llego %d", code)
+	}
+
+	g2 := newGuard(adminAccess("customers.read"), ModeEnforce)
+	g2.table = table
+	code, _ = runGuard(t, g2, http.MethodGet, "/integrations", 26, true)
+	if code != http.StatusForbidden {
+		t.Fatalf("sin ninguno de los permisos debe dar 403, llego %d", code)
+	}
+}
+
 func TestGuard_Enforce_SuscripcionVencidaBloqueaSalvoBilletera(t *testing.T) {
 	uc := &fakeUC{access: &entities.Access{BusinessID: 26, SubscriptionStatus: "expired", Permissions: []string{"orders.read"}}}
 	code, _ := runGuard(t, newGuard(uc, ModeEnforce), http.MethodGet, "/orders", 26, true)

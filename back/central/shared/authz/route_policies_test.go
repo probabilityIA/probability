@@ -50,6 +50,20 @@ func TestPoliticas_PrefijoNoConfundeRutasParecidas(t *testing.T) {
 
 func TestPoliticas_TodoRecursoReferenciadoExiste(t *testing.T) {
 	for route, p := range buildExact() {
+		if p.Kind == PolicyPermission && len(p.AnyOf) > 0 {
+			for _, code := range p.AnyOf {
+				found := false
+				for _, r := range Resources {
+					if len(code) > len(r.Code) && code[:len(r.Code)+1] == r.Code+"." {
+						found = true
+					}
+				}
+				if !found {
+					t.Fatalf("%s referencia un permiso de recurso inexistente: %s", route, code)
+				}
+			}
+			continue
+		}
 		if p.Kind == PolicyPermission {
 			if _, ok := ResourceByCode(p.Resource); !ok {
 				t.Fatalf("%s referencia un recurso inexistente: %s", route, p.Resource)

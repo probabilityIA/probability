@@ -10,7 +10,9 @@ interface MyIntegrationsButtonProps {
 
 export function MyIntegrationsButton({ businessId }: MyIntegrationsButtonProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { isSuperAdmin } = usePermissions();
+    const { isSuperAdmin, can } = usePermissions();
+
+    if (!can('integrations.read')) return null;
 
     const disabled = isSuperAdmin && !businessId;
 

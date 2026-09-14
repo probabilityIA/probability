@@ -243,6 +243,8 @@ var permissionRoutes = map[string]RoutePolicy{
 	get("/siigo/invoices/:invoiceID/pdf"):                              PermAction("invoicing", ActionRead),
 	post("/users/:id/assign-role"):                                     PermAction("users", ActionUpdate),
 	post("/customers/upload-bulk"):                                     PermAction("customers", ActionCreate),
+	get("/integrations"):                                               AnyPermission("integrations.read", "orders.read"),
+	get("/integrations/stats"):                                         AnyPermission("integrations.read", "orders.read"),
 	post("/integrations/whatsapp/send-template"):                       Perm("notifications"),
 	post("/integrations/whatsapp/conversations/:id/reply"):             Perm("notifications"),
 	post("/integrations/whatsapp/conversations/:id/reply-media"):       Perm("notifications"),
