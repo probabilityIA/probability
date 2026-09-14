@@ -70,3 +70,47 @@ Hallazgo: el rol Administrador NO tiene `Productos` create/update/delete ni
 ordenes. La auditoria de la fase 2 lo tiene que resolver antes de bloquear.
 
 Tambien: `business_module_overrides` ahora respeta `expires_at`.
+
+## Fase 2 - decisiones y evidencia
+
+Desvio del plan: en vez de un helper por archivo de rutas (829 rutas en ~80
+modulos), la politica vive en una tabla central `shared/authz/route_policies.go`
+(exactas + prefijos, accion por metodo HTTP) y un middleware global en
+`/api/v1` la aplica con `c.FullPath()`. Al arrancar, el backend reporta las
+rutas sin politica (`[authz] rutas sin politica declarada`); con
+`AUTHZ_ROUTES_DUMP=<archivo>` escribe el listado completo. Hoy: 0 sin declarar
+(78 public, 94 authenticated, 166 super_admin, 491 permission).
+
+No hay test de CI que recorra `engine.Routes()`: construir el router exige BD,
+Redis y RabbitMQ. La cobertura se verifica al arrancar (log) y con el volcado.
+
+Modo por variables de entorno leidas con `os.Getenv` (no estan en el struct de
+`shared/env`): `AUTHZ_MODE=audit|enforce`, `AUTHZ_ENFORCE_MODULES=orders,...`.
+
+Auditoria en local (admin demo navegando orders, shipments, invoicing,
+customers, integrations, wallet, users y 19 pantallas por iframe):
+- `/businesses/:id/configured-resources` y `/businesses/simple` las pide todo
+  usuario al cargar el layout -> pasan a `authenticated`. El handler de
+  configured-resources ya valida propiedad; `/businesses/simple` NO la validaba
+  (devolvia todos los negocios a cualquier JWT): ahora un usuario de negocio
+  solo recibe el suyo. Verificado: demo -> [26], super admin -> [30, 26].
+- `/storefront/catalog` denegado: correcto, Demo no tiene Storefront.
+
+Analisis de permisos del Administrador contra las 491 rutas por permiso:
+los modulos fuera del plan basico (inventory, warehouses, delivery,
+notifications, storefront) se niegan por plan, como se decidio. Huecos reales
+del rol: `orders.create/delete`, `products.create/update/delete`,
+`integrations.update/delete`. Corregido POR API en local:
+- `POST /permissions/bulk` -> permisos 129-134 (Ordenes Delete, Productos
+  Create/Update/Delete, Integraciones Update/Delete).
+- `POST /roles/4/permissions` con [128..134].
+
+Tropiezo: `POST /roles/:id/permissions` REEMPLAZA los permisos del rol, no
+los agrega. La primera llamada con [128..134] dejo al Administrador local con 7
+permisos. Se restauro por el mismo API con la lista completa (1-21, 38-85,
+128-134 = 76) y se verifico en BD. En produccion hay que mandar SIEMPRE la lista
+completa.
+
+PENDIENTE PARA PRODUCCION: esos 6 permisos y la asignacion al rol
+Administrador no existen en prod. Hay que crearlos con el mismo API (o un seed)
+ANTES de activar enforce, o los administradores no podran crear ordenes.

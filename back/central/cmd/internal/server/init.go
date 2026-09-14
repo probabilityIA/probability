@@ -64,6 +64,9 @@ func Init(ctx context.Context) error {
 
 	v1Group := r.Group("/api/v1")
 
+	authzBundle := authz.New(v1Group, database, redisClient, logger)
+	v1Group.Use(authzBundle.Middleware())
+
 	authBundle := auth.New(v1Group, database, logger, environment, s3Service, rabbitMQ)
 
 	events.New(v1Group, logger, rabbitMQ, redisClient)
@@ -72,7 +75,8 @@ func Init(ctx context.Context) error {
 
 	modulesBundle := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter)
 
-	authz.New(v1Group, database, redisClient, logger, modulesBundle.Subscriptions.UseCase)
+	authzBundle.SetModuleAccess(modulesBundle.Subscriptions.UseCase)
+	authzBundle.ReportCoverage(ctx, r.Routes())
 
 	authBundle.Demo.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
 	authBundle.Business.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
