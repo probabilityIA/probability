@@ -20,12 +20,6 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 }
 
 func (r *Repository) Migrate(ctx context.Context) error {
-	if err := r.MigrateCodCheckoutCarrierFee(ctx); err != nil {
-		return err
-	}
-	if err := r.FixCodTotalCheckoutWoo(ctx); err != nil {
-		return err
-	}
 	if err := r.migrateWhatsappInboundConversationType(ctx); err != nil {
 		return err
 	}
