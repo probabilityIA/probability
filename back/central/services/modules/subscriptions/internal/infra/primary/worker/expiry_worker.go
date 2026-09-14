@@ -8,10 +8,9 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-const (
-	checkTimeZone = "America/Bogota"
-	checkHour     = 8
-)
+const checkTimeZone = "America/Bogota"
+
+var checkHours = []int{8, 20}
 
 type ExpiryWorker struct {
 	uc  app.IUseCase
@@ -43,12 +42,17 @@ func (w *ExpiryWorker) Start(ctx context.Context) {
 }
 
 func nextRun(now time.Time, location *time.Location) time.Time {
-	candidate := time.Date(now.Year(), now.Month(), now.Day(), checkHour, 0, 0, 0, location)
-	if candidate.After(now) {
-		return candidate
+	day := now
+	for i := 0; i < 2; i++ {
+		for _, hour := range checkHours {
+			candidate := time.Date(day.Year(), day.Month(), day.Day(), hour, 0, 0, 0, location)
+			if candidate.After(now) {
+				return candidate
+			}
+		}
+		day = day.AddDate(0, 0, 1)
 	}
-	tomorrow := now.AddDate(0, 0, 1)
-	return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), checkHour, 0, 0, 0, location)
+	return time.Date(day.Year(), day.Month(), day.Day(), checkHours[0], 0, 0, 0, location)
 }
 
 func (w *ExpiryWorker) runCheck(ctx context.Context) {

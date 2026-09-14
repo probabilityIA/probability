@@ -19,17 +19,17 @@ func formatSpanishDate(t time.Time) string {
 	return fmt.Sprintf("%d de %s de %d", t.Day(), spanishMonths[t.Month()-1], t.Year())
 }
 
-func (uc *UseCase) notifyPaymentWindowIfNeeded(ctx context.Context, business entities.ExpiringBusiness) {
+func (uc *UseCase) notifyPaymentWindowIfNeeded(ctx context.Context, business entities.ExpiringBusiness, now time.Time) {
 	if uc.rabbit == nil {
 		return
 	}
 
-	alreadyNotified, err := uc.repo.HasAuditLogSince(ctx, business.BusinessID, entities.AuditActionPaymentWindowNotified, business.EndDate)
+	notifiedToday, err := uc.repo.HasAuditLogSince(ctx, business.BusinessID, entities.AuditActionPaymentWindowNotified, startOfDayBogota(now))
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Uint("business_id", business.BusinessID).Msg("payment window alert: failed to check idempotency")
 		return
 	}
-	if alreadyNotified {
+	if notifiedToday {
 		return
 	}
 
@@ -89,4 +89,13 @@ func (uc *UseCase) notifyPaymentWindowIfNeeded(ctx context.Context, business ent
 
 	uc.recordAudit(ctx, business.BusinessID, systemUserID, entities.AuditActionPaymentWindowNotified,
 		fmt.Sprintf("aviso de whatsapp enviado: periodo de pago abierto, vence %s", formatSpanishDate(business.EndDate)))
+}
+
+func startOfDayBogota(t time.Time) time.Time {
+	location, err := time.LoadLocation("America/Bogota")
+	if err != nil {
+		location = time.UTC
+	}
+	local := t.In(location)
+	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, location)
 }

@@ -16,18 +16,36 @@ func TestNextRun_AntesDeLasOcho_HoyALasOcho(t *testing.T) {
 	assert.Equal(t, time.Date(2026, 9, 4, 8, 0, 0, 0, loc), got)
 }
 
-func TestNextRun_DespuesDeLasOcho_MananaALasOcho(t *testing.T) {
+func TestNextRun_DespuesDeLasOcho_HoyALasVeinte(t *testing.T) {
 	loc, _ := time.LoadLocation("America/Bogota")
 	now := time.Date(2026, 9, 4, 12, 40, 0, 0, loc)
+
+	got := nextRun(now, loc)
+
+	assert.Equal(t, time.Date(2026, 9, 4, 20, 0, 0, 0, loc), got)
+}
+
+func TestNextRun_ExactamenteALasOcho_HoyALasVeinte(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, 9, 4, 8, 0, 0, 0, loc)
+
+	got := nextRun(now, loc)
+
+	assert.Equal(t, time.Date(2026, 9, 4, 20, 0, 0, 0, loc), got)
+}
+
+func TestNextRun_DespuesDeLasVeinte_MananaALasOcho(t *testing.T) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Date(2026, 9, 4, 21, 15, 0, 0, loc)
 
 	got := nextRun(now, loc)
 
 	assert.Equal(t, time.Date(2026, 9, 5, 8, 0, 0, 0, loc), got)
 }
 
-func TestNextRun_ExactamenteALasOcho_MananaALasOcho(t *testing.T) {
+func TestNextRun_ExactamenteALasVeinte_MananaALasOcho(t *testing.T) {
 	loc, _ := time.LoadLocation("America/Bogota")
-	now := time.Date(2026, 9, 4, 8, 0, 0, 0, loc)
+	now := time.Date(2026, 9, 4, 20, 0, 0, 0, loc)
 
 	got := nextRun(now, loc)
 

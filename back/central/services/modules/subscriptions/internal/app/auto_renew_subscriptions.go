@@ -42,6 +42,16 @@ func (uc *UseCase) autoRenewIfEnabled(ctx context.Context, business entities.Exp
 		return false
 	}
 	if balance < amount {
+		systemUserID, sysErr := uc.resolveSystemUserID(ctx)
+		if sysErr == nil {
+			uc.recordAudit(ctx, business.BusinessID, systemUserID, entities.AuditActionAutoRenewInsufficientFunds,
+				fmt.Sprintf("intento de pago automatico fallido: se necesitan %.0f y el saldo disponible es %.0f", amount, balance))
+		}
+		uc.log.Warn(ctx).
+			Uint("business_id", business.BusinessID).
+			Float64("amount_needed", amount).
+			Float64("wallet_balance", balance).
+			Msg("auto renew: insufficient wallet balance")
 		return false
 	}
 
