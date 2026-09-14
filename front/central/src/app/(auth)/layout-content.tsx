@@ -28,8 +28,8 @@ interface LayoutContentProps {
 
 function LayoutContent({ user, children }: LayoutContentProps) {
   const pathname = usePathname();
-  const { permissions } = usePermissions();
-  const isClienteFinal = permissions?.role_name === 'cliente_final';
+  const { roleCode } = usePermissions();
+  const isClienteFinal = roleCode === 'cliente_final';
   const isStorefrontPath = pathname.startsWith('/storefront');
 
   const {

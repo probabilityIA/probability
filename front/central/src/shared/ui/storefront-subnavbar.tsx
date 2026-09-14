@@ -15,7 +15,7 @@ export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
     const router = useRouter();
     const { actionButtons } = useNavbarActions();
     const { selectedBusinessId, setSelectedBusinessId } = useStorefrontBusiness();
-    const { isSuperAdmin, permissions } = usePermissions();
+    const { hasNav } = usePermissions();
 
     const handleBusinessChange = useCallback((id: number | null) => {
         setSelectedBusinessId(id);
@@ -30,7 +30,7 @@ export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
 
     const isActive = (path: string) => pathname.startsWith(path);
 
-    const canViewWebsiteConfig = isSuperAdmin || permissions?.role_name === 'Administrador';
+    const canViewWebsiteConfig = hasNav('website_config');
 
     const menuItems = canViewWebsiteConfig
         ? [

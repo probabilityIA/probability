@@ -23,6 +23,10 @@ class LoginUseCases {
     return _repository.getRolesPermissions();
   }
 
+  Future<Set<String>> getNavigationKeys() {
+    return _repository.getNavigationKeys();
+  }
+
   Future<List<RecoveryChannel>> getRecoveryChannels(String email) {
     return _repository.getRecoveryChannels(email);
   }

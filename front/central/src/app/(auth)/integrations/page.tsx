@@ -29,12 +29,12 @@ const ALL_TAB_CATEGORIES = 'platform,ecommerce,invoicing,messaging';
 const NARROW_FORM_TYPE_IDS = [1, 2, 3, 4, 8, 16, 33];
 
 const CATEGORY_RESOURCE_MAP: Record<string, string> = {
-    'ecommerce': 'Integraciones-E-commerce',
-    'invoicing': 'Integraciones-Facturacion-Electronica',
-    'messaging': 'Integraciones-Mensajeria',
-    'payment': 'Integraciones-Pagos',
-    'shipping': 'Integraciones-Logistica',
-    'platform': 'Integraciones-Platform',
+    'ecommerce': 'integrations.ecommerce',
+    'invoicing': 'integrations.einvoicing',
+    'messaging': 'integrations.messaging',
+    'payment': 'integrations.payments',
+    'shipping': 'integrations.logistics',
+    'platform': 'integrations.platform',
 };
 
 export default function IntegrationsPage() {
@@ -52,7 +52,7 @@ export default function IntegrationsPage() {
     const [refreshKey, setRefreshKey] = useState(0);
 
     const { categories, loading: categoriesLoading } = useCategories();
-    const { hasPermission, isSuperAdmin } = usePermissions();
+    const { can, isSuperAdmin } = usePermissions();
     const { setActionButtons } = useNavbarActions();
     const { selectedBusinessId } = useIntegrationsBusiness();
 
@@ -70,9 +70,9 @@ export default function IntegrationsPage() {
             if (isSuperAdmin) return true;
             const resource = CATEGORY_RESOURCE_MAP[c.code];
             if (!resource) return true;
-            return hasPermission(resource, 'Read');
+            return can(`${resource}.read`);
         });
-    }, [categories, isSuperAdmin, hasPermission]);
+    }, [categories, isSuperAdmin, can]);
 
     const activeCategoryCode = useMemo(() => {
         if (isTypesTab || isEnvironmentTab || isAllTab) return null;

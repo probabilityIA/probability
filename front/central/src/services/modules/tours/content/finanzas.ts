@@ -82,7 +82,7 @@ export const invoicingTour: TourDefinition = {
     version: 1,
     title: 'Facturacion',
     routes: ['/invoicing'],
-    resource: 'Facturacion',
+    resource: 'invoicing',
     autoStart: true,
     steps: [
         {

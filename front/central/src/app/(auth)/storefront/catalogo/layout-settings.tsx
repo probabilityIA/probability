@@ -21,7 +21,7 @@ const PRESETS: CatalogLayout[] = [
 
 export function CatalogLayoutSettings({ layout, businessId }: CatalogLayoutSettingsProps) {
     const router = useRouter();
-    const { permissions } = usePermissions();
+    const { roleCode } = usePermissions();
     const [open, setOpen] = useState(false);
     const [columns, setColumns] = useState(layout.columns);
     const [rows, setRows] = useState(layout.rows);
@@ -42,7 +42,7 @@ export function CatalogLayoutSettings({ layout, businessId }: CatalogLayoutSetti
         router.refresh();
     };
 
-    if (permissions?.role_name === 'cliente_final') {
+    if (roleCode === 'cliente_final') {
         return null;
     }
 

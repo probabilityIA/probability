@@ -6,12 +6,12 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useCategories } from '../hooks/useCategories';
 
 const CATEGORY_RESOURCE_MAP: Record<string, string> = {
-    'ecommerce': 'Integraciones-E-commerce',
-    'invoicing': 'Integraciones-Facturacion-Electronica',
-    'messaging': 'Integraciones-Mensajeria',
-    'payment': 'Integraciones-Pagos',
-    'shipping': 'Integraciones-Logistica',
-    'platform': 'Integraciones-Platform',
+    'ecommerce': 'integrations.ecommerce',
+    'invoicing': 'integrations.einvoicing',
+    'messaging': 'integrations.messaging',
+    'payment': 'integrations.payments',
+    'shipping': 'integrations.logistics',
+    'platform': 'integrations.platform',
 };
 
 const CATEGORY_DOT_COLORS: Record<string, string> = {
@@ -31,7 +31,7 @@ const SUPER_ADMIN_ONLY_CATEGORIES = new Set(['storefront', 'internal']);
 export function IntegrationCategoryTabs() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
+    const { can, isSuperAdmin } = usePermissions();
     const { categories, loading: categoriesLoading } = useCategories();
 
     const scrollElRef = useRef<HTMLDivElement | null>(null);
@@ -90,18 +90,16 @@ export function IntegrationCategoryTabs() {
         return null;
     }
 
-    const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
-    const canViewTypes = permissionsNotLoaded || isSuperAdmin || hasPermission('Integraciones-Tipos-de-integracion', 'Read');
+    const canViewTypes = isSuperAdmin;
 
     const allowedCategories = categories
         .filter(c => c.is_visible && c.is_active)
         .filter(c => {
             if (isSuperAdmin) return true;
             if (SUPER_ADMIN_ONLY_CATEGORIES.has(c.code)) return false;
-            if (permissionsNotLoaded) return true;
             const resource = CATEGORY_RESOURCE_MAP[c.code];
             if (!resource) return true;
-            return hasPermission(resource, 'Read');
+            return can(`${resource}.read`);
         })
         .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 

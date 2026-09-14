@@ -28,7 +28,8 @@ class ModulesScreen extends StatelessWidget {
         padding: AppSpacing.page,
         children: [
           for (final group in AppModules.visibleGroupsFor(
-            isSuperAdmin: context.watch<LoginProvider>().isSuperAdmin,
+            isSuperAdmin: login.isSuperAdmin,
+            canNav: login.canNav,
           )) ...[
             AppSectionHeader(title: group.title),
             GridView.builder(

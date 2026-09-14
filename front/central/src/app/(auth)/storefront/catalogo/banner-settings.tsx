@@ -14,14 +14,14 @@ interface BannerSettingsProps {
 
 export function BannerSettings({ banner, businessId }: BannerSettingsProps) {
     const router = useRouter();
-    const { permissions } = usePermissions();
+    const { roleCode } = usePermissions();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [togglingEnabled, setTogglingEnabled] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    if (permissions?.role_name === 'cliente_final') {
+    if (roleCode === 'cliente_final') {
         return null;
     }
 

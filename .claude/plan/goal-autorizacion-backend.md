@@ -152,3 +152,39 @@ cargan con datos y el log no registra ninguna denegacion para el usuario 8.
 
 `RequireModuleAccess` de invoicing e inventory se deja: es redundante con el
 motor (que ya cruza el plan) pero no estorba. Se retira en la fase 5.
+
+## Fase 4 - front y app obedecen
+
+Backend:
+- Subrecursos de inventario heredan las acciones del padre si el negocio los
+  tiene activos (`InheritFromParent`); los avanzados excluyen al rol `demo`
+  (`ExcludeRoles`). Reemplaza la lista `DEMO_ALLOWED_RESOURCES` y el cruce con
+  `useResourceConfig` que hacia el front.
+- Navegacion: entradas `notification_channels` y `notification_event_types`.
+
+Front (`front/central`):
+- `services/auth/access`: tipos, repositorio y `getMyAccessAction` sobre
+  `GET /auth/me/access`.
+- `permissions-context.tsx` reescrito: expone `access`, `can(codigo)`,
+  `hasNav(clave)`, `canAccessRoute`, `roleCode`. Se borraron `hasPermission`,
+  `hasRouteAccess`, `getResourceActions`, `PermissionGate`, `useHasPermission`
+  y `RESOURCE_ROUTE_MAP`.
+- Permisos fuera de `localStorage`: `TokenStorage.getPermissions` devuelve una
+  copia en memoria que llena el provider (los 55 archivos que la leen siguen
+  funcionando) y borra la llave vieja.
+- `AccessRouteGuard` en `app/(auth)/layout.tsx`: mientras carga muestra
+  spinner; si la ruta no esta en la navegacion del backend muestra "No tienes
+  acceso a este modulo". Es guard de cliente: la seguridad real es el backend.
+- Sidebar, orders-sidebar, orders-subnavbar, inventory-subnavbar,
+  storefront-subnavbar, pestanas de integraciones, tours y paginas de IAM
+  consultan `hasNav`/`can`. Sin comparaciones por nombre de rol visible:
+  quedan 5 por `roleCode` (`cliente_final` x4, `demo` en el cambio de tema),
+  que es un codigo estable que manda el backend.
+- LoginForm ya no pide `roles-permissions` ni escribe permisos.
+- `tsc --noEmit`: 0 errores.
+
+App movil:
+- `LoginProvider` pide `/auth/me/access` al entrar y al restaurar sesion y
+  expone `canNav`. `AppModules` cambia `resources` por `navKey`;
+  `isRouteAllowed` y `visibleGroupsFor` filtran por la navegacion del backend.
+- `flutter test` login + navegacion: 70 pruebas OK (4 nuevas).

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"sort"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/auth/authz/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/auth/authz/internal/domain/errors"
@@ -93,6 +94,22 @@ func (uc *UseCase) resolvePermissions(ctx context.Context, staff *entities.Staff
 		allowedModules[m] = true
 	}
 
+	roleCode := authz.RoleCode(staff.RoleName)
+	allowed := func(resource authz.Resource) bool {
+		if resource.SuperAdminOnly {
+			return false
+		}
+		for _, excluded := range resource.ExcludeRoles {
+			if excluded == roleCode {
+				return false
+			}
+		}
+		if restrictByConfig && !activeResources[resource.Code] {
+			return false
+		}
+		return resource.Module == "" || allowedModules[resource.Module]
+	}
+
 	set := make(map[string]bool)
 	for _, rp := range rolePermissions {
 		resource, ok := authz.ResourceByLegacyName(rp.ResourceName)
@@ -105,16 +122,27 @@ func (uc *UseCase) resolvePermissions(ctx context.Context, staff *entities.Staff
 			uc.log.Warn(ctx).Str("action", rp.ActionName).Msg("[authz] accion de BD sin codigo en el catalogo, se ignora")
 			continue
 		}
-		if resource.SuperAdminOnly {
-			continue
-		}
-		if restrictByConfig && !activeResources[resource.Code] {
-			continue
-		}
-		if resource.Module != "" && !allowedModules[resource.Module] {
+		if !allowed(resource) {
 			continue
 		}
 		set[authz.PermissionCode(resource.Code, action)] = true
+	}
+
+	for _, resource := range authz.Resources {
+		if resource.InheritFromParent == "" || !allowed(resource) {
+			continue
+		}
+		prefix := resource.InheritFromParent + "."
+		for code := range set {
+			if !strings.HasPrefix(code, prefix) {
+				continue
+			}
+			action := strings.TrimPrefix(code, prefix)
+			if strings.Contains(action, ".") {
+				continue
+			}
+			set[authz.PermissionCode(resource.Code, action)] = true
+		}
 	}
 
 	permissions := make([]string, 0, len(set))

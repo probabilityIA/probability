@@ -25,7 +25,7 @@ class AppModule {
     required this.icon,
     this.description,
     this.matchPrefix = false,
-    this.resources = const [],
+    this.navKey,
     this.stage = ModuleStage.prod,
     this.superAdminOnly = false,
   });
@@ -35,7 +35,7 @@ class AppModule {
   final IconData icon;
   final String? description;
   final bool matchPrefix;
-  final List<String> resources;
+  final String? navKey;
   final ModuleStage stage;
   final bool superAdminOnly;
 
@@ -43,6 +43,12 @@ class AppModule {
 
   bool isActive(String location) =>
       matchPrefix ? location.startsWith(route) : location == route;
+
+  bool allowedBy({required bool isSuperAdmin, bool Function(String key)? canNav}) {
+    if (isSuperAdmin || navKey == null) return true;
+    if (canNav == null) return false;
+    return canNav(navKey!);
+  }
 
   bool owns(String location) =>
       location == route || location.startsWith('$route/') || isActive(location);
@@ -57,10 +63,15 @@ class AppModuleGroup {
   List<AppModule> get visibleModules =>
       modules.where((module) => module.isVisible).toList();
 
-  List<AppModule> visibleFor({required bool isSuperAdmin}) => modules
-      .where((module) => module.isVisible)
-      .where((module) => isSuperAdmin || !module.superAdminOnly)
-      .toList();
+  List<AppModule> visibleFor({
+    required bool isSuperAdmin,
+    bool Function(String key)? canNav,
+  }) =>
+      modules
+          .where((module) => module.isVisible)
+          .where((module) => isSuperAdmin || !module.superAdminOnly)
+          .where((module) => module.allowedBy(isSuperAdmin: isSuperAdmin, canNav: canNav))
+          .toList();
 }
 
 class AppModules {
@@ -80,24 +91,24 @@ class AppModules {
         AppModule(
           label: '\u00d3rdenes',
           route: '/orders',
+          navKey: 'orders',
           icon: Icons.receipt_long_outlined,
           description: 'Pedidos de todos los canales',
           matchPrefix: true,
-          resources: ['\u00d3rdenes', 'Orders'],
         ),
         AppModule(
           label: 'Clientes',
           route: '/customers',
+          navKey: 'customers',
           icon: Icons.people_alt_outlined,
           description: 'Directorio y compras',
-          resources: ['Clientes', 'Customers'],
         ),
         AppModule(
           label: 'Facturaci\u00f3n',
           route: '/invoicing',
+          navKey: 'invoicing',
           icon: Icons.description_outlined,
           description: 'Facturas y notas cr\u00e9dito',
-          resources: ['Facturaci\u00f3n', 'Invoicing'],
         ),
       ],
     ),
@@ -107,17 +118,17 @@ class AppModules {
         AppModule(
           label: 'Env\u00edos',
           route: '/orders/shipments',
+          navKey: 'shipments',
           icon: Icons.local_shipping_outlined,
           description: 'Gu\u00edas y seguimiento',
-          resources: ['Env\u00edos', 'Shipments'],
         ),
         AppModule(
           label: 'Ultima milla',
           route: '/delivery',
+          navKey: 'delivery',
           icon: Icons.alt_route_outlined,
           description: 'Rutas, conductores y vehiculos',
           matchPrefix: true,
-          resources: ['Rutas', 'Routes'],
           stage: ModuleStage.development,
         ),
       ],
@@ -128,23 +139,23 @@ class AppModules {
         AppModule(
           label: 'Productos',
           route: '/inventory',
+          navKey: 'products',
           icon: Icons.sell_outlined,
           description: 'Catalogo y precios',
-          resources: ['Productos', 'Products'],
         ),
         AppModule(
           label: 'Bodegas',
           route: '/inventory/warehouses',
+          navKey: 'warehouses',
           icon: Icons.warehouse_outlined,
           description: 'Ubicaciones y ocupacion',
-          resources: ['Bodegas', 'Warehouses'],
         ),
         AppModule(
           label: 'Stock',
           route: '/inventory/stock',
+          navKey: 'inventory',
           icon: Icons.inventory_2_outlined,
           description: 'Existencias y movimientos',
-          resources: ['Inventario', 'Inventory'],
         ),
       ],
     ),
@@ -154,16 +165,16 @@ class AppModules {
         AppModule(
           label: 'Billetera',
           route: '/wallet',
+          navKey: 'wallet',
           icon: Icons.account_balance_wallet_outlined,
           description: 'Saldo y movimientos',
-          resources: ['Billetera', 'Wallet'],
         ),
         AppModule(
           label: 'Pagos',
           route: '/pay',
+          navKey: 'integrations',
           icon: Icons.credit_card_outlined,
           description: 'Pasarelas y recaudo',
-          resources: ['Pagos', 'Pay'],
         ),
       ],
     ),
@@ -173,10 +184,10 @@ class AppModules {
         AppModule(
           label: 'Integraciones',
           route: '/integrations',
+          navKey: 'integrations',
           icon: Icons.hub_outlined,
           description: 'Catalogo de conectores',
           matchPrefix: true,
-          resources: ['Integraciones', 'Integrations'],
           superAdminOnly: true,
         ),
         AppModule(
@@ -188,17 +199,17 @@ class AppModules {
         AppModule(
           label: 'Tienda online',
           route: '/storefront',
+          navKey: 'storefront',
           icon: Icons.storefront_outlined,
           description: 'Catalogo p\u00fablico y sitio',
           matchPrefix: true,
-          resources: ['Tienda', 'Storefront'],
         ),
         AppModule(
           label: 'Notificaciones',
           route: '/notifications',
+          navKey: 'notifications',
           icon: Icons.notifications_none_outlined,
           description: 'Eventos y plantillas',
-          resources: ['Notificaciones', 'Notifications'],
         ),
       ],
     ),
@@ -208,17 +219,17 @@ class AppModules {
         AppModule(
           label: 'Usuarios y roles',
           route: '/iam',
+          navKey: 'users',
           icon: Icons.admin_panel_settings_outlined,
           description: 'Accesos y permisos',
           matchPrefix: true,
-          resources: ['Usuarios', 'Users', 'Roles', 'Permisos', 'Permissions'],
         ),
         AppModule(
           label: 'Negocios',
           route: '/businesses',
+          navKey: 'businesses',
           icon: Icons.apartment_outlined,
           description: 'Empresas de la plataforma',
-          resources: ['Empresas', 'Businesses'],
         ),
       ],
     ),
@@ -230,24 +241,33 @@ class AppModules {
   static List<AppModuleGroup> get visibleGroups =>
       visibleGroupsFor(isSuperAdmin: true);
 
-  static List<AppModuleGroup> visibleGroupsFor({required bool isSuperAdmin}) =>
+  static List<AppModuleGroup> visibleGroupsFor({
+    required bool isSuperAdmin,
+    bool Function(String key)? canNav,
+  }) =>
       groups
           .map((group) => AppModuleGroup(
                 title: group.title,
-                modules: group.visibleFor(isSuperAdmin: isSuperAdmin),
+                modules: group.visibleFor(isSuperAdmin: isSuperAdmin, canNav: canNav),
               ))
           .where((group) => group.modules.isNotEmpty)
           .toList();
 
-  static bool isRouteAllowed(String location, {required bool isSuperAdmin}) {
+  static bool isRouteAllowed(
+    String location, {
+    required bool isSuperAdmin,
+    bool Function(String key)? canNav,
+  }) {
+    AppModule? owner;
     for (final module in all) {
-      if (module.owns(location)) {
-        if (!module.isVisible) return false;
-        if (module.superAdminOnly && !isSuperAdmin) return false;
-        return true;
+      if (module.owns(location) && (owner == null || module.route.length > owner.route.length)) {
+        owner = module;
       }
     }
-    return true;
+    if (owner == null) return true;
+    if (!owner.isVisible) return false;
+    if (owner.superAdminOnly && !isSuperAdmin) return false;
+    return owner.allowedBy(isSuperAdmin: isSuperAdmin, canNav: canNav);
   }
 
   static bool isRouteAvailable(String location) {

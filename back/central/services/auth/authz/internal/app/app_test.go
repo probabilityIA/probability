@@ -211,6 +211,42 @@ func TestAcceso_SeCachea(t *testing.T) {
 	}
 }
 
+func TestAcceso_SubrecursosDeInventarioHeredanDelPadre(t *testing.T) {
+	repo := &fakeRepo{
+		staff:       map[uint]*entities.StaffRole{30: adminStaff()},
+		permissions: []entities.RolePermission{{ResourceName: "Inventario", ActionName: "Read"}},
+		configs: []entities.ResourceConfig{
+			{ResourceName: "Inventario", Active: true},
+			{ResourceName: "Inventario-Stock", Active: true},
+			{ResourceName: "Inventario-Kardex", Active: false},
+		},
+	}
+	uc := newUC(repo, []string{"inventory"})
+
+	access, _ := uc.GetEffectiveAccess(context.Background(), 8, 30, 0)
+	if !has(access.Permissions, "inventory.stock.read") {
+		t.Fatalf("stock activo debe heredar lectura del padre: %v", access.Permissions)
+	}
+	if has(access.Permissions, "inventory.kardex.read") {
+		t.Fatalf("kardex esta desactivado para el negocio: %v", access.Permissions)
+	}
+}
+
+func TestAcceso_DemoNoHeredaSubrecursosAvanzados(t *testing.T) {
+	staff := adminStaff()
+	staff.RoleName = "demo"
+	repo := &fakeRepo{staff: map[uint]*entities.StaffRole{30: staff}, permissions: []entities.RolePermission{{ResourceName: "Inventario", ActionName: "Read"}}}
+	uc := newUC(repo, []string{"inventory"})
+
+	access, _ := uc.GetEffectiveAccess(context.Background(), 71, 30, 0)
+	if !has(access.Permissions, "inventory.movements.read") {
+		t.Fatalf("demo ve movimientos: %v", access.Permissions)
+	}
+	if has(access.Permissions, "inventory.kardex.read") || has(access.Permissions, "inventory.lpn.read") {
+		t.Fatalf("demo no debe ver kardex ni LPN: %v", access.Permissions)
+	}
+}
+
 func navHas(nav []entities.NavItem, key string) bool {
 	for _, n := range nav {
 		if n.Key == key {

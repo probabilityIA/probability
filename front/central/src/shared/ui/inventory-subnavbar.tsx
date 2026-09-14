@@ -8,66 +8,39 @@ import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
-import { useResourceConfig } from '@/services/auth/business/ui/hooks/useResourceConfig';
 import { InventoryDisabledNotice, useInventoryModuleActive } from '@/services/modules/inventory/ui';
 import { TourLauncher } from '@/services/modules/tours/ui';
-
-const DEMO_ALLOWED_RESOURCES = new Set([
-    'Productos',
-    'Products',
-    'Inventario-Stock',
-    'Inventario-Movimientos',
-]);
 
 export const INVENTORY_FILTERS_SLOT_ID = 'inventory-filters-slot';
 
 export const InventorySubNavbar = memo(function InventorySubNavbar() {
     const pathname = usePathname();
-    const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
+    const { can, isSuperAdmin, isLoading, permissions } = usePermissions();
     const { actionButtons } = useNavbarActions();
     const { selectedBusinessId, setSelectedBusinessId } = useInventoryBusiness();
-
-    const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
 
     const businessIdForConfig = isSuperAdmin
         ? (selectedBusinessId || 0)
         : (permissions?.business_id || 0);
-    const { config: businessConfig, loading: businessConfigLoading } = useResourceConfig(businessIdForConfig);
     const inventoryBusinessId = businessIdForConfig > 0 ? businessIdForConfig : null;
     const { isActive: inventoryModuleActive, loading: inventoryModuleLoading } = useInventoryModuleActive(inventoryBusinessId);
-    const businessActiveResources = businessConfig?.resources
-        ?.filter((r: any) => r.is_active)
-        .map((r: any) => r.resource_name) ?? [];
-    const businessActiveSet = new Set<string>(businessActiveResources);
 
-    const isInventarioSub = (r: string) => r.startsWith('Inventario-');
+    const isResourcesLoading = isLoading;
 
-    const isResourcesLoading = permissionsNotLoaded || (businessIdForConfig > 0 && businessConfigLoading);
+    const allow = (permission: string) => !isResourcesLoading && can(permission);
 
-    const isDemo = permissions?.role_name === 'demo';
-
-    const allow = (resource: string) => {
-        if (isSuperAdmin) return true;
-        if (isResourcesLoading) return false;
-        if (isDemo && !DEMO_ALLOWED_RESOURCES.has(resource)) return false;
-        if (!businessActiveSet.has(resource)) return false;
-        if (hasPermission(resource, 'Read')) return true;
-        if (isInventarioSub(resource) && hasPermission('Inventario', 'Read')) return true;
-        return false;
-    };
-
-    const canViewProducts     = allow('Productos') || allow('Products');
-    const canViewWarehouses   = allow('Bodegas')   || allow('Warehouses');
-    const canViewStock        = allow('Inventario-Stock');
-    const canViewMovements    = allow('Inventario-Movimientos');
-    const canViewTraceability = allow('Inventario-Trazabilidad');
-    const canViewKardex       = allow('Inventario-Kardex');
-    const canViewOperations   = allow('Inventario-Operaciones');
-    const canViewSlotting     = allow('Inventario-Slotting');
-    const canViewAudit        = allow('Inventario-Auditoria');
-    const canViewLPN          = allow('Inventario-LPN');
-    const canViewScan         = allow('Inventario-Scan');
-    const canViewSyncLogs     = allow('Inventario-Sync-Logs');
+    const canViewProducts     = allow('products.read');
+    const canViewWarehouses   = allow('warehouses.read');
+    const canViewStock        = allow('inventory.stock.read');
+    const canViewMovements    = allow('inventory.movements.read');
+    const canViewTraceability = allow('inventory.traceability.read');
+    const canViewKardex       = allow('inventory.kardex.read');
+    const canViewOperations   = allow('inventory.operations.read');
+    const canViewSlotting     = allow('inventory.slotting.read');
+    const canViewAudit        = allow('inventory.audit.read');
+    const canViewLPN          = allow('inventory.lpn.read');
+    const canViewScan         = allow('inventory.scan.read');
+    const canViewSyncLogs     = allow('inventory.sync_logs.read');
 
     const isInInventoryModule = pathname.startsWith('/products') ||
                                 pathname.startsWith('/warehouses') ||

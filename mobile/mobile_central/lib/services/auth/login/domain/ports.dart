@@ -6,6 +6,7 @@ abstract class ILoginRepository {
       String currentPassword, String newPassword);
   Future<GeneratePasswordResponse> generatePassword({int? userId});
   Future<UserRolesPermissionsResponse> getRolesPermissions();
+  Future<Set<String>> getNavigationKeys();
   Future<List<RecoveryChannel>> getRecoveryChannels(String email);
   Future<SimpleAuthResponse> forgotPassword(String email, String channel);
   Future<SimpleAuthResponse> verifyOtp(String email, String code);

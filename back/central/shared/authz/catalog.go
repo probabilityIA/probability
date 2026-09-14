@@ -14,11 +14,13 @@ const (
 )
 
 type Resource struct {
-	Code           string
-	Label          string
-	Module         string
-	LegacyNames    []string
-	SuperAdminOnly bool
+	Code              string
+	Label             string
+	Module            string
+	LegacyNames       []string
+	SuperAdminOnly    bool
+	InheritFromParent string
+	ExcludeRoles      []string
 }
 
 type NavRule string
@@ -85,16 +87,16 @@ var Resources = []Resource{
 	{Code: "integrations.types", Label: "Tipos de integraci\u00f3n", Module: string(moduleregistry.ModuleIntegrations), LegacyNames: []string{"Integraciones-Tipos-de-integracion"}, SuperAdminOnly: true},
 	{Code: "inventory", Label: "Inventario", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario", "Inventory"}},
 	{Code: "warehouses", Label: "Bodegas", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Bodegas", "Warehouses"}},
-	{Code: "inventory.stock", Label: "Stock", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Stock"}},
-	{Code: "inventory.movements", Label: "Movimientos", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Movimientos"}},
-	{Code: "inventory.traceability", Label: "Trazabilidad", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Trazabilidad"}},
-	{Code: "inventory.kardex", Label: "Kardex", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Kardex"}},
-	{Code: "inventory.operations", Label: "Operaciones", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Operaciones"}},
-	{Code: "inventory.slotting", Label: "Slotting", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Slotting"}},
-	{Code: "inventory.audit", Label: "Auditor\u00eda", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Auditoria"}},
-	{Code: "inventory.lpn", Label: "LPN", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-LPN"}},
-	{Code: "inventory.scan", Label: "Escaneo", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Scan"}},
-	{Code: "inventory.sync_logs", Label: "Logs de sincronizaci\u00f3n", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Sync-Logs"}},
+	{Code: "inventory.stock", Label: "Stock", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Stock"}, InheritFromParent: "inventory"},
+	{Code: "inventory.movements", Label: "Movimientos", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Movimientos"}, InheritFromParent: "inventory"},
+	{Code: "inventory.traceability", Label: "Trazabilidad", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Trazabilidad"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
+	{Code: "inventory.kardex", Label: "Kardex", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Kardex"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
+	{Code: "inventory.operations", Label: "Operaciones", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Operaciones"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
+	{Code: "inventory.slotting", Label: "Slotting", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Slotting"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
+	{Code: "inventory.audit", Label: "Auditor\u00eda", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Auditoria"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
+	{Code: "inventory.lpn", Label: "LPN", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-LPN"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
+	{Code: "inventory.scan", Label: "Escaneo", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Scan"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
+	{Code: "inventory.sync_logs", Label: "Logs de sincronizaci\u00f3n", Module: string(moduleregistry.ModuleInventory), LegacyNames: []string{"Inventario-Sync-Logs"}, InheritFromParent: "inventory", ExcludeRoles: []string{"demo"}},
 }
 
 var Navigation = []NavEntry{
@@ -125,6 +127,8 @@ var Navigation = []NavEntry{
 	{Key: "commercial", Label: "Comercial", Route: "/commercial", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Prospectos y seguimiento comercial"},
 	{Key: "marketing_leads", Label: "Leads", Route: "/marketing-leads", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Contactos del sitio web"},
 	{Key: "siigo_referrals", Label: "Referidos Siigo", Route: "/siigo-referrals", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Referidos de Siigo"},
+	{Key: "notification_channels", Label: "Canales de notificaci\u00f3n", Route: "/notification-channels", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Canales de env\u00edo de notificaciones"},
+	{Key: "notification_event_types", Label: "Eventos de notificaci\u00f3n", Route: "/notification-event-types", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Tipos de evento que disparan notificaciones"},
 	{Key: "shipping_margins", Label: "M\u00e1rgenes de env\u00edo", Route: "/shipping-margins", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "M\u00e1rgenes por transportadora"},
 }
 
