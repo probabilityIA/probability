@@ -173,6 +173,33 @@ en la lista a borrar. Ojo con la diferencia entre **tags** e **imagenes**: cada
 build empuja 4 tags de una misma imagen, asi que `list-images` cuenta hasta 4
 veces mas que `describe-images`.
 
+## S3 - adjuntos de chats
+
+Bucket `probability-chat-attachments` (creado 2026-09-13 por CLI, no esta en
+Terraform: Terraform solo maneja el bucket de estado y ECR).
+
+| Que | Valor |
+|---|---|
+| Uso | archivos enviados y recibidos en los chats (hoy WhatsApp) |
+| Estructura | `whatsapp/<business_id>/<yyyy>/<mm>/<uuid>.<ext>` |
+| Acceso publico | bloqueado (las 4 banderas) |
+| Cifrado | SSE-S3 (AES256) con bucket key |
+| Politica | niega todo trafico sin TLS |
+| Ownership | `BucketOwnerEnforced` (sin ACLs) |
+| Lifecycle | `expire-365d`: borra cada objeto a los 365 dias |
+
+**Retencion: 1 ano.** Los mensajes de chat en base de datos se borran con el
+mismo plazo (job del backend), asi que el archivo y su mensaje desaparecen
+juntos. Si legal pide otro plazo, se cambian los DOS: la regla del bucket y la
+constante del job.
+
+El front nunca recibe una URL publica: el backend firma URLs temporales para
+ver o descargar. El usuario `backend-s3-uploader` ya tiene acceso por
+`AmazonS3FullAccess`; no hizo falta tocar IAM.
+
+**No reutilizar este bucket para otra cosa.** La regla de 365 dias borraria
+avatares, imagenes de productos o lo que se guarde aqui.
+
 ## Auditoria - CloudTrail
 
 Trail `probability-trail`, activo desde 2026-08-21. Multi-region, con eventos

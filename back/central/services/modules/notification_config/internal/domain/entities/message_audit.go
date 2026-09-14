@@ -31,6 +31,11 @@ type ConversationSummary struct {
 	ID                   string
 	PhoneNumber          string
 	OrderNumber          string
+	OrderID              string
+	CampaignID           *uint
+	CampaignName         string
+	UnreadCount          int
+	OptedOut             bool
 	ConversationType     string
 	BusinessID           uint
 	CurrentState         string
@@ -42,12 +47,35 @@ type ConversationSummary struct {
 	CreatedAt            time.Time
 }
 
+const ChatRetentionDays = 365
+
+type ChatPurgeResult struct {
+	Messages      int64
+	Conversations int64
+	Reads         int64
+}
+
+type MessageMedia struct {
+	Type     string
+	Key      string
+	Mime     string
+	Filename string
+	Size     int64
+}
+
+type MessageButton struct {
+	Text string
+	Type string
+}
+
 type ConversationMessage struct {
 	ID           string
 	Direction    string
 	MessageID    string
 	TemplateName string
 	Content      string
+	Buttons      []MessageButton
+	Media        *MessageMedia
 	Status       string
 	DeliveredAt  *time.Time
 	ReadAt       *time.Time

@@ -51,6 +51,11 @@ func DomainToConversationListResponse(dto *dtos.PaginatedConversationListRespons
 			ID:                   d.ID,
 			PhoneNumber:          d.PhoneNumber,
 			OrderNumber:          d.OrderNumber,
+			OrderID:              d.OrderID,
+			CampaignID:           d.CampaignID,
+			CampaignName:         d.CampaignName,
+			UnreadCount:          d.UnreadCount,
+			OptedOut:             d.OptedOut,
 			ConversationType:     d.ConversationType,
 			CurrentState:         d.CurrentState,
 			MessageCount:         d.MessageCount,
@@ -63,23 +68,30 @@ func DomainToConversationListResponse(dto *dtos.PaginatedConversationListRespons
 	}
 
 	return response.PaginatedConversationListResponse{
-		Data:       conversations,
-		Total:      dto.Total,
-		Page:       dto.Page,
-		PageSize:   dto.PageSize,
-		TotalPages: dto.TotalPages,
+		Data:                conversations,
+		Total:               dto.Total,
+		UnreadConversations: dto.UnreadConversations,
+		Page:                dto.Page,
+		PageSize:            dto.PageSize,
+		TotalPages:          dto.TotalPages,
 	}
 }
 
 func DomainToConversationDetailResponse(dto *dtos.ConversationDetailResponseDTO) response.ConversationDetailResponse {
 	messages := make([]response.ConversationMessage, len(dto.Messages))
 	for i, m := range dto.Messages {
+		var buttons []response.MessageButton
+		for _, b := range m.Buttons {
+			buttons = append(buttons, response.MessageButton{Text: b.Text, Type: b.Type})
+		}
 		messages[i] = response.ConversationMessage{
 			ID:           m.ID,
 			Direction:    m.Direction,
 			MessageID:    m.MessageID,
 			TemplateName: m.TemplateName,
 			Content:      m.Content,
+			Buttons:      buttons,
+			Media:        toMessageMediaResponse(m.Media),
 			Status:       m.Status,
 			DeliveredAt:  m.DeliveredAt,
 			ReadAt:       m.ReadAt,
@@ -91,9 +103,27 @@ func DomainToConversationDetailResponse(dto *dtos.ConversationDetailResponseDTO)
 		ConversationID:   dto.ConversationID,
 		PhoneNumber:      dto.PhoneNumber,
 		OrderNumber:      dto.OrderNumber,
+		OrderID:          dto.OrderID,
+		CampaignID:       dto.CampaignID,
+		CampaignName:     dto.CampaignName,
+		OptedOut:         dto.OptedOut,
 		ConversationType: dto.ConversationType,
 		CurrentState:     dto.CurrentState,
 		AiPaused:         dto.AiPaused,
 		Messages:         messages,
+	}
+}
+
+func toMessageMediaResponse(media *dtos.MessageMediaResponseDTO) *response.MessageMedia {
+	if media == nil {
+		return nil
+	}
+	return &response.MessageMedia{
+		Type:      media.Type,
+		URL:       media.URL,
+		MimeType:  media.MimeType,
+		Filename:  media.Filename,
+		Size:      media.Size,
+		Available: media.Available,
 	}
 }

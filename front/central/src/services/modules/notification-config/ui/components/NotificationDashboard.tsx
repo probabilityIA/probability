@@ -105,7 +105,7 @@ export function NotificationDashboard() {
           )}
 
           {activeTab === 'conversations' && (
-            <WhatsAppConversations businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
+            <WhatsAppConversations businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} fillHeight />
           )}
 
           {activeTab === 'campaigns' && (

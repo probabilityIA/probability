@@ -27,12 +27,18 @@ func TestCreateDefaultsToDailyDistribute(t *testing.T) {
 
 func TestCreateValidatesSchedule(t *testing.T) {
 	cases := map[string]func(*dtos.CreateCampaignDTO){
-		"modo desconocido":      func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = "weekly" },
-		"entrega desconocida":   func(d *dtos.CreateCampaignDTO) { d.DeliveryMode = "blast" },
-		"intervalo en cero":     func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = entities.CampaignScheduleInterval },
-		"intervalo gigante":     func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = entities.CampaignScheduleInterval; d.IntervalDays = 400 },
-		"fechas vacias":         func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = entities.CampaignScheduleDates },
-		"fecha mal escrita":     func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = entities.CampaignScheduleDates; d.SendDates = []string{"15/09/2026"} },
+		"modo desconocido":    func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = "weekly" },
+		"entrega desconocida": func(d *dtos.CreateCampaignDTO) { d.DeliveryMode = "blast" },
+		"intervalo en cero":   func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = entities.CampaignScheduleInterval },
+		"intervalo gigante": func(d *dtos.CreateCampaignDTO) {
+			d.ScheduleMode = entities.CampaignScheduleInterval
+			d.IntervalDays = 400
+		},
+		"fechas vacias": func(d *dtos.CreateCampaignDTO) { d.ScheduleMode = entities.CampaignScheduleDates },
+		"fecha mal escrita": func(d *dtos.CreateCampaignDTO) {
+			d.ScheduleMode = entities.CampaignScheduleDates
+			d.SendDates = []string{"15/09/2026"}
+		},
 		"repetir sin fin":       func(d *dtos.CreateCampaignDTO) { d.DeliveryMode = entities.CampaignDeliveryRepeat },
 		"demasiadas repeticion": func(d *dtos.CreateCampaignDTO) { d.Occurrences = 1000 },
 	}

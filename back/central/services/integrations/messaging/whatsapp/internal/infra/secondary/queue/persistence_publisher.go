@@ -134,6 +134,11 @@ type messageLogPayload struct {
 	DeliveredAt    *time.Time `json:"delivered_at,omitempty"`
 	ReadAt         *time.Time `json:"read_at,omitempty"`
 	CreatedAt      time.Time  `json:"created_at"`
+	MediaType      string     `json:"media_type,omitempty"`
+	MediaKey       string     `json:"media_key,omitempty"`
+	MediaMime      string     `json:"media_mime,omitempty"`
+	MediaFilename  string     `json:"media_filename,omitempty"`
+	MediaSize      int64      `json:"media_size,omitempty"`
 }
 
 func toMessageLogPayload(m *entities.MessageLog) messageLogPayload {
@@ -148,6 +153,11 @@ func toMessageLogPayload(m *entities.MessageLog) messageLogPayload {
 		DeliveredAt:    m.DeliveredAt,
 		ReadAt:         m.ReadAt,
 		CreatedAt:      m.CreatedAt,
+		MediaType:      m.MediaType,
+		MediaKey:       m.MediaKey,
+		MediaMime:      m.MediaMime,
+		MediaFilename:  m.MediaFilename,
+		MediaSize:      m.MediaSize,
 	}
 }
 

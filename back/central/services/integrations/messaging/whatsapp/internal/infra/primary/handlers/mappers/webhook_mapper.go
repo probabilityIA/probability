@@ -136,6 +136,24 @@ func mapWebhookMessage(req request.WebhookMessage) dtos.WebhookMessageDTO {
 		Button:      button,
 		Interactive: interactive,
 		Context:     context,
+		Image:       mapMediaContent(req.Image),
+		Document:    mapMediaContent(req.Document),
+		Audio:       mapMediaContent(req.Audio),
+		Video:       mapMediaContent(req.Video),
+		Sticker:     mapMediaContent(req.Sticker),
+	}
+}
+
+func mapMediaContent(req *request.MediaContent) *dtos.MediaContentDTO {
+	if req == nil {
+		return nil
+	}
+	return &dtos.MediaContentDTO{
+		ID:       req.ID,
+		MimeType: req.MimeType,
+		SHA256:   req.SHA256,
+		Caption:  req.Caption,
+		Filename: req.Filename,
 	}
 }
 

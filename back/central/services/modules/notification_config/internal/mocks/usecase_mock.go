@@ -7,9 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 )
 
-// UseCaseMock - Mock del caso de uso
 type UseCaseMock struct {
-	// Notification Configs
 	CreateFn             func(ctx context.Context, dto dtos.CreateNotificationConfigDTO) (*dtos.NotificationConfigResponseDTO, error)
 	UpdateFn             func(ctx context.Context, id uint, dto dtos.UpdateNotificationConfigDTO) (*dtos.NotificationConfigResponseDTO, error)
 	GetByIDFn            func(ctx context.Context, id uint) (*dtos.NotificationConfigResponseDTO, error)
@@ -17,7 +15,6 @@ type UseCaseMock struct {
 	DeleteFn             func(ctx context.Context, id uint) error
 	ValidateConditionsFn func(config *entities.IntegrationNotificationConfig, orderStatusID uint, paymentMethodID uint) bool
 
-	// Notification Types
 	GetNotificationTypesFn      func(ctx context.Context) ([]entities.NotificationType, error)
 	GetNotificationTypeByIDFn   func(ctx context.Context, id uint) (*entities.NotificationType, error)
 	GetNotificationTypeByCodeFn func(ctx context.Context, code string) (*entities.NotificationType, error)
@@ -25,10 +22,8 @@ type UseCaseMock struct {
 	UpdateNotificationTypeFn    func(ctx context.Context, notificationType *entities.NotificationType) error
 	DeleteNotificationTypeFn    func(ctx context.Context, id uint) error
 
-	// Sync
 	SyncByIntegrationFn func(ctx context.Context, dto dtos.SyncNotificationConfigsDTO) (*dtos.SyncNotificationConfigsResponseDTO, error)
 
-	// Notification Event Types
 	GetEventTypesByNotificationTypeFn func(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error)
 	ListAllEventTypesFn               func(ctx context.Context) ([]entities.NotificationEventType, error)
 	GetNotificationEventTypeByIDFn    func(ctx context.Context, id uint) (*entities.NotificationEventType, error)
@@ -36,12 +31,10 @@ type UseCaseMock struct {
 	UpdateNotificationEventTypeFn     func(ctx context.Context, eventType *entities.NotificationEventType) error
 	DeleteNotificationEventTypeFn     func(ctx context.Context, id uint) error
 
-	// Message Audit
 	ListMessageAuditFn     func(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error)
 	GetMessageAuditStatsFn func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error)
 }
 
-// Notification Configs
 func (m *UseCaseMock) Create(ctx context.Context, dto dtos.CreateNotificationConfigDTO) (*dtos.NotificationConfigResponseDTO, error) {
 	if m.CreateFn != nil {
 		return m.CreateFn(ctx, dto)
@@ -84,7 +77,6 @@ func (m *UseCaseMock) ValidateConditions(config *entities.IntegrationNotificatio
 	return false
 }
 
-// Notification Types
 func (m *UseCaseMock) GetNotificationTypes(ctx context.Context) ([]entities.NotificationType, error) {
 	if m.GetNotificationTypesFn != nil {
 		return m.GetNotificationTypesFn(ctx)
@@ -127,7 +119,6 @@ func (m *UseCaseMock) DeleteNotificationType(ctx context.Context, id uint) error
 	return nil
 }
 
-// Notification Event Types
 func (m *UseCaseMock) GetEventTypesByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error) {
 	if m.GetEventTypesByNotificationTypeFn != nil {
 		return m.GetEventTypesByNotificationTypeFn(ctx, notificationTypeID)
@@ -170,7 +161,6 @@ func (m *UseCaseMock) DeleteNotificationEventType(ctx context.Context, id uint) 
 	return nil
 }
 
-// Sync
 func (m *UseCaseMock) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificationConfigsDTO) (*dtos.SyncNotificationConfigsResponseDTO, error) {
 	if m.SyncByIntegrationFn != nil {
 		return m.SyncByIntegrationFn(ctx, dto)
@@ -178,7 +168,6 @@ func (m *UseCaseMock) SyncByIntegration(ctx context.Context, dto dtos.SyncNotifi
 	return nil, nil
 }
 
-// Message Audit
 func (m *UseCaseMock) ListMessageAudit(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error) {
 	if m.ListMessageAuditFn != nil {
 		return m.ListMessageAuditFn(ctx, filter)
@@ -193,11 +182,14 @@ func (m *UseCaseMock) GetMessageAuditStats(ctx context.Context, businessID uint,
 	return nil, nil
 }
 
-// Conversation View
 func (m *UseCaseMock) ListConversations(_ context.Context, _ dtos.ConversationListFilterDTO) (*dtos.PaginatedConversationListResponseDTO, error) {
 	return nil, nil
 }
 
 func (m *UseCaseMock) GetConversationMessages(_ context.Context, _ string, _ uint) (*dtos.ConversationDetailResponseDTO, error) {
 	return nil, nil
+}
+
+func (m *UseCaseMock) MarkConversationRead(_ context.Context, _ string, _ uint, _ *uint) error {
+	return nil
 }

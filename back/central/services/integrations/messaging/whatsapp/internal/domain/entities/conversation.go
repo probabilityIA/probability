@@ -73,4 +73,9 @@ type MessageLog struct {
 	DeliveredAt    *time.Time
 	ReadAt         *time.Time
 	CreatedAt      time.Time
+	MediaType      string
+	MediaKey       string
+	MediaMime      string
+	MediaFilename  string
+	MediaSize      int64
 }

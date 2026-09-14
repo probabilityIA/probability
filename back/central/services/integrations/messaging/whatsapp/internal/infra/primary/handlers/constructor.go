@@ -20,6 +20,7 @@ type IHandler interface {
 	PreviewTemplates(c *gin.Context)
 
 	SendManualReply(c *gin.Context)
+	SendManualMedia(c *gin.Context)
 
 	PauseAI(c *gin.Context)
 	ResumeAI(c *gin.Context)

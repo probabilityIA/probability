@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
@@ -131,6 +132,17 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 	if rabbit != nil {
 		useCase.SetButtonReplyPublisher(queue.NewButtonReplyPublisher(rabbit, logger))
 	}
+
+	var chatMediaStorage ports.IChatMediaStorage
+	if chatStorage := storage.NewChatMedia(config, logger); chatStorage != nil {
+		chatMediaStorage = chatStorage
+	}
+	useCase.SetMediaDependencies(func(baseURL string) ports.IMediaAPI {
+		if strings.TrimSpace(baseURL) == "" {
+			baseURL = whatsappURL
+		}
+		return client.NewMediaClient(baseURL, logger)
+	}, chatMediaStorage)
 
 	testUsecase := usecasetestconnection.New(config, logger)
 

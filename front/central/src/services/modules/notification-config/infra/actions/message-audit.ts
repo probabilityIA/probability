@@ -54,6 +54,7 @@ export async function listConversationsAction(filter: ConversationListFilter) {
             error: error.message,
             data: [],
             total: 0,
+            unread_conversations: 0,
             page: 1,
             page_size: 20,
             total_pages: 0,
@@ -69,6 +70,32 @@ export async function getConversationMessagesAction(
         const repo = await getRepository();
         const result = await repo.getConversationMessages(conversationId, businessId);
         return { success: true, data: result };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function markConversationReadAction(
+    conversationId: string,
+    businessId: number
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const repo = await getRepository();
+        await repo.markConversationRead(conversationId, businessId);
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function sendManualMediaAction(
+    conversationId: string,
+    formData: FormData
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+        const repo = await getRepository();
+        const messageId = await repo.sendManualMedia(conversationId, formData);
+        return { success: true, messageId };
     } catch (error: any) {
         return { success: false, error: error.message };
     }

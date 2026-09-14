@@ -6,6 +6,7 @@ import (
 )
 
 type useCase struct {
+	chatMediaSigner       ports.IChatMediaSigner
 	repository            ports.IRepository
 	notificationTypeRepo  ports.INotificationTypeRepository
 	notificationEventRepo ports.INotificationEventTypeRepository

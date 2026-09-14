@@ -200,5 +200,10 @@ func toMessageLogEntity(p *request.MessageLogPayload) *entities.WhatsAppMessageL
 		DeliveredAt:    p.DeliveredAt,
 		ReadAt:         p.ReadAt,
 		CreatedAt:      p.CreatedAt,
+		MediaType:      p.MediaType,
+		MediaKey:       p.MediaKey,
+		MediaMime:      p.MediaMime,
+		MediaFilename:  p.MediaFilename,
+		MediaSize:      p.MediaSize,
 	}
 }

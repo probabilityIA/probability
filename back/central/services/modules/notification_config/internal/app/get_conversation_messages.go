@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 )
 
 func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID string, businessID uint) (*dtos.ConversationDetailResponseDTO, error) {
@@ -22,6 +23,8 @@ func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID s
 			MessageID:    msg.MessageID,
 			TemplateName: msg.TemplateName,
 			Content:      msg.Content,
+			Buttons:      messageButtonDTOs(msg.Buttons),
+			Media:        uc.messageMediaDTO(ctx, msg.Media),
 			Status:       msg.Status,
 			CreatedAt:    msg.CreatedAt.Format(time.RFC3339),
 		}
@@ -42,9 +45,24 @@ func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID s
 		ConversationID:   conv.ID,
 		PhoneNumber:      conv.PhoneNumber,
 		OrderNumber:      conv.OrderNumber,
+		OrderID:          conv.OrderID,
+		CampaignID:       conv.CampaignID,
+		CampaignName:     conv.CampaignName,
+		OptedOut:         conv.OptedOut,
 		ConversationType: conv.ConversationType,
 		CurrentState:     conv.CurrentState,
 		AiPaused:         aiPaused,
 		Messages:         msgDTOs,
 	}, nil
+}
+
+func messageButtonDTOs(buttons []entities.MessageButton) []dtos.MessageButtonResponseDTO {
+	if len(buttons) == 0 {
+		return nil
+	}
+	out := make([]dtos.MessageButtonResponseDTO, 0, len(buttons))
+	for _, button := range buttons {
+		out = append(out, dtos.MessageButtonResponseDTO{Text: button.Text, Type: button.Type})
+	}
+	return out
 }

@@ -8,13 +8,13 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IHandler define los métodos HTTP del handler de auditoría de mensajes
 type IHandler interface {
 	RegisterRoutes(router *gin.RouterGroup)
 	List(c *gin.Context)
 	Stats(c *gin.Context)
 	ListConversations(c *gin.Context)
 	GetConversationMessages(c *gin.Context)
+	MarkConversationRead(c *gin.Context)
 }
 
 type handler struct {
@@ -22,7 +22,6 @@ type handler struct {
 	logger  log.ILogger
 }
 
-// New crea una nueva instancia del handler de auditoría de mensajes
 func New(useCase ports.IUseCase, logger log.ILogger) IHandler {
 	return &handler{
 		useCase: useCase,
@@ -30,9 +29,6 @@ func New(useCase ports.IUseCase, logger log.ILogger) IHandler {
 	}
 }
 
-// resolveBusinessID obtiene el business_id efectivo.
-// Para usuarios normales usa el del JWT.
-// Para super admins (business_id=0 en JWT) lee el query param ?business_id=X.
 func (h *handler) resolveBusinessID(c *gin.Context) (uint, bool) {
 	businessID := c.GetUint("business_id")
 	if businessID > 0 {

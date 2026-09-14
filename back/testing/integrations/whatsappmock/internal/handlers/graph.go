@@ -39,6 +39,11 @@ type sendMessageRequest struct {
 	To               string           `json:"to"`
 	Type             string           `json:"type"`
 	Template         *templatePayload `json:"template"`
+	Text             *textPayload     `json:"text"`
+	Image            *mediaPayload    `json:"image"`
+	Document         *mediaPayload    `json:"document"`
+	Audio            *mediaPayload    `json:"audio"`
+	Video            *mediaPayload    `json:"video"`
 }
 
 func newMessageID() string {
@@ -58,7 +63,12 @@ func (h *Handler) SendMessage(c *gin.Context) {
 		return
 	}
 
-	if body.To == "" || body.Template == nil || body.Template.Name == "" {
+	if body.Template == nil {
+		h.sendNonTemplate(c, phoneNumberID, body)
+		return
+	}
+
+	if body.To == "" || body.Template.Name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"message": "falta el destinatario o la plantilla", "code": 100}})
 		return
 	}

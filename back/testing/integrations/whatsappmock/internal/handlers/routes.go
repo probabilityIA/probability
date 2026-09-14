@@ -14,6 +14,9 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 		mock.POST("/reply", h.ManualReply)
 		mock.POST("/approve", h.ApproveByName)
 		mock.POST("/reset", h.Reset)
+		mock.GET("/media", h.ListMedia)
+		mock.GET("/media/:id", h.DownloadMedia)
+		mock.POST("/inbound-media", h.InboundMedia)
 	}
 
 	router.POST("/:id/messages", h.SendMessage)
@@ -21,5 +24,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	router.GET("/:id/message_templates", h.ListMetaTemplates)
 	router.DELETE("/:id/message_templates", h.DeleteMetaTemplate)
 	router.POST("/:id/uploads", h.StartUpload)
+	router.POST("/:id/media", h.UploadMedia)
+	router.GET("/:id", h.GetMediaInfo)
 	router.POST("/:id", h.FinishUpload)
 }

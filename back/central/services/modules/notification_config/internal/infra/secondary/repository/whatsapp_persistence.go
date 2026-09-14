@@ -136,6 +136,11 @@ func (r *whatsAppPersister) CreateMessageLog(ctx context.Context, entry *entitie
 		DeliveredAt:    entry.DeliveredAt,
 		ReadAt:         entry.ReadAt,
 		CreatedAt:      entry.CreatedAt,
+		MediaType:      entry.MediaType,
+		MediaKey:       entry.MediaKey,
+		MediaMime:      entry.MediaMime,
+		MediaFilename:  entry.MediaFilename,
+		MediaSize:      entry.MediaSize,
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {

@@ -112,6 +112,25 @@ export class MessageAuditApiRepository {
         return response.json();
     }
 
+    async markConversationRead(conversationId: string, businessId: number): Promise<void> {
+        const params = new URLSearchParams();
+        params.append("business_id", businessId.toString());
+
+        const response = await fetch(
+            `${this.baseUrl}/notification-configs/message-audit/conversations/${conversationId}/read?${params.toString()}`,
+            {
+                method: "POST",
+                headers: { Authorization: `Bearer ${this.token}` },
+                cache: "no-store",
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || "Failed to mark conversation as read");
+        }
+    }
+
     async sendManualReply(
         conversationId: string,
         phoneNumber: string,
@@ -136,6 +155,23 @@ export class MessageAuditApiRepository {
         }
 
         const data = await response.json();
+        return data.message_id as string;
+    }
+
+    async sendManualMedia(conversationId: string, formData: FormData): Promise<string> {
+        const response = await fetch(
+            `${this.baseUrl}/integrations/whatsapp/conversations/${conversationId}/reply-media`,
+            {
+                method: "POST",
+                headers: { Authorization: `Bearer ${this.token}` },
+                body: formData,
+            }
+        );
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.message || data.error || "No se pudo enviar el archivo");
+        }
         return data.message_id as string;
     }
 

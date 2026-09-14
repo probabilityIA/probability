@@ -40,10 +40,28 @@ type WhatsAppMessageLog struct {
 	DeliveredAt    *time.Time
 	ReadAt         *time.Time
 	CreatedAt      time.Time `gorm:"not null;default:now();index:idx_whatsapp_msg_created_at"`
+	MediaType      string    `gorm:"type:varchar(16)"`
+	MediaKey       string    `gorm:"type:text"`
+	MediaMime      string    `gorm:"type:varchar(100)"`
+	MediaFilename  string    `gorm:"type:varchar(255)"`
+	MediaSize      int64     `gorm:"not null;default:0"`
 
 	Conversation WhatsAppConversation `gorm:"foreignKey:ConversationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 func (WhatsAppMessageLog) TableName() string {
 	return "whatsapp_message_logs"
+}
+
+type WhatsAppConversationRead struct {
+	ID         uint      `gorm:"primaryKey"`
+	BusinessID uint      `gorm:"not null;uniqueIndex:idx_wa_conversation_read,priority:1"`
+	PhoneKey   string    `gorm:"type:varchar(32);not null;uniqueIndex:idx_wa_conversation_read,priority:2"`
+	LastReadAt time.Time `gorm:"not null"`
+	ReadByID   *uint
+	UpdatedAt  time.Time `gorm:"not null;default:now()"`
+}
+
+func (WhatsAppConversationRead) TableName() string {
+	return "whatsapp_conversation_reads"
 }

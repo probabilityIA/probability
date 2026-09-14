@@ -100,3 +100,81 @@ Contra base local y el mock de WhatsApp, backend local.
 No probado en E2E (cubierto solo por tests unitarios): cambio de vuelta al
 llegar la segunda fecha, pausa al acabarse las fechas con pendientes, y
 completar tras la ultima fecha. Requieren esperar dias o escribir la base.
+
+## 2026-09-13 - CU-03 bandeja: sin leer, orden, baja y etiquetas
+
+Base local, backend local y mock de WhatsApp (respuestas automaticas apagadas).
+Campana 7 "CU-03 bandeja sin leer" a tres clientes: A 573102020202, B 573105557788, C 573029998877.
+
+| Paso | Resultado |
+|---|---|
+| 1. Tres conversaciones con etiqueta de campana | FAIL en la primera corrida, OK tras el fix (ver bug) |
+| 2. A responde: `unread_count=1`, total 1 | OK |
+| 3. B responde despues y se marca leido: A (sin leer, 19:49:50) queda antes que B (leido, 19:49:56) | OK |
+| 4. Marcar A leido: 0 y persiste al reconsultar | OK |
+| 5. `POST .../read` con otro negocio: 404, marca de A intacta, 0 filas en el negocio 1 | OK |
+| 6. B responde "Dejar de recibir": `opted_out=true` (antes false), sin leer 1, tambien en el detalle | OK |
+| 7. A responde dos veces: `unread_count=2` | OK |
+| 8. Etiqueta de orden: `order_id` real de DEM-0045 en listado y detalle | OK |
+| 9. Migracion re-ejecutada: 65 filas y misma `max(last_read_at)`, no re-rellena | OK |
+
+**Bug encontrado y corregido:** los envios de campana guardan el telefono como
+esta en el cliente (`3102020202`, sin indicativo) y la conversacion lo guarda con
+`57`. El filtro `campaign_id` del listado y la etiqueta de campana comparaban
+todos los digitos, asi que un cliente guardado sin +57 nunca aparecia en la
+pestana Conversaciones de su campana. Ahora comparan los ultimos 10 digitos
+(`message_audit_queries.go`). Anterior a este trabajo: tambien afectaba a la
+pestana de conversaciones del detalle de campana.
+
+**No cubierto:** cliente con `accepts_marketing=false` sin haber respondido la
+baja (la API de clientes no expone el campo y la prueba no escribe la base).
+
+**Observado, no es de este cambio:** cada respuesta del cliente crea una fila
+nueva de `whatsapp_conversations` tipo `inbound` sin `campaign_id` para el mismo
+telefono (A acumula tres filas en minutos). El listado las agrupa por telefono,
+pero la tabla crece de mas.
+
+## 2026-09-13 - Texto real y botones de las plantillas en Conversaciones
+
+Base local, backend local, mock de WhatsApp.
+
+| Caso | Resultado |
+|---|---|
+| Campana/flujo guardado como `nombre: parametros` muestra encabezado + cuerpo + pie | OK (`26_dice_que_no: Andres` -> "hola / dices que no ? Andres / que mal") |
+| Plantilla del sistema guardada como "Plantilla: nombre" muestra el texto | OK tras llenar `body_text` desde Meta (`migrateSystemTemplateBodies`); 0 mensajes quedan sin texto en local |
+| Vista previa de la lista usa el texto, no el nombre | OK |
+| Botones de plantilla del negocio | OK (`26_me_jodo`: genial / que cagada) |
+| Marketing agrega "Dejar de recibir" aunque no este guardado | OK (`26_saludo_inicial`: Si / No / Dejar de recibir) |
+| Botones de plantillas del sistema (desde Meta) | OK (confirmaciones: Confirmar pedido / No confirmar) |
+| Mensaje ya guardado con texto completo tambien muestra botones | OK |
+| Mensajes entrantes no muestran botones | OK |
+
+**Limite:** los envios hechos por `SendTemplateWithConversation` guardaban el
+mensaje sin variables, asi que esos mensajes viejos muestran "-" donde iba el
+dato (p. ej. `pedido_confirmado_v2`). Corregido hacia adelante: ahora se
+guardan las variables.
+
+## 2026-09-13 - CU-04 adjuntos en el chat y retencion de 1 ano
+
+Base local, backend local, mock de WhatsApp. Archivos en el bucket real
+`probability-chat-attachments` (privado, SSE-S3, solo TLS, expira a los 365 dias).
+
+| Paso | Resultado |
+|---|---|
+| 1. Imagen con texto desde la bandeja | OK: 200, mock recibe `POST /media` + `type=image` con caption, detalle con `media.available=true`, URL firmada 200 `image/png`, objeto en `whatsapp/26/2026/09/` |
+| 2. PDF sin texto | OK: `type=document` con `filename=factura.pdf`, `content` vacio |
+| 3a. `.exe` | OK: 400 `invalid_media`, no llega a S3 ni al mock |
+| 3b. Imagen de mas de 5 MB | OK: 400 |
+| 3c. Archivo de mas de 10 MB | OK: 413 |
+| 3d. Usuario normal con `business_id=1` en el form | OK: se ignora, el archivo queda en `whatsapp/26/`, nada en `whatsapp/1/` |
+| 4. Cliente envia imagen con texto | OK: se descarga del mock, se guarda en S3, URL firmada 200, sin leer sube, vista previa "Asi llego" |
+| 5. Cliente envia documento sin texto | OK: `filename=comprobante.pdf`, vista previa "[Documento]" |
+| 6. Retencion | OK: `EXPLAIN` de los 3 DELETE planifica; hoy borraria 0 de 105 mensajes (con corte de 30 dias el filtro encuentra 51); el job corrio 2 min despues del arranque con `cutoff=2025-09-13` y borro 0/0/0; test unitario del corte a 365 dias |
+
+**Encontrado de paso (anterior a este trabajo):** los archivos que mandaban los
+clientes nunca se procesaban: el webhook no tenia campos de imagen, documento,
+audio ni video, asi que el mensaje quedaba vacio. Corregido en este mismo cambio.
+
+**Pendiente de limpieza:** 5 objetos de prueba en
+`s3://probability-chat-attachments/whatsapp/26/2026/09/` (se dejaron para las
+capturas; expiran solos a los 365 dias si no se borran).

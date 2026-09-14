@@ -68,6 +68,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 				Status:         entities.MessageStatusDelivered,
 				CreatedAt:      time.Now(),
 			}
+			u.attachInboundMedia(ctx, humanLog, message, humanSession.BusinessID)
 			if logErr := u.persistPublisher.PublishMessageLogCreated(ctx, humanLog); logErr != nil {
 				u.log.Error(ctx).Err(logErr).
 					Str("conversation_id", humanSession.ConversationID).
@@ -80,7 +81,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 				humanSession.ConversationID,
 				phoneNumber,
 				message.ID,
-				messageText,
+				messagePreview(messageText, message),
 			); sseErr != nil {
 				u.log.Error(ctx).Err(sseErr).
 					Str("conversation_id", humanSession.ConversationID).
@@ -123,6 +124,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		Status:         entities.MessageStatusDelivered,
 		CreatedAt:      time.Now(),
 	}
+	u.attachInboundMedia(ctx, messageLog, message, conversation.BusinessID)
 
 	if err := u.persistPublisher.PublishMessageLogCreated(ctx, messageLog); err != nil {
 		u.log.Error(ctx).Err(err).
@@ -136,7 +138,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		conversation.ID,
 		phoneNumber,
 		message.ID,
-		messageText,
+		messagePreview(messageText, message),
 	); sseErr != nil {
 		u.log.Error(ctx).Err(sseErr).
 			Str("conversation_id", conversation.ID).
@@ -241,6 +243,7 @@ func (u *usecases) routeToOwnNumberBusiness(
 		Status:         entities.MessageStatusDelivered,
 		CreatedAt:      time.Now(),
 	}
+	u.attachInboundMedia(ctx, messageLog, message, owner.BusinessID)
 	if logErr := u.persistPublisher.PublishMessageLogCreated(ctx, messageLog); logErr != nil {
 		u.log.Error(ctx).Err(logErr).
 			Str("conversation_id", conversation.ID).
@@ -253,7 +256,7 @@ func (u *usecases) routeToOwnNumberBusiness(
 		conversation.ID,
 		phoneNumber,
 		message.ID,
-		messageText,
+		messagePreview(messageText, message),
 	); sseErr != nil {
 		u.log.Error(ctx).Err(sseErr).
 			Str("conversation_id", conversation.ID).

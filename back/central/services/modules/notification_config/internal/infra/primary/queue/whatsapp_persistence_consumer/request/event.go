@@ -36,6 +36,11 @@ type MessageLogPayload struct {
 	DeliveredAt    *time.Time `json:"delivered_at,omitempty"`
 	ReadAt         *time.Time `json:"read_at,omitempty"`
 	CreatedAt      time.Time  `json:"created_at"`
+	MediaType      string     `json:"media_type,omitempty"`
+	MediaKey       string     `json:"media_key,omitempty"`
+	MediaMime      string     `json:"media_mime,omitempty"`
+	MediaFilename  string     `json:"media_filename,omitempty"`
+	MediaSize      int64      `json:"media_size,omitempty"`
 }
 
 type StatusUpdatePayload struct {

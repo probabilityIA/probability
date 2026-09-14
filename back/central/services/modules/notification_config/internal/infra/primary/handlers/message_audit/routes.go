@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
-// RegisterRoutes registra las rutas HTTP del módulo de auditoría de mensajes
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	audit := router.Group("/notification-configs/message-audit")
 	audit.Use(middleware.JWT())
@@ -14,5 +13,6 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		audit.GET("/stats", h.Stats)
 		audit.GET("/conversations", h.ListConversations)
 		audit.GET("/conversations/:id/messages", h.GetConversationMessages)
+		audit.POST("/conversations/:id/read", h.MarkConversationRead)
 	}
 }

@@ -11,6 +11,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 
 		whatsapp.POST("/send-template", middleware.JWT(), h.SendTemplate)
 		whatsapp.POST("/conversations/:id/reply", middleware.JWT(), h.SendManualReply)
+		whatsapp.POST("/conversations/:id/reply-media", middleware.JWT(), h.SendManualMedia)
 		whatsapp.POST("/conversations/:id/pause-ai", middleware.JWT(), h.PauseAI)
 		whatsapp.POST("/conversations/:id/resume-ai", middleware.JWT(), h.ResumeAI)
 

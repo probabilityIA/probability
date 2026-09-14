@@ -190,11 +190,18 @@ type conversationSummaryRow struct {
 	ID                   uuid.UUID
 	PhoneNumber          string
 	OrderNumber          string
+	OrderID              string
+	CampaignID           *uint
+	CampaignName         string
+	UnreadCount          int
+	OptedOut             bool
 	ConversationType     string
 	BusinessID           uint
 	CurrentState         string
 	MessageCount         int
 	LastMessageContent   string
+	LastMessageTemplate  string
+	LastMessageMediaType string
 	LastMessageDirection string
 	LastMessageStatus    string
 	LastActivity         time.Time
@@ -208,11 +215,57 @@ const campaignConversationFilter = `(
 		WHERE s.campaign_id = ?
 		  AND s.business_id = c.business_id
 		  AND s.deleted_at IS NULL
-		  AND regexp_replace(s.phone, '[^0-9]', '', 'g') = regexp_replace(c.phone_number, '[^0-9]', '', 'g')
+		  AND right(regexp_replace(s.phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(c.phone_number, '[^0-9]', '', 'g'), 10)
 	)
 )`
 
 const phoneKeyExpr = `regexp_replace(phone_number, '[^0-9]', '', 'g')`
+
+func conversationOrderLateral(conv string) string {
+	return fmt.Sprintf(`LEFT JOIN LATERAL (
+		SELECT o.id::text AS id FROM orders o
+		WHERE %[1]s.order_number <> ''
+		  AND o.order_number = %[1]s.order_number
+		  AND o.business_id = %[1]s.business_id
+		  AND o.deleted_at IS NULL
+		ORDER BY o.created_at DESC LIMIT 1
+	) ord ON true`, conv)
+}
+
+const optOutReplyText = "dejar de recibir"
+
+func clientOptOutExists(business, phoneKey string) string {
+	return fmt.Sprintf(`EXISTS (
+		SELECT 1 FROM client cl
+		WHERE cl.business_id = %[1]s
+		  AND cl.accepts_marketing = false
+		  AND cl.deleted_at IS NULL
+		  AND right(regexp_replace(cl.phone, '[^0-9]', '', 'g'), 10) = right(%[2]s, 10)
+	)`, business, phoneKey)
+}
+
+func conversationCampaignLateral(conv, phoneKey string) string {
+	return fmt.Sprintf(`LEFT JOIN LATERAL (
+		SELECT wc.id, wc.name FROM whatsapp_campaigns wc
+		WHERE wc.business_id = %[1]s.business_id
+		  AND wc.deleted_at IS NULL
+		  AND (
+			wc.id IN (
+				SELECT cc.campaign_id FROM whatsapp_conversations cc
+				WHERE cc.business_id = %[1]s.business_id
+				  AND cc.campaign_id IS NOT NULL
+				  AND regexp_replace(cc.phone_number, '[^0-9]', '', 'g') = %[2]s
+			)
+			OR EXISTS (
+				SELECT 1 FROM whatsapp_campaign_sends s
+				WHERE s.campaign_id = wc.id
+				  AND s.deleted_at IS NULL
+				  AND right(regexp_replace(s.phone, '[^0-9]', '', 'g'), 10) = right(%[2]s, 10)
+			)
+		  )
+		ORDER BY wc.created_at DESC LIMIT 1
+	) camp ON true`, conv, phoneKey)
+}
 
 func conversationFilters(filter dtos.ConversationListFilterDTO) (string, []any) {
 	clauses := []string{"c.business_id = ?"}
@@ -279,8 +332,15 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		       COALESCE(agg.message_count, 0) AS message_count,
 		       COALESCE(agg.last_activity, ultima.updated_at) AS last_activity,
 		       COALESCE(reciente.content, '') AS last_message_content,
+		       COALESCE(reciente.template_name, '') AS last_message_template,
+		       COALESCE(reciente.media_type, '') AS last_message_media_type,
 		       COALESCE(reciente.direction, '') AS last_message_direction,
-		       COALESCE(reciente.status, '') AS last_message_status
+		       COALESCE(reciente.status, '') AS last_message_status,
+		       COALESCE(ord.id, '') AS order_id,
+		       camp.id AS campaign_id,
+		       COALESCE(camp.name, '') AS campaign_name,
+		       COALESCE(agg.unread_count, 0) AS unread_count,
+		       (COALESCE(agg.opt_out_replies, 0) > 0 OR %s) AS opted_out
 		FROM claves k
 		JOIN LATERAL (
 			SELECT * FROM conv WHERE conv.phone_key = k.phone_key
@@ -290,19 +350,31 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 			SELECT conv.created_at FROM conv WHERE conv.phone_key = k.phone_key
 			ORDER BY conv.created_at ASC LIMIT 1
 		) primera ON true
+		LEFT JOIN whatsapp_conversation_reads rd
+			ON rd.business_id = ultima.business_id AND rd.phone_key = k.phone_key
 		LEFT JOIN LATERAL (
-			SELECT COUNT(*) AS message_count, MAX(ml.created_at) AS last_activity
+			SELECT COUNT(*) AS message_count, MAX(ml.created_at) AS last_activity,
+			       COUNT(*) FILTER (
+			           WHERE ml.direction = 'inbound'
+			             AND ml.created_at > COALESCE(rd.last_read_at, 'epoch'::timestamptz)
+			       ) AS unread_count,
+			       COUNT(*) FILTER (
+			           WHERE ml.direction = 'inbound'
+			             AND lower(btrim(ml.content)) = '%s'
+			       ) AS opt_out_replies
 			FROM whatsapp_message_logs ml
 			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
 		) agg ON true
 		LEFT JOIN LATERAL (
-			SELECT ml.content, ml.direction, ml.status
+			SELECT ml.content, ml.template_name, ml.media_type, ml.direction, ml.status
 			FROM whatsapp_message_logs ml
 			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
 			ORDER BY ml.created_at DESC LIMIT 1
 		) reciente ON true
-		ORDER BY last_activity DESC
-		OFFSET ? LIMIT ?`, phoneKeyExpr, where)
+		%s
+		%s
+		ORDER BY (COALESCE(agg.unread_count, 0) > 0) DESC, last_activity DESC
+		OFFSET ? LIMIT ?`, phoneKeyExpr, where, clientOptOutExists("ultima.business_id", "k.phone_key"), optOutReplyText, conversationOrderLateral("ultima"), conversationCampaignLateral("ultima", "k.phone_key"))
 
 	listArgs := append(append([]any{}, args...), offset, filter.PageSize)
 
@@ -311,17 +383,28 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		return nil, 0, err
 	}
 
+	previewPairs := make([][2]string, 0, len(rows))
+	for _, row := range rows {
+		previewPairs = append(previewPairs, [2]string{row.LastMessageTemplate, row.LastMessageContent})
+	}
+	previewTexts := q.loadTemplateTexts(ctx, filter.BusinessID, templateNamesToResolve(previewPairs))
+
 	conversations := make([]entities.ConversationSummary, len(rows))
 	for i, row := range rows {
 		conversations[i] = entities.ConversationSummary{
 			ID:                   row.ID.String(),
 			PhoneNumber:          row.PhoneNumber,
 			OrderNumber:          row.OrderNumber,
+			OrderID:              row.OrderID,
+			CampaignID:           row.CampaignID,
+			CampaignName:         row.CampaignName,
+			UnreadCount:          row.UnreadCount,
+			OptedOut:             row.OptedOut,
 			ConversationType:     row.ConversationType,
 			BusinessID:           row.BusinessID,
 			CurrentState:         row.CurrentState,
 			MessageCount:         row.MessageCount,
-			LastMessageContent:   row.LastMessageContent,
+			LastMessageContent:   previewContent(resolveMessageContent(previewTexts, row.LastMessageTemplate, row.LastMessageContent), row.LastMessageMediaType),
 			LastMessageDirection: row.LastMessageDirection,
 			LastMessageStatus:    row.LastMessageStatus,
 			LastActivity:         row.LastActivity,
@@ -332,22 +415,89 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 	return conversations, total, nil
 }
 
+func (q *messageAuditQuerier) CountUnreadConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) (int64, error) {
+	where, args := conversationFilters(filter)
+
+	countSQL := fmt.Sprintf(`
+		WITH conv AS (
+			SELECT c.id, %s AS phone_key
+			FROM whatsapp_conversations c
+			WHERE %s
+		),
+		claves AS (SELECT DISTINCT phone_key FROM conv)
+		SELECT COUNT(*)
+		FROM claves k
+		LEFT JOIN whatsapp_conversation_reads rd
+			ON rd.business_id = ? AND rd.phone_key = k.phone_key
+		WHERE EXISTS (
+			SELECT 1 FROM whatsapp_message_logs ml
+			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
+			  AND ml.direction = 'inbound'
+			  AND ml.created_at > COALESCE(rd.last_read_at, 'epoch'::timestamptz)
+		)`, phoneKeyExpr, where)
+
+	countArgs := append(append([]any{}, args...), filter.BusinessID)
+
+	var total int64
+	if err := q.db.Conn(ctx).Raw(countSQL, countArgs...).Scan(&total).Error; err != nil {
+		q.logger.Error().Err(err).Msg("Error counting unread conversations")
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func (q *messageAuditQuerier) MarkConversationRead(ctx context.Context, conversationID string, businessID uint, userID *uint) error {
+	convID, err := uuid.Parse(conversationID)
+	if err != nil {
+		return fmt.Errorf("conversation ID invalido: %s", conversationID)
+	}
+
+	result := q.db.Conn(ctx).Exec(`
+		INSERT INTO whatsapp_conversation_reads (business_id, phone_key, last_read_at, read_by_id, updated_at)
+		SELECT c.business_id, regexp_replace(c.phone_number, '[^0-9]', '', 'g'), NOW(), ?, NOW()
+		FROM whatsapp_conversations c
+		WHERE c.id = ? AND c.business_id = ?
+		ON CONFLICT (business_id, phone_key) DO UPDATE SET
+			last_read_at = EXCLUDED.last_read_at,
+			read_by_id = EXCLUDED.read_by_id,
+			updated_at = EXCLUDED.updated_at`, userID, convID, businessID)
+	if result.Error != nil {
+		q.logger.Error().Err(result.Error).Str("conversation_id", conversationID).Msg("Error marking conversation as read")
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("conversation not found: %s", conversationID)
+	}
+
+	return nil
+}
+
 type conversationMessageRow struct {
-	ID           uuid.UUID
-	Direction    string
-	MessageID    string
-	TemplateName string
-	Content      string
-	Status       string
-	DeliveredAt  *time.Time
-	ReadAt       *time.Time
-	CreatedAt    time.Time
+	ID            uuid.UUID
+	Direction     string
+	MessageID     string
+	TemplateName  string
+	Content       string
+	Status        string
+	DeliveredAt   *time.Time
+	ReadAt        *time.Time
+	CreatedAt     time.Time
+	MediaType     string
+	MediaKey      string
+	MediaMime     string
+	MediaFilename string
+	MediaSize     int64
 }
 
 type conversationMetaRow struct {
 	ID               uuid.UUID
 	PhoneNumber      string
 	OrderNumber      string
+	OrderID          string
+	CampaignID       *uint
+	CampaignName     string
+	OptedOut         bool
 	ConversationType string
 	CurrentState     string
 }
@@ -355,23 +505,40 @@ type conversationMetaRow struct {
 func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conversationID string, businessID uint) (*entities.ConversationSummary, []entities.ConversationMessage, error) {
 	convID, err := uuid.Parse(conversationID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("conversation ID inválido: %s", conversationID)
+		return nil, nil, fmt.Errorf("conversation ID invalido: %s", conversationID)
 	}
 
 	var meta conversationMetaRow
-	err = q.db.Conn(ctx).
-		Table("whatsapp_conversations").
-		Select("id, phone_number, order_number, conversation_type, current_state").
-		Where("id = ? AND business_id = ?", convID, businessID).
-		First(&meta).Error
+	metaSQL := fmt.Sprintf(`
+		SELECT c.id, c.phone_number, c.order_number, c.conversation_type, c.current_state,
+		       COALESCE(ord.id, '') AS order_id,
+		       camp.id AS campaign_id,
+		       COALESCE(camp.name, '') AS campaign_name,
+		       (%s OR EXISTS (
+		           SELECT 1 FROM whatsapp_message_logs ml
+		           JOIN whatsapp_conversations c2 ON c2.id = ml.conversation_id
+		           WHERE c2.business_id = c.business_id
+		             AND regexp_replace(c2.phone_number, '[^0-9]', '', 'g') = regexp_replace(c.phone_number, '[^0-9]', '', 'g')
+		             AND ml.direction = 'inbound'
+		             AND lower(btrim(ml.content)) = '%s'
+		       )) AS opted_out
+		FROM whatsapp_conversations c
+		%s
+		%s
+		WHERE c.id = ? AND c.business_id = ?
+		LIMIT 1`, clientOptOutExists("c.business_id", "regexp_replace(c.phone_number, '[^0-9]', '', 'g')"), optOutReplyText, conversationOrderLateral("c"), conversationCampaignLateral("c", "regexp_replace(c.phone_number, '[^0-9]', '', 'g')"))
+	err = q.db.Conn(ctx).Raw(metaSQL, convID, businessID).Scan(&meta).Error
 	if err != nil {
 		return nil, nil, fmt.Errorf("conversation not found: %w", err)
+	}
+	if meta.ID == uuid.Nil {
+		return nil, nil, fmt.Errorf("conversation not found: %s", conversationID)
 	}
 
 	var rows []conversationMessageRow
 	err = q.db.Conn(ctx).
 		Table("whatsapp_message_logs").
-		Select("id, direction, message_id, template_name, content, status, delivered_at, read_at, created_at").
+		Select("id, direction, message_id, template_name, content, status, delivered_at, read_at, created_at, COALESCE(media_type, '') AS media_type, COALESCE(media_key, '') AS media_key, COALESCE(media_mime, '') AS media_mime, COALESCE(media_filename, '') AS media_filename, COALESCE(media_size, 0) AS media_size").
 		Where(fmt.Sprintf(`conversation_id IN (
 			SELECT id FROM whatsapp_conversations
 			WHERE business_id = ? AND %s = (
@@ -388,19 +555,35 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 		ID:               meta.ID.String(),
 		PhoneNumber:      meta.PhoneNumber,
 		OrderNumber:      meta.OrderNumber,
+		OrderID:          meta.OrderID,
+		CampaignID:       meta.CampaignID,
+		CampaignName:     meta.CampaignName,
+		OptedOut:         meta.OptedOut,
 		ConversationType: meta.ConversationType,
 		CurrentState:     meta.CurrentState,
 		BusinessID:       businessID,
 	}
 
+	messagePairs := make([][2]string, 0, len(rows))
+	for _, row := range rows {
+		messagePairs = append(messagePairs, [2]string{row.TemplateName, row.Content})
+	}
+	texts := q.loadTemplateTexts(ctx, businessID, templateNamesToResolve(messagePairs))
+
 	messages := make([]entities.ConversationMessage, len(rows))
 	for i, row := range rows {
+		content, buttons := resolveMessage(texts, row.TemplateName, row.Content)
+		if row.Direction != "outbound" {
+			buttons = nil
+		}
 		messages[i] = entities.ConversationMessage{
 			ID:           row.ID.String(),
 			Direction:    row.Direction,
 			MessageID:    row.MessageID,
 			TemplateName: row.TemplateName,
-			Content:      normalizeMessageContent(row.TemplateName, row.Content),
+			Content:      content,
+			Buttons:      messageButtons(buttons),
+			Media:        messageMedia(row),
 			Status:       row.Status,
 			DeliveredAt:  row.DeliveredAt,
 			ReadAt:       row.ReadAt,
@@ -458,4 +641,48 @@ func (q *messageAuditQuerier) GetMessageStats(ctx context.Context, businessID ui
 		TotalFailed:    result.TotalFailed,
 		SuccessRate:    successRate,
 	}, nil
+}
+
+func messageButtons(buttons []templateButton) []entities.MessageButton {
+	if len(buttons) == 0 {
+		return nil
+	}
+	out := make([]entities.MessageButton, 0, len(buttons))
+	for _, button := range buttons {
+		out = append(out, entities.MessageButton{Text: button.Text, Type: button.Type})
+	}
+	return out
+}
+
+func messageMedia(row conversationMessageRow) *entities.MessageMedia {
+	if row.MediaType == "" {
+		return nil
+	}
+	return &entities.MessageMedia{
+		Type:     row.MediaType,
+		Key:      row.MediaKey,
+		Mime:     row.MediaMime,
+		Filename: row.MediaFilename,
+		Size:     row.MediaSize,
+	}
+}
+
+func previewContent(content, mediaType string) string {
+	if strings.TrimSpace(content) != "" || mediaType == "" {
+		return content
+	}
+	switch mediaType {
+	case "image":
+		return "[Imagen]"
+	case "document":
+		return "[Documento]"
+	case "audio":
+		return "[Audio]"
+	case "video":
+		return "[Video]"
+	case "sticker":
+		return "[Sticker]"
+	default:
+		return "[Archivo]"
+	}
 }

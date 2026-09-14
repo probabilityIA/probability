@@ -208,6 +208,11 @@ export interface ConversationSummary {
     id: string;
     phone_number: string;
     order_number: string;
+    order_id?: string;
+    campaign_id?: number | null;
+    campaign_name?: string;
+    unread_count: number;
+    opted_out: boolean;
     conversation_type: string;
     current_state: string;
     message_count: number;
@@ -232,9 +237,24 @@ export interface ConversationListFilter {
 export interface PaginatedConversationListResponse {
     data: ConversationSummary[];
     total: number;
+    unread_conversations?: number;
     page: number;
     page_size: number;
     total_pages: number;
+}
+
+export interface ConversationMessageButton {
+    text: string;
+    type: string;
+}
+
+export interface ConversationMessageMedia {
+    type: string;
+    url: string;
+    mime_type: string;
+    filename: string;
+    size: number;
+    available: boolean;
 }
 
 export interface ConversationMessage {
@@ -243,6 +263,8 @@ export interface ConversationMessage {
     message_id: string;
     template_name: string;
     content: string;
+    buttons?: ConversationMessageButton[];
+    media?: ConversationMessageMedia;
     status: string;
     delivered_at?: string;
     read_at?: string;
@@ -253,6 +275,10 @@ export interface ConversationDetailResponse {
     conversation_id: string;
     phone_number: string;
     order_number: string;
+    order_id?: string;
+    campaign_id?: number | null;
+    campaign_name?: string;
+    opted_out?: boolean;
     conversation_type: string;
     current_state: string;
     messages: ConversationMessage[];

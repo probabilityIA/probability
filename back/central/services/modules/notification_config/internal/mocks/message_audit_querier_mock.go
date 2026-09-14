@@ -7,7 +7,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 )
 
-// MessageAuditQuerierMock - Mock de la interfaz IMessageAuditQuerier
 type MessageAuditQuerierMock struct {
 	ListMessageLogsFn func(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error)
 	GetMessageStatsFn func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*entities.MessageAuditStats, error)
@@ -37,6 +36,14 @@ func (m *MessageAuditQuerierMock) ListEmailLogs(ctx context.Context, businessID 
 
 func (m *MessageAuditQuerierMock) ListConversations(_ context.Context, _ dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
 	return []entities.ConversationSummary{}, 0, nil
+}
+
+func (m *MessageAuditQuerierMock) CountUnreadConversations(_ context.Context, _ dtos.ConversationListFilterDTO) (int64, error) {
+	return 0, nil
+}
+
+func (m *MessageAuditQuerierMock) MarkConversationRead(_ context.Context, _ string, _ uint, _ *uint) error {
+	return nil
 }
 
 func (m *MessageAuditQuerierMock) GetConversationMessages(_ context.Context, _ string, _ uint) (*entities.ConversationSummary, []entities.ConversationMessage, error) {

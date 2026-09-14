@@ -21,12 +21,23 @@ func (uc *useCase) ListConversations(ctx context.Context, filter dtos.Conversati
 		return nil, err
 	}
 
+	unread, err := uc.messageAuditQuerier.CountUnreadConversations(ctx, filter)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("Error counting unread conversations")
+		return nil, err
+	}
+
 	data := make([]dtos.ConversationSummaryResponseDTO, len(conversations))
 	for i, conv := range conversations {
 		data[i] = dtos.ConversationSummaryResponseDTO{
 			ID:                   conv.ID,
 			PhoneNumber:          conv.PhoneNumber,
 			OrderNumber:          conv.OrderNumber,
+			OrderID:              conv.OrderID,
+			CampaignID:           conv.CampaignID,
+			CampaignName:         conv.CampaignName,
+			UnreadCount:          conv.UnreadCount,
+			OptedOut:             conv.OptedOut,
 			ConversationType:     conv.ConversationType,
 			CurrentState:         conv.CurrentState,
 			MessageCount:         conv.MessageCount,
@@ -44,10 +55,11 @@ func (uc *useCase) ListConversations(ctx context.Context, filter dtos.Conversati
 	}
 
 	return &dtos.PaginatedConversationListResponseDTO{
-		Data:       data,
-		Total:      total,
-		Page:       filter.Page,
-		PageSize:   filter.PageSize,
-		TotalPages: totalPages,
+		Data:                data,
+		Total:               total,
+		UnreadConversations: unread,
+		Page:                filter.Page,
+		PageSize:            filter.PageSize,
+		TotalPages:          totalPages,
 	}, nil
 }

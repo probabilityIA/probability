@@ -52,6 +52,19 @@ type WebhookMessageDTO struct {
 	Button      *ButtonResponseDTO
 	Interactive *InteractiveResponseDTO
 	Context     *MessageContextDTO
+	Image       *MediaContentDTO
+	Document    *MediaContentDTO
+	Audio       *MediaContentDTO
+	Video       *MediaContentDTO
+	Sticker     *MediaContentDTO
+}
+
+type MediaContentDTO struct {
+	ID       string
+	MimeType string
+	SHA256   string
+	Caption  string
+	Filename string
 }
 
 type TextContentDTO struct {
@@ -124,6 +137,10 @@ func (m *WebhookMessageDTO) GetMessageText() string {
 		if m.Button != nil {
 			return m.Button.Text
 		}
+	case "image", "document", "video":
+		if media := m.GetMedia(); media != nil {
+			return media.Caption
+		}
 	case "interactive":
 		if m.Interactive != nil {
 			if m.Interactive.ButtonReply != nil {
@@ -135,6 +152,22 @@ func (m *WebhookMessageDTO) GetMessageText() string {
 		}
 	}
 	return ""
+}
+
+func (m *WebhookMessageDTO) GetMedia() *MediaContentDTO {
+	switch m.Type {
+	case "image":
+		return m.Image
+	case "document":
+		return m.Document
+	case "audio":
+		return m.Audio
+	case "video":
+		return m.Video
+	case "sticker":
+		return m.Sticker
+	}
+	return nil
 }
 
 func (m *WebhookMessageDTO) IsButtonResponse() bool {

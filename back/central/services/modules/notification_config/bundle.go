@@ -2,6 +2,9 @@ package notification_config
 
 import (
 	"context"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app/chatretention"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/shared/env"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app"
@@ -32,7 +35,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient.IRedis, logger log.ILogger, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service) {
+func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient.IRedis, logger log.ILogger, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, environment env.IConfig) {
 	logger = logger.WithModule("notification_config")
 
 	repo := repository.New(database, logger)
@@ -54,6 +57,18 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	}
 
 	useCase := app.New(repo, notificationTypeRepo, notificationEventTypeRepo, cacheManager, messageAuditQuerier, aiPauseChecker, logger)
+
+	if signer, ok := useCase.(interface{ SetChatMediaSigner(ports.IChatMediaSigner) }); ok {
+
+		if chatMedia := storage.NewChatMedia(environment, logger); chatMedia != nil {
+
+			signer.SetChatMediaSigner(chatMedia)
+
+		}
+
+	}
+
+	go worker.NewChatRetention(chatretention.New(repository.NewChatRetentionRepository(database, logger), logger), logger).Start(context.Background())
 
 	configHandler := notification_config.New(useCase, logger)
 	typeHandler := notification_type.New(useCase, logger)

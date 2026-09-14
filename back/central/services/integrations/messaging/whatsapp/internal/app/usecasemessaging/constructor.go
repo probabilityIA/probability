@@ -11,6 +11,7 @@ import (
 )
 
 type IUseCase interface {
+	SendManualMedia(ctx context.Context, conversationID string, phoneNumber string, businessID uint, media entities.OutboundMedia, caption string, sentBy string) (string, error)
 	SendMessage(ctx context.Context, req dtos.SendMessageRequest) (string, error)
 
 	SendTemplate(ctx context.Context, templateName, phoneNumber string, variables map[string]string, orderNumber string, businessID uint) (string, error)
@@ -34,6 +35,7 @@ type IUseCase interface {
 }
 
 type IUseCaseMutable interface {
+	SetMediaDependencies(factory MediaAPIFactory, storage ports.IChatMediaStorage)
 	IUseCase
 	SetButtonReplyPublisher(publisher ports.IButtonReplyPublisher)
 }
@@ -41,6 +43,8 @@ type IUseCaseMutable interface {
 type WhatsAppClientFactory func(baseURL string) ports.IWhatsApp
 
 type usecases struct {
+	mediaFactory      MediaAPIFactory
+	chatMedia         ports.IChatMediaStorage
 	whatsApp          ports.IWhatsApp
 	clientFactory     WhatsAppClientFactory
 	conversationCache ports.IConversationCache

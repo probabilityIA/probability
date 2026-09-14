@@ -245,7 +245,7 @@ func (u *usecases) SendTemplateWithConversation(
 		Direction:      entities.MessageDirectionOutbound,
 		MessageID:      messageID,
 		TemplateName:   templateName,
-		Content:        buildTemplateContent(templateName, nil),
+		Content:        buildTemplateContent(templateName, variables),
 		Status:         entities.MessageStatusSent,
 		CreatedAt:      time.Now(),
 	}

@@ -52,6 +52,19 @@ type WebhookMessage struct {
 	Button      *ButtonResponse      `json:"button,omitempty"`
 	Interactive *InteractiveResponse `json:"interactive,omitempty"`
 	Context     *MessageContext      `json:"context,omitempty"`
+	Image       *MediaContent        `json:"image,omitempty"`
+	Document    *MediaContent        `json:"document,omitempty"`
+	Audio       *MediaContent        `json:"audio,omitempty"`
+	Video       *MediaContent        `json:"video,omitempty"`
+	Sticker     *MediaContent        `json:"sticker,omitempty"`
+}
+
+type MediaContent struct {
+	ID       string `json:"id"`
+	MimeType string `json:"mime_type"`
+	SHA256   string `json:"sha256"`
+	Caption  string `json:"caption"`
+	Filename string `json:"filename"`
 }
 
 type TextContent struct {

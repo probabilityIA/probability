@@ -63,6 +63,23 @@ type Message struct {
 	Type      string   `json:"type"`
 	Button    *Button  `json:"button,omitempty"`
 	Context   *Context `json:"context,omitempty"`
+	Text      *Text    `json:"text,omitempty"`
+	Image     *Media   `json:"image,omitempty"`
+	Document  *Media   `json:"document,omitempty"`
+	Audio     *Media   `json:"audio,omitempty"`
+	Video     *Media   `json:"video,omitempty"`
+}
+
+type Text struct {
+	Body string `json:"body"`
+}
+
+type Media struct {
+	ID       string `json:"id"`
+	MimeType string `json:"mime_type"`
+	SHA256   string `json:"sha256"`
+	Caption  string `json:"caption,omitempty"`
+	Filename string `json:"filename,omitempty"`
 }
 
 type Button struct {

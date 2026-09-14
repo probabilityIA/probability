@@ -16,6 +16,20 @@ type Send struct {
 	Variables     map[string]string `json:"variables"`
 	SentAt        time.Time         `json:"sent_at"`
 	RepliedWith   string            `json:"replied_with"`
+	Type          string            `json:"type"`
+	Text          string            `json:"text,omitempty"`
+	MediaType     string            `json:"media_type,omitempty"`
+	MediaID       string            `json:"media_id,omitempty"`
+	Caption       string            `json:"caption,omitempty"`
+	Filename      string            `json:"filename,omitempty"`
+}
+
+type Media struct {
+	ID       string `json:"id"`
+	MimeType string `json:"mime_type"`
+	Filename string `json:"filename"`
+	Size     int    `json:"size"`
+	Data     []byte `json:"-"`
 }
 
 type Template struct {
@@ -33,12 +47,14 @@ type Store struct {
 	templates []*Template
 	script    map[string]string
 	autoReply bool
+	media     map[string]*Media
 }
 
 func New() *Store {
 	return &Store{
 		script:    defaultScript(),
 		autoReply: true,
+		media:     map[string]*Media{},
 	}
 }
 
@@ -158,8 +174,31 @@ func (s *Store) AutoReply() bool {
 func (s *Store) Reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.media = map[string]*Media{}
 	s.sends = nil
 	s.templates = nil
 	s.script = defaultScript()
 	s.autoReply = true
+}
+
+func (s *Store) AddMedia(media *Media) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.media[media.ID] = media
+}
+
+func (s *Store) Media(id string) *Media {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.media[id]
+}
+
+func (s *Store) MediaList() []*Media {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]*Media, 0, len(s.media))
+	for _, media := range s.media {
+		out = append(out, media)
+	}
+	return out
 }
