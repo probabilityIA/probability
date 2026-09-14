@@ -24,8 +24,8 @@ Entorno: local, BD `127.0.0.1:5434`, backend :3050, front :3000
 |---|---|---|
 | 0 - Huecos explotables | hecha 2026-09-14 | 2cc1bf19 |
 | 1 - Catalogo y motor | hecha 2026-09-14 | ver abajo |
-| 2 - Enforcement audit | pendiente | |
-| 3 - Enforce | pendiente | |
+| 2 - Enforcement audit | hecha 2026-09-14 | 103e9c44 |
+| 3 - Enforce | hecha 2026-09-14 (local) | ver abajo |
 | 4 - Front y app obedecen | pendiente | |
 | 5 - Limpieza y docs | pendiente | |
 | Pruebas E2E multi-rol | pendiente | |
@@ -114,3 +114,41 @@ completa.
 PENDIENTE PARA PRODUCCION: esos 6 permisos y la asignacion al rol
 Administrador no existen en prod. Hay que crearlos con el mismo API (o un seed)
 ANTES de activar enforce, o los administradores no podran crear ordenes.
+
+## Fase 3 - enforce en local
+
+`back/central/.env` local: `AUTHZ_MODE=enforce` (en produccion NO se ha tocado
+nada; alli la variable no existe y el default es `audit`).
+
+Usuarios de prueba creados por API (super admin), negocio 26:
+- 77 `authz.demo@probability-test.com`, rol `demo` (7).
+- 78 `authz.envios@probability-test.com`, rol nuevo `Operador de envios` (8)
+  con Ordenes Read + Envios Create/Read/Update (permisos 1, 6, 7, 9).
+Las contrasenas las genero el API (quedan en el scratchpad de la sesion) y
+ambos tienen `require_password_change = true`.
+
+Matriz por API con enforce (codigo HTTP):
+
+| endpoint | super | admin | rol demo | envios |
+|---|---|---|---|---|
+| GET /orders | 200 | 200 | 200 | 200 |
+| POST /orders `{}` | 400 | 400 | 400 | 403 |
+| GET /products | 200 | 200 | 200 | 403 |
+| DELETE /products/999999 | 404 | 404 | 403 | 403 |
+| GET /customers | 200 | 200 | 403 | 403 |
+| GET /invoicing/invoices | 200 | 200 | 200 | 403 |
+| GET /users | 200 | 200 | 403 | 403 |
+| GET /integrations | 200 | 200 | 403 | 403 |
+| GET /shipments | 200 | 200 | 200 | 200 |
+| GET /inventory/lots | 200 | 403 (plan basico) | 403 | 403 |
+| GET /tickets | 200 | 403 | 403 | 403 |
+| GET /subscriptions/me | 200 | 200 | 200 | 200 |
+| sin sesion GET /orders | 401 | | | |
+
+400 y 404 significan que paso la autorizacion y fallo la validacion del handler.
+
+Navegador como administrador con enforce: Ordenes, Clientes e Integraciones
+cargan con datos y el log no registra ninguna denegacion para el usuario 8.
+
+`RequireModuleAccess` de invoicing e inventory se deja: es redundante con el
+motor (que ya cruza el plan) pero no estorba. Se retira en la fase 5.
