@@ -72,6 +72,7 @@ type codOrderResponse struct {
 	CodCarrierFee         float64    `json:"cod_carrier_fee"`
 	CodIncludesShipping   bool       `json:"cod_includes_shipping"`
 	CodCheckoutCarrierFee float64    `json:"cod_checkout_carrier_fee"`
+	CustomerCharge        float64    `json:"customer_charge"`
 	ShippingCost          float64    `json:"shipping_cost"`
 	DiscountPct           float64    `json:"discount_pct"`
 	Discount              float64    `json:"discount"`
@@ -221,7 +222,8 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 			CodCarrierFee:         in[i].CodCarrierFee,
 			CodIncludesShipping:   in[i].CodIncludesShipping,
 			CodCheckoutCarrierFee: in[i].CodCheckoutCarrierFee,
-			ShippingCost:          in[i].ShippingCost,
+			CustomerCharge:        in[i].CustomerCharge,
+			ShippingCost:         in[i].ShippingCost,
 			DiscountPct:           in[i].DiscountPct,
 			Discount:              in[i].Discount,
 			Net:                   in[i].Net,

@@ -25,7 +25,6 @@ import { CarrierOfficeSelector } from "@/shared/ui/CarrierOfficeSelector";
 import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
 import dynamic from 'next/dynamic';
-import { codCheckoutFee, codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const GUIDE_SSE_GRACE_MS = 45000;
 const GUIDE_POLL_INTERVAL_MS = 5000;
@@ -301,8 +300,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     );
 
     const orderIsCOD = !!(order?.cod_total && order.cod_total > 0);
-    const orderCheckoutFee = order ? codCheckoutFee(order) : 0;
-    const orderCodValue = orderIsCOD ? order!.cod_total! + orderCheckoutFee : 0;
+    const orderCodValue = orderIsCOD ? (order!.cod_checkout_total ?? 0) : 0;
 
     const step1Form = useForm<Step1Values>({
         resolver: zodResolver(step1Schema),
@@ -439,7 +437,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
 
             if (order.cod_total && order.cod_total > 0) {
-                step1Form.setValue("codValue", order.cod_total + codCheckoutFee(order), { shouldValidate: true });
+                step1Form.setValue("codValue", order.cod_checkout_total ?? 0, { shouldValidate: true });
                 step1Form.setValue("codPaymentMethod", "cash");
             }
 
@@ -899,7 +897,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 insurance: step1Data.insurance,
                 description: step1Data.description,
                 contentValue: step1Data.contentValue,
-                codValue: (step1Data.codValue ?? 0) + (orderCheckoutFee > 0 ? 0 : codCarrierFee),
+                codValue: (step1Data.codValue ?? 0) + (order ? 0 : codCarrierFee),
                 includeGuideCost: step1Data.includeGuideCost,
                 codPaymentMethod: step1Data.codPaymentMethod,
                 totalCost: totalCost,
@@ -1283,7 +1281,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     {orderIsCOD && (
                                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-300 dark:bg-amber-900/30 dark:border-amber-600">
                                             <span className="text-amber-700 dark:text-amber-300 font-semibold text-sm">
-                                                Orden Contra Entrega - ${codCustomerCharge(order!).toLocaleString()} COP
+                                                Orden Contra Entrega - ${(order!.cod_customer_charge ?? 0).toLocaleString()} COP
                                             </span>
                                         </div>
                                     )}

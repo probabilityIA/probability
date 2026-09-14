@@ -15,7 +15,6 @@ import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
 import { carrierOfficeLabel } from '@/shared/utils/guide-destination';
-import { codBusinessNet, codCustomerCharge, codEffectiveCarrierFee } from '@/shared/utils/cod-amount';
 import dynamic from 'next/dynamic';
 import { Package, Copy, Check, Link2, X, Calendar, CreditCard, Truck, Receipt, Percent, Wallet, ShoppingBag, User, Phone, Mail, MapPin, ClipboardList, Save, MessageCircle, History, AlertTriangle, RefreshCw, Clock, FileText, ChevronRight, ArrowRight, Plus, CircleCheck, Scissors } from 'lucide-react';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
@@ -276,11 +275,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const totalItemsQty = itemsTotals.qty;
 
     const isCodOrder = order.is_cod === true || (order.cod_total || 0) > 0;
-    const realCarrierFee = order.shipment?.cod_carrier_fee || 0;
-    const codCarrierFee = codEffectiveCarrierFee({ ...order, cod_carrier_fee: realCarrierFee });
-    const carrierFeeFromCheckout = realCarrierFee <= 0 && codCarrierFee > 0;
-    const codNet = codBusinessNet({ ...order, cod_carrier_fee: realCarrierFee });
-    const codToCollect = codCustomerCharge({ ...order, cod_carrier_fee: realCarrierFee });
+    const codCarrierFee = order.cod_effective_carrier_fee ?? 0;
+    const carrierFeeFromCheckout = order.cod_carrier_fee_source === 'checkout';
+    const codNet = order.cod_business_net ?? 0;
+    const codToCollect = order.cod_customer_charge ?? 0;
     const envioNeto = (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0);
     const envioMasComision = envioNeto + codCarrierFee;
 

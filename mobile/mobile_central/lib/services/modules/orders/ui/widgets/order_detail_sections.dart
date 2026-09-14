@@ -205,7 +205,7 @@ class OrderTotalsCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    AppFormat.money(order.codToCollect),
+                    AppFormat.money(order.codCustomerCharge ?? order.codTotal),
                     style: theme.textTheme.titleSmall?.copyWith(color: AppColors.primaryDark),
                   ),
                 ],

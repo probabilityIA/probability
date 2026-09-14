@@ -38,8 +38,14 @@ type Order struct {
 	CodIncludesShipping         bool     `json:"cod_includes_shipping"`
 	CodCheckoutCarrierFee       float64  `json:"cod_checkout_carrier_fee"`
 	CodCutConfirmed             bool     `json:"cod_cut_confirmed"`
+	CodCustomerCharge           float64  `json:"cod_customer_charge"`
+	CodCheckoutTotal            float64  `json:"cod_checkout_total"`
+	CodEffectiveCarrierFee      float64  `json:"cod_effective_carrier_fee"`
+	CodCarrierFeeSource         string   `json:"cod_carrier_fee_source"`
+	CodChargedCarrierFee        float64  `json:"cod_charged_carrier_fee"`
+	CodBusinessNet              float64  `json:"cod_business_net"`
 
-	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`
+	SubtotalPresentment    float64 `json:"subtotal_presentment,omitempty"`
 	TaxPresentment          float64 `json:"tax_presentment,omitempty"`
 	DiscountPresentment     float64 `json:"discount_presentment,omitempty"`
 	ShippingCostPresentment float64 `json:"shipping_cost_presentment,omitempty"`

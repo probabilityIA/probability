@@ -6,7 +6,16 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/shared/cod"
 )
+
+func setCustomerCharge(o *entities.CodOrder) {
+	o.CustomerCharge = cod.CustomerCharge(cod.Order{
+		CodTotal:           o.CodTotal,
+		IncludesShipping:   o.CodIncludesShipping,
+		CheckoutCarrierFee: o.CodCheckoutCarrierFee,
+	}, o.CodCarrierFee)
+}
 
 func (uc *UseCase) ListOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
 	orders, total, err := uc.repo.ListCodOrders(ctx, f)
@@ -31,6 +40,7 @@ func (uc *UseCase) ListOrders(ctx context.Context, f dtos.OrdersFilter) ([]entit
 		orders[i].DiscountPct = pct
 		orders[i].Discount = d
 		orders[i].Net = n
+		setCustomerCharge(&orders[i])
 		orders[i].CodState = domain.PaymentState(orders[i].Status, orders[i].Paid)
 		orders[i].Collected = orders[i].Paid
 		if orders[i].Paid {

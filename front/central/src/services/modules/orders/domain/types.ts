@@ -54,6 +54,12 @@ export interface Order {
     cod_total?: number;
     cod_includes_shipping?: boolean;
     cod_checkout_carrier_fee?: number;
+    cod_customer_charge?: number;
+    cod_checkout_total?: number;
+    cod_effective_carrier_fee?: number;
+    cod_carrier_fee_source?: '' | 'carrier' | 'checkout';
+    cod_charged_carrier_fee?: number;
+    cod_business_net?: number;
     is_cod?: boolean;
 
     subtotal_presentment?: number;

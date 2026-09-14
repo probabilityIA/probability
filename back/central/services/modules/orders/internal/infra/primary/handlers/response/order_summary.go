@@ -55,6 +55,10 @@ type OrderSummary struct {
 	IsTest                 bool                   `json:"is_test"`
 	InvoiceStatus          string                 `json:"invoice_status"`
 	CodCutConfirmed        bool                   `json:"cod_cut_confirmed"`
+	CodIncludesShipping    bool                   `json:"cod_includes_shipping"`
+	CodCheckoutCarrierFee  float64                `json:"cod_checkout_carrier_fee"`
+	CodCustomerCharge      float64                `json:"cod_customer_charge"`
+	CodCheckoutTotal       float64                `json:"cod_checkout_total"`
 	Shipment               *ShipmentSummary       `json:"shipment,omitempty"`
 	QuotedShipping         *QuotedShipping        `json:"quoted_shipping,omitempty"`
 	FreeShipping           bool                   `json:"free_shipping"`

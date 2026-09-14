@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/cod"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
@@ -141,6 +142,19 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		shipment.CodTotal = s.Order.CodTotal
 		shipment.CodIncludesShipping = s.Order.CodIncludesShipping
 		shipment.CodCheckoutCarrierFee = s.Order.CodCheckoutCarrierFee
+		if s.Order.CodTotal != nil {
+			carrierFee := 0.0
+			if s.CodCarrierFee != nil {
+				carrierFee = *s.CodCarrierFee
+			}
+			b := cod.Summarize(cod.Order{
+				CodTotal:           *s.Order.CodTotal,
+				IncludesShipping:   s.Order.CodIncludesShipping,
+				CheckoutCarrierFee: s.Order.CodCheckoutCarrierFee,
+			}, carrierFee)
+			shipment.CodCustomerCharge = b.CustomerCharge
+			shipment.CodCheckoutTotal = b.CheckoutTotal
+		}
 		shipment.IsPaid = s.Order.IsPaid
 		shipment.PaidAt = s.Order.PaidAt
 		total := s.Order.TotalAmount

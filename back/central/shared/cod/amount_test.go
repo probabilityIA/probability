@@ -37,6 +37,29 @@ func TestCheckoutTotal(t *testing.T) {
 	}
 }
 
+func TestSummarize(t *testing.T) {
+	tests := []struct {
+		name       string
+		order      Order
+		carrierFee float64
+		want       Breakdown
+	}{
+		{"orden manual con guia (VIG-0161)", Order{CodTotal: 106565}, 7805, Breakdown{CustomerCharge: 114370, CheckoutTotal: 106565, CarrierFee: 7805, CarrierFeeSource: FeeSourceCarrier, ChargedCarrierFee: 7805, BusinessNet: 106565}},
+		{"orden manual sin guia", Order{CodTotal: 106565}, 0, Breakdown{CustomerCharge: 106565, CheckoutTotal: 106565, BusinessNet: 106565}},
+		{"plugin sin guia: comision del checkout (15791)", Order{CodTotal: 65990, IncludesShipping: true, CheckoutCarrierFee: 5238}, 0, Breakdown{CustomerCharge: 71228, CheckoutTotal: 71228, CarrierFee: 5238, CarrierFeeSource: FeeSourceCheckout, ChargedCarrierFee: 5238, BusinessNet: 65990}},
+		{"plugin con comision real mayor: el negocio recibe su neto (15788)", Order{CodTotal: 65990, IncludesShipping: true, CheckoutCarrierFee: 5238}, 6116, Breakdown{CustomerCharge: 71228, CheckoutTotal: 71228, CarrierFee: 6116, CarrierFeeSource: FeeSourceCarrier, ChargedCarrierFee: 5238, BusinessNet: 65990}},
+		{"canal que cobra el total sin plugin", Order{CodTotal: 191322, IncludesShipping: true}, 6116, Breakdown{CustomerCharge: 191322, CheckoutTotal: 191322, CarrierFee: 6116, CarrierFeeSource: FeeSourceCarrier, BusinessNet: 185206}},
+		{"sin cod_total", Order{CheckoutCarrierFee: 5365}, 5365, Breakdown{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Summarize(tt.order, tt.carrierFee); got != tt.want {
+				t.Errorf("Summarize() = %+v, se esperaba %+v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAmountToCollect(t *testing.T) {
 	tests := []struct {
 		name       string

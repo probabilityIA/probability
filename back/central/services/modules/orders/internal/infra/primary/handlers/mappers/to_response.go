@@ -6,7 +6,23 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/response"
+	"github.com/secamc93/probability/back/central/shared/cod"
 )
+
+func codBreakdown(codTotal *float64, includesShipping bool, checkoutCarrierFee float64, carrierFee *float64) cod.Breakdown {
+	if codTotal == nil {
+		return cod.Breakdown{}
+	}
+	fee := 0.0
+	if carrierFee != nil {
+		fee = *carrierFee
+	}
+	return cod.Summarize(cod.Order{
+		CodTotal:           *codTotal,
+		IncludesShipping:   includesShipping,
+		CheckoutCarrierFee: checkoutCarrierFee,
+	}, fee)
+}
 
 func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 	var metadataJSON datatypes.JSON
@@ -75,6 +91,12 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		}
 	}
 
+	var shipmentCarrierFee *float64
+	if dto.Shipment != nil {
+		shipmentCarrierFee = dto.Shipment.CodCarrierFee
+	}
+	codAmounts := codBreakdown(dto.CodTotal, dto.CodIncludesShipping, dto.CodCheckoutCarrierFee, shipmentCarrierFee)
+
 	return &response.Order{
 		ID:                          dto.ID,
 		CreatedAt:                   dto.CreatedAt,
@@ -103,6 +125,12 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		CodIncludesShipping:         dto.CodIncludesShipping,
 		CodCheckoutCarrierFee:       dto.CodCheckoutCarrierFee,
 		CodCutConfirmed:             dto.CodCutConfirmed,
+		CodCustomerCharge:           codAmounts.CustomerCharge,
+		CodCheckoutTotal:            codAmounts.CheckoutTotal,
+		CodEffectiveCarrierFee:      codAmounts.CarrierFee,
+		CodCarrierFeeSource:         codAmounts.CarrierFeeSource,
+		CodChargedCarrierFee:        codAmounts.ChargedCarrierFee,
+		CodBusinessNet:              codAmounts.BusinessNet,
 		SubtotalPresentment:         dto.SubtotalPresentment,
 		TaxPresentment:              dto.TaxPresentment,
 		DiscountPresentment:         dto.DiscountPresentment,
@@ -226,8 +254,18 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		}
 	}
 
+	var summaryCarrierFee *float64
+	if dto.Shipment != nil {
+		summaryCarrierFee = dto.Shipment.CodCarrierFee
+	}
+	summaryCod := codBreakdown(dto.CodTotal, dto.CodIncludesShipping, dto.CodCheckoutCarrierFee, summaryCarrierFee)
+
 	return &response.OrderSummary{
-		QuotedShipping:         buildQuotedShipping(dto.ShippingDetails),
+		CodIncludesShipping:    dto.CodIncludesShipping,
+		CodCheckoutCarrierFee:  dto.CodCheckoutCarrierFee,
+		CodCustomerCharge:      summaryCod.CustomerCharge,
+		CodCheckoutTotal:       summaryCod.CheckoutTotal,
+		QuotedShipping:        buildQuotedShipping(dto.ShippingDetails),
 		FreeShipping:           dto.FreeShipping,
 		StatusSource:           dto.StatusSource,
 		StatusChangedBy:        dto.StatusChangedBy,

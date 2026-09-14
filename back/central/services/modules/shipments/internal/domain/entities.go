@@ -161,6 +161,8 @@ type ShipmentResponse struct {
 	CodTotal              *float64   `json:"cod_total,omitempty"`
 	CodIncludesShipping   bool       `json:"cod_includes_shipping"`
 	CodCheckoutCarrierFee float64    `json:"cod_checkout_carrier_fee"`
+	CodCustomerCharge     float64    `json:"cod_customer_charge"`
+	CodCheckoutTotal      float64    `json:"cod_checkout_total"`
 	IsPaid                bool       `json:"is_paid"`
 	PaidAt                *time.Time `json:"paid_at,omitempty"`
 	PaymentMethodCode     string     `json:"payment_method_code,omitempty"`
