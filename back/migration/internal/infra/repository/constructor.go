@@ -68,10 +68,7 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWhatsappMessageMedia(ctx); err != nil {
 		return err
 	}
-	if err := r.MigrateShipmentCodCollectAmount(ctx); err != nil {
-		return err
-	}
-	return r.FixShipmentCodCollectAmount(ctx)
+	return r.MigrateShipmentCodCollectAmount(ctx)
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {
