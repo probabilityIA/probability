@@ -31,6 +31,7 @@ import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { getActionError } from '@/shared/utils/action-result';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 import { guideHref } from '@/shared/utils/guide-link';
+import { codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const COMBINING_MARK_MIN = 0x0300;
 const COMBINING_MARK_MAX = 0x036f;
@@ -353,7 +354,7 @@ const OrderRow = memo(({
                             <span
                                 className="self-start inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                                 style={{ backgroundColor: '#fef3c7', color: '#92400e' }}
-                                title={'La dirección se escribió a mano, sin elegir una sugerencia de Google Maps'}
+                                title={'La direcci\u00f3n se escribi\u00f3 a mano, sin elegir una sugerencia de Google Maps'}
                             >
                                 {'Dir. sin Google'}
                             </span>
@@ -371,7 +372,7 @@ const OrderRow = memo(({
                         </span>
                         {(order.score_breakdown?.categories || (order.negative_factors && order.negative_factors.length > 0)) && (
                             <ProbabilityTooltip>
-                                <div className="font-semibold mb-2 text-center">Análisis de probabilidad</div>
+                                <div className="font-semibold mb-2 text-center">An&#225;lisis de probabilidad</div>
 
                                 {order.score_breakdown?.categories ? (
                                     <div className="space-y-1.5 mb-2">
@@ -397,7 +398,7 @@ const OrderRow = memo(({
                                         <div className="font-semibold mb-1 text-orange-400 text-[10px]">Datos faltantes:</div>
                                         {order.negative_factors.map((factor, idx) => (
                                             <div key={idx} className="flex items-center gap-1">
-                                                <span className="text-orange-400">•</span>
+                                                <span className="text-orange-400">&#8226;</span>
                                                 <span className="text-[10px]">{factor}</span>
                                             </div>
                                         ))}
@@ -415,7 +416,7 @@ const OrderRow = memo(({
                 <div className="flex flex-col items-center gap-1">
                     {order.is_confirmed === true ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
-                            Sí
+                            S&#237;
                         </span>
                     ) : order.is_confirmed === false ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
@@ -553,7 +554,7 @@ const OrderRow = memo(({
                         </div>
                     );
                 })() : (
-                    <span className="text-xs text-gray-400 text-center block">Sin envío</span>
+                    <span className="text-xs text-gray-400 text-center block">Sin env&#237;o</span>
                 )}
             </td>
             <td className="px-2 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -567,8 +568,8 @@ const OrderRow = memo(({
                                     ? 'bg-gray-400 text-gray-600 dark:text-gray-300 cursor-not-allowed opacity-60'
                                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
                                 }`}
-                            title={order.guide_link ? 'Guía ya validada' : 'Recomendación Inteligente IA'}
-                            aria-label={order.guide_link ? 'Guía ya validada' : 'Ver recomendación IA'}
+                            title={order.guide_link ? 'Gu\u00eda ya validada' : 'Recomendaci\u00f3n Inteligente IA'}
+                            aria-label={order.guide_link ? 'Gu\u00eda ya validada' : 'Ver recomendaci\u00f3n IA'}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -627,7 +628,7 @@ const OrderRow = memo(({
                                     : 'bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-500'
                             }`}
                             title={isTerminalStatus(order.order_status?.code || order.status || '')
-                                ? 'Estado terminal — no se puede cambiar'
+                                ? 'Estado terminal \u2014 no se puede cambiar'
                                 : 'Cambiar estado'}
                             aria-label="Cambiar estado"
                         >
@@ -640,8 +641,8 @@ const OrderRow = memo(({
                         <button
                             onClick={() => onShowGuide(guideHref(order.shipment?.id, order.guide_link, order.business_id))}
                             className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            title="Ver guía de envío"
-                            aria-label="Ver guía de envío"
+                            title="Ver gu&#237;a de env&#237;o"
+                            aria-label="Ver gu&#237;a de env&#237;o"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -852,9 +853,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
         {
             key: 'internal_number',
-            label: 'Número interno',
+            label: 'N\u00famero interno',
             type: 'text',
-            placeholder: 'Buscar por número interno...',
+            placeholder: 'Buscar por n\u00famero interno...',
         },
         {
             key: 'customer_name',
@@ -870,9 +871,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
         {
             key: 'customer_phone',
-            label: 'Teléfono del cliente',
+            label: 'Tel\u00e9fono del cliente',
             type: 'text',
-            placeholder: 'Buscar por teléfono...',
+            placeholder: 'Buscar por tel\u00e9fono...',
         },
         {
             key: 'status',
@@ -892,7 +893,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
         {
             key: 'integration_id',
-            label: 'Integración',
+            label: 'Integraci\u00f3n',
             type: 'select',
             options: integrationsList,
         },
@@ -962,7 +963,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         if (filters.internal_number) {
             active.push({
                 key: 'internal_number',
-                label: 'Número interno',
+                label: 'N\u00famero interno',
                 value: filters.internal_number,
                 type: 'text',
             });
@@ -989,7 +990,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         if (filters.customer_phone) {
             active.push({
                 key: 'customer_phone',
-                label: 'Teléfono del cliente',
+                label: 'Tel\u00e9fono del cliente',
                 value: filters.customer_phone,
                 type: 'text',
             });
@@ -1028,7 +1029,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             const integration = integrationsList.find(i => i.value === String(filters.integration_id));
             active.push({
                 key: 'integration_id',
-                label: 'Integración',
+                label: 'Integraci\u00f3n',
                 value: integration ? integration.label : String(filters.integration_id),
                 type: 'select',
             });
@@ -1275,7 +1276,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 setPage(response.page || 1);
             }
         } catch (err: any) {
-            console.error('Error al actualizar órdenes:', err);
+            console.error('Error al actualizar \u00f3rdenes:', err);
         } finally {
             setTableLoading(false);
         }
@@ -1300,10 +1301,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 setTotalPages(response.total_pages || 1);
                 setPage(response.page || 1);
             } else {
-                setError(response.message || 'Error al cargar las órdenes');
+                setError(response.message || 'Error al cargar las \u00f3rdenes');
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al cargar las órdenes'));
+            setError(getActionError(err, 'Error al cargar las \u00f3rdenes'));
         } finally {
             setInitialLoading(false);
             setTableLoading(false);
@@ -1331,7 +1332,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 const response = await getOrdersAction(params);
 
                 if (!response.success || !response.data) {
-                    throw new Error(response.message || 'Error al obtener órdenes');
+                    throw new Error(response.message || 'Error al obtener \u00f3rdenes');
                 }
 
                 ordersToDownload = [...ordersToDownload, ...response.data];
@@ -1348,25 +1349,25 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     'ID Orden': order.order_number || order.external_id || order.id,
                     'Cliente': order.customer_name || '',
                     'Email': order.customer_email || '',
-                    'Teléfono': order.customer_phone || '',
+                    'Tel\u00e9fono': order.customer_phone || '',
                     'Plataforma': order.platform || '',
                     'Estado': order.status || '',
                     'Total': order.total_amount || 0,
                     'Moneda': order.currency || '',
-                    'Pagado': order.is_paid ? 'Sí' : 'No',
-                    'Contra Entrega COD': order.cod_total || 0,
-                    'Dirección': order.shipping_street || '',
+                    'Pagado': order.is_paid ? 'S\u00ed' : 'No',
+                    'Contra Entrega COD': codCustomerCharge({ ...order, cod_carrier_fee: order.shipment?.cod_carrier_fee }),
+                    'Direcci\u00f3n': order.shipping_street || '',
                     'Ciudad': resolved?.ciudad || order.shipping_city || '',
                     'Departamento': resolved?.departamento || order.shipping_state || '',
-                    'Valor Envío': order.shipment?.total_cost || order.quoted_shipping?.price || order.shipping_cost || 0,
-                    'Guía': order.tracking_number || order.shipment?.tracking_number || '',
-                    'Fecha Creación': order.created_at ? new Date(order.created_at).toLocaleString('es-CO') : '',
+                    'Valor Env\u00edo': order.shipment?.total_cost || order.quoted_shipping?.price || order.shipping_cost || 0,
+                    'Gu\u00eda': order.tracking_number || order.shipment?.tracking_number || '',
+                    'Fecha Creaci\u00f3n': order.created_at ? new Date(order.created_at).toLocaleString('es-CO') : '',
                 };
             });
 
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Órdenes');
+            XLSX.utils.book_append_sheet(wb, ws, '\u00d3rdenes');
 
             const colWidths = [
                 { wch: 15 },
@@ -1391,9 +1392,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             const fileName = `ordenes_${startDate}_a_${endDate}.xlsx`;
             XLSX.writeFile(wb, fileName);
 
-            showToast(`Se descargaron ${excelData.length} órdenes correctamente`, 'success');
+            showToast(`Se descargaron ${excelData.length} \u00f3rdenes correctamente`, 'success');
         } catch (error) {
-            console.error('Error al descargar órdenes:', error);
+            console.error('Error al descargar \u00f3rdenes:', error);
             throw error;
         }
     }, [filters, isSuperAdmin, selectedBusinessId, showToast]);
@@ -1424,7 +1425,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     }, [refreshKey, refreshTableOnly]);
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de que deseas eliminar esta orden?')) return;
+        if (!confirm('\u00bfEst\u00e1s seguro de que deseas eliminar esta orden?')) return;
 
         try {
             const response = await deleteOrderAction(id);
@@ -1524,7 +1525,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     }, []);
 
     if (initialLoading) {
-        return <div className="text-center py-8">Cargando órdenes...</div>;
+        return <div className="text-center py-8">Cargando &#243;rdenes...</div>;
     }
 
     if (error) {
@@ -1613,7 +1614,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         Orden
                                         {filters.sort_by === 'order_number' && (
                                             <span className="text-purple-100">
-                                                {filters.sort_order === 'asc' ? '↑' : '↓'}
+                                                {filters.sort_order === 'asc' ? '\u2191' : '\u2193'}
                                             </span>
                                         )}
                                     </div>
@@ -1662,7 +1663,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                             {orders.length === 0 ? (
                                 <tr>
                                     <td colSpan={isSuperAdmin ? 10 : 9} className="px-4 sm:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                                        No hay órdenes disponibles
+                                        No hay &#243;rdenes disponibles
                                     </td>
                                 </tr>
                             ) : (
@@ -1751,7 +1752,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         onClick={() => setFilters({ ...filters, page: 1 })}
                                         disabled={page === 1}
                                         className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
-                                        title="Primera página"
+                                        title="Primera p&#225;gina"
                                     >
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
                                     </button>
@@ -1824,7 +1825,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         onClick={() => setFilters({ ...filters, page: totalPages })}
                                         disabled={page === totalPages}
                                         className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
-                                        title="Última página"
+                                        title="&#218;ltima p&#225;gina"
                                     >
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                                     </button>
@@ -1852,7 +1853,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 </select>
                             </div>
                             <p className="text-xs text-white/80">
-                                Página {page} de {totalPages}
+                                P&#225;gina {page} de {totalPages}
                             </p>
                         </div>
                     </div>
@@ -1973,7 +1974,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                Guía de envío
+                                Gu&#237;a de env&#237;o
                             </div>
                             <button
                                 onClick={() => setGuideUrl(null)}
@@ -1994,8 +1995,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 </svg>
                             </div>
                             <div className="text-center">
-                                <p className="font-semibold text-gray-800 dark:text-gray-100 text-lg">Guía de Envío lista</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">El PDF está disponible para ver o descargar</p>
+                                <p className="font-semibold text-gray-800 dark:text-gray-100 text-lg">Gu&#237;a de Env&#237;o lista</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">El PDF est&#225; disponible para ver o descargar</p>
                             </div>
                             <div className="flex flex-col gap-3 w-full">
                                 <a
@@ -2007,7 +2008,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                     </svg>
-                                    Abrir PDF en nueva pestaña
+                                    Abrir PDF en nueva pesta&#241;a
                                 </a>
                                 <a
                                     href={guideUrl}

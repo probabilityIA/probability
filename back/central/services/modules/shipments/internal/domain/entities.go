@@ -6,11 +6,6 @@ import (
 	"gorm.io/datatypes"
 )
 
-//
-//	SHIPMENT DTOs
-//
-
-// CreateShipmentRequest representa la solicitud para crear un envío
 type CreateShipmentRequest struct {
 	OrderID *string `json:"order_id" binding:"omitempty"`
 
@@ -34,9 +29,9 @@ type CreateShipmentRequest struct {
 
 	ShippingAddressID *uint `json:"shipping_address_id"`
 
-	ShippingCost      *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
-	InsuranceCost     *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
-	TotalCost         *float64 `json:"total_cost" binding:"omitempty,min=0"`
+	ShippingCost  *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
+	InsuranceCost *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
+	TotalCost     *float64 `json:"total_cost" binding:"omitempty,min=0"`
 	CodCarrierFee *float64 `json:"cod_carrier_fee" binding:"omitempty,min=0"`
 
 	Weight *float64 `json:"weight" binding:"omitempty,min=0"`
@@ -58,7 +53,6 @@ type CreateShipmentRequest struct {
 	CreatedByName string `json:"-"`
 }
 
-// UpdateShipmentRequest representa la solicitud para actualizar un envío
 type UpdateShipmentRequest struct {
 	TrackingNumber *string `json:"tracking_number" binding:"omitempty,max=128"`
 	TrackingURL    *string `json:"tracking_url" binding:"omitempty,max=512"`
@@ -74,9 +68,9 @@ type UpdateShipmentRequest struct {
 
 	ShippingAddressID *uint `json:"shipping_address_id"`
 
-	ShippingCost      *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
-	InsuranceCost     *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
-	TotalCost         *float64 `json:"total_cost" binding:"omitempty,min=0"`
+	ShippingCost  *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
+	InsuranceCost *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
+	TotalCost     *float64 `json:"total_cost" binding:"omitempty,min=0"`
 	CodCarrierFee *float64 `json:"cod_carrier_fee" binding:"omitempty,min=0"`
 
 	Weight *float64 `json:"weight" binding:"omitempty,min=0"`
@@ -98,7 +92,6 @@ type UpdateShipmentRequest struct {
 	UpdatedByName string `json:"-"`
 }
 
-// ShipmentResponse representa la respuesta de un envío
 type ShipmentResponse struct {
 	ID        uint       `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -133,13 +126,13 @@ type ShipmentResponse struct {
 
 	ShippingAddressID *uint `json:"shipping_address_id,omitempty"`
 
-	ShippingCost      *float64 `json:"shipping_cost,omitempty"`
-	InsuranceCost     *float64 `json:"insurance_cost,omitempty"`
-	TotalCost         *float64 `json:"total_cost,omitempty"`
-	CarrierCost       *float64 `json:"carrier_cost,omitempty"`
-	AppliedMargin     *float64 `json:"applied_margin,omitempty"`
-	CodCarrierFee *float64 `json:"cod_carrier_fee,omitempty"`
-	CodProbabilityMargin  *float64 `json:"cod_probability_margin,omitempty"`
+	ShippingCost         *float64 `json:"shipping_cost,omitempty"`
+	InsuranceCost        *float64 `json:"insurance_cost,omitempty"`
+	TotalCost            *float64 `json:"total_cost,omitempty"`
+	CarrierCost          *float64 `json:"carrier_cost,omitempty"`
+	AppliedMargin        *float64 `json:"applied_margin,omitempty"`
+	CodCarrierFee        *float64 `json:"cod_carrier_fee,omitempty"`
+	CodProbabilityMargin *float64 `json:"cod_probability_margin,omitempty"`
 
 	Weight *float64 `json:"weight,omitempty"`
 	Height *float64 `json:"height,omitempty"`
@@ -159,19 +152,20 @@ type ShipmentResponse struct {
 	CreatedByName string `json:"created_by_name,omitempty"`
 	UpdatedByName string `json:"updated_by_name,omitempty"`
 
-	// Datos del cliente desde la orden
 	CustomerName  string `json:"customer_name,omitempty"`
 	CustomerEmail string `json:"customer_email,omitempty"`
 	CustomerPhone string `json:"customer_phone,omitempty"`
 	CustomerDNI   string `json:"customer_dni,omitempty"`
 	OrderNumber   string `json:"order_number,omitempty"`
 
-	CodTotal           *float64   `json:"cod_total,omitempty"`
-	IsPaid             bool       `json:"is_paid"`
-	PaidAt             *time.Time `json:"paid_at,omitempty"`
-	PaymentMethodCode  string     `json:"payment_method_code,omitempty"`
-	OrderTotalAmount   *float64   `json:"order_total_amount,omitempty"`
-	OrderCurrency      string     `json:"order_currency,omitempty"`
+	CodTotal              *float64   `json:"cod_total,omitempty"`
+	CodIncludesShipping   bool       `json:"cod_includes_shipping"`
+	CodCheckoutCarrierFee float64    `json:"cod_checkout_carrier_fee"`
+	IsPaid                bool       `json:"is_paid"`
+	PaidAt                *time.Time `json:"paid_at,omitempty"`
+	PaymentMethodCode     string     `json:"payment_method_code,omitempty"`
+	OrderTotalAmount      *float64   `json:"order_total_amount,omitempty"`
+	OrderCurrency         string     `json:"order_currency,omitempty"`
 }
 
 type CODFilter struct {
@@ -187,7 +181,6 @@ type CollectCODRequest struct {
 	Notes string `json:"notes" binding:"omitempty,max=500"`
 }
 
-// ShipmentsListResponse representa la respuesta paginada de envíos
 type ShipmentsListResponse struct {
 	Data       []ShipmentResponse `json:"data"`
 	Total      int64              `json:"total"`

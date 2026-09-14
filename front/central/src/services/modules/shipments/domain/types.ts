@@ -45,6 +45,9 @@ export interface Shipment {
     order_number?: string;
     metadata?: any;
     cod_total?: number;
+    cod_carrier_fee?: number;
+    cod_includes_shipping?: boolean;
+    cod_checkout_carrier_fee?: number;
     is_paid?: boolean;
     paid_at?: string;
     payment_method_code?: string;

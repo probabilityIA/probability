@@ -153,6 +153,7 @@ class Order {
   final double totalAmount;
   final String currency;
   final double? codTotal;
+  final double? codCheckoutCarrierFee;
   final double? subtotalPresentment;
   final double? taxPresentment;
   final double? discountPresentment;
@@ -229,6 +230,12 @@ class Order {
   final String importedAt;
   final List<String>? negativeFactors;
 
+  double? get codToCollect {
+    final total = codTotal;
+    if (total == null || total <= 0) return total;
+    return total + (codCheckoutCarrierFee ?? 0);
+  }
+
   List<OrderLineItem> get lineItems {
     final fromOrderItems = OrderLineItem.listFrom(orderItems);
     if (fromOrderItems.isNotEmpty) return fromOrderItems;
@@ -258,6 +265,7 @@ class Order {
     required this.totalAmount,
     required this.currency,
     this.codTotal,
+    this.codCheckoutCarrierFee,
     this.subtotalPresentment,
     this.taxPresentment,
     this.discountPresentment,
@@ -359,6 +367,7 @@ class Order {
       totalAmount: (json['total_amount'] ?? 0).toDouble(),
       currency: json['currency'] ?? '',
       codTotal: json['cod_total']?.toDouble(),
+      codCheckoutCarrierFee: json['cod_checkout_carrier_fee']?.toDouble(),
       subtotalPresentment: json['subtotal_presentment']?.toDouble(),
       taxPresentment: json['tax_presentment']?.toDouble(),
       discountPresentment: json['discount_presentment']?.toDouble(),

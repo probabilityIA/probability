@@ -11,6 +11,7 @@ import { Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import { MiniAddressMap } from './MiniAddressMap';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 import { guideHref } from '../utils/guide-link';
+import { codCheckoutFee, codCustomerCharge } from '@/shared/utils/cod-amount';
 
 interface Props {
     selectedBusinessId?: number | null;
@@ -18,7 +19,7 @@ interface Props {
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
     pending: { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
-    in_transit: { label: 'En tránsito', cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+    in_transit: { label: 'En tr\u00e1nsito', cls: 'bg-blue-100 text-blue-700 border-blue-200' },
     delivered: { label: 'Entregado', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
     failed: { label: 'Fallido', cls: 'bg-red-100 text-red-700 border-red-200' },
     cancelled: { label: 'Cancelado', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
@@ -49,7 +50,7 @@ function CODBadge({ isPaid }: { isPaid?: boolean }) {
 }
 
 function formatMoney(amount?: number, currency: string = 'COP') {
-    if (amount == null) return '—';
+    if (amount == null) return '\u2014';
     try {
         return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
     } catch {
@@ -58,7 +59,7 @@ function formatMoney(amount?: number, currency: string = 'COP') {
 }
 
 function formatDate(s?: string) {
-    if (!s) return '—';
+    if (!s) return '\u2014';
     return new Date(s).toLocaleString('es-CO', {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Bogota',
@@ -133,7 +134,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                     <DollarSign className="text-emerald-600" size={20} />
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Envíos contra entrega</h2>
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Env&#237;os contra entrega</h2>
                     <span className="text-xs text-gray-500 dark:text-gray-400">({total})</span>
                 </div>
                 <div className="flex-1" />
@@ -151,7 +152,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                     <input
                         value={guideFilter}
                         onChange={e => setGuideFilter(e.target.value)}
-                        placeholder="N° de guía..."
+                        placeholder="N&#176; de gu&#237;a..."
                         className="pl-9 pr-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-44"
                     />
                 </div>
@@ -162,7 +163,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                 >
                     <option value="">Todos los estados</option>
                     <option value="pending">Pendiente</option>
-                    <option value="in_transit">En tránsito</option>
+                    <option value="in_transit">En tr&#225;nsito</option>
                     <option value="delivered">Entregado</option>
                     <option value="failed">Fallido</option>
                 </select>
@@ -200,7 +201,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                     {!loading && filtered.length === 0 && !error && (
                         <div className="text-center text-gray-400 dark:text-gray-500 p-10 text-sm">
                             <Package size={32} className="mx-auto mb-2 opacity-50" />
-                            No hay envíos contra entrega.
+                            No hay env&#237;os contra entrega.
                         </div>
                     )}
                     <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -221,7 +222,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                                     </div>
                                     <div className="flex items-center justify-between gap-2 text-xs text-gray-600 dark:text-gray-300">
                                         <span className="font-mono truncate">#{s.order_number || s.tracking_number || s.id}</span>
-                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatMoney(s.cod_total, s.order_currency)}</span>
+                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatMoney(codCustomerCharge(s), s.order_currency)}</span>
                                     </div>
                                     <div className="flex items-center justify-between gap-2 mt-1">
                                         <StatusBadge status={s.status} />
@@ -244,7 +245,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                             >
                                 <ChevronLeft size={14} />
                             </button>
-                            <span className="text-gray-500 dark:text-gray-400">Pág {page} de {totalPages}</span>
+                            <span className="text-gray-500 dark:text-gray-400">P&#225;g {page} de {totalPages}</span>
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page >= totalPages}
@@ -268,7 +269,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                         <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500 text-sm">
                             <div className="text-center">
                                 <Package size={48} className="mx-auto mb-3 opacity-40" />
-                                Selecciona un envío para ver el detalle
+                                Selecciona un env&#237;o para ver el detalle
                             </div>
                         </div>
                     )}
@@ -339,7 +340,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                         <StatusBadge status={shipment.status} />
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                        Orden #{shipment.order_number || shipment.id} · Tracking {shipment.tracking_number || '—'}
+                        Orden #{shipment.order_number || shipment.id} &#183; Tracking {shipment.tracking_number || '\u2014'}
                     </p>
                 </div>
                 <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -356,7 +357,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                         </div>
                         <p className="text-xs text-blue-900 dark:text-blue-100 truncate">{shipment.warehouse_name || 'Bodega principal'}</p>
                     </div>
-                    <MiniAddressMap address={shipment.warehouse_name || 'Medellín'} city="Medellín" color="blue" />
+                    <MiniAddressMap address={shipment.warehouse_name || 'Medell\u00edn'} city="Medell&#237;n" color="blue" />
                 </div>
                 <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg overflow-hidden">
                     <div className="p-3">
@@ -373,19 +374,19 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <InfoCard icon={<DollarSign size={12} />} label="Monto a cobrar" value={formatMoney(shipment.cod_total, shipment.order_currency)} highlight />
+                <InfoCard icon={<DollarSign size={12} />} label="Monto a cobrar" value={formatMoney(codCustomerCharge(shipment), shipment.order_currency)} highlight />
                 <InfoCard icon={<DollarSign size={12} />} label="Total orden" value={formatMoney(shipment.order_total_amount, shipment.order_currency)} />
-                <InfoCard icon={<Truck size={12} />} label="Transportadora" value={shipment.carrier || '—'} />
+                <InfoCard icon={<Truck size={12} />} label="Transportadora" value={shipment.carrier || '\u2014'} />
                 <InfoCard icon={<Calendar size={12} />} label="Entregado" value={shipment.delivered_at ? formatDate(shipment.delivered_at) : 'Pendiente'} />
             </div>
 
             {carrierLogo && (
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <img src={carrierLogo} alt={shipment.carrier} className="h-5 max-w-[80px] object-contain" />
-                    <span>Guía: {shipment.guide_id || '—'}</span>
+                    <span>Gu&#237;a: {shipment.guide_id || '\u2014'}</span>
                     {shipment.guide_url && (
                         <a href={guideHref(shipment.id, shipment.guide_url, businessId)} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline inline-flex items-center gap-1">
-                            <FileText size={11} /> Ver guía
+                            <FileText size={11} /> Ver gu&#237;a
                         </a>
                     )}
                 </div>
@@ -405,8 +406,8 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                             <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-1">Registrar cobro contra entrega</h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {canCollect
-                                    ? `Marca como pagado el monto de ${formatMoney(shipment.cod_total, shipment.order_currency)}.`
-                                    : 'Solo se puede registrar el cobro cuando el envío esté entregado.'}
+                                    ? `Marca como pagado el monto de ${formatMoney((shipment.cod_total || 0) + codCheckoutFee(shipment), shipment.order_currency)}.`
+                                    : 'Solo se puede registrar el cobro cuando el env\u00edo est\u00e9 entregado.'}
                             </p>
                         </div>
                         <button
@@ -447,7 +448,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                                 <div className="flex-1">
                                     <div className="font-semibold text-gray-900 dark:text-white">{ev.status}</div>
                                     <div className="text-gray-600 dark:text-gray-400">{ev.description}</div>
-                                    <div className="text-gray-400 dark:text-gray-500 mt-0.5">{ev.location} · {ev.date}</div>
+                                    <div className="text-gray-400 dark:text-gray-500 mt-0.5">{ev.location} &#183; {ev.date}</div>
                                 </div>
                             </li>
                         ))}
@@ -460,7 +461,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-5">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Confirmar cobro</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                            ¿Marcar la orden <span className="font-mono">#{shipment.order_number}</span> como pagada por <strong>{formatMoney(shipment.cod_total, shipment.order_currency)}</strong>?
+                            &#191;Marcar la orden <span className="font-mono">#{shipment.order_number}</span> como pagada por <strong>{formatMoney((shipment.cod_total || 0) + codCheckoutFee(shipment), shipment.order_currency)}</strong>?
                         </p>
                         <label className="block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">Notas / referencia (opcional)</label>
                         <textarea

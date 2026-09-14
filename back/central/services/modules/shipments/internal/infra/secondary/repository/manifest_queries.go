@@ -131,7 +131,12 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			COALESCE(o.shipping_state, '') AS shipping_state,
 			s.weight,
 			COALESCE(o.total_amount, 0) AS total_amount,
-			o.cod_total + COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_total,
+			CASE
+				WHEN o.cod_total IS NULL THEN NULL
+				WHEN COALESCE(o.cod_checkout_carrier_fee, 0) > 0 THEN o.cod_total + o.cod_checkout_carrier_fee
+				WHEN o.cod_includes_shipping THEN o.cod_total
+				ELSE o.cod_total + COALESCE(s.cod_carrier_fee, 0)
+			END AS cod_total,
 			o.business_id,
 			COALESCE(b.name, '') AS business_name,
 			w.name AS warehouse_name,

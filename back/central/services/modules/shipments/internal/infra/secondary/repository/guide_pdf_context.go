@@ -64,7 +64,12 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			s.created_at,
 			s.estimated_delivery,
 			s.destination_address, s.destination_city, s.destination_state, s.destination_suburb,
-			o.cod_total + COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_total,
+			CASE
+				WHEN o.cod_total IS NULL THEN NULL
+				WHEN COALESCE(o.cod_checkout_carrier_fee, 0) > 0 THEN o.cod_total + o.cod_checkout_carrier_fee
+				WHEN o.cod_includes_shipping THEN o.cod_total
+				ELSE o.cod_total + COALESCE(s.cod_carrier_fee, 0)
+			END AS cod_total,
 			s.cod_carrier_fee,
 			o.order_number,
 			o.customer_name,
