@@ -23,7 +23,7 @@ const GAP = 14;
 
 export function TourSpotlight({ step, stepNumber, totalSteps, onNext, onPrev, onClose, onUnavailable, onSkipAll }: Props) {
     const anclado = Boolean(step.target);
-    const { rect, notFound } = useTargetRect(step.target ?? null, anclado);
+    const { rect, notFound } = useTargetRect(step.target ?? null, anclado, step.waitMs);
 
     useEffect(() => {
         if (notFound) onUnavailable();

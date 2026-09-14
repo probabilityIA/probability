@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MessageAudit } from './MessageAudit';
 import { WhatsAppConversations } from './WhatsAppConversations';
 import { IntegrationRulesForm, RULES_TABS_SLOT_ID } from './IntegrationRulesForm';
@@ -22,13 +23,34 @@ const tabs = [
   { key: 'flows' as const, label: 'Flujos' },
 ];
 
+type TabKey = (typeof tabs)[number]['key'];
+
+function isTabKey(value: string | null): value is TabKey {
+  return tabs.some((tab) => tab.key === value);
+}
+
 export function NotificationDashboard() {
   const { isSuperAdmin } = usePermissions();
   const { selectedBusinessId } = useNotificationBusiness();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
 
   const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
-  const [activeTab, setActiveTab] = useState<'audit' | 'conversations' | 'campaigns' | 'templates' | 'flows'>('conversations');
+  const [activeTab, setActiveTab] = useState<TabKey>(isTabKey(tabParam) ? tabParam : 'conversations');
+
+  useEffect(() => {
+    if (isTabKey(tabParam)) setActiveTab(tabParam);
+  }, [tabParam]);
+
+  const selectTab = (key: TabKey) => {
+    setActiveTab(key);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', key);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [configRefreshKey, setConfigRefreshKey] = useState(0);
@@ -55,7 +77,8 @@ export function NotificationDashboard() {
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            data-tour={`notif-tab-${tab.key}`}
+            onClick={() => selectTab(tab.key)}
             style={
               activeTab === tab.key
                 ? { backgroundColor: 'var(--color-secondary-500)', color: 'var(--color-on-secondary, white)' }
@@ -77,6 +100,7 @@ export function NotificationDashboard() {
 
         <button
           type="button"
+          data-tour="notif-rules"
           onClick={() => setIsRulesModalOpen(true)}
           className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}

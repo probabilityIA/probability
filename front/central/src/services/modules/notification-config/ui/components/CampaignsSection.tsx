@@ -121,6 +121,7 @@ export function CampaignsSection({ businessId }: CampaignsSectionProps) {
               color: "var(--color-on-primary, white)",
             }}
             className="rounded-lg px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90"
+            data-tour="notif-new-campaign"
           >
             {"Nueva campaña"}
           </button>,

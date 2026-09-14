@@ -245,6 +245,7 @@ export function TemplatesSection({ businessId }: TemplatesSectionProps) {
           )}
           <button
             type="button"
+            data-tour="notif-new-template"
             onClick={() => setCreating(true)}
             className={`${own.some((item) => item.Status === "pending") ? "" : "ml-auto "}rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90`}
           >

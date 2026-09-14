@@ -32,6 +32,7 @@ export interface TourStep {
     route?: string;
     optional?: boolean;
     superAdminOnly?: boolean;
+    waitMs?: number;
 }
 
 export interface TourDefinition {

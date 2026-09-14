@@ -455,7 +455,7 @@ export function WhatsAppConversations({ businessId, campaignId, fillHeight = fal
                   <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.243-1.214l-.252-.149-2.868.852.852-2.868-.149-.252A8 8 0 1112 20z" />
                 </svg>
               </div>
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">Conversaciones</h3>
+              <h3 data-tour="notif-conversations-list" className="text-sm font-medium text-gray-900 dark:text-white">Conversaciones</h3>
               <span className="text-xs text-gray-400 dark:text-gray-500">({total})</span>
               {unreadConversations > 0 && (
                 <span className="ml-auto rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-semibold text-white">

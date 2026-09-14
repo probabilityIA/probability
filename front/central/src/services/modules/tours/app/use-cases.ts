@@ -31,6 +31,7 @@ export function resolveVisibleSteps(tour: TourDefinition, isSuperAdmin = false):
         if (step.superAdminOnly && !isSuperAdmin) return false;
         if (!step.target) return true;
         if (step.route) return true;
+        if (step.waitMs) return true;
         if (!step.optional) return true;
         return Boolean(document.querySelector(step.target));
     });

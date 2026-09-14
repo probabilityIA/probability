@@ -12,7 +12,7 @@ export interface TargetRect {
 const TIMEOUT_MS = 1500;
 const POLL_MS = 120;
 
-export function useTargetRect(selector: string | null, enabled: boolean) {
+export function useTargetRect(selector: string | null, enabled: boolean, timeoutMs: number = TIMEOUT_MS) {
     const [rect, setRect] = useState<TargetRect | null>(null);
     const [notFound, setNotFound] = useState(false);
 
@@ -31,7 +31,7 @@ export function useTargetRect(selector: string | null, enabled: boolean) {
         const medir = () => {
             const el = document.querySelector(selector) as HTMLElement | null;
             if (!el) {
-                if (Date.now() - inicio > TIMEOUT_MS && !cancelled) setNotFound(true);
+                if (Date.now() - inicio > timeoutMs && !cancelled) setNotFound(true);
                 return false;
             }
             const box = el.getBoundingClientRect();
@@ -62,7 +62,7 @@ export function useTargetRect(selector: string | null, enabled: boolean) {
             window.removeEventListener('resize', actualizar);
             window.removeEventListener('scroll', actualizar, true);
         };
-    }, [selector, enabled]);
+    }, [selector, enabled, timeoutMs]);
 
     return { rect, notFound };
 }

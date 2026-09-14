@@ -140,6 +140,20 @@ describe('resolveVisibleSteps', () => {
         expect(resuelto.steps.map((s) => s.id)).toEqual(['welcome', 'orders']);
     });
 
+    it('conserva los pasos opcionales con espera aunque su elemento aparezca despues', () => {
+        const definicion = tour({
+            steps: [
+                { id: 'tab', title: 'Pestana', body: 'b', target: '[data-tour="tab"]', route: '/demo?tab=x', optional: true },
+                { id: 'boton', title: 'Boton', body: 'b', target: '[data-tour="boton"]', optional: true, waitMs: 8000 },
+                { id: 'sin-espera', title: 'Otro', body: 'b', target: '[data-tour="otro"]', optional: true },
+            ],
+        });
+
+        const resuelto = resolveVisibleSteps(definicion);
+
+        expect(resuelto.steps.map((s) => s.id)).toEqual(['tab', 'boton']);
+    });
+
     it('conserva los pasos obligatorios aunque el elemento no exista todavia', () => {
         const definicion = tour({
             steps: [
