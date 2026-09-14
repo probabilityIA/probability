@@ -112,5 +112,7 @@ script, verificar, y dejar `Migrate()` en cero otra vez.
 
 | 2026-09-14 | `FixCodTotal15788CambioTransportadora` | **TKT-000088**. Orden 15788 (Viga): el comprador cotizo Interrapidisimo en la tienda (comision 5.238) y el negocio genero la guia con Coordinadora (6.116) antes de la mejora; la guia cobra 71.228 y EnvioClick devuelve 65.112. Por decision del usuario la diferencia de 878 la asume el negocio: `cod_total` 65.990 -> 65.112, con guarda de valor previo y sin corte. Verificado: 1 fila; contra entrega muestra neto 65.112 y cobro 71.228. DML borrado del repo tras la corrida | produccion |
 
+| 2026-09-14 | `FixCodTotalVigaMayorQueGuia` | **TKT-000088**. Ordenes de Viga sin ningun corte donde `cod_total` era mayor que lo que devuelve EnvioClick (`cod_collect_amount - cod_carrier_fee`). Por decision del usuario se paga lo que dice la guia: 14685 199.068 -> 197.041, 14689 65.595 -> 64.152, 14670 60.645 -> 59.496, 14687 57.593 -> 56.626, VIG-0068 159.300,90 -> 158.535 (total -6.352). Las que salen a favor de Probability no se tocan. Guarda de valor previo y sin corte. Billetera sin cambios. Verificado: 5 filas y 0 ordenes sin corte pagando mas que su guia. DML borrado del repo tras la corrida | produccion |
+
 Antes de esta fecha no habia registro: todas las migraciones listadas en
 `migrateHistorico()` se aplicaron corriendo la cadena completa.
