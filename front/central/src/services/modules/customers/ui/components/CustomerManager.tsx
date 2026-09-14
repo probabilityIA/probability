@@ -123,7 +123,7 @@ export default function CustomerManager({ selectedBusinessId = null, onBusinessC
                             placeholder="-- Selecciona un negocio --"
                         />
                     )}
-                    {isSuperAdmin && !requiresBusinessSelection && (
+                    {!requiresBusinessSelection && (
                         <>
                             <button
                                 onClick={() => setShowBulkUpload(true)}
