@@ -26,7 +26,7 @@ Entorno: local, BD `127.0.0.1:5434`, backend :3050, front :3000
 | 1 - Catalogo y motor | hecha 2026-09-14 | ver abajo |
 | 2 - Enforcement audit | hecha 2026-09-14 | 103e9c44 |
 | 3 - Enforce | hecha 2026-09-14 (local) | ver abajo |
-| 4 - Front y app obedecen | pendiente | |
+| 4 - Front y app obedecen | hecha 2026-09-14 | 986811b2 |
 | 5 - Limpieza y docs | pendiente | |
 | Pruebas E2E multi-rol | pendiente | |
 
