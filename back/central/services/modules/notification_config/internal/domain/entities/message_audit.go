@@ -34,6 +34,7 @@ type ConversationSummary struct {
 	OrderID              string
 	CampaignID           *uint
 	CampaignName         string
+	CustomerName         string
 	UnreadCount          int
 	OptedOut             bool
 	ConversationType     string

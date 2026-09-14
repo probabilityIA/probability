@@ -36,6 +36,7 @@ func (uc *useCase) ListConversations(ctx context.Context, filter dtos.Conversati
 			OrderID:              conv.OrderID,
 			CampaignID:           conv.CampaignID,
 			CampaignName:         conv.CampaignName,
+			CustomerName:         conv.CustomerName,
 			UnreadCount:          conv.UnreadCount,
 			OptedOut:             conv.OptedOut,
 			ConversationType:     conv.ConversationType,

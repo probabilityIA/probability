@@ -193,6 +193,7 @@ type conversationSummaryRow struct {
 	OrderID              string
 	CampaignID           *uint
 	CampaignName         string
+	CustomerName         string
 	UnreadCount          int
 	OptedOut             bool
 	ConversationType     string
@@ -233,6 +234,17 @@ func conversationOrderLateral(conv string) string {
 }
 
 const optOutReplyText = "dejar de recibir"
+
+func clientNameLateral(business, phoneKey string) string {
+	return fmt.Sprintf(`LEFT JOIN LATERAL (
+		SELECT cl.name FROM client cl
+		WHERE cl.business_id = %[1]s
+		  AND cl.deleted_at IS NULL
+		  AND btrim(COALESCE(cl.name, '')) <> ''
+		  AND right(regexp_replace(cl.phone, '[^0-9]', '', 'g'), 10) = right(%[2]s, 10)
+		ORDER BY cl.updated_at DESC LIMIT 1
+	) cli ON true`, business, phoneKey)
+}
 
 func clientOptOutExists(business, phoneKey string) string {
 	return fmt.Sprintf(`EXISTS (
@@ -339,6 +351,7 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		       COALESCE(ord.id, '') AS order_id,
 		       camp.id AS campaign_id,
 		       COALESCE(camp.name, '') AS campaign_name,
+		       COALESCE(cli.name, '') AS customer_name,
 		       COALESCE(agg.unread_count, 0) AS unread_count,
 		       (COALESCE(agg.opt_out_replies, 0) > 0 OR %s) AS opted_out
 		FROM claves k
@@ -373,8 +386,9 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		) reciente ON true
 		%s
 		%s
+		%s
 		ORDER BY (COALESCE(agg.unread_count, 0) > 0) DESC, last_activity DESC
-		OFFSET ? LIMIT ?`, phoneKeyExpr, where, clientOptOutExists("ultima.business_id", "k.phone_key"), optOutReplyText, conversationOrderLateral("ultima"), conversationCampaignLateral("ultima", "k.phone_key"))
+		OFFSET ? LIMIT ?`, phoneKeyExpr, where, clientOptOutExists("ultima.business_id", "k.phone_key"), optOutReplyText, conversationOrderLateral("ultima"), conversationCampaignLateral("ultima", "k.phone_key"), clientNameLateral("ultima.business_id", "k.phone_key"))
 
 	listArgs := append(append([]any{}, args...), offset, filter.PageSize)
 
@@ -398,6 +412,7 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 			OrderID:              row.OrderID,
 			CampaignID:           row.CampaignID,
 			CampaignName:         row.CampaignName,
+			CustomerName:         row.CustomerName,
 			UnreadCount:          row.UnreadCount,
 			OptedOut:             row.OptedOut,
 			ConversationType:     row.ConversationType,
@@ -497,6 +512,7 @@ type conversationMetaRow struct {
 	OrderID          string
 	CampaignID       *uint
 	CampaignName     string
+	CustomerName     string
 	OptedOut         bool
 	ConversationType string
 	CurrentState     string
@@ -514,6 +530,7 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 		       COALESCE(ord.id, '') AS order_id,
 		       camp.id AS campaign_id,
 		       COALESCE(camp.name, '') AS campaign_name,
+		       COALESCE(cli.name, '') AS customer_name,
 		       (%s OR EXISTS (
 		           SELECT 1 FROM whatsapp_message_logs ml
 		           JOIN whatsapp_conversations c2 ON c2.id = ml.conversation_id
@@ -525,8 +542,9 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 		FROM whatsapp_conversations c
 		%s
 		%s
+		%s
 		WHERE c.id = ? AND c.business_id = ?
-		LIMIT 1`, clientOptOutExists("c.business_id", "regexp_replace(c.phone_number, '[^0-9]', '', 'g')"), optOutReplyText, conversationOrderLateral("c"), conversationCampaignLateral("c", "regexp_replace(c.phone_number, '[^0-9]', '', 'g')"))
+		LIMIT 1`, clientOptOutExists("c.business_id", "regexp_replace(c.phone_number, '[^0-9]', '', 'g')"), optOutReplyText, conversationOrderLateral("c"), conversationCampaignLateral("c", "regexp_replace(c.phone_number, '[^0-9]', '', 'g')"), clientNameLateral("c.business_id", "regexp_replace(c.phone_number, '[^0-9]', '', 'g')"))
 	err = q.db.Conn(ctx).Raw(metaSQL, convID, businessID).Scan(&meta).Error
 	if err != nil {
 		return nil, nil, fmt.Errorf("conversation not found: %w", err)
@@ -558,6 +576,7 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 		OrderID:          meta.OrderID,
 		CampaignID:       meta.CampaignID,
 		CampaignName:     meta.CampaignName,
+		CustomerName:     meta.CustomerName,
 		OptedOut:         meta.OptedOut,
 		ConversationType: meta.ConversationType,
 		CurrentState:     meta.CurrentState,

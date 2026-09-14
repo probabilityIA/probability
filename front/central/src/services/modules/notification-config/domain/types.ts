@@ -211,6 +211,7 @@ export interface ConversationSummary {
     order_id?: string;
     campaign_id?: number | null;
     campaign_name?: string;
+    customer_name?: string;
     unread_count: number;
     opted_out: boolean;
     conversation_type: string;
@@ -278,6 +279,7 @@ export interface ConversationDetailResponse {
     order_id?: string;
     campaign_id?: number | null;
     campaign_name?: string;
+    customer_name?: string;
     opted_out?: boolean;
     conversation_type: string;
     current_state: string;

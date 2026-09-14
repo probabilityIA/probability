@@ -39,6 +39,7 @@ type ConversationSummary struct {
 	OrderID              string `json:"order_id"`
 	CampaignID           *uint  `json:"campaign_id"`
 	CampaignName         string `json:"campaign_name"`
+	CustomerName         string `json:"customer_name"`
 	UnreadCount          int    `json:"unread_count"`
 	OptedOut             bool   `json:"opted_out"`
 	ConversationType     string `json:"conversation_type"`
@@ -95,6 +96,7 @@ type ConversationDetailResponse struct {
 	OrderID          string                `json:"order_id"`
 	CampaignID       *uint                 `json:"campaign_id"`
 	CampaignName     string                `json:"campaign_name"`
+	CustomerName     string                `json:"customer_name"`
 	OptedOut         bool                  `json:"opted_out"`
 	ConversationType string                `json:"conversation_type"`
 	CurrentState     string                `json:"current_state"`

@@ -48,6 +48,7 @@ func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID s
 		OrderID:          conv.OrderID,
 		CampaignID:       conv.CampaignID,
 		CampaignName:     conv.CampaignName,
+		CustomerName:     conv.CustomerName,
 		OptedOut:         conv.OptedOut,
 		ConversationType: conv.ConversationType,
 		CurrentState:     conv.CurrentState,

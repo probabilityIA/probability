@@ -526,12 +526,15 @@ export function WhatsAppConversations({ businessId, campaignId, fillHeight = fal
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className={`text-sm text-gray-900 dark:text-white truncate ${unread ? 'font-semibold' : 'font-medium'}`}>
-                            {conv.phone_number}
+                            {conv.customer_name || conv.phone_number}
                           </span>
                           <span className={`text-[10px] shrink-0 ml-2 ${unread ? 'font-semibold text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                             {timeAgo(conv.last_activity)}
                           </span>
                         </div>
+                        {conv.customer_name && (
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{conv.phone_number}</p>
+                        )}
 
                         <div className="flex items-center gap-1 mt-0.5">
                           {conv.last_message_direction === 'outbound' && (
@@ -632,7 +635,14 @@ export function WhatsAppConversations({ businessId, campaignId, fillHeight = fal
                       {isSystemAlert ? BELL : detail.phone_number.slice(-2)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{detail.phone_number}</p>
+                      {detail.customer_name ? (
+                        <>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{detail.customer_name}</p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400">{detail.phone_number}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{detail.phone_number}</p>
+                      )}
                       <div className="flex flex-wrap items-center gap-1.5">
                         {isSystemAlert ? (
                           <span className="inline-block px-1.5 py-0 rounded-full text-[9px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
