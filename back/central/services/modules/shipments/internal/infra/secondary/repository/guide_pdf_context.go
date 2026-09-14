@@ -20,9 +20,9 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		CreatedAt          *time.Time
 		EstimatedDelivery  *time.Time
 		DestinationAddress string
-		DestinationCity   string
+		DestinationCity    string
 		DestinationState   string
-		DestinationSuburb string
+		DestinationSuburb  string
 		CodTotal           *float64
 		CodCarrierFee      *float64
 		OrderNumber        *string
@@ -64,7 +64,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			s.created_at,
 			s.estimated_delivery,
 			s.destination_address, s.destination_city, s.destination_state, s.destination_suburb,
-			o.cod_total,
+			o.cod_total + COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_total,
 			s.cod_carrier_fee,
 			o.order_number,
 			o.customer_name,

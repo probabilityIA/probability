@@ -8,22 +8,18 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
-// buildOrderEntity construye la entidad ProbabilityOrder desde el DTO
 func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, clientID *uint, statusMapping orderStatusMapping) *entities.ProbabilityOrder {
 	return &entities.ProbabilityOrder{
-		// Identificadores de integración
 		BusinessID:      dto.BusinessID,
 		IntegrationID:   dto.IntegrationID,
 		IntegrationType: dto.IntegrationType,
 
-		// Identificadores de la orden
 		Platform:       dto.Platform,
 		ExternalID:     dto.ExternalID,
 		ChannelPackID:  dto.ChannelPackID,
 		OrderNumber:    dto.OrderNumber,
 		InternalNumber: dto.InternalNumber,
 
-		// Información financiera
 		Subtotal:                    dto.Subtotal,
 		Tax:                         dto.Tax,
 		Discount:                    dto.Discount,
@@ -34,6 +30,7 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		IsCod:                       dto.IsCod,
 		CodTotal:                    dto.CodTotal,
 		CodIncludesShipping:         dto.CodIncludesShipping,
+		CodCheckoutCarrierFee:       dto.CodCheckoutCarrierFee,
 		SubtotalPresentment:         dto.SubtotalPresentment,
 		TaxPresentment:              dto.TaxPresentment,
 		DiscountPresentment:         dto.DiscountPresentment,
@@ -43,7 +40,6 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		TotalAmountPresentment:      dto.TotalAmountPresentment,
 		CurrencyPresentment:         dto.CurrencyPresentment,
 
-		// Información del cliente
 		CustomerID:        clientID,
 		CustomerName:      dto.CustomerName,
 		CustomerFirstName: dto.CustomerFirstName,
@@ -64,7 +60,6 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 			return ""
 		}(),
 
-		// Tipo y estado
 		OrderTypeID:         dto.OrderTypeID,
 		OrderTypeName:       dto.OrderTypeName,
 		Status:              dto.Status,
@@ -73,37 +68,31 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		PaymentStatusID:     statusMapping.PaymentStatusID,
 		FulfillmentStatusID: statusMapping.FulfillmentStatusID,
 
-		// Información adicional
 		Notes:    dto.Notes,
 		Coupon:   dto.Coupon,
 		Approved: dto.Approved,
 		UserID:   dto.UserID,
 		UserName: dto.UserName,
 
-		// Testing
 		IsTest: dto.IsTest,
 
-		// Facturación
 		Invoiceable:     dto.Invoiceable,
 		InvoiceURL:      dto.InvoiceURL,
 		InvoiceID:       dto.InvoiceID,
 		InvoiceProvider: dto.InvoiceProvider,
 		OrderStatusURL:  dto.OrderStatusURL,
 
-		// Datos estructurados (JSONB)
 		Metadata:           dto.Metadata,
 		FinancialDetails:   dto.FinancialDetails,
 		ShippingDetails:    dto.ShippingDetails,
 		PaymentDetails:     dto.PaymentDetails,
 		FulfillmentDetails: dto.FulfillmentDetails,
 
-		// Timestamps
 		OccurredAt: dto.OccurredAt,
 		ImportedAt: dto.ImportedAt,
 	}
 }
 
-// assignPaymentMethodID asigna el PaymentMethodID desde el primer pago
 func (uc *UseCaseCreateOrder) assignPaymentMethodID(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) {
 	order.PaymentMethodID = 1 // Valor por defecto
 
@@ -126,7 +115,6 @@ func (uc *UseCaseCreateOrder) assignPaymentMethodID(order *entities.ProbabilityO
 	}
 }
 
-// populateOrderFields popula campos planos de dirección desde Addresses
 func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) {
 	for _, addr := range dto.Addresses {
 		if addr.Type == "shipping" {

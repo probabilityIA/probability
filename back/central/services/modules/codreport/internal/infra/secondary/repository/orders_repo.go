@@ -11,23 +11,24 @@ import (
 )
 
 type codOrderRow struct {
-	OrderID       string
-	OrderNumber   string
-	CustomerName  string
-	Carrier       string
-	CodTotal      float64
-	CodCarrierFee       float64
-	CodIncludesShipping bool
-	ShippingCost        float64
-	Currency            string
-	Status        string
-	Collected     bool
-	ShipmentID    uint
-	HasGuide      bool
-	GuideNumber   string
-	Paid          bool
-	CreatedAt     time.Time
-	DeliveredAt   *time.Time
+	OrderID               string
+	OrderNumber           string
+	CustomerName          string
+	Carrier               string
+	CodTotal              float64
+	CodCarrierFee         float64
+	CodIncludesShipping   bool
+	CodCheckoutCarrierFee float64
+	ShippingCost          float64
+	Currency              string
+	Status                string
+	Collected             bool
+	ShipmentID            uint
+	HasGuide              bool
+	GuideNumber           string
+	Paid                  bool
+	CreatedAt             time.Time
+	DeliveredAt           *time.Time
 }
 
 const guideNumberExpr = `COALESCE(NULLIF(s.guide_id,''), NULLIF(s.tracking_number,''), NULLIF(o.tracking_number,''), '')`
@@ -111,7 +112,7 @@ func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]
 	offset := (page - 1) * pageSize
 
 	listSQL := fmt.Sprintf(`
-SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_includes_shipping, o.currency, o.created_at,
+SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_includes_shipping, o.cod_checkout_carrier_fee, o.currency, o.created_at,
 	s.id AS shipment_id,
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
@@ -135,23 +136,24 @@ LIMIT ? OFFSET ?`, latestShipmentJoin, where)
 	out := make([]entities.CodOrder, len(rows))
 	for i := range rows {
 		out[i] = entities.CodOrder{
-			OrderID:       rows[i].OrderID,
-			OrderNumber:   rows[i].OrderNumber,
-			ShipmentID:    rows[i].ShipmentID,
-			HasGuide:      rows[i].HasGuide,
-			GuideNumber:   rows[i].GuideNumber,
-			CustomerName:  rows[i].CustomerName,
-			Carrier:       rows[i].Carrier,
-			CodTotal:      rows[i].CodTotal,
-			CodCarrierFee:       rows[i].CodCarrierFee,
-			CodIncludesShipping: rows[i].CodIncludesShipping,
-			ShippingCost:        rows[i].ShippingCost,
-			Currency:            rows[i].Currency,
-			Status:              rows[i].Status,
-			Collected:           rows[i].Collected,
-			Paid:          rows[i].Paid,
-			CreatedAt:     rows[i].CreatedAt,
-			DeliveredAt:   rows[i].DeliveredAt,
+			OrderID:               rows[i].OrderID,
+			OrderNumber:           rows[i].OrderNumber,
+			ShipmentID:            rows[i].ShipmentID,
+			HasGuide:              rows[i].HasGuide,
+			GuideNumber:           rows[i].GuideNumber,
+			CustomerName:          rows[i].CustomerName,
+			Carrier:               rows[i].Carrier,
+			CodTotal:              rows[i].CodTotal,
+			CodCarrierFee:         rows[i].CodCarrierFee,
+			CodIncludesShipping:   rows[i].CodIncludesShipping,
+			CodCheckoutCarrierFee: rows[i].CodCheckoutCarrierFee,
+			ShippingCost:          rows[i].ShippingCost,
+			Currency:              rows[i].Currency,
+			Status:                rows[i].Status,
+			Collected:             rows[i].Collected,
+			Paid:                  rows[i].Paid,
+			CreatedAt:             rows[i].CreatedAt,
+			DeliveredAt:           rows[i].DeliveredAt,
 		}
 	}
 	return out, total, nil

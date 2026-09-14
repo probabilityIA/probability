@@ -32,6 +32,20 @@ func TestOrderCodBasisAmountToCollect(t *testing.T) {
 			want:       176494,
 		},
 		{
+			name:       "checkout del plugin: cod_total neto + comision del checkout = total de la tienda (orden 15789)",
+			basis:      OrderCodBasis{TotalAmount: 45000, CodTotal: 68002, CodIncludesShipping: true, CodCheckoutCarrierFee: 5365},
+			totalCost:  23001,
+			carrierFee: 5365,
+			want:       73367,
+		},
+		{
+			name:       "checkout del plugin con comision real distinta: se cobra lo que dijo la tienda (orden 15788)",
+			basis:      OrderCodBasis{TotalAmount: 45000, CodTotal: 65990, CodIncludesShipping: true, CodCheckoutCarrierFee: 5238},
+			totalCost:  20225,
+			carrierFee: 6116,
+			want:       71228,
+		},
+		{
 			name:       "sin flete calculado conserva el cod_total",
 			basis:      OrderCodBasis{TotalAmount: 157500, CodTotal: 157500, CodIncludesShipping: false},
 			totalCost:  0,

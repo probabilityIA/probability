@@ -61,28 +61,29 @@ type summaryResponse struct {
 }
 
 type codOrderResponse struct {
-	OrderID       string     `json:"order_id"`
-	OrderNumber   string     `json:"order_number"`
-	ShipmentID    uint       `json:"shipment_id"`
-	HasGuide      bool       `json:"has_guide"`
-	GuideNumber   string     `json:"guide_number"`
-	CustomerName  string     `json:"customer_name"`
-	Carrier       string     `json:"carrier"`
-	CodTotal      float64    `json:"cod_total"`
-	CodCarrierFee       float64    `json:"cod_carrier_fee"`
-	CodIncludesShipping bool       `json:"cod_includes_shipping"`
-	ShippingCost        float64    `json:"shipping_cost"`
-	DiscountPct   float64    `json:"discount_pct"`
-	Discount      float64    `json:"discount"`
-	Net           float64    `json:"net"`
-	Currency      string     `json:"currency"`
-	Status        string     `json:"status"`
-	Collected     bool       `json:"collected"`
-	Paid          bool       `json:"paid"`
-	CodState      string     `json:"cod_state"`
-	CutStatus     string     `json:"cut_status"`
-	CreatedAt     time.Time  `json:"created_at"`
-	DeliveredAt   *time.Time `json:"delivered_at"`
+	OrderID               string     `json:"order_id"`
+	OrderNumber           string     `json:"order_number"`
+	ShipmentID            uint       `json:"shipment_id"`
+	HasGuide              bool       `json:"has_guide"`
+	GuideNumber           string     `json:"guide_number"`
+	CustomerName          string     `json:"customer_name"`
+	Carrier               string     `json:"carrier"`
+	CodTotal              float64    `json:"cod_total"`
+	CodCarrierFee         float64    `json:"cod_carrier_fee"`
+	CodIncludesShipping   bool       `json:"cod_includes_shipping"`
+	CodCheckoutCarrierFee float64    `json:"cod_checkout_carrier_fee"`
+	ShippingCost          float64    `json:"shipping_cost"`
+	DiscountPct           float64    `json:"discount_pct"`
+	Discount              float64    `json:"discount"`
+	Net                   float64    `json:"net"`
+	Currency              string     `json:"currency"`
+	Status                string     `json:"status"`
+	Collected             bool       `json:"collected"`
+	Paid                  bool       `json:"paid"`
+	CodState              string     `json:"cod_state"`
+	CutStatus             string     `json:"cut_status"`
+	CreatedAt             time.Time  `json:"created_at"`
+	DeliveredAt           *time.Time `json:"delivered_at"`
 }
 
 type paymentCutResponse struct {
@@ -209,28 +210,29 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 	out := make([]codOrderResponse, len(in))
 	for i := range in {
 		out[i] = codOrderResponse{
-			OrderID:       in[i].OrderID,
-			OrderNumber:   in[i].OrderNumber,
-			ShipmentID:    in[i].ShipmentID,
-			HasGuide:      in[i].HasGuide,
-			GuideNumber:   in[i].GuideNumber,
-			CustomerName:  in[i].CustomerName,
-			Carrier:       in[i].Carrier,
-			CodTotal:      in[i].CodTotal,
-			CodCarrierFee:       in[i].CodCarrierFee,
-			CodIncludesShipping: in[i].CodIncludesShipping,
-			ShippingCost:        in[i].ShippingCost,
-			DiscountPct:   in[i].DiscountPct,
-			Discount:      in[i].Discount,
-			Net:           in[i].Net,
-			Currency:      in[i].Currency,
-			Status:        in[i].Status,
-			Collected:     in[i].Collected,
-			Paid:          in[i].Paid,
-			CodState:      in[i].CodState,
-			CutStatus:     in[i].CutStatus,
-			CreatedAt:     in[i].CreatedAt,
-			DeliveredAt:   in[i].DeliveredAt,
+			OrderID:               in[i].OrderID,
+			OrderNumber:           in[i].OrderNumber,
+			ShipmentID:            in[i].ShipmentID,
+			HasGuide:              in[i].HasGuide,
+			GuideNumber:           in[i].GuideNumber,
+			CustomerName:          in[i].CustomerName,
+			Carrier:               in[i].Carrier,
+			CodTotal:              in[i].CodTotal,
+			CodCarrierFee:         in[i].CodCarrierFee,
+			CodIncludesShipping:   in[i].CodIncludesShipping,
+			CodCheckoutCarrierFee: in[i].CodCheckoutCarrierFee,
+			ShippingCost:          in[i].ShippingCost,
+			DiscountPct:           in[i].DiscountPct,
+			Discount:              in[i].Discount,
+			Net:                   in[i].Net,
+			Currency:              in[i].Currency,
+			Status:                in[i].Status,
+			Collected:             in[i].Collected,
+			Paid:                  in[i].Paid,
+			CodState:              in[i].CodState,
+			CutStatus:             in[i].CutStatus,
+			CreatedAt:             in[i].CreatedAt,
+			DeliveredAt:           in[i].DeliveredAt,
 		}
 	}
 	return out

@@ -129,7 +129,7 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 	}
 	amountToCollect := event.TotalAmount
 	if event.CodTotal > 0 {
-		amountToCollect = entities.CodAmountToCollect(event.CodTotal, event.CodCarrierFee, event.CodIncludesShipping)
+		amountToCollect = entities.CodAmountToCollect(event.CodTotal, event.CodCarrierFee, event.CodIncludesShipping, event.CodCheckoutCarrierFee)
 	} else if amountToCollect > 0 && event.CodCarrierFee > 0 {
 		amountToCollect += event.CodCarrierFee
 	}

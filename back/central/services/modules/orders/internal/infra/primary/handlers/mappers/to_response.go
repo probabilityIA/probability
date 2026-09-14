@@ -101,6 +101,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		IsCod:                       dto.IsCod,
 		CodTotal:                    dto.CodTotal,
 		CodIncludesShipping:         dto.CodIncludesShipping,
+		CodCheckoutCarrierFee:       dto.CodCheckoutCarrierFee,
 		CodCutConfirmed:             dto.CodCutConfirmed,
 		SubtotalPresentment:         dto.SubtotalPresentment,
 		TaxPresentment:              dto.TaxPresentment,

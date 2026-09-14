@@ -209,15 +209,16 @@ type OrderPublicTracking struct {
 }
 
 type OrderCODInfo struct {
-	OrderID           string
-	BusinessID        uint
-	CodTotal          *float64
-	TotalAmount       float64
-	Currency          string
-	IsPaid            bool
-	PaidAt            *time.Time
-	PaymentMethodID   uint
-	PaymentMethodCode string
+	OrderID               string
+	BusinessID            uint
+	CodTotal              *float64
+	CodCheckoutCarrierFee float64
+	TotalAmount           float64
+	Currency              string
+	IsPaid                bool
+	PaidAt                *time.Time
+	PaymentMethodID       uint
+	PaymentMethodCode     string
 }
 
 type CarrierInfo struct {
@@ -256,15 +257,16 @@ type ITransportRequestPublisher interface {
 }
 
 type GuideNotificationData struct {
-	CustomerName  string
-	CustomerPhone string
-	OrderNumber   string
-	BusinessName  string
-	IntegrationID uint
-	CodTotal      *float64
-	CodCarrierFee       *float64
-	CodIncludesShipping bool
-	TrackingURL         string
+	CustomerName          string
+	CustomerPhone         string
+	OrderNumber           string
+	BusinessName          string
+	IntegrationID         uint
+	CodTotal              *float64
+	CodCarrierFee         *float64
+	CodIncludesShipping   bool
+	CodCheckoutCarrierFee float64
+	TrackingURL           string
 }
 
 type OrderExternalGuide struct {
@@ -303,9 +305,17 @@ type OrderRecipient struct {
 }
 
 type OrderCodBasis struct {
-	TotalAmount         float64
-	CodTotal            float64
-	CodIncludesShipping bool
+	TotalAmount           float64
+	CodTotal              float64
+	CodIncludesShipping   bool
+	CodCheckoutCarrierFee float64
+}
+
+func (b OrderCodBasis) CheckoutTotal() float64 {
+	if b.CodTotal <= 0 {
+		return 0
+	}
+	return b.CodTotal + b.CodCheckoutCarrierFee
 }
 
 func (b OrderCodBasis) NetTarget(guideTotalCost float64, embeddedCarrierFee float64) float64 {
@@ -316,7 +326,7 @@ func (b OrderCodBasis) NetTarget(guideTotalCost float64, embeddedCarrierFee floa
 		return b.TotalAmount + guideTotalCost
 	}
 	if b.CodIncludesShipping {
-		return b.CodTotal - embeddedCarrierFee
+		return b.CheckoutTotal() - embeddedCarrierFee
 	}
 	return b.CodTotal
 }

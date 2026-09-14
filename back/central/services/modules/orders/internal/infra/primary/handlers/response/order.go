@@ -36,6 +36,7 @@ type Order struct {
 	IsCod                       bool     `json:"is_cod"`
 	CodTotal                    *float64 `json:"cod_total,omitempty"`
 	CodIncludesShipping         bool     `json:"cod_includes_shipping"`
+	CodCheckoutCarrierFee       float64  `json:"cod_checkout_carrier_fee"`
 	CodCutConfirmed             bool     `json:"cod_cut_confirmed"`
 
 	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`

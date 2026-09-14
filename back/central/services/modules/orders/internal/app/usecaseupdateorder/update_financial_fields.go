@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
-// updateFinancialFields actualiza los campos financieros de la orden
 func (uc *UseCaseUpdateOrder) updateFinancialFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
@@ -41,6 +40,11 @@ func (uc *UseCaseUpdateOrder) updateFinancialFields(order *entities.ProbabilityO
 
 	if dto.CodTotal != nil && (order.CodTotal == nil || *order.CodTotal != *dto.CodTotal) {
 		order.CodTotal = dto.CodTotal
+		changed = true
+	}
+
+	if order.CodCheckoutCarrierFee != dto.CodCheckoutCarrierFee {
+		order.CodCheckoutCarrierFee = dto.CodCheckoutCarrierFee
 		changed = true
 	}
 

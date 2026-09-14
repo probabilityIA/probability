@@ -37,7 +37,7 @@ func (r *Repository) ListPendingCarriers(ctx context.Context, businessID uint, i
 	var rows []row
 	err := r.db.Conn(ctx).
 		Table("shipments AS s").
-		Select(carrierGroupExpr + " AS carrier, COUNT(*) AS count").
+		Select(carrierGroupExpr+" AS carrier, COUNT(*) AS count").
 		Joins("LEFT JOIN orders o ON o.id = s.order_id").
 		Where("s.deleted_at IS NULL").
 		Where("s.status = ?", "pending").
@@ -59,11 +59,6 @@ func (r *Repository) ListPendingCarriers(ctx context.Context, businessID uint, i
 	return out, nil
 }
 
-// carrierGroupExpr normaliza s.carrier para agrupar variantes del mismo
-// transportador que llegan con distinta capitalizacion o con el nivel de
-// servicio pegado (ej. "coordinadora" y "COORDINADORA - Normal (2 dias
-// habiles)" deben contar como "COORDINADORA"). No modifica el dato crudo,
-// solo como se agrupa/filtra en este listado.
 const carrierGroupExpr = "UPPER(TRIM(SPLIT_PART(COALESCE(s.carrier, ''), ' - ', 1)))"
 
 func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.ManifestFilter) ([]domain.ManifestShipmentRow, int64, error) {
@@ -98,28 +93,28 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 	}
 
 	type row struct {
-		ShipmentID         uint
-		OrderID            *string
-		OrderNumber        string
-		TrackingNumber     *string
-		Carrier            *string
-		CarrierCode        *string
-		CustomerName       string
-		CustomerDNI        string
-		ShippingStreet     string
-		ShippingCity       string
-		ShippingState      string
-		Weight             *float64
-		TotalAmount        float64
-		CodTotal           *float64
-		BusinessID         *uint
-		BusinessName       string
-		WarehouseName      *string
-		ShipmentCreatedAt  *time.Time
-		OrderCreatedAt     *time.Time
-		ShipmentStatus     string
-		OrderStatus        string
-		PackageQuantity    int64
+		ShipmentID        uint
+		OrderID           *string
+		OrderNumber       string
+		TrackingNumber    *string
+		Carrier           *string
+		CarrierCode       *string
+		CustomerName      string
+		CustomerDNI       string
+		ShippingStreet    string
+		ShippingCity      string
+		ShippingState     string
+		Weight            *float64
+		TotalAmount       float64
+		CodTotal          *float64
+		BusinessID        *uint
+		BusinessName      string
+		WarehouseName     *string
+		ShipmentCreatedAt *time.Time
+		OrderCreatedAt    *time.Time
+		ShipmentStatus    string
+		OrderStatus       string
+		PackageQuantity   int64
 	}
 
 	q := base.
@@ -136,7 +131,7 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			COALESCE(o.shipping_state, '') AS shipping_state,
 			s.weight,
 			COALESCE(o.total_amount, 0) AS total_amount,
-			o.cod_total,
+			o.cod_total + COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_total,
 			o.business_id,
 			COALESCE(b.name, '') AS business_name,
 			w.name AS warehouse_name,

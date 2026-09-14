@@ -42,6 +42,7 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		IsCod:                       order.IsCod,
 		CodTotal:                    order.CodTotal,
 		CodIncludesShipping:         order.CodIncludesShipping,
+		CodCheckoutCarrierFee:       order.CodCheckoutCarrierFee,
 		CodCutConfirmed:             order.CodCutConfirmed,
 		SubtotalPresentment:         order.SubtotalPresentment,
 		TaxPresentment:              order.TaxPresentment,

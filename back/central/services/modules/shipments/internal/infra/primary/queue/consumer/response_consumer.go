@@ -336,6 +336,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 					freshCod := basis.CodTotal
 					notification.CodTotal = &freshCod
 					notification.CodIncludesShipping = basis.CodIncludesShipping
+					notification.CodCheckoutCarrierFee = basis.CodCheckoutCarrierFee
 				} else {
 					c.log.Warn(ctx).Err(err).
 						Str("order_id", *shipment.OrderID).

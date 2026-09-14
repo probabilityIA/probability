@@ -36,6 +36,7 @@ type OrderResponse struct {
 	IsCod                       bool
 	CodTotal                    *float64
 	CodIncludesShipping         bool
+	CodCheckoutCarrierFee       float64
 	CodCutConfirmed             bool
 
 	SubtotalPresentment     float64

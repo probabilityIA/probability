@@ -15,7 +15,7 @@ import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
 import { carrierOfficeLabel } from '@/shared/utils/guide-destination';
-import { codCustomerCharge } from '@/shared/utils/cod-amount';
+import { codBusinessNet, codCustomerCharge, codEffectiveCarrierFee } from '@/shared/utils/cod-amount';
 import dynamic from 'next/dynamic';
 import { Package, Copy, Check, Link2, X, Calendar, CreditCard, Truck, Receipt, Percent, Wallet, ShoppingBag, User, Phone, Mail, MapPin, ClipboardList, Save, MessageCircle, History, AlertTriangle, RefreshCw, Clock, FileText, ChevronRight, ArrowRight, Plus, CircleCheck, Scissors } from 'lucide-react';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
@@ -276,9 +276,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const totalItemsQty = itemsTotals.qty;
 
     const isCodOrder = order.is_cod === true || (order.cod_total || 0) > 0;
-    const codCarrierFee = order.shipment?.cod_carrier_fee || 0;
-    const codNet = order.cod_total || 0;
-    const codToCollect = codCustomerCharge({ ...order, cod_carrier_fee: codCarrierFee });
+    const realCarrierFee = order.shipment?.cod_carrier_fee || 0;
+    const codCarrierFee = codEffectiveCarrierFee({ ...order, cod_carrier_fee: realCarrierFee });
+    const carrierFeeFromCheckout = realCarrierFee <= 0 && codCarrierFee > 0;
+    const codNet = codBusinessNet({ ...order, cod_carrier_fee: realCarrierFee });
+    const codToCollect = codCustomerCharge({ ...order, cod_carrier_fee: realCarrierFee });
     const envioNeto = (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0);
     const envioMasComision = envioNeto + codCarrierFee;
 
@@ -640,9 +642,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 {codCarrierFee > 0 ? formatCurrency(codCarrierFee, order.currency) : 'Pendiente'}
                                             </p>
                                             <p className="text-[10px] leading-snug text-slate-400">
-                                                {codCarrierFee > 0
-                                                    ? `${order.shipment?.carrier || 'Transportadora'} - contra entrega`
-                                                    : 'Se liquida al confirmar el recaudo'}
+                                                {carrierFeeFromCheckout
+                                                    ? 'Cotizada en el checkout de la tienda'
+                                                    : codCarrierFee > 0
+                                                        ? `${order.shipment?.carrier || 'Transportadora'} - contra entrega`
+                                                        : 'Se liquida al confirmar el recaudo'}
                                             </p>
                                             {codCarrierFee > 0 && envioMasComision > 0 && (
                                                 <p className="mt-1 text-[10px] leading-snug text-slate-500 dark:text-gray-400">

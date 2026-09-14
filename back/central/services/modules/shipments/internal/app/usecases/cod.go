@@ -67,7 +67,7 @@ func (uc *UseCases) CollectCOD(ctx context.Context, shipmentID uint, notes strin
 		return nil, domain.ErrOrderAlreadyPaid
 	}
 
-	if err := uc.repo.MarkOrderPaidCOD(ctx, info.OrderID, *info.CodTotal, info.PaymentMethodID, notes); err != nil {
+	if err := uc.repo.MarkOrderPaidCOD(ctx, info.OrderID, *info.CodTotal+info.CodCheckoutCarrierFee, info.PaymentMethodID, notes); err != nil {
 		return nil, err
 	}
 

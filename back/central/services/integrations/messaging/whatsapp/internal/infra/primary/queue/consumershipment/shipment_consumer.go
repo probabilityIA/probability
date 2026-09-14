@@ -114,7 +114,7 @@ func buildGuideVariables(event request.ShipmentGuideEvent) (string, map[string]s
 	trackingURL = orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo")
 
 	if event.CodTotal > 0 {
-		amountToCollect := entities.CodAmountToCollect(event.CodTotal, event.CodCarrierFee, event.CodIncludesShipping)
+		amountToCollect := entities.CodAmountToCollect(event.CodTotal, event.CodCarrierFee, event.CodIncludesShipping, event.CodCheckoutCarrierFee)
 		return "guia_envio_generada_cod", map[string]string{
 			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
 			"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),
