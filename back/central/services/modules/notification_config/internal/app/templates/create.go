@@ -45,6 +45,7 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateTemplateDTO) (*ent
 }
 
 func (uc *useCase) sendToMeta(ctx context.Context, template *entities.WhatsappTemplate) error {
+	template.Components = BuildMetaComponents(template)
 	if template.MetaTemplateID != "" {
 		return uc.submitEdit(ctx, template)
 	}

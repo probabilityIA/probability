@@ -280,5 +280,11 @@ func templateToDomain(model *models.WhatsappTemplate) (*entities.WhatsappTemplat
 		}
 	}
 
+	if len(model.Components) > 0 {
+		if err := json.Unmarshal(model.Components, &template.Components); err != nil {
+			return nil, err
+		}
+	}
+
 	return template, nil
 }

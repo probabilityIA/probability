@@ -2,7 +2,6 @@ package errors
 
 import "fmt"
 
-// MetaGraphError representa un error parseado de la Graph API de Meta
 type MetaGraphError struct {
 	Code          int
 	Subcode       int
@@ -15,7 +14,6 @@ func (e *MetaGraphError) Error() string {
 	return e.FriendlyMessage()
 }
 
-// FriendlyMessage retorna un mensaje claro en español basado en el código de error de Meta
 func (e *MetaGraphError) FriendlyMessage() string {
 	code := e.Code
 	subcode := e.Subcode
@@ -35,6 +33,11 @@ func (e *MetaGraphError) FriendlyMessage() string {
 		return fmt.Sprintf("El Phone Number ID '%d' no existe o no tiene permisos. Verifica el ID en Meta Business Manager -> WhatsApp -> Numeros de telefono", e.PhoneNumberID)
 	case code == 100 && subcode == 2018109:
 		return "Parametros invalidos en el mensaje. Verifica que el numero de destino tenga formato internacional (ej: +573001234567)"
+	case code == 100 && e.PhoneNumberID == 0:
+		if e.Message != "" {
+			return fmt.Sprintf("Solicitud invalida para Meta (code 100, subcode %d): %s", subcode, e.Message)
+		}
+		return fmt.Sprintf("Solicitud invalida para Meta (code 100, subcode %d)", subcode)
 	case code == 100:
 		return fmt.Sprintf("Solicitud invalida (code 100). Verifica que el Phone Number ID '%d' sea correcto y tenga permisos asignados", e.PhoneNumberID)
 
@@ -88,7 +91,6 @@ func (e *MetaGraphError) FriendlyMessage() string {
 	}
 }
 
-// NewMetaGraphError crea un MetaGraphError a partir de los datos parseados
 func NewMetaGraphError(code, subcode int, message string, statusCode int, phoneNumberID uint) *MetaGraphError {
 	return &MetaGraphError{
 		Code:          code,
@@ -99,7 +101,6 @@ func NewMetaGraphError(code, subcode int, message string, statusCode int, phoneN
 	}
 }
 
-// NewMetaGraphErrorUnparseable crea un error cuando no se pudo parsear el JSON de Meta
 func NewMetaGraphErrorUnparseable(statusCode int) *MetaGraphError {
 	return &MetaGraphError{
 		StatusCode: statusCode,

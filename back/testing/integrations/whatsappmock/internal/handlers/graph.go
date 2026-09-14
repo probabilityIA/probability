@@ -229,6 +229,16 @@ func (h *Handler) CreateTemplate(c *gin.Context) {
 		return
 	}
 
+	if !hasBodyComponent(body.Components) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{
+			"message":        "Invalid parameter",
+			"error_user_msg": "components: la plantilla necesita un componente BODY",
+			"code":           100,
+			"error_subcode":  2388043,
+		}})
+		return
+	}
+
 	metaID := fmt.Sprintf("mock_tpl_%d", time.Now().UnixNano())
 
 	template := &store.Template{
@@ -309,4 +319,15 @@ func (h *Handler) StartUpload(c *gin.Context) {
 func (h *Handler) FinishUpload(c *gin.Context) {
 	handle := "mock_handle_" + strings.ReplaceAll(uuid.New().String(), "-", "")[:12]
 	c.JSON(http.StatusOK, gin.H{"h": handle, "id": handle})
+}
+
+func hasBodyComponent(components []map[string]any) bool {
+	for _, component := range components {
+		componentType, _ := component["type"].(string)
+		text, _ := component["text"].(string)
+		if strings.EqualFold(componentType, "BODY") && strings.TrimSpace(text) != "" {
+			return true
+		}
+	}
+	return false
 }

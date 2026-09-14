@@ -111,6 +111,11 @@ func (u *usecase) SubmitCustom(ctx context.Context, submission CustomTemplateSub
 
 	result.WABAID = wabaID
 
+	if len(submission.Components) == 0 {
+		result.ErrorMessage = "la plantilla llego sin componentes (cuerpo, botones): no se envia a Meta"
+		return result
+	}
+
 	handle, err := u.resolveHeaderHandle(ctx, submission, baseURL, token)
 	if err != nil {
 		result.ErrorMessage = err.Error()
