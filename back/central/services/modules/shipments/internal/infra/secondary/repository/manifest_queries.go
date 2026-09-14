@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/cod"
 )
 
 func (r *Repository) resolveManifestBusinessIDs(ctx context.Context, businessID uint, includeChildren bool) []uint {
@@ -93,28 +94,31 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 	}
 
 	type row struct {
-		ShipmentID        uint
-		OrderID           *string
-		OrderNumber       string
-		TrackingNumber    *string
-		Carrier           *string
-		CarrierCode       *string
-		CustomerName      string
-		CustomerDNI       string
-		ShippingStreet    string
-		ShippingCity      string
-		ShippingState     string
-		Weight            *float64
-		TotalAmount       float64
-		CodTotal          *float64
-		BusinessID        *uint
-		BusinessName      string
-		WarehouseName     *string
-		ShipmentCreatedAt *time.Time
-		OrderCreatedAt    *time.Time
-		ShipmentStatus    string
-		OrderStatus       string
-		PackageQuantity   int64
+		ShipmentID            uint
+		OrderID               *string
+		OrderNumber           string
+		TrackingNumber        *string
+		Carrier               *string
+		CarrierCode           *string
+		CustomerName          string
+		CustomerDNI           string
+		ShippingStreet        string
+		ShippingCity          string
+		ShippingState         string
+		Weight                *float64
+		TotalAmount           float64
+		CodTotal              *float64
+		CodIncludesShipping   bool
+		CodCheckoutCarrierFee float64
+		CodCarrierFee         *float64
+		BusinessID            *uint
+		BusinessName          string
+		WarehouseName         *string
+		ShipmentCreatedAt     *time.Time
+		OrderCreatedAt        *time.Time
+		ShipmentStatus        string
+		OrderStatus           string
+		PackageQuantity       int64
 	}
 
 	q := base.
@@ -131,12 +135,10 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			COALESCE(o.shipping_state, '') AS shipping_state,
 			s.weight,
 			COALESCE(o.total_amount, 0) AS total_amount,
-			CASE
-				WHEN o.cod_total IS NULL THEN NULL
-				WHEN COALESCE(o.cod_checkout_carrier_fee, 0) > 0 THEN o.cod_total + o.cod_checkout_carrier_fee
-				WHEN o.cod_includes_shipping THEN o.cod_total
-				ELSE o.cod_total + COALESCE(s.cod_carrier_fee, 0)
-			END AS cod_total,
+			o.cod_total,
+			COALESCE(o.cod_includes_shipping, false) AS cod_includes_shipping,
+			COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_checkout_carrier_fee,
+			s.cod_carrier_fee,
 			o.business_id,
 			COALESCE(b.name, '') AS business_name,
 			w.name AS warehouse_name,
@@ -193,7 +195,15 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			item.Weight = *r.Weight
 		}
 		if r.CodTotal != nil {
-			item.CodTotal = *r.CodTotal
+			carrierFee := 0.0
+			if r.CodCarrierFee != nil {
+				carrierFee = *r.CodCarrierFee
+			}
+			item.CodTotal = cod.CustomerCharge(cod.Order{
+				CodTotal:           *r.CodTotal,
+				IncludesShipping:   r.CodIncludesShipping,
+				CheckoutCarrierFee: r.CodCheckoutCarrierFee,
+			}, carrierFee)
 		}
 		item.DeclaredValue = r.TotalAmount
 		if r.BusinessID != nil {

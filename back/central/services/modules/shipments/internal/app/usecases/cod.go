@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/cod"
 )
 
 func (uc *UseCases) ListCODShipments(ctx context.Context, filter domain.CODFilter) (*domain.ShipmentsListResponse, error) {
@@ -67,7 +68,8 @@ func (uc *UseCases) CollectCOD(ctx context.Context, shipmentID uint, notes strin
 		return nil, domain.ErrOrderAlreadyPaid
 	}
 
-	if err := uc.repo.MarkOrderPaidCOD(ctx, info.OrderID, *info.CodTotal+info.CodCheckoutCarrierFee, info.PaymentMethodID, notes); err != nil {
+	paidAmount := cod.CheckoutTotal(cod.Order{CodTotal: *info.CodTotal, CheckoutCarrierFee: info.CodCheckoutCarrierFee})
+	if err := uc.repo.MarkOrderPaidCOD(ctx, info.OrderID, paidAmount, info.PaymentMethodID, notes); err != nil {
 		return nil, err
 	}
 

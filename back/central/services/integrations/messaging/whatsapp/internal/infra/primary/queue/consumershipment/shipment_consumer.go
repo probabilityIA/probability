@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment/request"
+	"github.com/secamc93/probability/back/central/shared/cod"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -114,7 +114,11 @@ func buildGuideVariables(event request.ShipmentGuideEvent) (string, map[string]s
 	trackingURL = orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo")
 
 	if event.CodTotal > 0 {
-		amountToCollect := entities.CodAmountToCollect(event.CodTotal, event.CodCarrierFee, event.CodIncludesShipping, event.CodCheckoutCarrierFee)
+		amountToCollect := cod.CustomerCharge(cod.Order{
+			CodTotal:           event.CodTotal,
+			IncludesShipping:   event.CodIncludesShipping,
+			CheckoutCarrierFee: event.CodCheckoutCarrierFee,
+		}, event.CodCarrierFee)
 		return "guia_envio_generada_cod", map[string]string{
 			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
 			"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/shared/shippingpkg"
-	"math"
 	"time"
 )
 
@@ -309,34 +308,6 @@ type OrderCodBasis struct {
 	CodTotal              float64
 	CodIncludesShipping   bool
 	CodCheckoutCarrierFee float64
-}
-
-func (b OrderCodBasis) CheckoutTotal() float64 {
-	if b.CodTotal <= 0 {
-		return 0
-	}
-	return b.CodTotal + b.CodCheckoutCarrierFee
-}
-
-func (b OrderCodBasis) NetTarget(guideTotalCost float64, embeddedCarrierFee float64) float64 {
-	if b.CodTotal <= 0 {
-		return 0
-	}
-	if !b.CodIncludesShipping && guideTotalCost > 0 {
-		return b.TotalAmount + guideTotalCost
-	}
-	if b.CodIncludesShipping {
-		return b.CheckoutTotal() - embeddedCarrierFee
-	}
-	return b.CodTotal
-}
-
-func (b OrderCodBasis) AmountToCollect(guideTotalCost float64, codCarrierFee float64) float64 {
-	base := b.NetTarget(guideTotalCost, codCarrierFee)
-	if base <= 0 {
-		return 0
-	}
-	return math.Ceil(base + codCarrierFee)
 }
 
 type IShipmentSSEPublisher interface {

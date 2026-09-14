@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder/request"
+	"github.com/secamc93/probability/back/central/shared/cod"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -129,7 +129,11 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 	}
 	amountToCollect := event.TotalAmount
 	if event.CodTotal > 0 {
-		amountToCollect = entities.CodAmountToCollect(event.CodTotal, event.CodCarrierFee, event.CodIncludesShipping, event.CodCheckoutCarrierFee)
+		amountToCollect = cod.CustomerCharge(cod.Order{
+			CodTotal:           event.CodTotal,
+			IncludesShipping:   event.CodIncludesShipping,
+			CheckoutCarrierFee: event.CodCheckoutCarrierFee,
+		}, event.CodCarrierFee)
 	} else if amountToCollect > 0 && event.CodCarrierFee > 0 {
 		amountToCollect += event.CodCarrierFee
 	}
