@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/shared/ui/modal";
 import { useToast } from "@/shared/providers/toast-provider";
-import { TEMPLATE_STATUS_LABEL, WhatsappTemplate } from "../../domain/scheduled-types";
+import { TEMPLATE_STATUS_LABEL, TemplateScope, WhatsappTemplate } from "../../domain/scheduled-types";
 import {
   deleteTemplateAction,
   getTemplateVariablesAction,
@@ -52,6 +52,8 @@ export function TemplatesSection({ businessId }: TemplatesSectionProps) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<WhatsappTemplate | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [createScope, setCreateScope] = useState<TemplateScope>("campaign");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -209,6 +211,13 @@ export function TemplatesSection({ businessId }: TemplatesSectionProps) {
             {"Propias del negocio"}
           </h3>
           <span className="text-xs text-gray-400">{`${own.length}`}</span>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="ml-auto rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            {"+ Nueva plantilla"}
+          </button>
         </div>
 
         {own.length === 0 ? (
@@ -245,6 +254,58 @@ export function TemplatesSection({ businessId }: TemplatesSectionProps) {
           </>
         )}
       </section>
+
+      <Modal
+        isOpen={creating}
+        onClose={() => setCreating(false)}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{"Nueva plantilla"}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {"Plantilla de mensaje para WhatsApp · Meta"}
+            </span>
+          </span>
+        )}
+        size="4xl"
+        zIndex={60}
+        noPadding
+        noBodyScroll
+      >
+        {creating && (
+          <>
+            <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-7 py-3 dark:border-gray-700">
+              <span className="text-[13px] font-semibold text-gray-900 dark:text-white">{"Uso"}</span>
+              {([
+                { key: "campaign", label: "Campañas y flujos" },
+                { key: "scheduled", label: "Reglas programadas" },
+              ] as Array<{ key: TemplateScope; label: string }>).map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setCreateScope(option.key)}
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                    createScope === option.key
+                      ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <TemplateForm
+              businessId={businessId}
+              variableCatalog={catalog}
+              scope={createScope}
+              onSuccess={() => {
+                setCreating(false);
+                load();
+              }}
+              onCancel={() => setCreating(false)}
+            />
+          </>
+        )}
+      </Modal>
 
       <Modal
         isOpen={editing !== null}

@@ -221,6 +221,10 @@ func buildTemplate(dto dtos.CreateTemplateDTO) (*entities.WhatsappTemplate, erro
 		return nil, err
 	}
 
+	if err := validateMetaRules(body, header, footer, buttons, len(variables)); err != nil {
+		return nil, err
+	}
+
 	businessID := dto.BusinessID
 
 	scope := strings.TrimSpace(dto.Scope)

@@ -16,6 +16,7 @@ import {
   updateTemplateAction,
   uploadTemplateMediaAction,
 } from "../../infra/actions/whatsapp-templates";
+import { metaRuleError } from "../../domain/template-rules";
 
 interface TemplateFormProps {
   businessId?: number;
@@ -173,6 +174,15 @@ export function TemplateForm({
   const prefix = businessId ? `${businessId}_` : "";
   const templateName = isEdit ? template?.Name ?? "" : slug ? `${prefix}${slug}` : "";
   const mismatch = placeholders !== variables.length;
+  const ruleError = bodyText.trim()
+    ? metaRuleError({
+        body: bodyText.trim(),
+        header: headerType === "IMAGE" ? "" : headerText.trim(),
+        footer: footerText.trim(),
+        buttons: buttons.map((item) => item.text.trim()).filter(Boolean),
+        variables: placeholders,
+      })
+    : null;
 
   const sampleFor = (position: number): string => {
     const variable = variables.find((item) => item.position === position);
@@ -192,7 +202,8 @@ export function TemplateForm({
   const insertVariable = (source: string) => {
     const next = variables.length + 1;
     setVariables([...variables, { position: next, source, fallback: "" }]);
-    setBodyText(`${bodyText}{{${next}}}`.slice(0, MAX_BODY));
+    const separator = bodyText && !/\s$/.test(bodyText) ? " " : "";
+    setBodyText(`${bodyText}${separator}{{${next}}}`.slice(0, MAX_BODY));
   };
 
   const updateVariable = (index: number, patch: Partial<VariableRow>) => {
@@ -248,6 +259,10 @@ export function TemplateForm({
     }
     if (variables.some((item) => !item.source)) {
       setError("Toda variable necesita un dato asociado");
+      return;
+    }
+    if (ruleError) {
+      setError(ruleError);
       return;
     }
     if (headerType === "IMAGE" && !headerMediaURL) {
@@ -665,6 +680,11 @@ export function TemplateForm({
             {mismatch && (
               <span className="text-[12px] text-red-600">
                 {`El cuerpo usa ${placeholders} variable(s) y hay ${variables.length} declarada(s). Meta la rechaza si no coinciden.`}
+              </span>
+            )}
+            {!mismatch && ruleError && (
+              <span data-testid="template-rule-error" className="text-[12px] text-red-600">
+                {ruleError}
               </span>
             )}
           </div>
