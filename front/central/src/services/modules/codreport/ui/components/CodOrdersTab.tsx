@@ -9,7 +9,6 @@ import { getCodOrdersAction, getCodSummaryAction, getCarrierConfigsAction, updat
 import { CodOrder, CodState, CodSummary, ReportFilters } from '../../domain/types';
 import { formatMoney, formatDateTime, browserTimeZone, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
-import { codCustomerCharge } from '@/shared/utils/cod-amount';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { GuidePreviewModal } from './GuidePreviewModal';
 
@@ -316,7 +315,7 @@ export default function CodOrdersTab({ filters }: Props) {
         setError(null);
     }, []);
 
-    const filteredTotal = orders.reduce((a, o) => a + codCustomerCharge(o), 0);
+    const filteredTotal = orders.reduce((a, o) => a + o.customer_charge, 0);
     const currency = orders[0]?.currency;
 
     return (
@@ -472,7 +471,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                                 onError={setError}
                                             />
                                         </td>
-                                        <td className="px-3 py-3.5 text-right text-[13.5px] font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(codCustomerCharge(o), o.currency)}</td>
+                                        <td className="px-3 py-3.5 text-right text-[13.5px] font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(o.customer_charge, o.currency)}</td>
                                         <td className="px-3 py-3.5"><RecaudoBadge state={o.cod_state} /></td>
                                         <td className="px-3 py-3.5">
                                             {o.cut_status === 'confirmed' ? (

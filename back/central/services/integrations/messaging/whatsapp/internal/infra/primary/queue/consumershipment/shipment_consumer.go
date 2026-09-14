@@ -118,6 +118,7 @@ func buildGuideVariables(event request.ShipmentGuideEvent) (string, map[string]s
 			CodTotal:           event.CodTotal,
 			IncludesShipping:   event.CodIncludesShipping,
 			CheckoutCarrierFee: event.CodCheckoutCarrierFee,
+			CollectAmount:      event.CodCollectAmount,
 		}, event.CodCarrierFee)
 		return "guia_envio_generada_cod", map[string]string{
 			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),

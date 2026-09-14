@@ -15,7 +15,6 @@ import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
 import { carrierOfficeLabel } from '@/shared/utils/guide-destination';
-import { codBusinessNet, codCustomerCharge, codEffectiveCarrierFee } from '@/shared/utils/cod-amount';
 import dynamic from 'next/dynamic';
 import { Package, Copy, Check, Link2, X, Calendar, CreditCard, Truck, Receipt, Percent, Wallet, ShoppingBag, User, Phone, Mail, MapPin, ClipboardList, Save, MessageCircle, History, AlertTriangle, RefreshCw, Clock, FileText, ChevronRight, ArrowRight, Plus, CircleCheck, Scissors } from 'lucide-react';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
@@ -276,11 +275,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const totalItemsQty = itemsTotals.qty;
 
     const isCodOrder = order.is_cod === true || (order.cod_total || 0) > 0;
-    const realCarrierFee = order.shipment?.cod_carrier_fee || 0;
-    const codCarrierFee = codEffectiveCarrierFee({ ...order, cod_carrier_fee: realCarrierFee });
-    const carrierFeeFromCheckout = realCarrierFee <= 0 && codCarrierFee > 0;
-    const codNet = codBusinessNet({ ...order, cod_carrier_fee: realCarrierFee });
-    const codToCollect = codCustomerCharge({ ...order, cod_carrier_fee: realCarrierFee });
+    const codCarrierFee = order.cod_effective_carrier_fee ?? 0;
+    const carrierFeeFromCheckout = order.cod_carrier_fee_source === 'checkout';
+    const codNet = order.cod_business_net ?? 0;
+    const codToCollect = order.cod_customer_charge ?? 0;
     const envioNeto = (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0);
     const envioMasComision = envioNeto + codCarrierFee;
 
@@ -674,6 +672,21 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         </div>
                                     )}
                                 </div>
+
+                                {isCodOrder && order.cod_carrier_changed && (
+                                    <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+                                        <p className="font-bold">Transportadora distinta a la cotizada en la tienda</p>
+                                        <p>
+                                            El cliente cotiz&oacute; con <strong>{order.quoted_shipping?.carrier || 'otra transportadora'}</strong>
+                                            {' '}(comisi&oacute;n {formatCurrency(order.quoted_shipping?.cod_carrier_fee || order.cod_checkout_carrier_fee || 0, order.currency)})
+                                            {' '}y la gu&iacute;a se gener&oacute; con <strong>{order.shipment?.carrier || 'otra transportadora'}</strong>
+                                            {' '}(comisi&oacute;n {formatCurrency(codCarrierFee, order.currency)}).
+                                            {(order.cod_collect_amount ?? 0) > 0 && (
+                                                <>{' '}Valor a recaudar en la gu&iacute;a: <strong>{formatCurrency(order.cod_collect_amount ?? 0, order.currency)}</strong>.</>
+                                            )}
+                                        </p>
+                                    </div>
+                                )}
 
                                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
                                     <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2 dark:border-gray-700">

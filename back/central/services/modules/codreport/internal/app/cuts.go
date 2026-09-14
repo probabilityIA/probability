@@ -44,6 +44,7 @@ func (uc *UseCase) SelectableOrders(ctx context.Context, f dtos.SelectableOrders
 		orders[i].DiscountPct = pct
 		orders[i].Discount = d
 		orders[i].Net = n
+		setCustomerCharge(&orders[i])
 		orders[i].CodState = domain.CodStatePendingPayment
 	}
 	return orders, nil
@@ -65,6 +66,7 @@ func (uc *UseCase) CutOrders(ctx context.Context, businessID uint, cutID uint) (
 		orders[i].DiscountPct = pct
 		orders[i].Discount = d
 		orders[i].Net = n
+		setCustomerCharge(&orders[i])
 		orders[i].CodState = domain.CodStateCollected
 		orders[i].CutStatus = "confirmed"
 	}

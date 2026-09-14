@@ -11,7 +11,6 @@ import { Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import { MiniAddressMap } from './MiniAddressMap';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 import { guideHref } from '../utils/guide-link';
-import { codCheckoutFee, codCustomerCharge } from '@/shared/utils/cod-amount';
 
 interface Props {
     selectedBusinessId?: number | null;
@@ -222,7 +221,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                                     </div>
                                     <div className="flex items-center justify-between gap-2 text-xs text-gray-600 dark:text-gray-300">
                                         <span className="font-mono truncate">#{s.order_number || s.tracking_number || s.id}</span>
-                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatMoney(codCustomerCharge(s), s.order_currency)}</span>
+                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatMoney((s.cod_customer_charge ?? 0), s.order_currency)}</span>
                                     </div>
                                     <div className="flex items-center justify-between gap-2 mt-1">
                                         <StatusBadge status={s.status} />
@@ -374,7 +373,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <InfoCard icon={<DollarSign size={12} />} label="Monto a cobrar" value={formatMoney(codCustomerCharge(shipment), shipment.order_currency)} highlight />
+                <InfoCard icon={<DollarSign size={12} />} label="Monto a cobrar" value={formatMoney((shipment.cod_customer_charge ?? 0), shipment.order_currency)} highlight />
                 <InfoCard icon={<DollarSign size={12} />} label="Total orden" value={formatMoney(shipment.order_total_amount, shipment.order_currency)} />
                 <InfoCard icon={<Truck size={12} />} label="Transportadora" value={shipment.carrier || '\u2014'} />
                 <InfoCard icon={<Calendar size={12} />} label="Entregado" value={shipment.delivered_at ? formatDate(shipment.delivered_at) : 'Pendiente'} />
@@ -406,7 +405,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                             <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-1">Registrar cobro contra entrega</h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {canCollect
-                                    ? `Marca como pagado el monto de ${formatMoney((shipment.cod_total || 0) + codCheckoutFee(shipment), shipment.order_currency)}.`
+                                    ? `Marca como pagado el monto de ${formatMoney(shipment.cod_checkout_total ?? 0, shipment.order_currency)}.`
                                     : 'Solo se puede registrar el cobro cuando el env\u00edo est\u00e9 entregado.'}
                             </p>
                         </div>
@@ -461,7 +460,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-5">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Confirmar cobro</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                            &#191;Marcar la orden <span className="font-mono">#{shipment.order_number}</span> como pagada por <strong>{formatMoney((shipment.cod_total || 0) + codCheckoutFee(shipment), shipment.order_currency)}</strong>?
+                            &#191;Marcar la orden <span className="font-mono">#{shipment.order_number}</span> como pagada por <strong>{formatMoney(shipment.cod_checkout_total ?? 0, shipment.order_currency)}</strong>?
                         </p>
                         <label className="block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">Notas / referencia (opcional)</label>
                         <textarea

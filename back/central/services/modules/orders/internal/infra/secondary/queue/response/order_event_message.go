@@ -26,6 +26,7 @@ type OrderSnapshot struct {
 	IsCod                 bool     `json:"is_cod"`
 	CodIncludesShipping   bool     `json:"cod_includes_shipping"`
 	CodCheckoutCarrierFee float64  `json:"cod_checkout_carrier_fee"`
+	CodCollectAmount      *float64 `json:"cod_collect_amount,omitempty"`
 	Currency              string   `json:"currency"`
 	PaymentMethodID       uint     `json:"payment_method_id"`
 	PaymentStatusID       *uint    `json:"payment_status_id,omitempty"`

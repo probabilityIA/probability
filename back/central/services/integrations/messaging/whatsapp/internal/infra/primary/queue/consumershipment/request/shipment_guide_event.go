@@ -19,5 +19,6 @@ type ShipmentGuideEvent struct {
 	CodCarrierFee         float64 `json:"cod_carrier_fee"`
 	CodIncludesShipping   bool    `json:"cod_includes_shipping"`
 	CodCheckoutCarrierFee float64 `json:"cod_checkout_carrier_fee"`
+	CodCollectAmount      float64 `json:"cod_collect_amount"`
 	TrackingURL           string  `json:"tracking_url"`
 }

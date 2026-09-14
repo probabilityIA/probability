@@ -13,7 +13,6 @@ import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
 import { buildGuideDestination } from '@/shared/utils/guide-destination';
-import { codCheckoutFee, codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -197,7 +196,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
             const order = selectedOrders[i];
             try {
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
-                const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total + codCheckoutFee(order) : undefined;
+                const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_checkout_total : undefined;
                 const quotePayload: EnvioClickQuoteRequest = {
                     order_uuid: order.id,
                     auto_package: !editedPackageIds.has(order.id),
@@ -258,7 +257,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
                 const destParts = buildGuideDestination(order);
 
-                const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total + codCheckoutFee(order) : undefined;
+                const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_checkout_total : undefined;
                 const guideTotalCost = (order.quote!.flete) + (order.quote!.minimumInsurance ?? 0) + (order.quote!.extraInsurance ?? 0);
                 const generatePayload: EnvioClickQuoteRequest = {
                     idRate: order.quote!.idRate,
@@ -418,7 +417,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                                 <span className="font-semibold">{order.order_number}</span>
                                                 {order.cod_total && order.cod_total > 0 && (
                                                     <span className="shipment-badge-warning text-[10px] px-1.5 py-0.5">
-                                                        Contra Entrega ${codCustomerCharge(order).toLocaleString()}
+                                                        Contra Entrega ${(order.cod_customer_charge ?? 0).toLocaleString()}
                                                     </span>
                                                 )}
                                             </div>

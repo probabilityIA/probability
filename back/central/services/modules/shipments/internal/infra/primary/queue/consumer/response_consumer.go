@@ -184,6 +184,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 	if calibratedCODFee <= 0 {
 		calibratedCODFee, _ = toFloat(dataField["codCarrierFee"])
 	}
+	declaredCODValue, _ := toFloat(data["codValue"])
 
 	if carrier == "" && trackingNumber != "" {
 		carrier = inferCarrierFromTrackingNumber(trackingNumber)
@@ -257,6 +258,9 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				}
 				shipment.CodCarrierFee = &calibratedCODFee
 			}
+			if declaredCODValue > 0 {
+				shipment.CodCollectAmount = &declaredCODValue
+			}
 
 			appendGuideGeneratedEvent(shipment, response.Provider, trackingNumber, carrier)
 
@@ -329,6 +333,9 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				OrderNumber:   shipment.OrderNumber,
 				CodTotal:      shipment.CodTotal,
 				CodCarrierFee: shipment.CodCarrierFee,
+			}
+			if shipment.CodCollectAmount != nil {
+				notification.CodCollectAmount = *shipment.CodCollectAmount
 			}
 
 			if shipment.OrderID != nil && *shipment.OrderID != "" {

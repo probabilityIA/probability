@@ -265,6 +265,7 @@ type GuideNotificationData struct {
 	CodCarrierFee         *float64
 	CodIncludesShipping   bool
 	CodCheckoutCarrierFee float64
+	CodCollectAmount      float64
 	TrackingURL           string
 }
 
@@ -308,6 +309,7 @@ type OrderCodBasis struct {
 	CodTotal              float64
 	CodIncludesShipping   bool
 	CodCheckoutCarrierFee float64
+	QuotedCarrier         string
 }
 
 type IShipmentSSEPublisher interface {

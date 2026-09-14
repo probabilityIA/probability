@@ -29,7 +29,8 @@ type ProbabilityShipment struct {
 	ShippingCost  *float64
 	InsuranceCost *float64
 	TotalCost     *float64
-	CodCarrierFee *float64
+	CodCarrierFee    *float64
+	CodCollectAmount *float64
 
 	Weight *float64
 	Height *float64

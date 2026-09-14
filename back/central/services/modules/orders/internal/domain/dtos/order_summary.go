@@ -54,10 +54,12 @@ type OrderSummary struct {
 	IsPaid                 bool
 	IsCod                  bool
 	CodTotal               *float64
+	CodIncludesShipping    bool
+	CodCheckoutCarrierFee  float64
 	IsConfirmed            *bool
 	Novelty                *string
 	IsTest                 bool
-	InvoiceStatus          string // "", "pending", "issued", "failed", "cancelled"
+	InvoiceStatus          string
 	CodCutConfirmed        bool
 	Shipment               *ShipmentSummary
 	ShippingDetails        []byte

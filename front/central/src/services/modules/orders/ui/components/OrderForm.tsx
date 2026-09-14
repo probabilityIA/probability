@@ -11,7 +11,6 @@ import ProductForm from '../../../products/ui/components/ProductForm';
 import { createOrderAction, updateOrderAction } from '../../infra/actions';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
-import { codCheckoutFee, codCustomerCharge, codEffectiveCarrierFee } from '@/shared/utils/cod-amount';
 import { useClientSearch } from '../hooks/useClientSearch';
 import { useWarehouses } from '../hooks/useWarehouses';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
@@ -663,16 +662,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     };
 
     const yaLiquidadaEnCorte = order?.cod_cut_confirmed === true;
-    const codAmountSource = {
-        cod_total: formData.cod_total,
-        cod_carrier_fee: order?.shipment?.cod_carrier_fee,
-        cod_includes_shipping: order?.cod_includes_shipping,
-        cod_checkout_carrier_fee: order?.cod_checkout_carrier_fee,
-    };
-    const comisionContraEntrega = isCOD ? codEffectiveCarrierFee(codAmountSource) : 0;
-    const comisionDelCheckout = isCOD && codCheckoutFee(codAmountSource) > 0;
-    const comisionSeSuma = comisionDelCheckout || !order?.cod_includes_shipping;
-    const cobroContraEntrega = codCustomerCharge(codAmountSource);
+    const comisionCobrada = order?.cod_charged_carrier_fee ?? 0;
+    const comisionSeSuma = comisionCobrada > 0;
+    const comisionContraEntrega = isCOD ? (comisionSeSuma ? comisionCobrada : (order?.cod_effective_carrier_fee ?? 0)) : 0;
+    const comisionDelCheckout = isCOD && (order?.cod_checkout_carrier_fee ?? 0) > 0;
+    const cobroContraEntrega = isCOD && (formData.cod_total || 0) > 0 ? (formData.cod_total || 0) + comisionCobrada : 0;
     const displayTotal = isCOD && !yaLiquidadaEnCorte && cobroContraEntrega > 0
         ? cobroContraEntrega
         : formData.total_amount + formData.shipping_cost;

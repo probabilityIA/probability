@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/cod"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
@@ -45,6 +46,7 @@ func ToDBShipment(s *domain.Shipment) *models.Shipment {
 		AppliedMargin:        s.AppliedMargin,
 		CodCarrierFee:        s.CodCarrierFee,
 		CodProbabilityMargin: s.CodProbabilityMargin,
+		CodCollectAmount:     s.CodCollectAmount,
 		Weight:               s.Weight,
 		Height:               s.Height,
 		Width:                s.Width,
@@ -113,6 +115,7 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		AppliedMargin:        s.AppliedMargin,
 		CodCarrierFee:        s.CodCarrierFee,
 		CodProbabilityMargin: s.CodProbabilityMargin,
+		CodCollectAmount:     s.CodCollectAmount,
 		Weight:               s.Weight,
 		Height:               s.Height,
 		Width:                s.Width,
@@ -141,6 +144,24 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		shipment.CodTotal = s.Order.CodTotal
 		shipment.CodIncludesShipping = s.Order.CodIncludesShipping
 		shipment.CodCheckoutCarrierFee = s.Order.CodCheckoutCarrierFee
+		if s.Order.CodTotal != nil {
+			carrierFee := 0.0
+			if s.CodCarrierFee != nil {
+				carrierFee = *s.CodCarrierFee
+			}
+			collectAmount := 0.0
+			if s.CodCollectAmount != nil {
+				collectAmount = *s.CodCollectAmount
+			}
+			b := cod.Summarize(cod.Order{
+				CodTotal:           *s.Order.CodTotal,
+				IncludesShipping:   s.Order.CodIncludesShipping,
+				CheckoutCarrierFee: s.Order.CodCheckoutCarrierFee,
+				CollectAmount:      collectAmount,
+			}, carrierFee)
+			shipment.CodCustomerCharge = b.CustomerCharge
+			shipment.CodCheckoutTotal = b.CheckoutTotal
+		}
 		shipment.IsPaid = s.Order.IsPaid
 		shipment.PaidAt = s.Order.PaidAt
 		total := s.Order.TotalAmount

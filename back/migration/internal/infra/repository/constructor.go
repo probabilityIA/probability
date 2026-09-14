@@ -65,7 +65,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateSystemTemplateBodies(ctx); err != nil {
 		return err
 	}
-	return r.migrateWhatsappMessageMedia(ctx)
+	if err := r.migrateWhatsappMessageMedia(ctx); err != nil {
+		return err
+	}
+	return r.MigrateShipmentCodCollectAmount(ctx)
 }
 
 func (r *Repository) migrateHistorico(ctx context.Context) error {

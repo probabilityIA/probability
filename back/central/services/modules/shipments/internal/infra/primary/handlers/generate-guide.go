@@ -146,11 +146,14 @@ func (h *Handlers) overrideCodValue(c *gin.Context, raw map[string]interface{}, 
 		carrierFee = *req.CodCarrierFee
 	}
 
+	guideCarrier, _ := raw["carrier"].(string)
 	codOrder := cod.Order{
 		TotalAmount:        basis.TotalAmount,
 		CodTotal:           basis.CodTotal,
 		IncludesShipping:   basis.CodIncludesShipping,
 		CheckoutCarrierFee: basis.CodCheckoutCarrierFee,
+		QuotedCarrier:      basis.QuotedCarrier,
+		GuideCarrier:       guideCarrier,
 	}
 
 	amount := cod.AmountToCollect(codOrder, totalCost, carrierFee)

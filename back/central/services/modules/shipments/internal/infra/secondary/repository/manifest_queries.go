@@ -111,6 +111,7 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 		CodIncludesShipping   bool
 		CodCheckoutCarrierFee float64
 		CodCarrierFee         *float64
+		CodCollectAmount      *float64
 		BusinessID            *uint
 		BusinessName          string
 		WarehouseName         *string
@@ -139,6 +140,7 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			COALESCE(o.cod_includes_shipping, false) AS cod_includes_shipping,
 			COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_checkout_carrier_fee,
 			s.cod_carrier_fee,
+			s.cod_collect_amount,
 			o.business_id,
 			COALESCE(b.name, '') AS business_name,
 			w.name AS warehouse_name,
@@ -199,10 +201,15 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			if r.CodCarrierFee != nil {
 				carrierFee = *r.CodCarrierFee
 			}
+			collectAmount := 0.0
+			if r.CodCollectAmount != nil {
+				collectAmount = *r.CodCollectAmount
+			}
 			item.CodTotal = cod.CustomerCharge(cod.Order{
 				CodTotal:           *r.CodTotal,
 				IncludesShipping:   r.CodIncludesShipping,
 				CheckoutCarrierFee: r.CodCheckoutCarrierFee,
+				CollectAmount:      collectAmount,
 			}, carrierFee)
 		}
 		item.DeclaredValue = r.TotalAmount

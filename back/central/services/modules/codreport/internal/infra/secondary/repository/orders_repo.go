@@ -19,6 +19,7 @@ type codOrderRow struct {
 	CodCarrierFee         float64
 	CodIncludesShipping   bool
 	CodCheckoutCarrierFee float64
+	CodCollectAmount      float64
 	ShippingCost          float64
 	Currency              string
 	Status                string
@@ -117,6 +118,7 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_inc
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
 	COALESCE(s.cod_carrier_fee,0) AS cod_carrier_fee,
+	COALESCE(s.cod_collect_amount,0) AS cod_collect_amount,
 	s.status, s.delivered_at,
 	(s.status = 'delivered') AS collected,
 	`+paidExpr+` AS paid,
@@ -147,7 +149,8 @@ LIMIT ? OFFSET ?`, latestShipmentJoin, where)
 			CodCarrierFee:         rows[i].CodCarrierFee,
 			CodIncludesShipping:   rows[i].CodIncludesShipping,
 			CodCheckoutCarrierFee: rows[i].CodCheckoutCarrierFee,
-			ShippingCost:          rows[i].ShippingCost,
+			CodCollectAmount:      rows[i].CodCollectAmount,
+			ShippingCost:         rows[i].ShippingCost,
 			Currency:              rows[i].Currency,
 			Status:                rows[i].Status,
 			Collected:             rows[i].Collected,

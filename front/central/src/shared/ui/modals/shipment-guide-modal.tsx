@@ -25,7 +25,6 @@ import { CarrierOfficeSelector } from "@/shared/ui/CarrierOfficeSelector";
 import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
 import dynamic from 'next/dynamic';
-import { codCheckoutFee, codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const GUIDE_SSE_GRACE_MS = 45000;
 const GUIDE_POLL_INTERVAL_MS = 5000;
@@ -228,6 +227,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
     const quotedCarrierKey = normalizeCarrierKey((order?.quoted_shipping?.carrier || '').split(' - ')[0]);
+    const quotedCheckoutFee = order?.quoted_shipping?.cod_carrier_fee || order?.cod_checkout_carrier_fee || 0;
+    const selectedCodFee = selectedRate?.cod ? (selectedRate.codCarrierFee ?? 0) : 0;
+    const selectedCarrierChanged = !!selectedRate && !!quotedCarrierKey && (order?.cod_checkout_carrier_fee ?? 0) > 0
+        && normalizeCarrierKey(selectedRate.carrier) !== quotedCarrierKey;
+    const changedCollectAmount = (order?.cod_total ?? 0) + selectedCodFee;
 
     useEffect(() => {
         if (currentStep !== 2 || !order?.id || !order?.business_id) return;
@@ -301,8 +305,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     );
 
     const orderIsCOD = !!(order?.cod_total && order.cod_total > 0);
-    const orderCheckoutFee = order ? codCheckoutFee(order) : 0;
-    const orderCodValue = orderIsCOD ? order!.cod_total! + orderCheckoutFee : 0;
+    const orderCodValue = orderIsCOD ? (order!.cod_checkout_total ?? 0) : 0;
 
     const step1Form = useForm<Step1Values>({
         resolver: zodResolver(step1Schema),
@@ -439,7 +442,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
 
             if (order.cod_total && order.cod_total > 0) {
-                step1Form.setValue("codValue", order.cod_total + codCheckoutFee(order), { shouldValidate: true });
+                step1Form.setValue("codValue", order.cod_checkout_total ?? 0, { shouldValidate: true });
                 step1Form.setValue("codPaymentMethod", "cash");
             }
 
@@ -899,7 +902,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 insurance: step1Data.insurance,
                 description: step1Data.description,
                 contentValue: step1Data.contentValue,
-                codValue: (step1Data.codValue ?? 0) + (orderCheckoutFee > 0 ? 0 : codCarrierFee),
+                codValue: (step1Data.codValue ?? 0) + (order ? 0 : codCarrierFee),
                 includeGuideCost: step1Data.includeGuideCost,
                 codPaymentMethod: step1Data.codPaymentMethod,
                 totalCost: totalCost,
@@ -1283,7 +1286,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     {orderIsCOD && (
                                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-300 dark:bg-amber-900/30 dark:border-amber-600">
                                             <span className="text-amber-700 dark:text-amber-300 font-semibold text-sm">
-                                                Orden Contra Entrega - ${codCustomerCharge(order!).toLocaleString()} COP
+                                                Orden Contra Entrega - ${(selectedCarrierChanged ? changedCollectAmount : (order!.cod_customer_charge ?? 0)).toLocaleString()} COP
                                             </span>
                                         </div>
                                     )}
@@ -1462,6 +1465,19 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 <strong>${order.quoted_shipping.price.toLocaleString('es-CO')}</strong> en el checkout.
                                                 Genera la guia sobre esa transportadora.
                                             </span>
+                                        </div>
+                                    )}
+                                    {selectedCarrierChanged && (
+                                        <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+                                            <p className="font-bold">Transportadora distinta a la cotizada en la tienda</p>
+                                            <p>
+                                                El cliente cotiz&#243; con <strong>{order?.quoted_shipping?.carrier}</strong> (comisi&#243;n contra entrega ${quotedCheckoutFee.toLocaleString('es-CO')}).
+                                                {' '}Vas a generar la gu&#237;a con <strong>{selectedRate?.carrier}</strong> (comisi&#243;n ${selectedCodFee.toLocaleString('es-CO')}).
+                                            </p>
+                                            <p className="mt-1">
+                                                Diferencia: <strong>{selectedCodFee >= quotedCheckoutFee ? '+' : '-'}${Math.abs(selectedCodFee - quotedCheckoutFee).toLocaleString('es-CO')}</strong>.
+                                                {' '}El valor a recaudar en la gu&#237;a queda en <strong>${changedCollectAmount.toLocaleString('es-CO')}</strong> y el cliente final paga la diferencia.
+                                            </p>
                                         </div>
                                     )}
                                     <div className="grid grid-cols-2 gap-4 auto-rows-max">

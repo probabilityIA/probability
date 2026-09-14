@@ -31,7 +31,6 @@ import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { getActionError } from '@/shared/utils/action-result';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 import { guideHref } from '@/shared/utils/guide-link';
-import { codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const COMBINING_MARK_MIN = 0x0300;
 const COMBINING_MARK_MAX = 0x036f;
@@ -1355,7 +1354,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     'Total': order.total_amount || 0,
                     'Moneda': order.currency || '',
                     'Pagado': order.is_paid ? 'S\u00ed' : 'No',
-                    'Contra Entrega COD': codCustomerCharge({ ...order, cod_carrier_fee: order.shipment?.cod_carrier_fee }),
+                    'Contra Entrega COD': order.cod_customer_charge ?? 0,
                     'Direcci\u00f3n': order.shipping_street || '',
                     'Ciudad': resolved?.ciudad || order.shipping_city || '',
                     'Departamento': resolved?.departamento || order.shipping_state || '',

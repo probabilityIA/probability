@@ -28,6 +28,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		CodIncludesShipping   bool
 		CodCheckoutCarrierFee float64
 		CodCarrierFee         *float64
+		CodCollectAmount      *float64
 		OrderNumber           *string
 		CustomerName          *string
 		CustomerPhone         *string
@@ -71,6 +72,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			COALESCE(o.cod_includes_shipping, false) AS cod_includes_shipping,
 			COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_checkout_carrier_fee,
 			s.cod_carrier_fee,
+			s.cod_collect_amount,
 			o.order_number,
 			o.customer_name,
 			o.customer_phone,
@@ -211,6 +213,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			CodTotal:           valF(row.CodTotal),
 			IncludesShipping:   row.CodIncludesShipping,
 			CheckoutCarrierFee: row.CodCheckoutCarrierFee,
+			CollectAmount:      valF(row.CodCollectAmount),
 		}, valF(row.CodCarrierFee)),
 		CodCarrierFee:    valF(row.CodCarrierFee),
 		BusinessName:     val(row.BusinessName),

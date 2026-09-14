@@ -66,6 +66,7 @@ export interface CodOrder {
     cod_carrier_fee: number;
     cod_includes_shipping: boolean;
     cod_checkout_carrier_fee: number;
+    customer_charge: number;
     shipping_cost: number;
     discount_pct: number;
     discount: number;

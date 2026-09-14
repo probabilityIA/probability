@@ -134,6 +134,7 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 		"cod_carrier_fee":          confirmationCodCarrierFee,
 		"cod_includes_shipping":    order.CodIncludesShipping,
 		"cod_checkout_carrier_fee": order.CodCheckoutCarrierFee,
+		"cod_collect_amount":       codCollectAmountOf(order),
 		"is_cod":                   order.IsCod,
 		"currency":                 order.Currency,
 		"items_summary":            itemsSummary,
@@ -309,6 +310,15 @@ func codCarrierFeeOf(order *entities.ProbabilityOrder) float64 {
 	for i := range order.Shipments {
 		if order.Shipments[i].CodCarrierFee != nil && *order.Shipments[i].CodCarrierFee > 0 {
 			return *order.Shipments[i].CodCarrierFee
+		}
+	}
+	return 0
+}
+
+func codCollectAmountOf(order *entities.ProbabilityOrder) float64 {
+	for i := range order.Shipments {
+		if order.Shipments[i].CodCollectAmount != nil && *order.Shipments[i].CodCollectAmount > 0 {
+			return *order.Shipments[i].CodCollectAmount
 		}
 	}
 	return 0
