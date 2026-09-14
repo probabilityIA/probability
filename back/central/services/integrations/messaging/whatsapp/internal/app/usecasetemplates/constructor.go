@@ -27,6 +27,7 @@ type IUseCase interface {
 	SubmitCustom(ctx context.Context, submission CustomTemplateSubmission) CustomTemplateResult
 	UpdateCustom(ctx context.Context, submission CustomTemplateSubmission) CustomTemplateResult
 	DeleteCustom(ctx context.Context, submission CustomTemplateSubmission) error
+	SyncCustomStatuses(ctx context.Context, submission CustomTemplateSubmission) error
 	PreviewByEvent(ctx context.Context, businessID uint, eventCode string) ([]TemplatePreview, error)
 }
 

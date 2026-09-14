@@ -18,6 +18,7 @@ type IHandler interface {
 	Update(c *gin.Context)
 	Delete(c *gin.Context)
 	SubmitForReview(c *gin.Context)
+	SyncStatuses(c *gin.Context)
 	Variables(c *gin.Context)
 	UploadMedia(c *gin.Context)
 	ListAllFlows(c *gin.Context)

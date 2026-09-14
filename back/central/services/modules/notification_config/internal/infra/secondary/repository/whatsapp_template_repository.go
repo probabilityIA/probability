@@ -186,6 +186,25 @@ func (r *whatsappTemplateRepository) UpdateTemplateStatusByMeta(ctx context.Cont
 	return nil
 }
 
+func (r *whatsappTemplateRepository) ListBusinessesWithPendingTemplates(ctx context.Context, submittedBefore time.Time) ([]uint, error) {
+	var businessIDs []uint
+
+	err := r.db.Conn(ctx).Model(&models.WhatsappTemplate{}).
+		Distinct("business_id").
+		Where("origin = ?", entities.TemplateOriginBusiness).
+		Where("status = ?", entities.TemplateStatusPending).
+		Where("business_id IS NOT NULL").
+		Where("meta_template_id <> ''").
+		Where("submitted_at IS NULL OR submitted_at < ?", submittedBefore).
+		Pluck("business_id", &businessIDs).Error
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Error listing businesses with pending templates")
+		return nil, err
+	}
+
+	return businessIDs, nil
+}
+
 func templateToModel(template *entities.WhatsappTemplate) (*models.WhatsappTemplate, error) {
 	variables, err := json.Marshal(template.Variables)
 	if err != nil {

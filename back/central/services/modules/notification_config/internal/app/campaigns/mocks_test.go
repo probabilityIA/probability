@@ -320,6 +320,10 @@ func (m *templateRepoMock) UpdateTemplateStatusByMeta(_ context.Context, _, _, _
 	return nil
 }
 
+func (m *templateRepoMock) ListBusinessesWithPendingTemplates(_ context.Context, _ time.Time) ([]uint, error) {
+	return nil, nil
+}
+
 type publisherMock struct {
 	published []dtos.CampaignSendMessage
 	fail      bool

@@ -24,6 +24,8 @@ type IUseCase interface {
 	List(ctx context.Context, businessID uint, scope, status string, page, pageSize int) ([]entities.WhatsappTemplate, int64, error)
 	Delete(ctx context.Context, id, businessID uint) error
 	SubmitForReview(ctx context.Context, id, businessID uint) (*entities.WhatsappTemplate, error)
+	SyncPendingStatuses(ctx context.Context, businessID uint) (int, error)
+	SyncAllPendingStatuses(ctx context.Context) (int, error)
 	ApplySubmissionResult(ctx context.Context, result dtos.TemplateSubmissionResult) error
 	ApplyMetaStatus(ctx context.Context, wabaID, name, language, event, reason string) error
 	VariableCatalog() map[string]string

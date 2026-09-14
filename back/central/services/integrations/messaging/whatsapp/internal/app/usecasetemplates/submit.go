@@ -82,6 +82,7 @@ type CustomTemplateSubmission struct {
 	MetaTemplateID string           `json:"meta_template_id"`
 	HeaderMediaURL string           `json:"header_media_url"`
 	Components     []map[string]any `json:"components"`
+	Names          []string         `json:"names"`
 }
 
 type CustomTemplateResult struct {

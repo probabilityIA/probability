@@ -9,6 +9,7 @@ import {
   getTemplateVariablesAction,
   listTemplatesAction,
   submitTemplateForReviewAction,
+  syncTemplateStatusesAction,
 } from "../../infra/actions/whatsapp-templates";
 import { TemplateBubble, fillPlaceholders } from "./TemplateBubble";
 import { TemplateForm } from "./TemplateForm";
@@ -54,6 +55,7 @@ export function TemplatesSection({ businessId }: TemplatesSectionProps) {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [createScope, setCreateScope] = useState<TemplateScope>("campaign");
+  const [syncing, setSyncing] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,6 +84,26 @@ export function TemplatesSection({ businessId }: TemplatesSectionProps) {
     }
     showToast("Plantilla enviada a revisión de Meta", "success");
     load();
+  };
+
+  const handleSyncStatuses = async () => {
+    setSyncing(true);
+    const result = await syncTemplateStatusesAction(businessId);
+    if (!result.success) {
+      setSyncing(false);
+      showToast(result.error || "No se pudo consultar el estado en Meta", "error");
+      return;
+    }
+    if (!result.pending) {
+      setSyncing(false);
+      showToast("No hay plantillas en revisión para consultar", "info");
+      return;
+    }
+    showToast(`Consultando ${result.pending} plantilla(s) en Meta…`, "info");
+    setTimeout(() => {
+      setSyncing(false);
+      load();
+    }, 5000);
   };
 
   const handleDelete = async (template: WhatsappTemplate) => {
@@ -211,10 +233,20 @@ export function TemplatesSection({ businessId }: TemplatesSectionProps) {
             {"Propias del negocio"}
           </h3>
           <span className="text-xs text-gray-400">{`${own.length}`}</span>
+          {own.some((item) => item.Status === "pending") && (
+            <button
+              type="button"
+              onClick={handleSyncStatuses}
+              disabled={syncing}
+              className="ml-auto rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              {syncing ? "Consultando…" : "Consultar estado en Meta"}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="ml-auto rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            className={`${own.some((item) => item.Status === "pending") ? "" : "ml-auto "}rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90`}
           >
             {"+ Nueva plantilla"}
           </button>

@@ -15,6 +15,7 @@ type ITemplateRepository interface {
 	ListTemplates(ctx context.Context, businessID uint, scope, status string, page, pageSize int) ([]entities.WhatsappTemplate, int64, error)
 	DeleteTemplate(ctx context.Context, id uint) error
 	UpdateTemplateStatusByMeta(ctx context.Context, wabaID, name, language, status, reason string) error
+	ListBusinessesWithPendingTemplates(ctx context.Context, submittedBefore time.Time) ([]uint, error)
 }
 
 type IScheduledRuleRepository interface {

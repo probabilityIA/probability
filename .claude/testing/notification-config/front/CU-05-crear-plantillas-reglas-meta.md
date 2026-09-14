@@ -44,3 +44,20 @@ backend. Todo contra el mock de WhatsApp: nada llega a Meta.
 - variable mal escrita (`{{nombre}}`)
 
 Y no debe quedar ninguna fila creada.
+
+## Paso 5: estado de plantillas cuando se pierde el aviso de Meta
+
+Simular el aviso perdido: arrancar el mock con `WEBHOOK_BASE_URL` apuntando a un
+puerto sin nadie (por ejemplo `http://localhost:3999`), enviar la plantilla a
+revision y aprobarla en el mock sin avisar:
+`POST /_mock/approve {"name": "<nombre>", "silent": true}`.
+La plantilla queda `pending` en la base y `APPROVED` en el mock.
+
+1. Boton "Consultar estado en Meta" (solo aparece si hay plantillas en
+   revision) o `POST /api/v1/whatsapp-templates/sync-status?business_id=26`:
+   responde `pending: N` y a los segundos la plantilla pasa a `approved`.
+2. Sin plantillas pendientes responde `pending: 0` y no llama a Meta.
+3. Job `template_status_sync`: primera corrida 3 min despues de arrancar y luego
+   cada 10 min. Solo mira plantillas pendientes enviadas hace mas de 5 min; si
+   no hay ninguna no llama a Meta. Debe dejar la plantilla en `approved` sin
+   tocar nada.

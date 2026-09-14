@@ -40,6 +40,19 @@ func (c *Consumer) Start(ctx context.Context) error {
 			return nil
 		}
 
+		if submission.Action == "sync" {
+			if err := c.useCase.SyncCustomStatuses(ctx, submission); err != nil {
+				if whaErrors.IsNonRetryable(err) {
+					c.logger.Warn(ctx).Err(err).
+						Uint("business_id", submission.BusinessID).
+						Msg("No se pudo consultar el estado de las plantillas en Meta - error permanente (ACK)")
+					return nil
+				}
+				return err
+			}
+			return nil
+		}
+
 		if submission.Name == "" || (submission.Action != "delete" && submission.TemplateID == 0) {
 			c.logger.Warn(ctx).
 				Uint("template_id", submission.TemplateID).

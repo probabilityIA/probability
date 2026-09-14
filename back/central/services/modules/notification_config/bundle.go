@@ -208,5 +208,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 
 		go worker.NewScheduler(scheduledUseCase, logger).Start(context.Background())
 		go worker.NewCampaignDispatcher(campaignsUseCase, logger).Start(context.Background())
+		go worker.NewTemplateStatusSync(templatesUseCase, logger).Start(context.Background())
 	}
 }

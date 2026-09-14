@@ -79,6 +79,7 @@ type approveRequest struct {
 	Name   string `json:"name"`
 	Event  string `json:"event"`
 	Reason string `json:"reason"`
+	Silent bool   `json:"silent"`
 }
 
 func (h *Handler) ApproveByName(c *gin.Context) {
@@ -102,6 +103,12 @@ func (h *Handler) ApproveByName(c *gin.Context) {
 	event := body.Event
 	if event == "" {
 		event = "APPROVED"
+	}
+
+	if body.Silent {
+		template.Status = event
+		c.JSON(http.StatusOK, gin.H{"name": template.Name, "event": event, "silent": true})
+		return
 	}
 
 	h.emitTemplateStatus(template, event, body.Reason)
