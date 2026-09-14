@@ -52,6 +52,8 @@ export interface Order {
     total_amount: number;
     currency: string;
     cod_total?: number;
+    cod_includes_shipping?: boolean;
+    cod_checkout_carrier_fee?: number;
     is_cod?: boolean;
 
     subtotal_presentment?: number;

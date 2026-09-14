@@ -9,6 +9,7 @@ import (
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment/request"
+	"github.com/secamc93/probability/back/central/shared/cod"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -60,42 +61,7 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		return nil
 	}
 
-	trackingURL := event.TrackingURL
-	if trackingURL == "" && event.TrackingNumber != "" {
-		trackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + event.TrackingNumber
-	}
-	trackingURL = orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo")
-
-	isCOD := event.CodTotal > 0
-	amountToCollect := event.CodTotal
-	if isCOD && event.CodCarrierFee > 0 {
-		amountToCollect += event.CodCarrierFee
-	}
-
-	var templateName string
-	var variables map[string]string
-	if isCOD {
-		templateName = "guia_envio_generada_cod"
-		variables = map[string]string{
-			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
-			"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),
-			"3": sanitizeParam(orDefault(event.OrderNumber, "N/A")),
-			"4": sanitizeParam(orDefault(event.TrackingNumber, "N/A")),
-			"5": sanitizeParam(orDefault(event.Carrier, "Transportadora")),
-			"6": formatTotalAmount(amountToCollect),
-			"7": sanitizeParam(trackingURL),
-		}
-	} else {
-		templateName = "guia_envio_generada"
-		variables = map[string]string{
-			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
-			"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),
-			"3": sanitizeParam(orDefault(event.OrderNumber, "N/A")),
-			"4": sanitizeParam(orDefault(event.TrackingNumber, "N/A")),
-			"5": sanitizeParam(orDefault(event.Carrier, "Transportadora")),
-			"6": sanitizeParam(trackingURL),
-		}
-	}
+	templateName, variables := buildGuideVariables(event)
 
 	businessID := uint(0)
 	if event.BusinessID != nil {
@@ -138,6 +104,40 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		Msg("Shipment guide notification sent successfully")
 
 	return nil
+}
+
+func buildGuideVariables(event request.ShipmentGuideEvent) (string, map[string]string) {
+	trackingURL := event.TrackingURL
+	if trackingURL == "" && event.TrackingNumber != "" {
+		trackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + event.TrackingNumber
+	}
+	trackingURL = orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo")
+
+	if event.CodTotal > 0 {
+		amountToCollect := cod.CustomerCharge(cod.Order{
+			CodTotal:           event.CodTotal,
+			IncludesShipping:   event.CodIncludesShipping,
+			CheckoutCarrierFee: event.CodCheckoutCarrierFee,
+		}, event.CodCarrierFee)
+		return "guia_envio_generada_cod", map[string]string{
+			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
+			"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),
+			"3": sanitizeParam(orDefault(event.OrderNumber, "N/A")),
+			"4": sanitizeParam(orDefault(event.TrackingNumber, "N/A")),
+			"5": sanitizeParam(orDefault(event.Carrier, "Transportadora")),
+			"6": formatTotalAmount(amountToCollect),
+			"7": sanitizeParam(trackingURL),
+		}
+	}
+
+	return "guia_envio_generada", map[string]string{
+		"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
+		"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),
+		"3": sanitizeParam(orDefault(event.OrderNumber, "N/A")),
+		"4": sanitizeParam(orDefault(event.TrackingNumber, "N/A")),
+		"5": sanitizeParam(orDefault(event.Carrier, "Transportadora")),
+		"6": sanitizeParam(trackingURL),
+	}
 }
 
 func orDefault(value, defaultValue string) string {

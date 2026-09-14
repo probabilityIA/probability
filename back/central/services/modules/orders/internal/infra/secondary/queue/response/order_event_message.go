@@ -20,14 +20,15 @@ type OrderSnapshot struct {
 	InternalNumber string `json:"internal_number"`
 	ExternalID     string `json:"external_id"`
 
-	TotalAmount         float64  `json:"total_amount"`
-	CodTotal            *float64 `json:"cod_total,omitempty"`
-	CodCarrierFee       *float64 `json:"cod_carrier_fee,omitempty"`
-	IsCod               bool     `json:"is_cod"`
-	CodIncludesShipping bool     `json:"cod_includes_shipping"`
-	Currency            string   `json:"currency"`
-	PaymentMethodID     uint     `json:"payment_method_id"`
-	PaymentStatusID     *uint    `json:"payment_status_id,omitempty"`
+	TotalAmount           float64  `json:"total_amount"`
+	CodTotal              *float64 `json:"cod_total,omitempty"`
+	CodCarrierFee         *float64 `json:"cod_carrier_fee,omitempty"`
+	IsCod                 bool     `json:"is_cod"`
+	CodIncludesShipping   bool     `json:"cod_includes_shipping"`
+	CodCheckoutCarrierFee float64  `json:"cod_checkout_carrier_fee"`
+	Currency              string   `json:"currency"`
+	PaymentMethodID       uint     `json:"payment_method_id"`
+	PaymentStatusID       *uint    `json:"payment_status_id,omitempty"`
 
 	Subtotal     float64 `json:"subtotal"`
 	Tax          float64 `json:"tax"`

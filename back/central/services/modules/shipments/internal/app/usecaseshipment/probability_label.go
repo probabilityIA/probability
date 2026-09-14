@@ -82,11 +82,6 @@ func buildEnviaLabel(c *domain.GuidePDFContext, format *domain.GuideFormat) ([]b
 	return buf.Bytes(), nil
 }
 
-// buildCoordinadoraLabel replica el layout real de las guias de COORDINADORA
-// (logo + GUIA/UNIDAD arriba, codigo de barras, DE:/PARA:, Observaciones,
-// Ref, banner "Recaudos Contra Entrega" solo si el envio es contra entrega,
-// y la fila inferior Origen/QR/Destino/Zona Hub/Equipo Reparto), usando los
-// datos que ExtractCoordinadoraMetadata ya extrae del PDF real del carrier.
 func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideFormat) ([]byte, error) {
 	wCm := format.WidthCm
 	hCm := format.HeightCm
@@ -123,7 +118,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetTextColor(0, 0, 0)
 
-	// ── Header: [logo / barcode] | [GUIA, caja alta] | [UNIDAD / CC / PAQ] ─
 	gap := 1.5
 	topH := 24.0 * scale
 	logoBarcodeW := usableW * 0.45
@@ -138,10 +132,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	barcodeY := margin + logoH + 1.5*scale
 	barcodeH := topH - logoH - 1.5*scale
 
-	// El logo fuente de COORDINADORA ya trae el icono + el nombre en una
-	// sola imagen (wordmark completo). Se dibuja respetando su proporcion
-	// real (contain, sin deformar), del alto disponible o del ancho
-	// disponible, lo que resulte mas chico.
 	logoBytes := getCarrierLogoBytes(c.Carrier)
 	if len(logoBytes) > 0 {
 		logoW := logoBarcodeW
@@ -190,8 +180,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	}
 	cellH := topH / 3
 	drawCoordBadge(pdf, tr, unidadVal, x3, margin, rightColW, cellH, scale, false)
-	// "CC" es un badge fijo que COORDINADORA imprime en sus guias (tipo de
-	// documento); no proviene de datos extraidos, se replica tal cual.
 	drawCoordBadge(pdf, tr, "CC", x3, margin+cellH, rightColW, cellH, scale, false)
 	drawCoordBadge(pdf, tr, paqTxt, x3, margin+cellH*2, rightColW, cellH, scale, true)
 
@@ -201,28 +189,23 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.Line(margin, y, margin+usableW, y)
 	y += 1.5 * scale
 
-	// ── DE: ─────────────────────────────────────────────────────────────
 	sender := strings.TrimSpace(c.WarehouseCompany)
 	if sender == "" {
 		sender = strings.TrimSpace(c.BusinessName)
 	}
 	senderAddress := strings.TrimSpace(c.WarehouseAddress)
 	if senderAddress == "" {
-		// Sin bodega ni direccion de origen configurada: usar la direccion
-		// general del negocio como ultimo recurso, mejor que dejarlo vacio.
 		senderAddress = strings.TrimSpace(c.BusinessAddress)
 	}
 	senderCity := joinNonEmptyProb(", ", strings.TrimSpace(c.WarehouseCity), strings.TrimSpace(c.WarehouseState))
 	senderLine2 := joinNonEmptyProb("  ", cityTelLine(senderCity, c.WarehousePhone), postalLine(c.WarehousePostal))
 	y = drawCoordAddressBlock(pdf, tr, "DE:", sender, senderAddress, senderLine2, margin, y, usableW, scale, black, gray)
 
-	// ── PARA: ───────────────────────────────────────────────────────────
 	recipient := strings.TrimSpace(c.CustomerName)
 	destCity := joinNonEmptyProb(", ", strings.TrimSpace(c.DestinationCity), strings.TrimSpace(c.DestinationState))
 	destLine2 := cityTelLine(destCity, c.CustomerPhone)
 	y = drawCoordAddressBlock(pdf, tr, "PARA:", recipient, strings.TrimSpace(c.DestinationAddress), destLine2, margin, y, usableW, scale, black, gray)
 
-	// ── Observaciones Cliente: ─────────────────────────────────────────
 	if obs := strings.TrimSpace(c.Observaciones); obs != "" {
 		pdf.SetXY(margin, y)
 		pdf.SetFont("Helvetica", "B", 7.5*scale)
@@ -233,7 +216,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		y = pdf.GetY() + 1.2
 	}
 
-	// ── Ref: ────────────────────────────────────────────────────────────
 	refVal := strings.TrimSpace(c.Ref)
 	if refVal == "" {
 		refVal = strings.TrimSpace(c.OrderNumber)
@@ -248,7 +230,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		y = pdf.GetY() + 1.2
 	}
 
-	// ── Banner "Recaudos Contra Entrega" (solo COD) ────────────────────
 	if c.CodTotal > 0 {
 		bannerH := 7 * scale
 		pdf.SetFillColor(0, 0, 0)
@@ -261,9 +242,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		y += bannerH + 2
 	}
 
-	// Linea divisoria entre la info de la orden (DE:/PARA:/Observaciones/Ref)
-	// y la info de origen/destino de la guia. Si hay banner de "Recaudos
-	// Contra Entrega" ya cumple ese rol, no hace falta la linea extra.
 	if c.CodTotal <= 0 {
 		pdf.SetDrawColor(int(black.R), int(black.G), int(black.B))
 		pdf.SetLineWidth(0.5)
@@ -271,7 +249,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		y += 2
 	}
 
-	// ── Fila inferior: Origen | QR | Destino / Zona Hub / Equipo Reparto ─
 	footerH := hMm - y - margin
 	minFooterH := 22 * scale
 	maxFooterH := 30 * scale
@@ -279,8 +256,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		footerH = minFooterH
 		y = hMm - margin - footerH
 	} else if footerH > maxFooterH {
-		// Sobra espacio vertical (formatos altos como 10x15): no estirar las
-		// cajas, dejar el resto de la pagina en blanco como en la guia real.
 		footerH = maxFooterH
 	}
 	drawCoordFooterRow(pdf, tr, c, margin, y, usableW, footerH, scale, black, c.CodTotal > 0)
@@ -292,9 +267,6 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	return buf.Bytes(), nil
 }
 
-// drawCoordBox dibuja una caja con borde, etiqueta pequena arriba y el
-// valor en negrita debajo — el estilo de "GUIA:" / "UNIDAD" / "Origen" /
-// "Destino" / "Zona Hub" / "Equipo Reparto" que usa COORDINADORA.
 func drawCoordBox(pdf *gofpdf.Fpdf, tr func(string) string, label, value string, x, y, w, h, scale float64, centered bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
@@ -316,8 +288,6 @@ func drawCoordBox(pdf *gofpdf.Fpdf, tr func(string) string, label, value string,
 	pdf.CellFormat(w-pad*2, h-4.5*scale, tr(value), "", 0, align, false, 0, "")
 }
 
-// drawCoordBadge dibuja una caja pequena de una sola linea, centrada,
-// opcionalmente con fondo negro y texto blanco (como el badge "PAQ 1-2").
 func drawCoordBadge(pdf *gofpdf.Fpdf, tr func(string) string, text string, x, y, w, h, scale float64, filled bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
@@ -335,9 +305,6 @@ func drawCoordBadge(pdf *gofpdf.Fpdf, tr func(string) string, text string, x, y,
 	pdf.SetTextColor(0, 0, 0)
 }
 
-// drawCoordAddressBlock dibuja un bloque "DE:"/"PARA:" con nombre en
-// negrita, direccion y una linea de ciudad/telefono/postal. Retorna el Y
-// donde termino de escribir, para encadenar el siguiente bloque.
 func drawCoordAddressBlock(pdf *gofpdf.Fpdf, tr func(string) string, label, name, address, line2 string, x, y, w, scale float64, textCol, mutedCol color.RGBA) float64 {
 	pdf.SetXY(x, y)
 	pdf.SetFont("Helvetica", "B", 8*scale)
@@ -369,10 +336,6 @@ func drawCoordAddressBlock(pdf *gofpdf.Fpdf, tr func(string) string, label, name
 	return y + 1*scale
 }
 
-// drawCoordFooterRow dibuja la fila inferior de la guia: caja Origen (numero
-// + codigo de hub en dos lineas), QR de tracking con la fecha debajo, caja
-// Destino con el valor grande, y una sola caja Zona Hub/Equipo Reparto
-// dividida en dos mitades — igual que en la guia real de COORDINADORA.
 func drawCoordFooterRow(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, x, y, w, h, scale float64, black color.RGBA, noTopBorder bool) {
 	gap := 2.0
 	origenW := w * 0.17
@@ -437,10 +400,6 @@ func drawCoordFooterRow(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Guid
 	drawCoordSplitBox(pdf, tr, "Zona Hub", zonaVal, "Equipo Reparto", equipoVal, statX, y, statW, boxH, scale, noTopBorder)
 }
 
-// drawCoordBoxBorder dibuja el marco de una caja, opcionalmente sin el lado
-// superior. Se usa en la fila Origen/Destino/Zona Hub de envios contra
-// entrega: ahi el banner negro ya marca la separacion visual y una linea
-// extra justo encima de las cajas se ve redundante.
 func drawCoordBoxBorder(pdf *gofpdf.Fpdf, x, y, w, h float64, noTopBorder bool) {
 	if noTopBorder {
 		pdf.Line(x, y, x, y+h)
@@ -451,8 +410,6 @@ func drawCoordBoxBorder(pdf *gofpdf.Fpdf, x, y, w, h float64, noTopBorder bool) 
 	pdf.Rect(x, y, w, h, "D")
 }
 
-// drawCoordBoxTwoLine es como drawCoordBox pero el valor va en dos lineas
-// grandes centradas (el numero de Origen y su codigo de hub, ej. "28"/"FLA").
 func drawCoordBoxTwoLine(pdf *gofpdf.Fpdf, tr func(string) string, label, line1, line2 string, x, y, w, h, scale float64, noTopBorder bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
@@ -475,8 +432,6 @@ func drawCoordBoxTwoLine(pdf *gofpdf.Fpdf, tr func(string) string, label, line1,
 	}
 }
 
-// drawCoordBoxBig es como drawCoordBox pero con el valor en un tamano de
-// fuente mucho mayor (el "Destino" real se imprime muy grande y bold).
 func drawCoordBoxBig(pdf *gofpdf.Fpdf, tr func(string) string, label, value string, x, y, w, h, scale float64, noTopBorder bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
@@ -491,9 +446,6 @@ func drawCoordBoxBig(pdf *gofpdf.Fpdf, tr func(string) string, label, value stri
 	pdf.CellFormat(w, 9*scale, tr(value), "", 0, "C", false, 0, "")
 }
 
-// drawCoordSplitBox dibuja una sola caja partida por una linea horizontal
-// en dos mitades, cada una con su propia etiqueta y valor — el estilo real
-// de la caja combinada "Zona Hub" / "Equipo Reparto".
 func drawCoordSplitBox(pdf *gofpdf.Fpdf, tr func(string) string, label1, val1, label2, val2 string, x, y, w, h, scale float64, noTopBorder bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
@@ -515,8 +467,6 @@ func drawCoordHalfCell(pdf *gofpdf.Fpdf, tr func(string) string, label, value st
 	pdf.CellFormat(w, 5*scale, tr(value), "", 0, "C", false, 0, "")
 }
 
-// cityTelLine junta "ciudad" y "Tel: numero" con un separador visual,
-// omitiendo cualquiera de los dos que venga vacio.
 func cityTelLine(city, phone string) string {
 	phone = strings.TrimSpace(phone)
 	if phone != "" {
@@ -525,7 +475,6 @@ func cityTelLine(city, phone string) string {
 	return joinNonEmptyProb("  ", city, phone)
 }
 
-// postalLine antepone "Z.Postal:" solo si hay un valor que mostrar.
 func postalLine(postal string) string {
 	postal = strings.TrimSpace(postal)
 	if postal == "" {
@@ -782,7 +731,7 @@ func drawColumnPaquete(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Guide
 
 	pdf.SetFont("Helvetica", "B", 6*scale)
 	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
-	weightStr := "—"
+	weightStr := "\u2014"
 	if c.Weight > 0 {
 		weightStr = fmt.Sprintf("%.1f kg", c.Weight)
 	}
@@ -798,7 +747,7 @@ func drawColumnPaquete(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Guide
 
 	pdf.SetFont("Helvetica", "B", 6*scale)
 	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
-	dimsStr := "—"
+	dimsStr := "\u2014"
 	if c.Width > 0 && c.Height > 0 && c.Length > 0 {
 		dimsStr = fmt.Sprintf("%.0fx%.0fx%.0f cm", c.Width, c.Height, c.Length)
 	}
@@ -813,7 +762,7 @@ func drawColumnPaquete(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Guide
 		if currency == "" {
 			currency = "COP"
 		}
-		totalCliente := c.CodTotal + c.CodCarrierFee
+		totalCliente := c.CodTotal
 		codTxt := fmt.Sprintf("CONTRA ENTREGA: $%s", formatMoneyProb(totalCliente))
 		yPos := y + h - 8
 		pdf.Rect(x+margin, yPos, w-margin*2, 6.5*scale, "F")
@@ -872,7 +821,7 @@ func drawTrackingSectionNewDesign(pdf *gofpdf.Fpdf, tr func(string) string, c *d
 	pdf.SetXY(margin, trackingY+trackingH-2)
 	pdf.SetFont("Helvetica", "", 4*scale)
 	pdf.SetTextColor(int(darkBlue.R), int(darkBlue.G), int(darkBlue.B))
-	barcodeTxt := fmt.Sprintf("CODE 128 · *%s*", strings.TrimSpace(c.TrackingNumber))
+	barcodeTxt := fmt.Sprintf("CODE 128 \u00b7 *%s*", strings.TrimSpace(c.TrackingNumber))
 	pdf.CellFormat(usableW*0.5, 1.5*scale, tr(barcodeTxt), "", 0, "L", false, 0, "")
 
 	pdf.SetXY(margin+usableW*0.5, trackingY+trackingH-2)
@@ -1352,7 +1301,7 @@ func drawProbSender(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 		}
 	} else if sender != "" {
 		pdf.SetFont("Helvetica", "", 7*scale)
-		pdf.CellFormat(0, 3*scale, tr("(Sin información adicional en BD)"), "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, 3*scale, tr("(Sin informaci\u00f3n adicional en BD)"), "", 1, "L", false, 0, "")
 	}
 	pdf.Ln(1 * scale)
 }

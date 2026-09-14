@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/shared/shippingpkg"
-	"math"
 	"time"
 )
 
@@ -209,15 +208,16 @@ type OrderPublicTracking struct {
 }
 
 type OrderCODInfo struct {
-	OrderID           string
-	BusinessID        uint
-	CodTotal          *float64
-	TotalAmount       float64
-	Currency          string
-	IsPaid            bool
-	PaidAt            *time.Time
-	PaymentMethodID   uint
-	PaymentMethodCode string
+	OrderID               string
+	BusinessID            uint
+	CodTotal              *float64
+	CodCheckoutCarrierFee float64
+	TotalAmount           float64
+	Currency              string
+	IsPaid                bool
+	PaidAt                *time.Time
+	PaymentMethodID       uint
+	PaymentMethodCode     string
 }
 
 type CarrierInfo struct {
@@ -256,14 +256,16 @@ type ITransportRequestPublisher interface {
 }
 
 type GuideNotificationData struct {
-	CustomerName  string
-	CustomerPhone string
-	OrderNumber   string
-	BusinessName  string
-	IntegrationID uint
-	CodTotal      *float64
-	CodCarrierFee *float64
-	TrackingURL   string
+	CustomerName          string
+	CustomerPhone         string
+	OrderNumber           string
+	BusinessName          string
+	IntegrationID         uint
+	CodTotal              *float64
+	CodCarrierFee         *float64
+	CodIncludesShipping   bool
+	CodCheckoutCarrierFee float64
+	TrackingURL           string
 }
 
 type OrderExternalGuide struct {
@@ -302,33 +304,10 @@ type OrderRecipient struct {
 }
 
 type OrderCodBasis struct {
-	TotalAmount         float64
-	CodTotal            float64
-	CodIncludesShipping bool
-}
-
-func (b OrderCodBasis) NetTarget(guideTotalCost float64, embeddedCarrierFee float64) float64 {
-	if b.CodTotal <= 0 {
-		return 0
-	}
-	if !b.CodIncludesShipping && guideTotalCost > 0 {
-		return b.TotalAmount + guideTotalCost
-	}
-	if b.CodIncludesShipping {
-		// CodTotal ya trae la comision del carrier sumada (mapQuoteRatesToWoo
-		// la incluye en el precio de checkout), restarla evita que
-		// AmountToCollect la vuelva a sumar.
-		return b.CodTotal - embeddedCarrierFee
-	}
-	return b.CodTotal
-}
-
-func (b OrderCodBasis) AmountToCollect(guideTotalCost float64, codCarrierFee float64) float64 {
-	base := b.NetTarget(guideTotalCost, codCarrierFee)
-	if base <= 0 {
-		return 0
-	}
-	return math.Ceil(base + codCarrierFee)
+	TotalAmount           float64
+	CodTotal              float64
+	CodIncludesShipping   bool
+	CodCheckoutCarrierFee float64
 }
 
 type IShipmentSSEPublisher interface {

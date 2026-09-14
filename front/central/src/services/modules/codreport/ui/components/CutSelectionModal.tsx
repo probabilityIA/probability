@@ -5,6 +5,7 @@ import { CheckCircle2, RefreshCw, ShieldCheck, AlertCircle, Package, Search, X, 
 import { getSelectableOrdersAction, createDraftCutAction } from '../../infra/actions';
 import { CodOrder } from '../../domain/types';
 import { formatMoney, formatDateTime, carrierLabel } from './helpers';
+import { codCustomerCharge } from '@/shared/utils/cod-amount';
 
 interface Props {
     isOpen: boolean;
@@ -230,7 +231,7 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                                             <td className="py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">{carrierLabel(o.carrier)}</td>
                                             <td className="py-2 text-right text-gray-600 dark:text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(o.cod_total, o.currency)}</td>
                                             <td className="py-2 text-right text-[#c2410c] tabular-nums whitespace-nowrap">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
-                                            <td className="py-2 text-right font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
+                                            <td className="py-2 text-right font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(codCustomerCharge(o), o.currency)}</td>
                                             <td className="py-2 text-[11px] text-gray-500 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '-'}</td>
                                         </tr>
                                     );

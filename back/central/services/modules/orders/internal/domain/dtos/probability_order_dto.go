@@ -5,23 +5,17 @@ import (
 	"time"
 )
 
-// ProbabilityOrderDTO representa la estructura de orden en la lógica de negocio que todas las integraciones
-// deben enviar después de mapear sus datos específicos
-// Nota: Requiere tags JSON para deserialización en consumer
 type ProbabilityOrderDTO struct {
-	// Identificadores de integración
 	BusinessID      *uint  `json:"business_id"`
 	IntegrationID   uint   `json:"integration_id"`
 	IntegrationType string `json:"integration_type"`
 
-	// Identificadores de la orden
 	Platform       string `json:"platform"`
 	ExternalID     string `json:"external_id"`
 	ChannelPackID  string `json:"channel_pack_id,omitempty"`
 	OrderNumber    string `json:"order_number"`
 	InternalNumber string `json:"internal_number"`
 
-	// Información financiera
 	Subtotal     float64  `json:"subtotal"`
 	Tax          float64  `json:"tax"`
 	Discount     float64  `json:"discount"`
@@ -32,7 +26,8 @@ type ProbabilityOrderDTO struct {
 	IsCod        bool     `json:"is_cod"`
 	CodTotal     *float64 `json:"cod_total,omitempty"`
 
-	// Precios en moneda presentment (presentment_money - moneda local)
+	CodCheckoutCarrierFee float64 `json:"cod_checkout_carrier_fee,omitempty"`
+
 	SubtotalPresentment         float64 `json:"subtotal_presentment"`
 	TaxPresentment              float64 `json:"tax_presentment"`
 	DiscountPresentment         float64 `json:"discount_presentment"`
@@ -42,7 +37,6 @@ type ProbabilityOrderDTO struct {
 	TotalAmountPresentment      float64 `json:"total_amount_presentment"`
 	CurrencyPresentment         string  `json:"currency_presentment"`
 
-	// Información del cliente
 	CustomerID        *uint  `json:"customer_id,omitempty"`
 	CustomerName      string `json:"customer_name"`
 	CustomerFirstName string `json:"customer_first_name"`
@@ -65,54 +59,43 @@ type ProbabilityOrderDTO struct {
 	CustomerOrderCount       *int    `json:"customer_order_count,omitempty"`
 	CustomerTotalSpent       *string `json:"customer_total_spent,omitempty"`
 
-	// Tipo y estado
 	OrderTypeID    *uint  `json:"order_type_id,omitempty"`
 	OrderTypeName  string `json:"order_type_name"`
 	Status         string `json:"status"`
 	OriginalStatus string `json:"original_status"`
 	StatusID       *uint  `json:"status_id,omitempty"`
 
-	// Estados independientes
 	PaymentStatusID     *uint `json:"payment_status_id,omitempty"`
 	FulfillmentStatusID *uint `json:"fulfillment_status_id,omitempty"`
 
-	// Información adicional
 	Notes    *string `json:"notes,omitempty"`
 	Coupon   *string `json:"coupon,omitempty"`
 	Approved *bool   `json:"approved,omitempty"`
 	UserID   *uint   `json:"user_id,omitempty"`
 	UserName string  `json:"user_name"`
 
-	// Facturación
 	Invoiceable     bool    `json:"invoiceable"`
 	InvoiceURL      *string `json:"invoice_url,omitempty"`
 	InvoiceID       *string `json:"invoice_id,omitempty"`
 	InvoiceProvider *string `json:"invoice_provider,omitempty"`
 
-	// Enlaces Externos
 	OrderStatusURL string `json:"order_status_url"`
 
-	// Timestamps
 	OccurredAt time.Time `json:"occurred_at"`
 	ImportedAt time.Time `json:"imported_at"`
 
-	// Datos estructurados (JSONB) - Para compatibilidad
-	// json.RawMessage permite deserializar JSON sin conocer la estructura exacta
 	Metadata           json.RawMessage `json:"metadata,omitempty"`
 	FinancialDetails   json.RawMessage `json:"financial_details,omitempty"`
 	ShippingDetails    json.RawMessage `json:"shipping_details,omitempty"`
 	PaymentDetails     json.RawMessage `json:"payment_details,omitempty"`
 	FulfillmentDetails json.RawMessage `json:"fulfillment_details,omitempty"`
 
-	// Testing
 	IsTest bool `json:"is_test"`
 
-	// Control de flujo (no se persiste)
 	IsManualOrder       bool `json:"-"`
 	CodIncludesShipping bool `json:"-"`
 	SkipInventory       bool `json:"skip_inventory,omitempty"`
 
-	// Tablas relacionadas
 	OrderItems      []ProbabilityOrderItemDTO      `json:"order_items,omitempty"`
 	Addresses       []ProbabilityAddressDTO        `json:"addresses,omitempty"`
 	Payments        []ProbabilityPaymentDTO        `json:"payments,omitempty"`
@@ -120,7 +103,6 @@ type ProbabilityOrderDTO struct {
 	ChannelMetadata *ProbabilityChannelMetadataDTO `json:"channel_metadata,omitempty"`
 }
 
-// ProbabilityOrderItemDTO representa un item/producto de la orden
 type ProbabilityOrderItemDTO struct {
 	ProductID       *string  `json:"product_id,omitempty"`
 	ProductSKU      string   `json:"product_sku"`
@@ -137,11 +119,9 @@ type ProbabilityOrderItemDTO struct {
 	Tax             float64  `json:"tax"`
 	TaxRate         *float64 `json:"tax_rate,omitempty"`
 
-	// Precio base sin impuestos
 	UnitPriceBase            float64 `json:"unit_price_base"`
 	UnitPriceBasePresentment float64 `json:"unit_price_base_presentment"`
 
-	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64         `json:"unit_price_presentment"`
 	TotalPricePresentment float64         `json:"total_price_presentment"`
 	DiscountPresentment   float64         `json:"discount_presentment"`
@@ -152,7 +132,6 @@ type ProbabilityOrderItemDTO struct {
 	Metadata              json.RawMessage `json:"metadata,omitempty"`
 }
 
-// ProbabilityAddressDTO representa una dirección (envío o facturación)
 type ProbabilityAddressDTO struct {
 	Type         string          `json:"type"`
 	FirstName    string          `json:"first_name"`
@@ -171,7 +150,6 @@ type ProbabilityAddressDTO struct {
 	Metadata     json.RawMessage `json:"metadata,omitempty"`
 }
 
-// ProbabilityPaymentDTO representa un pago de la orden
 type ProbabilityPaymentDTO struct {
 	PaymentMethodID  uint            `json:"payment_method_id"`
 	Amount           float64         `json:"amount"`
@@ -189,7 +167,6 @@ type ProbabilityPaymentDTO struct {
 	Metadata         json.RawMessage `json:"metadata,omitempty"`
 }
 
-// ProbabilityShipmentDTO representa un envío de la orden
 type ProbabilityShipmentDTO struct {
 	TrackingNumber    *string         `json:"tracking_number,omitempty"`
 	TrackingURL       *string         `json:"tracking_url,omitempty"`
@@ -219,7 +196,6 @@ type ProbabilityShipmentDTO struct {
 	Metadata          json.RawMessage `json:"metadata,omitempty"`
 }
 
-// ProbabilityChannelMetadataDTO representa los datos crudos del canal
 type ProbabilityChannelMetadataDTO struct {
 	ChannelSource string          `json:"channel_source"`
 	RawData       json.RawMessage `json:"raw_data,omitempty"`

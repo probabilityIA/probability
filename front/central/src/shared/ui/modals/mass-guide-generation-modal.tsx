@@ -13,6 +13,7 @@ import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
 import { buildGuideDestination } from '@/shared/utils/guide-destination';
+import { codCheckoutFee, codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -23,14 +24,12 @@ const findDaneCode = (city: string, state: string) => {
 
     const entries = Object.entries(danes);
 
-    // 1. Try exact match with city and state
     const exactMatch = entries.find(([_, data]: [string, any]) =>
         normalizeString(data.ciudad) === targetCity &&
         normalizeString(data.departamento) === targetState
     );
     if (exactMatch) return exactMatch[0];
 
-    // 2. Try match with city only
     const cityMatch = entries.find(([_, data]: [string, any]) =>
         normalizeString(data.ciudad) === targetCity
     );
@@ -72,7 +71,6 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
 
-    // const repo = new ShipmentApiRepository(); // Eliminado para usar Server Actions
 
     useEffect(() => {
         if (isOpen && step === 'select') {
@@ -100,12 +98,11 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         try {
             const response = await getOrdersAction({ page: 1, page_size: 100 });
             if (response.success && response.data) {
-                // Filter orders without tracking numbers
                 const ordersWithoutGuides = response.data.filter(order => !order.tracking_number);
                 setOrders(ordersWithoutGuides);
             }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al cargar órdenes'));
+            setError(getActionError(err, 'Error al cargar \u00f3rdenes'));
         } finally {
             setLoading(false);
         }
@@ -200,7 +197,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
             const order = selectedOrders[i];
             try {
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
-                const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
+                const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total + codCheckoutFee(order) : undefined;
                 const quotePayload: EnvioClickQuoteRequest = {
                     order_uuid: order.id,
                     auto_package: !editedPackageIds.has(order.id),
@@ -227,11 +224,9 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
 
                 const response = await quoteShipmentAction(quotePayload);
                 if (response.success) {
-                    // Quote request accepted. Rates will arrive via SSE
-                    // For bulk generation, mark as pending quote
                     quotedOrders.push({ ...order, quotePending: true });
                 } else {
-                    quotedOrders.push({ ...order, quoteError: response.message || 'Error al solicitar cotización' });
+                    quotedOrders.push({ ...order, quoteError: response.message || 'Error al solicitar cotizaci\u00f3n' });
                 }
             } catch (err: any) {
                 quotedOrders.push({ ...order, quoteError: err.message || 'Error al cotizar' });
@@ -263,7 +258,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
                 const destParts = buildGuideDestination(order);
 
-                const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
+                const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total + codCheckoutFee(order) : undefined;
                 const guideTotalCost = (order.quote!.flete) + (order.quote!.minimumInsurance ?? 0) + (order.quote!.extraInsurance ?? 0);
                 const generatePayload: EnvioClickQuoteRequest = {
                     idRate: order.quote!.idRate,
@@ -288,7 +283,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     }],
                     origin: {
                         daneCode: selectedWarehouse?.city_dane_code || '',
-                        address: selectedWarehouse?.street || selectedWarehouse?.address || 'Dirección no especificada',
+                        address: selectedWarehouse?.street || selectedWarehouse?.address || 'Direcci\u00f3n no especificada',
                         company: selectedWarehouse?.company || selectedWarehouse?.name || 'Mi Empresa',
                         firstName: selectedWarehouse?.first_name || selectedWarehouse?.contact_name?.split(' ')[0] || 'Admin',
                         lastName: selectedWarehouse?.last_name || selectedWarehouse?.contact_name?.split(' ').slice(1).join(' ') || '',
@@ -300,7 +295,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     },
                     destination: {
                         daneCode: destDane || '',
-                        address: destParts.address || 'Dirección no especificada',
+                        address: destParts.address || 'Direcci\u00f3n no especificada',
                         company: order.customer_name || 'Cliente',
                         firstName: order.customer_name?.split(' ')[0] || 'Cliente',
                         lastName: order.customer_name?.split(' ').slice(1).join(' ') || 'Apellido',
@@ -316,7 +311,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 if (genRes.success && genRes.data) {
                     setGeneratedCount(prev => prev + 1);
                 } else {
-                    throw new Error(genRes.message || "Error generando guía");
+                    throw new Error(genRes.message || "Error generando gu\u00eda");
                 }
             } catch (err: any) {
                 setFailedCount(prev => prev + 1);
@@ -349,16 +344,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Generación Masiva de Guías</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Generaci&#243;n Masiva de Gu&#237;as</h2>
                     <button onClick={handleClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 text-2xl">
-                        ×
+                        &#215;
                     </button>
                 </div>
 
-                {/* Step 1: Select Orders */}
                 {step === 'select' && (
                     <div className="space-y-4">
-                        {/* Warehouse Selector */}
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <label className="block text-sm font-semibold text-blue-800 mb-2">Bodega de origen</label>
                             {warehouses.length === 0 ? (
@@ -374,7 +367,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 >
                                     {warehouses.map(wh => (
                                         <option key={wh.id} value={wh.id}>
-                                            {wh.name} — {wh.city}, {wh.state} {wh.is_default ? '(Por defecto)' : ''}
+                                            {wh.name} &#8212; {wh.city}, {wh.state} {wh.is_default ? '(Por defecto)' : ''}
                                         </option>
                                     ))}
                                 </select>
@@ -388,7 +381,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
 
                         <div className="flex justify-between items-center">
                             <p className="text-sm text-gray-600 dark:text-gray-300">
-                                Selecciona las órdenes para generar guías ({selectedOrderIds.size} seleccionadas)
+                                Selecciona las &#243;rdenes para generar gu&#237;as ({selectedOrderIds.size} seleccionadas)
                             </p>
                             <div className="space-x-2">
                                 <Button variant="outline" size="sm" onClick={selectAll}>
@@ -401,10 +394,10 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         </div>
 
                         {loading ? (
-                            <div className="text-center py-8">Cargando órdenes...</div>
+                            <div className="text-center py-8">Cargando &#243;rdenes...</div>
                         ) : orders.length === 0 ? (
                             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                No hay órdenes sin guía de envío
+                                No hay &#243;rdenes sin gu&#237;a de env&#237;o
                             </div>
                         ) : (
                             <div className="border rounded-lg max-h-96 overflow-y-auto">
@@ -425,7 +418,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                                 <span className="font-semibold">{order.order_number}</span>
                                                 {order.cod_total && order.cod_total > 0 && (
                                                     <span className="shipment-badge-warning text-[10px] px-1.5 py-0.5">
-                                                        Contra Entrega ${order.cod_total.toLocaleString()}
+                                                        Contra Entrega ${codCustomerCharge(order).toLocaleString()}
                                                     </span>
                                                 )}
                                             </div>
@@ -467,10 +460,9 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     </div>
                 )}
 
-                {/* Step 2: Quoting Progress */}
                 {step === 'quote' && (
                     <div className="space-y-4">
-                        <p className="text-center text-gray-600 dark:text-gray-300">Cotizando envíos...</p>
+                        <p className="text-center text-gray-600 dark:text-gray-300">Cotizando env&#237;os...</p>
                         <div className="shipment-progress-bar rounded-full h-4">
                             <div
                                 className="shipment-progress-fill"
@@ -483,16 +475,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     </div>
                 )}
 
-                {/* Step 3: Confirm */}
                 {step === 'confirm' && (
                     <div className="space-y-4">
-                        {/* Summary Header */}
                         <div className="shipment-alert shipment-alert-primary rounded-lg">
-                            <h3 className="font-semibold mb-2" style={{ color: 'var(--color-primary)' }}>Resumen de Cotización</h3>
+                            <h3 className="font-semibold mb-2" style={{ color: 'var(--color-primary)' }}>Resumen de Cotizaci&#243;n</h3>
                             <div className="flex justify-between items-center text-sm" style={{ color: 'var(--color-primary)' }}>
                                 <div>
-                                    <p>Órdenes cotizadas: {orders.filter(o => o.quote).length}</p>
-                                    <p>Órdenes con error: {orders.filter(o => o.quoteError).length}</p>
+                                    <p>&#211;rdenes cotizadas: {orders.filter(o => o.quote).length}</p>
+                                    <p>&#211;rdenes con error: {orders.filter(o => o.quoteError).length}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-lg font-bold">Total: ${totalCost.toLocaleString()} COP</p>
@@ -505,7 +495,6 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                             </div>
                         </div>
 
-                        {/* Detailed Order List */}
                         <div className="border rounded-lg max-h-96 overflow-y-auto">
                             <table className="w-full text-sm">
                                 <thead className="sticky top-0 shipment-table-header">
@@ -538,7 +527,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                                     <div>
                                                         <div className="font-medium">{order.quote.carrier}</div>
                                                         <div className="text-xs text-gray-500 dark:text-gray-400">{order.quote.product}</div>
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400">{order.quote.deliveryDays} días</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">{order.quote.deliveryDays} d&#237;as</div>
                                                     </div>
                                                 ) : (
                                                     <span className="text-red-600 text-xs">-</span>
@@ -556,11 +545,11 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                             <td className="p-3 text-center">
                                                 {order.quote ? (
                                                     <span className="shipment-badge-success px-2 py-1">
-                                                        ✓ Cotizada
+                                                        &#10003; Cotizada
                                                     </span>
                                                 ) : (
                                                     <span className="shipment-badge-error px-2 py-1">
-                                                        ✗ Error
+                                                        &#10007; Error
                                                     </span>
                                                 )}
                                             </td>
@@ -569,7 +558,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                                     onClick={() => setSelectedOrderForDetails(order)}
                                                     className="text-gray-400 hover:text-gray-600 dark:text-gray-300"
                                                 >
-                                                    ⋮
+                                                    &#8942;
                                                 </button>
                                             </td>
                                         </tr>
@@ -580,7 +569,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
 
                         {walletBalance !== null && walletBalance < totalCost && (
                             <div className="shipment-alert shipment-alert-error">
-                                ⚠️ Saldo insuficiente. Necesitas ${(totalCost - walletBalance).toLocaleString()} COP adicionales.
+                                &#9888;&#65039; Saldo insuficiente. Necesitas ${(totalCost - walletBalance).toLocaleString()} COP adicionales.
                             </div>
                         )}
 
@@ -592,16 +581,15 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 onClick={handleGenerateAll}
                                 disabled={walletBalance !== null && walletBalance < totalCost}
                             >
-                                Generar Guías ({orders.filter(o => o.quote).length})
+                                Generar Gu&#237;as ({orders.filter(o => o.quote).length})
                             </Button>
                         </div>
                     </div>
                 )}
 
-                {/* Step 4: Generating Progress */}
                 {step === 'generate' && (
                     <div className="space-y-4">
-                        <p className="text-center text-gray-600 dark:text-gray-300">Generando guías...</p>
+                        <p className="text-center text-gray-600 dark:text-gray-300">Generando gu&#237;as...</p>
                         <div className="shipment-progress-bar rounded-full h-4">
                             <div
                                 className="shipment-progress-fill"
@@ -618,14 +606,13 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     </div>
                 )}
 
-                {/* Step 5: Complete */}
                 {step === 'complete' && (
                     <div className="space-y-4">
                         <div className="shipment-alert shipment-alert-success">
-                            <h3 className="font-semibold mb-2">✅ Proceso Completado</h3>
+                            <h3 className="font-semibold mb-2">&#9989; Proceso Completado</h3>
                             <div className="space-y-1 text-sm">
-                                <p>Guías generadas exitosamente: {generatedCount}</p>
-                                <p>Guías fallidas: {failedCount}</p>
+                                <p>Gu&#237;as generadas exitosamente: {generatedCount}</p>
+                                <p>Gu&#237;as fallidas: {failedCount}</p>
                             </div>
                         </div>
 
@@ -634,7 +621,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 <h4 className="font-semibold mb-2">Errores:</h4>
                                 <ul className="text-sm space-y-1">
                                     {generationErrors.map((err, idx) => (
-                                        <li key={idx}>• {err}</li>
+                                        <li key={idx}>&#8226; {err}</li>
                                     ))}
                                 </ul>
                             </div>
@@ -655,12 +642,11 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 )}
             </div>
 
-            {/* Details Modal */}
             {selectedOrderForDetails && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-bold">Detalles de Cotización - {selectedOrderForDetails.order_number}</h3>
+                            <h3 className="text-lg font-bold">Detalles de Cotizaci&#243;n - {selectedOrderForDetails.order_number}</h3>
                             <button onClick={() => setSelectedOrderForDetails(null)} className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl">&times;</button>
                         </div>
 
@@ -668,7 +654,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                             <div className="space-y-1">
                                 <p className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Origen</p>
                                 <p>{selectedWarehouse ? `${selectedWarehouse.city}, ${selectedWarehouse.state}` : 'Sin bodega seleccionada'}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedWarehouse?.street || selectedWarehouse?.address || 'Sin dirección'}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedWarehouse?.street || selectedWarehouse?.address || 'Sin direcci\u00f3n'}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Destino</p>
@@ -694,7 +680,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                     <p>Seg. obligatorio: ${(selectedOrderForDetails.quote.minimumInsurance ?? 0).toLocaleString()}</p>
                                     <p>Seg. adicional: ${(selectedOrderForDetails.quote.extraInsurance ?? 0).toLocaleString()} <span className="text-emerald-700">(incluido)</span></p>
                                     <p className="font-bold">Total: ${(selectedOrderForDetails.quote.flete + (selectedOrderForDetails.quote.minimumInsurance ?? 0) + (selectedOrderForDetails.quote.extraInsurance ?? 0)).toLocaleString()}</p>
-                                    <p>Entrega: {selectedOrderForDetails.quote.deliveryDays} días</p>
+                                    <p>Entrega: {selectedOrderForDetails.quote.deliveryDays} d&#237;as</p>
                                 </div>
                             </div>
                         ) : (
@@ -706,7 +692,6 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         <div className="flex justify-end gap-2 pt-2">
                             <Button variant="outline" size="sm" onClick={() => setSelectedOrderForDetails(null)}>Cerrar</Button>
                             <Button size="sm" onClick={() => {
-                                // Logic to re-quote could go here
                                 setSelectedOrderForDetails(null);
                             }}>Cerrar</Button>
                         </div>
@@ -714,7 +699,6 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 </div>
             )}
 
-            {/* Edit Modal */}
             {selectedOrderForEdit && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4">
@@ -733,11 +717,11 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_state || ''} onChange={e => setEditForm({ ...editForm, shipping_state: e.target.value })} placeholder="Ej. Cundinamarca" />
                             </div>
                             <div className="space-y-1 col-span-2">
-                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Dirección</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Direcci&#243;n</label>
                                 <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_street || ''} onChange={e => setEditForm({ ...editForm, shipping_street: e.target.value })} />
                             </div>
                             <div className="space-y-1 col-span-2">
-                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Teléfono Cliente</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Tel&#233;fono Cliente</label>
                                 <input type="text" className="w-full border p-2 rounded" value={editForm.customer_phone || ''} onChange={e => setEditForm({ ...editForm, customer_phone: e.target.value })} />
                             </div>
                             <div className="space-y-1">

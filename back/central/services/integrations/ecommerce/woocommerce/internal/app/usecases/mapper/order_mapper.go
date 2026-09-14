@@ -33,10 +33,6 @@ func metaValue(meta []domain.WooCommerceMetaData, key string) string {
 	return ""
 }
 
-// MapWooOrderToProbability convierte una orden WooCommerce a el DTO canónico de Probability.
-// quoteRepo se usa para recuperar, por quote_id/rate_index, la tarifa exacta cotizada por
-// Probability (flete, seguro minimo, comision y margen COD) cuando el metodo de envio
-// vino del cotizador propio. Puede ser nil (metodo de envio ajeno o sin datos de quote).
 func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrder, rawJSON []byte, quoteRepo domain.IProductRepository, integrationID uint) *canonical.ProbabilityOrderDTO {
 	now := time.Now()
 	totalAmount := parseFloat(order.Total)
@@ -46,16 +42,13 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 	freeShipping := shippingCost <= 0 && len(order.ShippingLines) > 0
 	subtotal := totalAmount - totalTax - shippingCost + discount
 
-	// Customer name from billing
 	customerName := strings.TrimSpace(fmt.Sprintf("%s %s", order.Billing.FirstName, order.Billing.LastName))
 
-	// Notes
 	var notes *string
 	if order.CustomerNote != "" {
 		notes = &order.CustomerNote
 	}
 
-	// Coupon
 	var coupon *string
 	if len(order.CouponLines) > 0 {
 		codes := make([]string, len(order.CouponLines))
@@ -66,7 +59,6 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		coupon = &joined
 	}
 
-	// Map status
 	status := MapWooStatus(order.Status)
 
 	dto := &canonical.ProbabilityOrderDTO{
@@ -79,9 +71,6 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		Discount:        discount,
 		ShippingCost:    shippingCost,
 		FreeShipping:    freeShipping,
-		// TotalAmount es solo el valor de productos, igual que en las ordenes
-		// manuales (ver .claude/bitacora): el total con envio/comision se arma
-		// sumando ShippingCost/CodTotal, no se guarda un total distinto aqui.
 		TotalAmount:     subtotal,
 		Currency:        order.Currency,
 		CustomerName:    customerName,
@@ -95,7 +84,6 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		ImportedAt:      now,
 	}
 
-	// Order items
 	dto.OrderItems = make([]canonical.ProbabilityOrderItemDTO, 0, len(order.LineItems))
 	for _, item := range order.LineItems {
 		productID := fmt.Sprintf("%d", item.ProductID)
@@ -130,10 +118,8 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		})
 	}
 
-	// Addresses
 	dto.Addresses = make([]canonical.ProbabilityAddressDTO, 0, 2)
 
-	// Billing address
 	dto.Addresses = append(dto.Addresses, canonical.ProbabilityAddressDTO{
 		Type:       "billing",
 		FirstName:  order.Billing.FirstName,
@@ -148,9 +134,6 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		PostalCode: order.Billing.Postcode,
 	})
 
-	// Shipping address
-	// WooCommerce deja shipping vacio cuando el comprador no pide una direccion
-	// de envio distinta a la de facturacion: en ese caso se envia a la de billing.
 	shippingAddress := canonical.ProbabilityAddressDTO{
 		Type:       "shipping",
 		FirstName:  order.Shipping.FirstName,
@@ -178,7 +161,6 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 	}
 	dto.Addresses = append(dto.Addresses, shippingAddress)
 
-	// Payment
 	isCOD := false
 	if order.PaymentMethod != "" {
 		paymentStatus := "pending"
@@ -202,13 +184,9 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		isCOD = paymentMethodID == paymentMethodCOD
 	}
 
-	// Shipments from shipping lines.
-	// shippingCost (guia) empieza en el total crudo de Woo como fallback; si la linea trae
-	// quote_id/rate_index de Probability, se corrige al valor real cotizado (flete + seguro
-	// minimo, SIN comision de contra entrega), evitando que la comision quede contada dos
-	// veces en shipping_cost/cod_total (ver .claude/rules/guias-contra-entrega.md).
 	correctedShippingCost := shippingCost
 	shippingCostResolved := false
+	checkoutCarrierFee := 0.0
 	shippingLineDetails := make([]map[string]interface{}, 0, len(order.ShippingLines))
 	for _, sl := range order.ShippingLines {
 		carrier := sl.MethodTitle
@@ -229,14 +207,15 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 			rateIndexStr := metaValue(sl.MetaData, "rate_index")
 			code = "pq-" + quoteIDStr + "-" + rateIndexStr
 
+			if metaValue(sl.MetaData, "cod") == "1" {
+				checkoutCarrierFee += parseFloat(metaValue(sl.MetaData, "cod_carrier_fee"))
+			}
+
 			if quoteRepo != nil {
 				quoteID64, errQ := strconv.ParseUint(quoteIDStr, 10, 64)
 				rateIndex, errR := strconv.Atoi(rateIndexStr)
 				if errQ == nil && errR == nil {
 					if rate, err := quoteRepo.GetShippingQuoteRate(ctx, uint(quoteID64), rateIndex); err == nil && rate != nil {
-						// guia = flete + seguro minimo + seguro extra + margen COD
-						// (solo si la orden es contra entrega y la tarifa lo soporta),
-						// ver .claude/rules/guias-contra-entrega.md.
 						correctedShippingCost = rate.Flete + rate.MinimumInsurance + rate.ExtraInsurance
 						if isCOD && rate.COD {
 							correctedShippingCost += rate.CODProbabilityMargin
@@ -268,15 +247,13 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		}
 
 		if codIncludesShipping {
-			// La tienda ya le cobro el envio (con comision incluida) al cliente en
-			// el checkout: se recauda el total tal cual, igual que en ordenes
-			// manuales donde shipping_cost es el valor completo cobrado.
 			codTotal := totalAmount - totalTax
+			if checkoutCarrierFee > 0 && checkoutCarrierFee < codTotal {
+				codTotal -= checkoutCarrierFee
+				dto.CodCheckoutCarrierFee = checkoutCarrierFee
+			}
 			dto.CodTotal = &codTotal
 		} else {
-			// Las guias de contra entrega se generan en Probability aparte: el
-			// total del canal trae solo productos, se le suma el flete real de
-			// la guia (sin comision, que se agrega despues al generarla).
 			codTotal := subtotal + dto.ShippingCost
 			dto.CodTotal = &codTotal
 		}
@@ -288,7 +265,6 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 		}
 	}
 
-	// Channel metadata with raw data
 	if rawJSON != nil {
 		secciones := canonical.ExtractSections(rawJSON, canonical.WooCommerceSections)
 		dto.FinancialDetails = secciones.Financial
@@ -311,7 +287,6 @@ func MapWooOrderToProbability(ctx context.Context, order *domain.WooCommerceOrde
 	return dto
 }
 
-// IDs del catalogo seed payment_methods (migration/shared).
 const (
 	paymentMethodCreditCard   uint = 1
 	paymentMethodPaypal       uint = 3
@@ -322,7 +297,6 @@ const (
 	paymentMethodStripe       uint = 8
 )
 
-// mapWooPaymentMethod mapea el slug del gateway de WooCommerce al catalogo payment_methods.
 func mapWooPaymentMethod(method string) uint {
 	m := strings.ToLower(method)
 	switch {
@@ -343,7 +317,6 @@ func mapWooPaymentMethod(method string) uint {
 	}
 }
 
-// mapWooStatus mapea el estado de WooCommerce al estado canónico de Probability.
 func MapWooStatus(wooStatus string) string {
 	switch wooStatus {
 	case "pending", "checkout-draft", "processing", "addi-approved":
@@ -363,7 +336,6 @@ func MapWooStatus(wooStatus string) string {
 	}
 }
 
-// mapShipmentStatus mapea el estado de la orden WooCommerce a un estado de envío.
 func mapShipmentStatus(wooStatus string) string {
 	switch wooStatus {
 	case "completed":

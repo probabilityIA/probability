@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/cod"
 )
 
 func (uc *UseCases) ListCODShipments(ctx context.Context, filter domain.CODFilter) (*domain.ShipmentsListResponse, error) {
@@ -67,7 +68,8 @@ func (uc *UseCases) CollectCOD(ctx context.Context, shipmentID uint, notes strin
 		return nil, domain.ErrOrderAlreadyPaid
 	}
 
-	if err := uc.repo.MarkOrderPaidCOD(ctx, info.OrderID, *info.CodTotal, info.PaymentMethodID, notes); err != nil {
+	paidAmount := cod.CheckoutTotal(cod.Order{CodTotal: *info.CodTotal, CheckoutCarrierFee: info.CodCheckoutCarrierFee})
+	if err := uc.repo.MarkOrderPaidCOD(ctx, info.OrderID, paidAmount, info.PaymentMethodID, notes); err != nil {
 		return nil, err
 	}
 
@@ -90,50 +92,53 @@ func (uc *UseCases) CollectCOD(ctx context.Context, shipmentID uint, notes strin
 
 func mapShipmentToCODResponse(s *domain.Shipment) domain.ShipmentResponse {
 	return domain.ShipmentResponse{
-		ID:                 s.ID,
-		CreatedAt:          s.CreatedAt,
-		UpdatedAt:          s.UpdatedAt,
-		DeletedAt:          s.DeletedAt,
-		OrderID:            s.OrderID,
-		ClientName:         s.ClientName,
-		DestinationAddress: s.DestinationAddress,
-		TrackingNumber:     s.TrackingNumber,
-		TrackingURL:        s.TrackingURL,
-		Carrier:            s.Carrier,
-		CarrierCode:        s.CarrierCode,
-		GuideID:            s.GuideID,
-		GuideURL:           s.GuideURL,
-		Status:             s.Status,
-		ShippedAt:          s.ShippedAt,
-		DeliveredAt:        s.DeliveredAt,
-		ShippingAddressID:  s.ShippingAddressID,
-		ShippingCost:       s.ShippingCost,
-		InsuranceCost:      s.InsuranceCost,
-		TotalCost:          s.TotalCost,
-		Weight:             s.Weight,
-		Height:             s.Height,
-		Width:              s.Width,
-		Length:             s.Length,
-		WarehouseID:        s.WarehouseID,
-		WarehouseName:      s.WarehouseName,
-		DriverID:           s.DriverID,
-		DriverName:         s.DriverName,
-		IsLastMile:         s.IsLastMile,
-		EstimatedDelivery:  s.EstimatedDelivery,
-		DeliveryNotes:      s.DeliveryNotes,
-		Metadata:           s.Metadata,
-		CreatedByName:      s.CreatedByName,
-		UpdatedByName:      s.UpdatedByName,
-		CustomerName:       s.CustomerName,
-		CustomerEmail:      s.CustomerEmail,
-		CustomerPhone:      s.CustomerPhone,
-		CustomerDNI:        s.CustomerDNI,
-		OrderNumber:        s.OrderNumber,
-		CodTotal:           s.CodTotal,
-		IsPaid:             s.IsPaid,
-		PaidAt:             s.PaidAt,
-		PaymentMethodCode:  s.PaymentMethodCode,
-		OrderTotalAmount:   s.OrderTotalAmount,
-		OrderCurrency:      s.OrderCurrency,
+		ID:                    s.ID,
+		CreatedAt:             s.CreatedAt,
+		UpdatedAt:             s.UpdatedAt,
+		DeletedAt:             s.DeletedAt,
+		OrderID:               s.OrderID,
+		ClientName:            s.ClientName,
+		DestinationAddress:    s.DestinationAddress,
+		TrackingNumber:        s.TrackingNumber,
+		TrackingURL:           s.TrackingURL,
+		Carrier:               s.Carrier,
+		CarrierCode:           s.CarrierCode,
+		GuideID:               s.GuideID,
+		GuideURL:              s.GuideURL,
+		Status:                s.Status,
+		ShippedAt:             s.ShippedAt,
+		DeliveredAt:           s.DeliveredAt,
+		ShippingAddressID:     s.ShippingAddressID,
+		ShippingCost:          s.ShippingCost,
+		InsuranceCost:         s.InsuranceCost,
+		TotalCost:             s.TotalCost,
+		CodCarrierFee:         s.CodCarrierFee,
+		Weight:                s.Weight,
+		Height:                s.Height,
+		Width:                 s.Width,
+		Length:                s.Length,
+		WarehouseID:           s.WarehouseID,
+		WarehouseName:         s.WarehouseName,
+		DriverID:              s.DriverID,
+		DriverName:            s.DriverName,
+		IsLastMile:            s.IsLastMile,
+		EstimatedDelivery:     s.EstimatedDelivery,
+		DeliveryNotes:         s.DeliveryNotes,
+		Metadata:              s.Metadata,
+		CreatedByName:         s.CreatedByName,
+		UpdatedByName:         s.UpdatedByName,
+		CustomerName:          s.CustomerName,
+		CustomerEmail:         s.CustomerEmail,
+		CustomerPhone:         s.CustomerPhone,
+		CustomerDNI:           s.CustomerDNI,
+		OrderNumber:           s.OrderNumber,
+		CodTotal:              s.CodTotal,
+		CodIncludesShipping:   s.CodIncludesShipping,
+		CodCheckoutCarrierFee: s.CodCheckoutCarrierFee,
+		IsPaid:                s.IsPaid,
+		PaidAt:                s.PaidAt,
+		PaymentMethodCode:     s.PaymentMethodCode,
+		OrderTotalAmount:      s.OrderTotalAmount,
+		OrderCurrency:         s.OrderCurrency,
 	}
 }

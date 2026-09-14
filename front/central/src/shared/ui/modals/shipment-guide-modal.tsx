@@ -25,6 +25,7 @@ import { CarrierOfficeSelector } from "@/shared/ui/CarrierOfficeSelector";
 import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
 import dynamic from 'next/dynamic';
+import { codCheckoutFee, codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const GUIDE_SSE_GRACE_MS = 45000;
 const GUIDE_POLL_INTERVAL_MS = 5000;
@@ -122,10 +123,10 @@ function normalizeColombianPhone(raw: string | undefined | null): string {
 }
 
 const step1Schema = z.object({
-    originDaneCode: z.string().min(1, "Código DANE de origen requerido"),
-    originAddress: z.string().min(2, "Dirección de origen requerida").max(50),
-    destDaneCode: z.string().min(1, "Código DANE de destino requerido"),
-    destAddress: z.string().min(8, "Dirección de destino requerida").max(50),
+    originDaneCode: z.string().min(1, "C\u00f3digo DANE de origen requerido"),
+    originAddress: z.string().min(2, "Direcci\u00f3n de origen requerida").max(50),
+    destDaneCode: z.string().min(1, "C\u00f3digo DANE de destino requerido"),
+    destAddress: z.string().min(8, "Direcci\u00f3n de destino requerida").max(50),
     weight: z.number().min(1).max(1000),
     height: z.number().min(1).max(300),
     width: z.number().min(1).max(300),
@@ -165,7 +166,7 @@ type Step3Values = z.infer<typeof step3Schema>;
 
 const STEPS = [
     { id: 1, label: "Origen y Destino" },
-    { id: 2, label: "Cotización" },
+    { id: 2, label: "Cotizaci\u00f3n" },
     { id: 3, label: "Detalles" },
     { id: 4, label: "Pago" },
 ];
@@ -224,7 +225,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     }, []);
 
     const normalizeCarrierKey = (s: string) =>
-        (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
     const quotedCarrierKey = normalizeCarrierKey((order?.quoted_shipping?.carrier || '').split(' - ')[0]);
 
@@ -300,6 +301,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     );
 
     const orderIsCOD = !!(order?.cod_total && order.cod_total > 0);
+    const orderCheckoutFee = order ? codCheckoutFee(order) : 0;
+    const orderCodValue = orderIsCOD ? order!.cod_total! + orderCheckoutFee : 0;
 
     const step1Form = useForm<Step1Values>({
         resolver: zodResolver(step1Schema),
@@ -315,7 +318,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             length: 10,
             description: "E-commerce Order",
             contentValue: 0,
-            codValue: orderIsCOD ? order!.cod_total! : 0,
+            codValue: orderCodValue,
             includeGuideCost: false,
             insurance: false,
             codPaymentMethod: "cash",
@@ -436,7 +439,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
 
             if (order.cod_total && order.cod_total > 0) {
-                step1Form.setValue("codValue", order.cod_total, { shouldValidate: true });
+                step1Form.setValue("codValue", order.cod_total + codCheckoutFee(order), { shouldValidate: true });
                 step1Form.setValue("codPaymentMethod", "cash");
             }
 
@@ -489,7 +492,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             if (!pendingCorrelationId || data.correlation_id !== pendingCorrelationId) return;
             setPendingCorrelationId(null);
             pendingStep1DataRef.current = null;
-            setError(data.error_message || "Error al cotizar envío");
+            setError(data.error_message || "Error al cotizar env\u00edo");
             setLoading(false);
         },
         onGuideGenerated: async (data) => {
@@ -513,7 +516,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     const carrierName = (selectedRate?.carrier || data.carrier) ?? null;
                     if (carrierName) setSelectedCarrier(carrierName);
                     const carrierText = carrierName ? ` con ${carrierName}` : '';
-                    setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
+                    setSuccess(`\u2705 Gu\u00eda generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
                 }
 
                 const carrier = data.carrier || selectedRate?.carrier || '';
@@ -528,7 +531,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         onGuideFailed: async (data) => {
             if (pendingGuideCorrelationId && data.correlation_id !== pendingGuideCorrelationId) return;
             setPendingGuideCorrelationId(null);
-            setError(data.error_message || "Error al generar la guía");
+            setError(data.error_message || "Error al generar la gu\u00eda");
             setLoading(false);
             const id = pendingGuideShipmentIdRef.current;
             if (!id) return;
@@ -544,7 +547,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         const timeout = setTimeout(() => {
             setPendingCorrelationId(null);
             pendingStep1DataRef.current = null;
-            setError("Tiempo de espera agotado. Verifica tu conexión e intenta de nuevo.");
+            setError("Tiempo de espera agotado. Verifica tu conexi\u00f3n e intenta de nuevo.");
             setLoading(false);
         }, 30000);
         return () => clearTimeout(timeout);
@@ -685,7 +688,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     const handleStep1Submit = async (data: Step1Values) => {
         if (!data.originDaneCode || !data.destDaneCode) {
-            setError("⚠️ Por favor selecciona códigos DANE válidos para origen y destino");
+            setError("\u26a0\ufe0f Por favor selecciona c\u00f3digos DANE v\u00e1lidos para origen y destino");
             setLoading(false);
             return;
         }
@@ -701,16 +704,16 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         if (Object.keys(errors).length > 0) {
             const fieldLabels: { [key: string]: string } = {
                 originDaneCode: "Origen",
-                originAddress: "dirección de origen",
+                originAddress: "direcci\u00f3n de origen",
                 destDaneCode: "Destino",
-                destAddress: "dirección de destino",
+                destAddress: "direcci\u00f3n de destino",
                 weight: "peso",
                 height: "altura",
                 width: "ancho",
                 length: "largo",
-                description: "descripción",
+                description: "descripci\u00f3n",
                 contentValue: "valor declarado",
-                codPaymentMethod: "método de pago",
+                codPaymentMethod: "m\u00e9todo de pago",
             };
 
             const errorFields: string[] = [];
@@ -755,7 +758,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             if (!response.success) {
                 const msg = response.message || "Error al cotizar";
                 if (msg.toLowerCase().includes('no hay') || msg.toLowerCase().includes('sin transportador') || msg.toLowerCase().includes('integraci')) {
-                    setError("No hay transportadoras disponibles para esta ruta. Verifica la integración con tus proveedores logísticos.");
+                    setError("No hay transportadoras disponibles para esta ruta. Verifica la integraci\u00f3n con tus proveedores log\u00edsticos.");
                 } else {
                     setError(msg);
                 }
@@ -772,11 +775,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 return;
             }
 
-            setError("No hay transportadoras disponibles para esta ruta. Verifica la integración con tus proveedores logísticos.");
+            setError("No hay transportadoras disponibles para esta ruta. Verifica la integraci\u00f3n con tus proveedores log\u00edsticos.");
             setLoading(false);
             return;
         } catch (err: any) {
-            setError(getActionError(err, "Error al cotizar envío"));
+            setError(getActionError(err, "Error al cotizar env\u00edo"));
             setLoading(false);
         }
     };
@@ -792,9 +795,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const handleStep3Submit = async (data: Step3Values) => {
         const errors = step3Form.formState.errors;
 
-        console.log('📋 Step 3 Data:', data);
-        console.log('❌ Step 3 Errors:', errors);
-        console.log('📊 Error Count:', Object.keys(errors).length);
+        console.log('\u{1F4CB} Step 3 Data:', data);
+        console.log('\u274c Step 3 Errors:', errors);
+        console.log('\u{1F4CA} Error Count:', Object.keys(errors).length);
 
         if (Object.keys(errors).length > 0) {
             const fieldLabels: { [key: string]: string } = {
@@ -804,7 +807,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 originCompany: "Empresa",
                 originFirstName: "Nombre",
                 originLastName: "Apellido",
-                originPhone: "Teléfono",
+                originPhone: "Tel\u00e9fono",
                 originEmail: "Email",
                 destCrossStreet: "Complemento",
                 destReference: "Edificio/Interior/Apto",
@@ -812,9 +815,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 destCompany: "Empresa",
                 destFirstName: "Nombre",
                 destLastName: "Apellido",
-                destPhone: "Teléfono",
+                destPhone: "Tel\u00e9fono",
                 destEmail: "Email",
-                myShipmentReference: "Mi Referencia de Envío",
+                myShipmentReference: "Mi Referencia de Env\u00edo",
             };
 
             const originErrors: string[] = [];
@@ -857,13 +860,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         const missingFields: string[] = [];
 
         if (!step1Data) {
-            missingFields.push("⚠️ Paso 1: No completaste Origen, Destino o Paquete");
+            missingFields.push("\u26a0\ufe0f Paso 1: No completaste Origen, Destino o Paquete");
         }
         if (!selectedRate) {
-            missingFields.push("⚠️ Paso 2: No seleccionaste una transportadora o tarifa");
+            missingFields.push("\u26a0\ufe0f Paso 2: No seleccionaste una transportadora o tarifa");
         }
         if (!step3Data) {
-            missingFields.push("⚠️ Paso 3: No completaste los detalles de dirección");
+            missingFields.push("\u26a0\ufe0f Paso 3: No completaste los detalles de direcci\u00f3n");
         }
 
         if (missingFields.length > 0) {
@@ -896,7 +899,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 insurance: step1Data.insurance,
                 description: step1Data.description,
                 contentValue: step1Data.contentValue,
-                codValue: (step1Data.codValue ?? 0) + codCarrierFee,
+                codValue: (step1Data.codValue ?? 0) + (orderCheckoutFee > 0 ? 0 : codCarrierFee),
                 includeGuideCost: step1Data.includeGuideCost,
                 codPaymentMethod: step1Data.codPaymentMethod,
                 totalCost: totalCost,
@@ -935,7 +938,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
             const response = await generateGuideAction(generatePayload);
             if (!response.success) {
-                setError(response.message || "Error al enviar solicitud de generación de guía");
+                setError(response.message || "Error al enviar solicitud de generaci\u00f3n de gu\u00eda");
                 setLoading(false);
                 return;
             }
@@ -956,7 +959,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 const syncCarrier = (response.data?.data as any)?.carrier;
                 const carrierText = syncCarrier ? ` con ${syncCarrier}` : '';
                 if (syncCarrier) setSelectedCarrier(syncCarrier);
-                setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
+                setSuccess(`\u2705 Gu\u00eda generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
 
                 if (onGuideGenerated && tracker) {
                     onGuideGenerated({
@@ -974,7 +977,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setGuideGenerationRequested(true);
             setCurrentStep(4);
         } catch (err: any) {
-            setError(getActionError(err, "Error al generar guía"));
+            setError(getActionError(err, "Error al generar gu\u00eda"));
             setLoading(false);
         }
     };
@@ -992,12 +995,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 )}
                 <div className="bg-white dark:bg-gray-800 border-b px-3 py-3 flex-shrink-0">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>Generar Guía de Envío</h2>
+                        <h2 className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>Generar Gu&#237;a de Env&#237;o</h2>
                         <button
                             onClick={onClose}
                             className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 text-2xl"
                         >
-                            ×
+                            &#215;
                         </button>
                     </div>
                     <Stepper steps={STEPS} currentStep={currentStep} />
@@ -1008,7 +1011,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
                             {error.includes('\n') ? (
                                 <div>
-                                    <div className="font-semibold mb-2">⚠️ Por favor corrige los siguientes errores:</div>
+                                    <div className="font-semibold mb-2">&#9888;&#65039; Por favor corrige los siguientes errores:</div>
                                     <ul className="list-disc list-inside space-y-1">
                                         {error.split('\n').filter(line => line.trim()).map((line, idx) => (
                                             <li key={idx}>{line}</li>
@@ -1096,7 +1099,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                             <Input
                                                 compact
-                                                label="Calle y Número *"
+                                                label="Calle y N&#250;mero *"
                                                 {...step1Form.register("originAddress")}
                                                 error={step1Form.formState.errors.originAddress?.message}
                                                 placeholder="Calle 98 62-37"
@@ -1108,7 +1111,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         onClick={() => setShowOriginOffices(!showOriginOffices)}
                                                         className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
                                                     >
-                                                        📍 ¿Recoger en oficina principal?
+                                                        &#128205; &#191;Recoger en oficina principal?
                                                     </button>
                                                     {showOriginOffices && (
                                                         <CarrierOfficeSelector 
@@ -1171,7 +1174,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                             <Input
                                                 compact
-                                                label="Calle y Número *"
+                                                label="Calle y N&#250;mero *"
                                                 {...step1Form.register("destAddress")}
                                                 error={step1Form.formState.errors.destAddress?.message}
                                                 placeholder="Carrera 46 # 93 - 45"
@@ -1216,7 +1219,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         onClick={() => setShowDestOffices(!showDestOffices)}
                                                         className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
                                                     >
-                                                        📍 ¿Enviar a oficina principal?
+                                                        &#128205; &#191;Enviar a oficina principal?
                                                     </button>
                                                     {showDestOffices && (
                                                         <CarrierOfficeSelector 
@@ -1280,7 +1283,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     {orderIsCOD && (
                                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-300 dark:bg-amber-900/30 dark:border-amber-600">
                                             <span className="text-amber-700 dark:text-amber-300 font-semibold text-sm">
-                                                Orden Contra Entrega - ${order!.cod_total!.toLocaleString()} COP
+                                                Orden Contra Entrega - ${codCustomerCharge(order!).toLocaleString()} COP
                                             </span>
                                         </div>
                                     )}
@@ -1510,13 +1513,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 badgeLabel = 'RECOMENDADO';
                                             } else if (isCheapest) {
                                                 badgeColor = businessColors.secondary;
-                                                badgeLabel = 'MÁS ECONÓMICA';
+                                                badgeLabel = 'M\u00c1S ECON\u00d3MICA';
                                             } else if (isSameDay) {
                                                 badgeColor = businessColors.quaternary;
-                                                badgeLabel = 'MISMO DÍA';
+                                                badgeLabel = 'MISMO D\u00cdA';
                                             } else if (isFastest) {
                                                 badgeColor = businessColors.tertiary;
-                                                badgeLabel = 'MÁS RÁPIDA';
+                                                badgeLabel = 'M\u00c1S R\u00c1PIDA';
                                             }
 
                                             const isSelected = selectedRate?.idRate === rate.idRate;
@@ -1622,8 +1625,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             </div>
 
                                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px', color: '#3b4248', marginTop: '8px', textAlign: 'center', fontWeight: 700 }}>
-                                                                <div>Costo Guía: ${totalCost.toLocaleString()}</div>
-                                                                <div>Guía + Comisión: ${(totalCost + (codCarrierFee || 0)).toLocaleString()}</div>
+                                                                <div>Costo Gu&#237;a: ${totalCost.toLocaleString()}</div>
+                                                                <div>Gu&#237;a + Comisi&#243;n: ${(totalCost + (codCarrierFee || 0)).toLocaleString()}</div>
                                                                 {isInsured ? (
                                                                     <div style={{ color: '#059669', fontSize: '13px' }}>
                                                                         (Seguro: ${insuranceCost.toLocaleString()})
@@ -1633,7 +1636,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 )}
                                                                 {isCOD && codCarrierFee > 0 && (
                                                                     <div style={{ color: '#0891b2', fontSize: '13px' }}>
-                                                                        Comisión carrier: ${codCarrierFee.toLocaleString()}
+                                                                        Comisi&#243;n carrier: ${codCarrierFee.toLocaleString()}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1653,7 +1656,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 border: 'none',
                                                                 margin: '2px auto',
                                                             }}>
-                                                                {rate.deliveryDays === 0 ? 'Mismo día' : rate.deliveryDays === 1 ? '1 día' : `${rate.deliveryDays} días`}
+                                                                {rate.deliveryDays === 0 ? 'Mismo d\u00eda' : rate.deliveryDays === 1 ? '1 d\u00eda' : `${rate.deliveryDays} d\u00edas`}
                                                             </div>
 
                                                             {isCOD && (
@@ -1794,7 +1797,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {currentStep === 4 && selectedRate && (
                         <div className="flex flex-col h-full w-full overflow-hidden gap-3">
                             <div className="flex-shrink-0 space-y-3">
-                                <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200">Resumen de tu envío</h3>
+                                <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200">Resumen de tu env&#237;o</h3>
 
                                 <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
@@ -1802,7 +1805,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                             </svg>
-                                            <span className="font-medium">1 Envíos</span>
+                                            <span className="font-medium">1 Env&#237;os</span>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-sm text-gray-600 dark:text-gray-300">TOTAL:</div>
@@ -1810,10 +1813,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (step1Data?.insurance ? (selectedRate.extraInsurance ?? 0) : 0) + (selectedRate.cod ? (selectedRate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}
                                             </div>
                                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right leading-tight">
-                                                Guía: ${selectedRate.flete.toLocaleString()}<br />
+                                                Gu&#237;a: ${selectedRate.flete.toLocaleString()}<br />
                                                 Seg. obligatorio: ${(selectedRate.minimumInsurance ?? 0).toLocaleString()}<br />
                                                 Seg. adicional: ${(selectedRate.extraInsurance ?? 0).toLocaleString()} <span className={step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}>{step1Data?.insurance ? '(incluido)' : '(no incluido)'}</span>
-                                                {selectedRate.cod && (selectedRate.codCarrierFee ?? 0) > 0 && (<><br /><span className="text-cyan-700 dark:text-cyan-400">Comisión carrier: ${(selectedRate.codCarrierFee ?? 0).toLocaleString()}</span></>)}
+                                                {selectedRate.cod && (selectedRate.codCarrierFee ?? 0) > 0 && (<><br /><span className="text-cyan-700 dark:text-cyan-400">Comisi&#243;n carrier: ${(selectedRate.codCarrierFee ?? 0).toLocaleString()}</span></>)}
                                             </div>
                                         </div>
                                     </div>
@@ -1829,7 +1832,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <div className="font-medium text-gray-800 dark:text-gray-100">{selectedRate.carrier}</div>
                                             <div className="text-sm text-gray-500 dark:text-gray-400">{selectedRate.product}</div>
                                             {selectedRate.deliveryDays > 0 && (
-                                                <div className="text-xs text-gray-400 mt-1">{selectedRate.deliveryDays} día{selectedRate.deliveryDays !== 1 ? 's' : ''} hábil{selectedRate.deliveryDays !== 1 ? 'es' : ''}</div>
+                                                <div className="text-xs text-gray-400 mt-1">{selectedRate.deliveryDays} d&#237;a{selectedRate.deliveryDays !== 1 ? 's' : ''} h&#225;bil{selectedRate.deliveryDays !== 1 ? 'es' : ''}</div>
                                             )}
                                         </div>
                                     </div>
@@ -1838,7 +1841,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-3 pr-3" style={{ maxHeight: 'calc(85vh - 280px)' }}>
                                 <div>
-                                    <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-3">Selecciona tu método de pago</h4>
+                                    <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-3">Selecciona tu m&#233;todo de pago</h4>
                                     <div className={`grid gap-2 ${generatedPdfUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                         <div className="border-2 rounded-lg p-2" style={{ borderColor: 'var(--color-primary)', background: 'color-mix(in oklab, var(--color-primary) 10%, transparent)' }}>
                                             <div className="flex items-center justify-center mb-2">
@@ -1860,7 +1863,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     </svg>
                                                 </div>
                                                 <div className="text-center min-w-0">
-                                                    <p className="shipment-success-text">¡Guía generada exitosamente!</p>
+                                                    <p className="shipment-success-text">&#161;Gu&#237;a generada exitosamente!</p>
                                                     {selectedCarrier && (
                                                         <div className="flex items-center justify-center gap-2 mt-1.5">
                                                             <img
@@ -1898,7 +1901,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                             </svg>
-                                                            Guías personalizadas
+                                                            Gu&#237;as personalizadas
                                                             <svg className={`w-3 h-3 transition-transform ${showGuideFormatDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                                             </svg>
@@ -1955,7 +1958,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             onClick={() => setCurrentStep(currentStep - 1)}
                             disabled={loading}
                         >
-                            Atrás
+                            Atr&#225;s
                         </Button>
                     )}
 
@@ -1969,16 +1972,16 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             onClick={() => {
                                 const fieldLabels: { [key: string]: string } = {
                                     originDaneCode: "Ciudad de Origen",
-                                    originAddress: "Dirección de Origen",
+                                    originAddress: "Direcci\u00f3n de Origen",
                                     destDaneCode: "Ciudad de Destino",
-                                    destAddress: "Dirección de Destino",
+                                    destAddress: "Direcci\u00f3n de Destino",
                                     weight: "Peso del paquete",
                                     height: "Alto del paquete",
                                     width: "Ancho del paquete",
                                     length: "Largo del paquete",
-                                    description: "Descripción del contenido",
-                                    contentValue: "Valor de la mercancía",
-                                    codPaymentMethod: "Método de pago COD",
+                                    description: "Descripci\u00f3n del contenido",
+                                    contentValue: "Valor de la mercanc\u00eda",
+                                    codPaymentMethod: "M\u00e9todo de pago COD",
                                 };
                                 step1Form.handleSubmit(handleStep1Submit, (errors) => {
                                     const errorFields = Object.entries(errors).map(
@@ -2031,7 +2034,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             title={Object.keys(step3Form.formState.errors).length > 0 ? "Completa todos los campos requeridos" : ""}
                         >
                             {Object.keys(step3Form.formState.errors).length > 0
-                                ? `⚠️ ${Object.keys(step3Form.formState.errors).length} campo(s) incompleto(s)`
+                                ? `\u26a0\ufe0f ${Object.keys(step3Form.formState.errors).length} campo(s) incompleto(s)`
                                 : "Siguiente"
                             }
                         </Button>

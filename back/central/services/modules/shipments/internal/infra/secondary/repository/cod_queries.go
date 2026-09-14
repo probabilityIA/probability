@@ -80,13 +80,13 @@ func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNu
 	}
 	var result struct {
 		ID                 string
-		OrderNumber        string     `gorm:"column:order_number"`
-		BusinessID         *uint      `gorm:"column:business_id"`
-		BusinessName       string     `gorm:"column:business_name"`
+		OrderNumber        string `gorm:"column:order_number"`
+		BusinessID         *uint  `gorm:"column:business_id"`
+		BusinessName       string `gorm:"column:business_name"`
 		Status             string
-		IsPaid             bool       `gorm:"column:is_paid"`
-		TotalAmount        float64    `gorm:"column:total_amount"`
-		CodTotal           *float64   `gorm:"column:cod_total"`
+		IsPaid             bool     `gorm:"column:is_paid"`
+		TotalAmount        float64  `gorm:"column:total_amount"`
+		CodTotal           *float64 `gorm:"column:cod_total"`
 		Currency           string
 		CustomerName       string     `gorm:"column:customer_name"`
 		CustomerPhone      string     `gorm:"column:customer_phone"`
@@ -159,20 +159,21 @@ func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNu
 
 func (r *Repository) GetOrderCODInfo(ctx context.Context, orderID string) (*domain.OrderCODInfo, error) {
 	var result struct {
-		ID                string
-		BusinessID        *uint
-		CodTotal          *float64
-		TotalAmount       float64
-		Currency          string
-		IsPaid            bool
-		PaidAt            *time.Time
-		PaymentMethodID   uint
-		PaymentMethodCode string
+		ID                    string
+		BusinessID            *uint
+		CodTotal              *float64
+		CodCheckoutCarrierFee float64
+		TotalAmount           float64
+		Currency              string
+		IsPaid                bool
+		PaidAt                *time.Time
+		PaymentMethodID       uint
+		PaymentMethodCode     string
 	}
 
 	err := r.db.Conn(ctx).
 		Table("orders o").
-		Select("o.id, o.business_id, o.cod_total, o.total_amount, o.currency, o.is_paid, o.paid_at, o.payment_method_id, pm.code AS payment_method_code").
+		Select("o.id, o.business_id, o.cod_total, o.cod_checkout_carrier_fee, o.total_amount, o.currency, o.is_paid, o.paid_at, o.payment_method_id, pm.code AS payment_method_code").
 		Joins("LEFT JOIN payment_methods pm ON pm.id = o.payment_method_id").
 		Where("o.id = ? AND o.deleted_at IS NULL", orderID).
 		Limit(1).
@@ -188,14 +189,15 @@ func (r *Repository) GetOrderCODInfo(ctx context.Context, orderID string) (*doma
 	}
 
 	info := &domain.OrderCODInfo{
-		OrderID:           result.ID,
-		CodTotal:          result.CodTotal,
-		TotalAmount:       result.TotalAmount,
-		Currency:          result.Currency,
-		IsPaid:            result.IsPaid,
-		PaidAt:            result.PaidAt,
-		PaymentMethodID:   result.PaymentMethodID,
-		PaymentMethodCode: result.PaymentMethodCode,
+		OrderID:               result.ID,
+		CodTotal:              result.CodTotal,
+		CodCheckoutCarrierFee: result.CodCheckoutCarrierFee,
+		TotalAmount:           result.TotalAmount,
+		Currency:              result.Currency,
+		IsPaid:                result.IsPaid,
+		PaidAt:                result.PaidAt,
+		PaymentMethodID:       result.PaymentMethodID,
+		PaymentMethodCode:     result.PaymentMethodCode,
 	}
 	if result.BusinessID != nil {
 		info.BusinessID = *result.BusinessID

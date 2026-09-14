@@ -6,6 +6,7 @@ import { getCutOrdersAction, getSelectableOrdersAction } from '../../infra/actio
 import { CodOrder } from '../../domain/types';
 import { formatMoney, formatDateTime, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
+import { codCustomerCharge } from '@/shared/utils/cod-amount';
 
 const STATUS_PILL: Record<string, { bg: string; c: string; label: string }> = {
     pending: { bg: '#f1f5f9', c: '#475569', label: 'Pendiente' },
@@ -48,7 +49,7 @@ export function CutOrdersDetail({ cutId, periodStart, periodEnd, businessId }: P
         req.then(res => {
             if (cancelled) return;
             if (res.success) setOrders((res.data || []) as CodOrder[]);
-            else setError((res as any).message || 'Error al cargar las órdenes del corte');
+            else setError((res as any).message || 'Error al cargar las \u00f3rdenes del corte');
             setLoading(false);
         });
         return () => { cancelled = true; };
@@ -123,7 +124,7 @@ export function CutOrdersDetail({ cutId, periodStart, periodEnd, businessId }: P
                                 </td>
                                 <td className="px-2 py-2 text-right text-gray-600 dark:text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(o.cod_total, o.currency)}</td>
                                 <td className="px-2 py-2 text-right text-[#c2410c] tabular-nums whitespace-nowrap">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
-                                <td className="px-2 py-2 text-right font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
+                                <td className="px-2 py-2 text-right font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(codCustomerCharge(o), o.currency)}</td>
                                 <td className="pl-6 pr-2 py-2 text-[11px] text-gray-500 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '-'}</td>
                             </tr>
                         );

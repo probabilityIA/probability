@@ -15,7 +15,7 @@ import (
 
 func (r *Repository) SelectableCutOrders(ctx context.Context, f dtos.SelectableOrdersFilter) ([]entities.CodOrder, error) {
 	sql := fmt.Sprintf(`
-SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currency, o.created_at,
+SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_includes_shipping, o.cod_checkout_carrier_fee, o.currency, o.created_at,
 	s.id AS shipment_id,
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
@@ -40,19 +40,21 @@ ORDER BY COALESCE(s.delivered_at, o.created_at) DESC`, latestShipmentJoin, linke
 	out := make([]entities.CodOrder, len(rows))
 	for i := range rows {
 		out[i] = entities.CodOrder{
-			OrderID:       rows[i].OrderID,
-			OrderNumber:   rows[i].OrderNumber,
-			ShipmentID:    rows[i].ShipmentID,
-			HasGuide:      rows[i].HasGuide,
-			GuideNumber:   rows[i].GuideNumber,
-			CustomerName:  rows[i].CustomerName,
-			Carrier:       rows[i].Carrier,
-			CodTotal:      rows[i].CodTotal,
-			CodCarrierFee: rows[i].CodCarrierFee,
-			ShippingCost:  rows[i].ShippingCost,
-			Currency:      rows[i].Currency,
-			Status:        rows[i].Status,
-			DeliveredAt:   rows[i].DeliveredAt,
+			OrderID:               rows[i].OrderID,
+			OrderNumber:           rows[i].OrderNumber,
+			ShipmentID:            rows[i].ShipmentID,
+			HasGuide:              rows[i].HasGuide,
+			GuideNumber:           rows[i].GuideNumber,
+			CustomerName:          rows[i].CustomerName,
+			Carrier:               rows[i].Carrier,
+			CodTotal:              rows[i].CodTotal,
+			CodCarrierFee:         rows[i].CodCarrierFee,
+			CodIncludesShipping:   rows[i].CodIncludesShipping,
+			CodCheckoutCarrierFee: rows[i].CodCheckoutCarrierFee,
+			ShippingCost:          rows[i].ShippingCost,
+			Currency:              rows[i].Currency,
+			Status:                rows[i].Status,
+			DeliveredAt:           rows[i].DeliveredAt,
 		}
 	}
 	return out, nil
@@ -60,7 +62,7 @@ ORDER BY COALESCE(s.delivered_at, o.created_at) DESC`, latestShipmentJoin, linke
 
 func (r *Repository) CutOrders(ctx context.Context, businessID uint, cutID uint) ([]entities.CodOrder, error) {
 	sql := fmt.Sprintf(`
-SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currency, o.created_at,
+SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_includes_shipping, o.cod_checkout_carrier_fee, o.currency, o.created_at,
 	s.id AS shipment_id,
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
@@ -83,22 +85,24 @@ ORDER BY cpo.paid_at DESC, o.created_at DESC`, latestShipmentJoin)
 	out := make([]entities.CodOrder, len(rows))
 	for i := range rows {
 		out[i] = entities.CodOrder{
-			OrderID:       rows[i].OrderID,
-			OrderNumber:   rows[i].OrderNumber,
-			ShipmentID:    rows[i].ShipmentID,
-			HasGuide:      rows[i].HasGuide,
-			GuideNumber:   rows[i].GuideNumber,
-			CustomerName:  rows[i].CustomerName,
-			Carrier:       rows[i].Carrier,
-			CodTotal:      rows[i].CodTotal,
-			CodCarrierFee: rows[i].CodCarrierFee,
-			ShippingCost:  rows[i].ShippingCost,
-			Currency:      rows[i].Currency,
-			Status:        rows[i].Status,
-			Collected:     true,
-			Paid:          true,
-			CreatedAt:     rows[i].CreatedAt,
-			DeliveredAt:   rows[i].DeliveredAt,
+			OrderID:               rows[i].OrderID,
+			OrderNumber:           rows[i].OrderNumber,
+			ShipmentID:            rows[i].ShipmentID,
+			HasGuide:              rows[i].HasGuide,
+			GuideNumber:           rows[i].GuideNumber,
+			CustomerName:          rows[i].CustomerName,
+			Carrier:               rows[i].Carrier,
+			CodTotal:              rows[i].CodTotal,
+			CodCarrierFee:         rows[i].CodCarrierFee,
+			CodIncludesShipping:   rows[i].CodIncludesShipping,
+			CodCheckoutCarrierFee: rows[i].CodCheckoutCarrierFee,
+			ShippingCost:          rows[i].ShippingCost,
+			Currency:              rows[i].Currency,
+			Status:                rows[i].Status,
+			Collected:             true,
+			Paid:                  true,
+			CreatedAt:             rows[i].CreatedAt,
+			DeliveredAt:           rows[i].DeliveredAt,
 		}
 	}
 	return out, nil

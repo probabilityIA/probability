@@ -61,43 +61,45 @@ type summaryResponse struct {
 }
 
 type codOrderResponse struct {
-	OrderID       string     `json:"order_id"`
-	OrderNumber   string     `json:"order_number"`
-	ShipmentID    uint       `json:"shipment_id"`
-	HasGuide      bool       `json:"has_guide"`
-	GuideNumber   string     `json:"guide_number"`
-	CustomerName  string     `json:"customer_name"`
-	Carrier       string     `json:"carrier"`
-	CodTotal      float64    `json:"cod_total"`
-	CodCarrierFee float64    `json:"cod_carrier_fee"`
-	ShippingCost  float64    `json:"shipping_cost"`
-	DiscountPct   float64    `json:"discount_pct"`
-	Discount      float64    `json:"discount"`
-	Net           float64    `json:"net"`
-	Currency      string     `json:"currency"`
-	Status        string     `json:"status"`
-	Collected     bool       `json:"collected"`
-	Paid          bool       `json:"paid"`
-	CodState      string     `json:"cod_state"`
-	CutStatus     string     `json:"cut_status"`
-	CreatedAt     time.Time  `json:"created_at"`
-	DeliveredAt   *time.Time `json:"delivered_at"`
+	OrderID               string     `json:"order_id"`
+	OrderNumber           string     `json:"order_number"`
+	ShipmentID            uint       `json:"shipment_id"`
+	HasGuide              bool       `json:"has_guide"`
+	GuideNumber           string     `json:"guide_number"`
+	CustomerName          string     `json:"customer_name"`
+	Carrier               string     `json:"carrier"`
+	CodTotal              float64    `json:"cod_total"`
+	CodCarrierFee         float64    `json:"cod_carrier_fee"`
+	CodIncludesShipping   bool       `json:"cod_includes_shipping"`
+	CodCheckoutCarrierFee float64    `json:"cod_checkout_carrier_fee"`
+	ShippingCost          float64    `json:"shipping_cost"`
+	DiscountPct           float64    `json:"discount_pct"`
+	Discount              float64    `json:"discount"`
+	Net                   float64    `json:"net"`
+	Currency              string     `json:"currency"`
+	Status                string     `json:"status"`
+	Collected             bool       `json:"collected"`
+	Paid                  bool       `json:"paid"`
+	CodState              string     `json:"cod_state"`
+	CutStatus             string     `json:"cut_status"`
+	CreatedAt             time.Time  `json:"created_at"`
+	DeliveredAt           *time.Time `json:"delivered_at"`
 }
 
 type paymentCutResponse struct {
-	ID              uint                       `json:"id"`
-	PeriodStart     time.Time                  `json:"period_start"`
-	PeriodEnd       time.Time                  `json:"period_end"`
-	Status          string                     `json:"status"`
-	OrdersCount     int                        `json:"orders_count"`
-	TotalCollected  float64                    `json:"total_collected"`
-	TotalDiscount   float64                    `json:"total_discount"`
-	TotalNet        float64                    `json:"total_net"`
-	ByCarrier       []carrierAggregateResponse `json:"by_carrier"`
-	ConfirmedBy       uint                     `json:"confirmed_by"`
-	ConfirmedByName   string                   `json:"confirmed_by_name"`
-	ConfirmedByAvatar string                   `json:"confirmed_by_avatar"`
-	ConfirmedAt       *time.Time               `json:"confirmed_at"`
+	ID                uint                       `json:"id"`
+	PeriodStart       time.Time                  `json:"period_start"`
+	PeriodEnd         time.Time                  `json:"period_end"`
+	Status            string                     `json:"status"`
+	OrdersCount       int                        `json:"orders_count"`
+	TotalCollected    float64                    `json:"total_collected"`
+	TotalDiscount     float64                    `json:"total_discount"`
+	TotalNet          float64                    `json:"total_net"`
+	ByCarrier         []carrierAggregateResponse `json:"by_carrier"`
+	ConfirmedBy       uint                       `json:"confirmed_by"`
+	ConfirmedByName   string                     `json:"confirmed_by_name"`
+	ConfirmedByAvatar string                     `json:"confirmed_by_avatar"`
+	ConfirmedAt       *time.Time                 `json:"confirmed_at"`
 }
 
 type cutEmailLogResponse struct {
@@ -208,27 +210,29 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 	out := make([]codOrderResponse, len(in))
 	for i := range in {
 		out[i] = codOrderResponse{
-			OrderID:       in[i].OrderID,
-			OrderNumber:   in[i].OrderNumber,
-			ShipmentID:    in[i].ShipmentID,
-			HasGuide:      in[i].HasGuide,
-			GuideNumber:   in[i].GuideNumber,
-			CustomerName:  in[i].CustomerName,
-			Carrier:       in[i].Carrier,
-			CodTotal:      in[i].CodTotal,
-			CodCarrierFee: in[i].CodCarrierFee,
-			ShippingCost:  in[i].ShippingCost,
-			DiscountPct:   in[i].DiscountPct,
-			Discount:      in[i].Discount,
-			Net:           in[i].Net,
-			Currency:      in[i].Currency,
-			Status:        in[i].Status,
-			Collected:     in[i].Collected,
-			Paid:          in[i].Paid,
-			CodState:      in[i].CodState,
-			CutStatus:     in[i].CutStatus,
-			CreatedAt:     in[i].CreatedAt,
-			DeliveredAt:   in[i].DeliveredAt,
+			OrderID:               in[i].OrderID,
+			OrderNumber:           in[i].OrderNumber,
+			ShipmentID:            in[i].ShipmentID,
+			HasGuide:              in[i].HasGuide,
+			GuideNumber:           in[i].GuideNumber,
+			CustomerName:          in[i].CustomerName,
+			Carrier:               in[i].Carrier,
+			CodTotal:              in[i].CodTotal,
+			CodCarrierFee:         in[i].CodCarrierFee,
+			CodIncludesShipping:   in[i].CodIncludesShipping,
+			CodCheckoutCarrierFee: in[i].CodCheckoutCarrierFee,
+			ShippingCost:          in[i].ShippingCost,
+			DiscountPct:           in[i].DiscountPct,
+			Discount:              in[i].Discount,
+			Net:                   in[i].Net,
+			Currency:              in[i].Currency,
+			Status:                in[i].Status,
+			Collected:             in[i].Collected,
+			Paid:                  in[i].Paid,
+			CodState:              in[i].CodState,
+			CutStatus:             in[i].CutStatus,
+			CreatedAt:             in[i].CreatedAt,
+			DeliveredAt:           in[i].DeliveredAt,
 		}
 	}
 	return out
@@ -236,14 +240,14 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 
 func mapCut(c *entities.PaymentCut) paymentCutResponse {
 	return paymentCutResponse{
-		ID:              c.ID,
-		PeriodStart:     c.PeriodStart,
-		PeriodEnd:       c.PeriodEnd,
-		Status:          c.Status,
-		OrdersCount:     c.OrdersCount,
-		TotalCollected:  c.TotalCollected,
-		TotalDiscount:   c.TotalDiscount,
-		TotalNet:        c.TotalNet,
+		ID:                c.ID,
+		PeriodStart:       c.PeriodStart,
+		PeriodEnd:         c.PeriodEnd,
+		Status:            c.Status,
+		OrdersCount:       c.OrdersCount,
+		TotalCollected:    c.TotalCollected,
+		TotalDiscount:     c.TotalDiscount,
+		TotalNet:          c.TotalNet,
 		ByCarrier:         mapCarrierAggregates(c.ByCarrier),
 		ConfirmedBy:       c.ConfirmedBy,
 		ConfirmedByName:   c.ConfirmedByName,

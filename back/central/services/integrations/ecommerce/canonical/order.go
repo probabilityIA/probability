@@ -1,18 +1,9 @@
-// Package canonical define el formato canónico de órdenes para todos los módulos
-// de integración e-commerce. Todos los providers (Shopify, MercadoLibre, WooCommerce, etc.)
-// deben mapear sus órdenes a este formato antes de publicarlas a la cola de RabbitMQ.
-//
-// No tiene etiquetas JSON — es una estructura de dominio pura.
-// La serialización (con etiquetas JSON) se realiza en la capa de infraestructura
-// de cada módulo (infra/secondary/queue/request/).
 package canonical
 
 import (
 	"time"
 )
 
-// ProbabilityOrderDTO es el formato canónico de orden que todos los módulos
-// de e-commerce publican a la cola probability.orders.canonical.
 type ProbabilityOrderDTO struct {
 	BusinessID      *uint
 	IntegrationID   uint
@@ -31,7 +22,8 @@ type ProbabilityOrderDTO struct {
 	Currency        string
 	CodTotal        *float64
 
-	// Precios en moneda presentment (moneda local del cliente)
+	CodCheckoutCarrierFee float64
+
 	SubtotalPresentment     float64
 	TaxPresentment          float64
 	DiscountPresentment     float64
@@ -95,7 +87,6 @@ type ProbabilityOrderItemDTO struct {
 	Weight          *float64
 	Metadata        []byte
 
-	// Precios en moneda presentment
 	UnitPricePresentment  float64
 	TotalPricePresentment float64
 	DiscountPresentment   float64

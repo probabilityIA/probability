@@ -7,29 +7,24 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
-// OrderResponse representa la respuesta de una orden
-// ✅ DTO PURO - SIN TAGS
 type OrderResponse struct {
 	ID        string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 
-	// Identificadores de integración
 	BusinessID         *uint
 	IntegrationID      uint
 	IntegrationType    string
 	IntegrationLogoURL *string
 	IntegrationName    string
 
-	// Identificadores de la orden
 	Platform       string
 	ExternalID     string
 	ChannelPackID  string
 	OrderNumber    string
 	InternalNumber string
 
-	// Información financiera
 	Subtotal                    float64
 	Tax                         float64
 	Discount                    float64
@@ -40,9 +35,10 @@ type OrderResponse struct {
 	Currency                    string
 	IsCod                       bool
 	CodTotal                    *float64
+	CodIncludesShipping         bool
+	CodCheckoutCarrierFee       float64
 	CodCutConfirmed             bool
 
-	// Precios en moneda presentment (presentment_money - moneda local)
 	SubtotalPresentment     float64
 	TaxPresentment          float64
 	DiscountPresentment     float64
@@ -50,7 +46,6 @@ type OrderResponse struct {
 	TotalAmountPresentment  float64
 	CurrencyPresentment     string
 
-	// Información del cliente
 	CustomerID        *uint
 	CustomerName      string
 	CustomerFirstName string
@@ -59,7 +54,6 @@ type OrderResponse struct {
 	CustomerPhone     string
 	CustomerDNI       string
 
-	// Dirección de envío
 	ShippingStreet        string
 	ShippingCity          string
 	ShippingState         string
@@ -81,12 +75,10 @@ type OrderResponse struct {
 	ShippingBuilding         string
 	DestinationDaneCode      string
 
-	// Información de pago
 	PaymentMethodID uint
 	IsPaid          bool
 	PaidAt          *time.Time
 
-	// Información de envío/logística
 	TrackingNumber      *string
 	TrackingLink        *string
 	GuideID             *string
@@ -95,21 +87,18 @@ type OrderResponse struct {
 	DeliveredAt         *time.Time
 	DeliveryProbability *float64
 
-	// Información de fulfillment
 	WarehouseID   *uint
 	WarehouseName string
 	DriverID      *uint
 	DriverName    string
 	IsLastMile    bool
 
-	// Dimensiones y peso
 	Weight *float64
 	Height *float64
 	Width  *float64
 	Length *float64
 	Boxes  *string
 
-	// Tipo y estado
 	OrderTypeID    *uint
 	OrderTypeName  string
 	Status         string
@@ -117,45 +106,35 @@ type OrderResponse struct {
 	StatusID       *uint
 	OrderStatus    *entities.OrderStatusInfo
 
-	// Estados independientes
 	PaymentStatusID     *uint
 	FulfillmentStatusID *uint
 	PaymentStatus       *entities.PaymentStatusInfo
 	FulfillmentStatus   *entities.FulfillmentStatusInfo
 
-	// Información adicional
 	Notes    *string
 	Coupon   *string
 	Approved *bool
 	UserID   *uint
 	UserName string
 
-	// Novedades
 	IsConfirmed *bool
 	Novelty     *string
 
-	// Testing
 	IsTest bool
 
-	// Facturación
 	Invoiceable     bool
 	InvoiceURL      *string
 	InvoiceID       *string
 	InvoiceProvider *string
 
-	// Enlaces Externos
 	OrderStatusURL string
 
-	// Items de la orden
 	OrderItems []entities.ProbabilityOrderItem
 
-	// Información del envío (relación con shipments)
 	Shipment *ShipmentData
 
-	// Información de factura asociada (si existe y está emitida)
 	Invoice *InvoiceData
 
-	// Datos estructurados (JSONB) - almacenados como []byte
 	Metadata           []byte
 	FinancialDetails   []byte
 	ShippingDetails    []byte
@@ -165,12 +144,10 @@ type OrderResponse struct {
 	NegativeFactors    []string
 	ScoreBreakdown     json.RawMessage
 
-	// Timestamps
 	OccurredAt time.Time
 	ImportedAt time.Time
 }
 
-// ShipmentData contiene información del envío asociado a la orden
 type ShipmentData struct {
 	ID                  uint
 	Carrier             *string
@@ -183,7 +160,6 @@ type ShipmentData struct {
 	CodCarrierFee       *float64
 }
 
-// InvoiceData contiene información de la factura asociada a la orden
 type InvoiceData struct {
 	ID              uint
 	InvoiceNumber   string

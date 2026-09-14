@@ -6,46 +6,49 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/cod"
 )
 
 func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*domain.GuidePDFContext, error) {
 	var row struct {
-		ID                 uint
-		TrackingNumber     *string
-		Carrier            *string
-		Weight             *float64
-		Height             *float64
-		Width              *float64
-		Length             *float64
-		CreatedAt          *time.Time
-		EstimatedDelivery  *time.Time
-		DestinationAddress string
-		DestinationCity   string
-		DestinationState   string
-		DestinationSuburb string
-		CodTotal           *float64
-		CodCarrierFee      *float64
-		OrderNumber        *string
-		CustomerName       *string
-		CustomerPhone      *string
-		CustomerDNI        *string
-		CustomerEmail      *string
-		TotalAmount        *float64
-		Currency           *string
-		BusinessName       *string
-		BusinessAddress    *string
-		WName              *string
-		WCompany           *string
-		WFirst             *string
-		WLast              *string
-		WAddress           *string
-		WStreet            *string
-		WCity              *string
-		WState             *string
-		WPhone             *string
-		WPostal            *string
-		GuideURL           *string
-		Metadata           map[string]interface{}
+		ID                    uint
+		TrackingNumber        *string
+		Carrier               *string
+		Weight                *float64
+		Height                *float64
+		Width                 *float64
+		Length                *float64
+		CreatedAt             *time.Time
+		EstimatedDelivery     *time.Time
+		DestinationAddress    string
+		DestinationCity       string
+		DestinationState      string
+		DestinationSuburb     string
+		CodTotal              *float64
+		CodIncludesShipping   bool
+		CodCheckoutCarrierFee float64
+		CodCarrierFee         *float64
+		OrderNumber           *string
+		CustomerName          *string
+		CustomerPhone         *string
+		CustomerDNI           *string
+		CustomerEmail         *string
+		TotalAmount           *float64
+		Currency              *string
+		BusinessName          *string
+		BusinessAddress       *string
+		WName                 *string
+		WCompany              *string
+		WFirst                *string
+		WLast                 *string
+		WAddress              *string
+		WStreet               *string
+		WCity                 *string
+		WState                *string
+		WPhone                *string
+		WPostal               *string
+		GuideURL              *string
+		Metadata              map[string]interface{}
 	}
 
 	var items []struct {
@@ -65,6 +68,8 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			s.estimated_delivery,
 			s.destination_address, s.destination_city, s.destination_state, s.destination_suburb,
 			o.cod_total,
+			COALESCE(o.cod_includes_shipping, false) AS cod_includes_shipping,
+			COALESCE(o.cod_checkout_carrier_fee, 0) AS cod_checkout_carrier_fee,
 			s.cod_carrier_fee,
 			o.order_number,
 			o.customer_name,
@@ -202,29 +207,33 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		DestinationSuburb:  row.DestinationSuburb,
 		DeclaredValue:      valF(row.TotalAmount),
 		Currency:           val(row.Currency),
-		CodTotal:           valF(row.CodTotal),
-		CodCarrierFee:      valF(row.CodCarrierFee),
-		BusinessName:       val(row.BusinessName),
-		BusinessAddress:    val(row.BusinessAddress),
-		WarehouseName:      val(row.WName),
-		WarehouseCompany:   val(row.WCompany),
-		WarehouseContact:   contact,
-		WarehouseAddress:   wAddr,
-		WarehouseCity:      val(row.WCity),
-		WarehouseState:     val(row.WState),
-		WarehousePhone:     val(row.WPhone),
-		WarehousePostal:    firstNonEmpty(metaStr("postal_origen"), val(row.WPostal)),
-		Origen:             metaStr("origen"),
-		AsCode:             metaStr("as_code"),
-		Paq:                metaStr("paq"),
-		Unidad:             metaStr("unidad"),
-		Destino:            metaStr("destino"),
-		ZonaHub:            metaStr("zona_hub"),
-		EquipoReparto:      metaStr("equipo_reparto"),
-		Ref:                metaStr("ref"),
-		Guia:               metaStr("guia"),
-		Observaciones:      metaStr("observaciones"),
-		OrderItems:         orderItems,
+		CodTotal: cod.CustomerCharge(cod.Order{
+			CodTotal:           valF(row.CodTotal),
+			IncludesShipping:   row.CodIncludesShipping,
+			CheckoutCarrierFee: row.CodCheckoutCarrierFee,
+		}, valF(row.CodCarrierFee)),
+		CodCarrierFee:    valF(row.CodCarrierFee),
+		BusinessName:     val(row.BusinessName),
+		BusinessAddress:  val(row.BusinessAddress),
+		WarehouseName:    val(row.WName),
+		WarehouseCompany: val(row.WCompany),
+		WarehouseContact: contact,
+		WarehouseAddress: wAddr,
+		WarehouseCity:    val(row.WCity),
+		WarehouseState:   val(row.WState),
+		WarehousePhone:   val(row.WPhone),
+		WarehousePostal:  firstNonEmpty(metaStr("postal_origen"), val(row.WPostal)),
+		Origen:           metaStr("origen"),
+		AsCode:           metaStr("as_code"),
+		Paq:              metaStr("paq"),
+		Unidad:           metaStr("unidad"),
+		Destino:          metaStr("destino"),
+		ZonaHub:          metaStr("zona_hub"),
+		EquipoReparto:    metaStr("equipo_reparto"),
+		Ref:              metaStr("ref"),
+		Guia:             metaStr("guia"),
+		Observaciones:    metaStr("observaciones"),
+		OrderItems:       orderItems,
 	}
 
 	return result, nil

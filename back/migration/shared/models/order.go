@@ -37,6 +37,8 @@ type Order struct {
 	CodTotal            *float64 `gorm:"type:decimal(12,2)"`
 	CodIncludesShipping bool     `gorm:"column:cod_includes_shipping;not null"`
 
+	CodCheckoutCarrierFee float64 `gorm:"column:cod_checkout_carrier_fee;type:decimal(12,2);not null;default:0"`
+
 	SubtotalPresentment         float64 `gorm:"column:subtotal_presentment;type:decimal(12,2);not null;default:0"`
 	TaxPresentment              float64 `gorm:"column:tax_presentment;type:decimal(12,2);not null;default:0"`
 	DiscountPresentment         float64 `gorm:"column:discount_presentment;type:decimal(12,2);not null;default:0"`

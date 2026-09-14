@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/cod"
 )
 
 func (h *Handlers) GenerateGuide(c *gin.Context) {
@@ -145,12 +146,19 @@ func (h *Handlers) overrideCodValue(c *gin.Context, raw map[string]interface{}, 
 		carrierFee = *req.CodCarrierFee
 	}
 
-	amount := basis.AmountToCollect(totalCost, carrierFee)
+	codOrder := cod.Order{
+		TotalAmount:        basis.TotalAmount,
+		CodTotal:           basis.CodTotal,
+		IncludesShipping:   basis.CodIncludesShipping,
+		CheckoutCarrierFee: basis.CodCheckoutCarrierFee,
+	}
+
+	amount := cod.AmountToCollect(codOrder, totalCost, carrierFee)
 	if amount > 0 {
 		raw["codValue"] = amount
 	}
 
-	if netTarget := basis.NetTarget(totalCost, carrierFee); netTarget > 0 {
+	if netTarget := cod.NetTarget(codOrder, totalCost, carrierFee); netTarget > 0 {
 		raw["codNetTarget"] = netTarget
 	}
 }

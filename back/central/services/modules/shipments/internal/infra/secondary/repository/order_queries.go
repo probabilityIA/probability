@@ -147,14 +147,15 @@ func (r *Repository) GetOrderCodTotal(ctx context.Context, orderUUID string) (*f
 
 func (r *Repository) GetOrderCodBasis(ctx context.Context, orderUUID string) (*domain.OrderCodBasis, error) {
 	var result struct {
-		TotalAmount         float64  `gorm:"column:total_amount"`
-		CodTotal            *float64 `gorm:"column:cod_total"`
-		CodIncludesShipping bool     `gorm:"column:cod_includes_shipping"`
+		TotalAmount           float64  `gorm:"column:total_amount"`
+		CodTotal              *float64 `gorm:"column:cod_total"`
+		CodIncludesShipping   bool     `gorm:"column:cod_includes_shipping"`
+		CodCheckoutCarrierFee float64  `gorm:"column:cod_checkout_carrier_fee"`
 	}
 
 	err := r.db.Conn(ctx).
 		Table("orders").
-		Select("total_amount, cod_total, cod_includes_shipping").
+		Select("total_amount, cod_total, cod_includes_shipping, cod_checkout_carrier_fee").
 		Where("id = ?", orderUUID).
 		Where("deleted_at IS NULL").
 		Limit(1).
@@ -173,9 +174,10 @@ func (r *Repository) GetOrderCodBasis(ctx context.Context, orderUUID string) (*d
 	}
 
 	return &domain.OrderCodBasis{
-		TotalAmount:         result.TotalAmount,
-		CodTotal:            codTotal,
-		CodIncludesShipping: result.CodIncludesShipping,
+		TotalAmount:           result.TotalAmount,
+		CodTotal:              codTotal,
+		CodIncludesShipping:   result.CodIncludesShipping,
+		CodCheckoutCarrierFee: result.CodCheckoutCarrierFee,
 	}, nil
 }
 
@@ -341,16 +343,16 @@ func (r *Repository) EnsureAllBusinessesActive(ctx context.Context) error {
 
 func (r *Repository) GetOrderRecipient(ctx context.Context, orderUUID string) (*domain.OrderRecipient, error) {
 	var result struct {
-		CustomerName         string  `gorm:"column:customer_name"`
-		CustomerFirstName    string  `gorm:"column:customer_first_name"`
-		CustomerLastName     string  `gorm:"column:customer_last_name"`
-		CustomerEmail        string  `gorm:"column:customer_email"`
-		CustomerPhone        string  `gorm:"column:customer_phone"`
-		ShippingStreet       string  `gorm:"column:shipping_street"`
-		ShippingCity         string  `gorm:"column:shipping_city"`
-		ShippingState        string  `gorm:"column:shipping_state"`
-		ShippingNeighborhood string  `gorm:"column:shipping_neighborhood"`
-		BusinessID           *uint   `gorm:"column:business_id"`
+		CustomerName         string `gorm:"column:customer_name"`
+		CustomerFirstName    string `gorm:"column:customer_first_name"`
+		CustomerLastName     string `gorm:"column:customer_last_name"`
+		CustomerEmail        string `gorm:"column:customer_email"`
+		CustomerPhone        string `gorm:"column:customer_phone"`
+		ShippingStreet       string `gorm:"column:shipping_street"`
+		ShippingCity         string `gorm:"column:shipping_city"`
+		ShippingState        string `gorm:"column:shipping_state"`
+		ShippingNeighborhood string `gorm:"column:shipping_neighborhood"`
+		BusinessID           *uint  `gorm:"column:business_id"`
 	}
 
 	err := r.db.Conn(ctx).

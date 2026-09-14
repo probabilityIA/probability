@@ -11,27 +11,29 @@ type CarrierConfig struct {
 }
 
 type CodOrder struct {
-	OrderID       string
-	OrderNumber   string
-	ShipmentID    uint
-	HasGuide      bool
-	GuideNumber   string
-	CustomerName  string
-	Carrier       string
-	CodTotal      float64
-	CodCarrierFee float64
-	ShippingCost  float64
-	DiscountPct   float64
-	Discount      float64
-	Net           float64
-	Currency      string
-	Status        string
-	Collected     bool
-	Paid          bool
-	CodState      string
-	CreatedAt     time.Time
-	DeliveredAt   *time.Time
-	CutStatus     string
+	OrderID               string
+	OrderNumber           string
+	ShipmentID            uint
+	HasGuide              bool
+	GuideNumber           string
+	CustomerName          string
+	Carrier               string
+	CodTotal              float64
+	CodCarrierFee         float64
+	CodIncludesShipping   bool
+	CodCheckoutCarrierFee float64
+	ShippingCost          float64
+	DiscountPct           float64
+	Discount              float64
+	Net                   float64
+	Currency              string
+	Status                string
+	Collected             bool
+	Paid                  bool
+	CodState              string
+	CreatedAt             time.Time
+	DeliveredAt           *time.Time
+	CutStatus             string
 }
 
 type CarrierAggregate struct {
@@ -90,15 +92,15 @@ type HistoryPoint struct {
 }
 
 type PaymentCut struct {
-	ID              uint
-	BusinessID      uint
-	PeriodStart     time.Time
-	PeriodEnd       time.Time
-	Status          string
-	OrdersCount     int
-	TotalCollected  float64
-	TotalDiscount   float64
-	TotalNet        float64
+	ID                uint
+	BusinessID        uint
+	PeriodStart       time.Time
+	PeriodEnd         time.Time
+	Status            string
+	OrdersCount       int
+	TotalCollected    float64
+	TotalDiscount     float64
+	TotalNet          float64
 	ByCarrier         []CarrierAggregate
 	ConfirmedBy       uint
 	ConfirmedByName   string
