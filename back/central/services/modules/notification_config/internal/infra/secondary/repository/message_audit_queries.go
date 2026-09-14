@@ -338,57 +338,73 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 			FROM whatsapp_conversations c
 			WHERE %s
 		),
-		claves AS (SELECT DISTINCT phone_key FROM conv)
-		SELECT ultima.id, ultima.phone_number, ultima.order_number, ultima.conversation_type,
-		       ultima.business_id, ultima.current_state, primera.created_at,
-		       COALESCE(agg.message_count, 0) AS message_count,
-		       COALESCE(agg.last_activity, ultima.updated_at) AS last_activity,
-		       COALESCE(reciente.content, '') AS last_message_content,
-		       COALESCE(reciente.template_name, '') AS last_message_template,
-		       COALESCE(reciente.media_type, '') AS last_message_media_type,
-		       COALESCE(reciente.direction, '') AS last_message_direction,
-		       COALESCE(reciente.status, '') AS last_message_status,
+		ultima AS (
+			SELECT DISTINCT ON (phone_key) * FROM conv
+			ORDER BY phone_key, created_at DESC
+		),
+		primera AS (
+			SELECT phone_key, MIN(created_at) AS created_at FROM conv GROUP BY phone_key
+		),
+		msgs AS (
+			SELECT conv.phone_key, conv.business_id, ml.created_at, ml.content, ml.template_name,
+			       ml.media_type, ml.direction, ml.status
+			FROM conv
+			JOIN whatsapp_message_logs ml ON ml.conversation_id = conv.id
+		),
+		agg AS (
+			SELECT m.phone_key, COUNT(*) AS message_count, MAX(m.created_at) AS last_activity,
+			       COUNT(*) FILTER (
+			           WHERE m.direction = 'inbound'
+			             AND m.created_at > COALESCE(rd.last_read_at, 'epoch'::timestamptz)
+			       ) AS unread_count,
+			       COUNT(*) FILTER (
+			           WHERE m.direction = 'inbound'
+			             AND lower(btrim(m.content)) = '%s'
+			       ) AS opt_out_replies
+			FROM msgs m
+			LEFT JOIN whatsapp_conversation_reads rd
+				ON rd.business_id = m.business_id AND rd.phone_key = m.phone_key
+			GROUP BY m.phone_key
+		),
+		reciente AS (
+			SELECT DISTINCT ON (phone_key) phone_key, content, template_name, media_type, direction, status
+			FROM msgs
+			ORDER BY phone_key, created_at DESC
+		),
+		pagina AS (
+			SELECT u.id, u.phone_number, u.order_number, u.conversation_type, u.business_id,
+			       u.current_state, u.phone_key, p.created_at,
+			       COALESCE(a.message_count, 0) AS message_count,
+			       COALESCE(a.last_activity, u.updated_at) AS last_activity,
+			       COALESCE(a.unread_count, 0) AS unread_count,
+			       COALESCE(a.opt_out_replies, 0) AS opt_out_replies,
+			       COALESCE(r.content, '') AS last_message_content,
+			       COALESCE(r.template_name, '') AS last_message_template,
+			       COALESCE(r.media_type, '') AS last_message_media_type,
+			       COALESCE(r.direction, '') AS last_message_direction,
+			       COALESCE(r.status, '') AS last_message_status
+			FROM ultima u
+			JOIN primera p ON p.phone_key = u.phone_key
+			LEFT JOIN agg a ON a.phone_key = u.phone_key
+			LEFT JOIN reciente r ON r.phone_key = u.phone_key
+			ORDER BY (COALESCE(a.unread_count, 0) > 0) DESC, COALESCE(a.last_activity, u.updated_at) DESC
+			OFFSET ? LIMIT ?
+		)
+		SELECT pg.id, pg.phone_number, pg.order_number, pg.conversation_type, pg.business_id,
+		       pg.current_state, pg.created_at, pg.message_count, pg.last_activity,
+		       pg.last_message_content, pg.last_message_template, pg.last_message_media_type,
+		       pg.last_message_direction, pg.last_message_status,
 		       COALESCE(ord.id, '') AS order_id,
 		       camp.id AS campaign_id,
 		       COALESCE(camp.name, '') AS campaign_name,
 		       COALESCE(cli.name, '') AS customer_name,
-		       COALESCE(agg.unread_count, 0) AS unread_count,
-		       (COALESCE(agg.opt_out_replies, 0) > 0 OR %s) AS opted_out
-		FROM claves k
-		JOIN LATERAL (
-			SELECT * FROM conv WHERE conv.phone_key = k.phone_key
-			ORDER BY conv.created_at DESC LIMIT 1
-		) ultima ON true
-		JOIN LATERAL (
-			SELECT conv.created_at FROM conv WHERE conv.phone_key = k.phone_key
-			ORDER BY conv.created_at ASC LIMIT 1
-		) primera ON true
-		LEFT JOIN whatsapp_conversation_reads rd
-			ON rd.business_id = ultima.business_id AND rd.phone_key = k.phone_key
-		LEFT JOIN LATERAL (
-			SELECT COUNT(*) AS message_count, MAX(ml.created_at) AS last_activity,
-			       COUNT(*) FILTER (
-			           WHERE ml.direction = 'inbound'
-			             AND ml.created_at > COALESCE(rd.last_read_at, 'epoch'::timestamptz)
-			       ) AS unread_count,
-			       COUNT(*) FILTER (
-			           WHERE ml.direction = 'inbound'
-			             AND lower(btrim(ml.content)) = '%s'
-			       ) AS opt_out_replies
-			FROM whatsapp_message_logs ml
-			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
-		) agg ON true
-		LEFT JOIN LATERAL (
-			SELECT ml.content, ml.template_name, ml.media_type, ml.direction, ml.status
-			FROM whatsapp_message_logs ml
-			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
-			ORDER BY ml.created_at DESC LIMIT 1
-		) reciente ON true
+		       pg.unread_count,
+		       (pg.opt_out_replies > 0 OR %s) AS opted_out
+		FROM pagina pg
 		%s
 		%s
 		%s
-		ORDER BY (COALESCE(agg.unread_count, 0) > 0) DESC, last_activity DESC
-		OFFSET ? LIMIT ?`, phoneKeyExpr, where, clientOptOutExists("ultima.business_id", "k.phone_key"), optOutReplyText, conversationOrderLateral("ultima"), conversationCampaignLateral("ultima", "k.phone_key"), clientNameLateral("ultima.business_id", "k.phone_key"))
+		ORDER BY (pg.unread_count > 0) DESC, pg.last_activity DESC`, phoneKeyExpr, where, optOutReplyText, clientOptOutExists("pg.business_id", "pg.phone_key"), conversationOrderLateral("pg"), conversationCampaignLateral("pg", "pg.phone_key"), clientNameLateral("pg.business_id", "pg.phone_key"))
 
 	listArgs := append(append([]any{}, args...), offset, filter.PageSize)
 
@@ -439,17 +455,17 @@ func (q *messageAuditQuerier) CountUnreadConversations(ctx context.Context, filt
 			FROM whatsapp_conversations c
 			WHERE %s
 		),
-		claves AS (SELECT DISTINCT phone_key FROM conv)
-		SELECT COUNT(*)
-		FROM claves k
+		entrantes AS (
+			SELECT conv.phone_key, ml.created_at
+			FROM conv
+			JOIN whatsapp_message_logs ml ON ml.conversation_id = conv.id
+			WHERE ml.direction = 'inbound'
+		)
+		SELECT COUNT(DISTINCT e.phone_key)
+		FROM entrantes e
 		LEFT JOIN whatsapp_conversation_reads rd
-			ON rd.business_id = ? AND rd.phone_key = k.phone_key
-		WHERE EXISTS (
-			SELECT 1 FROM whatsapp_message_logs ml
-			WHERE ml.conversation_id IN (SELECT conv.id FROM conv WHERE conv.phone_key = k.phone_key)
-			  AND ml.direction = 'inbound'
-			  AND ml.created_at > COALESCE(rd.last_read_at, 'epoch'::timestamptz)
-		)`, phoneKeyExpr, where)
+			ON rd.business_id = ? AND rd.phone_key = e.phone_key
+		WHERE e.created_at > COALESCE(rd.last_read_at, 'epoch'::timestamptz)`, phoneKeyExpr, where)
 
 	countArgs := append(append([]any{}, args...), filter.BusinessID)
 
