@@ -53,8 +53,14 @@ de que existiera el envio con la comision.
 
 Por que puede haber diferencia entre comisiones: el checkout cotiza la comision
 y la guia la vuelve a medir despues (15788 cotizada con Interrapidisimo 5.238,
-guia con Coordinadora 6.116). Regla vigente: el comprador paga lo que vio en la
-tienda y el negocio asume la diferencia.
+guia con Coordinadora 6.116). Regla definida por el usuario: el comprador paga
+lo que vio en la tienda, al negocio se le paga `cod_total` (lo cotizado) y la
+diferencia la asume **Probability**, nunca el negocio. Por eso el corte sigue
+pagando `cod_total`.
+
+Ordenes con diferencia al 2026-09-14, todas sin corte: 14670, 14685, 14687 y
+14689 (bug del checkout anterior a `3312a469`), 15788 (cambio de
+transportadora al generar la guia) y 15770/15787 (tarifa mas baja, a favor).
 
 ## Correccion
 
@@ -88,8 +94,8 @@ envio real de WhatsApp (cubiertos por pruebas unitarias con 15789 y 15788).
 
 ## Pendientes
 
-- [ ] Guias 14666 y 14668: declaradas con la comision doble (211.864 y 121.133), siguen sin recoger. Cancelar y regenerar.
-- [ ] 14679: valores editados a mano, no coinciden con la tienda. Revisar con Viga.
+- [x] Guias 14666 y 14668: declaradas con la comision doble, pero las ordenes estan canceladas. No requiere accion.
+- [x] 14679 (editada por Viga) y 14642: ordenes canceladas. No requiere accion.
 - [ ] Shopify y ordenes sin plugin quedan con `cod_includes_shipping = true` por defecto: si generan guia, el negocio asume la comision sin saberlo. Decidir la regla.
 - [ ] Manifiesto y etiquetas propias imprimen `cod_total` sin comision en ordenes manuales (anterior a este caso).
 - [ ] El resumen "Recaudado" del modulo contra entrega ahora suma `cod_total` neto tambien para las ordenes del plugin.
