@@ -60,6 +60,57 @@ func TestSummarize(t *testing.T) {
 	}
 }
 
+func TestCarrierChanged(t *testing.T) {
+	tests := []struct {
+		name  string
+		order Order
+		want  bool
+	}{
+		{"misma transportadora con tilde y servicio", Order{CheckoutCarrierFee: 5238, QuotedCarrier: "Interrapid\u00edsimo - Normal (2 d\u00edas h\u00e1biles)", GuideCarrier: "INTERRAPIDISIMO"}, false},
+		{"otra transportadora (15788)", Order{CheckoutCarrierFee: 5238, QuotedCarrier: "INTERRAPIDISIMO", GuideCarrier: "COORDINADORA"}, true},
+		{"sin guia todavia", Order{CheckoutCarrierFee: 5238, QuotedCarrier: "INTERRAPIDISIMO"}, false},
+		{"orden sin comision del checkout", Order{QuotedCarrier: "INTERRAPIDISIMO", GuideCarrier: "COORDINADORA"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CarrierChanged(tt.order); got != tt.want {
+				t.Errorf("CarrierChanged() = %v, se esperaba %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCambioDeTransportadora(t *testing.T) {
+	cambio := Order{TotalAmount: 45000, CodTotal: 65990, IncludesShipping: true, CheckoutCarrierFee: 5238, QuotedCarrier: "INTERRAPIDISIMO", GuideCarrier: "COORDINADORA"}
+
+	if got := NetTarget(cambio, 20225, 6116); got != 65990 {
+		t.Errorf("NetTarget() = %v, el negocio debe recibir su neto 65990", got)
+	}
+	if got := AmountToCollect(cambio, 20225, 6116); got != 72106 {
+		t.Errorf("AmountToCollect() = %v, la guia debe cobrar neto + comision real 72106", got)
+	}
+	if got := CustomerCharge(cambio, 6116); got != 72106 {
+		t.Errorf("CustomerCharge() antes de guardar la guia = %v, se esperaba 72106", got)
+	}
+
+	conGuia := cambio
+	conGuia.CollectAmount = 72106
+	if got := Summarize(conGuia, 6116); got.CustomerCharge != 72106 || got.BusinessNet != 65990 || !got.CarrierChanged || got.ChargedCarrierFee != 6116 {
+		t.Errorf("Summarize() guia nueva = %+v", got)
+	}
+
+	guiaVieja := cambio
+	guiaVieja.CollectAmount = 71228
+	if got := Summarize(guiaVieja, 6116); got.CustomerCharge != 71228 || got.BusinessNet != 65112 {
+		t.Errorf("Summarize() guia vieja 15788 = %+v, se esperaba cobro 71228 y neto 65112", got)
+	}
+
+	mismaTransportadora := Order{CodTotal: 199068, IncludesShipping: true, CheckoutCarrierFee: 11501, QuotedCarrier: "INTERRAPIDISIMO", GuideCarrier: "INTERRAPIDISIMO", CollectAmount: 210569}
+	if got := Summarize(mismaTransportadora, 13528); got.CustomerCharge != 210569 || got.BusinessNet != 199068 || got.CarrierChanged {
+		t.Errorf("Summarize() error de cotizacion (14685) = %+v, el negocio recibe su neto", got)
+	}
+}
+
 func TestAmountToCollect(t *testing.T) {
 	tests := []struct {
 		name       string

@@ -336,6 +336,12 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 		}
 		data["codCarrierFee"] = calibratedFee
 	}
+	if req.CODValue > 0 {
+		if data == nil {
+			data = make(map[string]interface{})
+		}
+		data["codValue"] = req.CODValue
+	}
 
 	return &queue.TransportResponseMessage{
 		ShipmentID:    request.ShipmentID,

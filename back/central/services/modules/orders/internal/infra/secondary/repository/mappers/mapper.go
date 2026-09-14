@@ -621,6 +621,7 @@ func ToDomainShipments(shipments []models.Shipment) []entities.ProbabilityShipme
 		}
 		result[i] = entities.ProbabilityShipment{
 			CodCarrierFee:       s.CodCarrierFee,
+			CodCollectAmount:    s.CodCollectAmount,
 			ID:                  s.ID,
 			CreatedAt:           s.CreatedAt,
 			UpdatedAt:           s.UpdatedAt,

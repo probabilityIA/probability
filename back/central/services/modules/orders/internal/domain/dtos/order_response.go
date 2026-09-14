@@ -158,6 +158,7 @@ type ShipmentData struct {
 	CarrierStatusDetail *string
 	TotalCost           *float64
 	CodCarrierFee       *float64
+	CodCollectAmount    *float64
 }
 
 type InvoiceData struct {

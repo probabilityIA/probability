@@ -46,6 +46,7 @@ func ToDBShipment(s *domain.Shipment) *models.Shipment {
 		AppliedMargin:        s.AppliedMargin,
 		CodCarrierFee:        s.CodCarrierFee,
 		CodProbabilityMargin: s.CodProbabilityMargin,
+		CodCollectAmount:     s.CodCollectAmount,
 		Weight:               s.Weight,
 		Height:               s.Height,
 		Width:                s.Width,
@@ -114,6 +115,7 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		AppliedMargin:        s.AppliedMargin,
 		CodCarrierFee:        s.CodCarrierFee,
 		CodProbabilityMargin: s.CodProbabilityMargin,
+		CodCollectAmount:     s.CodCollectAmount,
 		Weight:               s.Weight,
 		Height:               s.Height,
 		Width:                s.Width,
@@ -147,10 +149,15 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 			if s.CodCarrierFee != nil {
 				carrierFee = *s.CodCarrierFee
 			}
+			collectAmount := 0.0
+			if s.CodCollectAmount != nil {
+				collectAmount = *s.CodCollectAmount
+			}
 			b := cod.Summarize(cod.Order{
 				CodTotal:           *s.Order.CodTotal,
 				IncludesShipping:   s.Order.CodIncludesShipping,
 				CheckoutCarrierFee: s.Order.CodCheckoutCarrierFee,
+				CollectAmount:      collectAmount,
 			}, carrierFee)
 			shipment.CodCustomerCharge = b.CustomerCharge
 			shipment.CodCheckoutTotal = b.CheckoutTotal

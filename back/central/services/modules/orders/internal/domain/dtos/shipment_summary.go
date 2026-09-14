@@ -1,7 +1,5 @@
 package dtos
 
-// ShipmentSummary representa un resumen del envío para la orden
-// ✅ DTO PURO - SIN TAGS
 type ShipmentSummary struct {
 	ID                  uint
 	Carrier             *string
@@ -12,4 +10,5 @@ type ShipmentSummary struct {
 	CarrierStatusDetail *string
 	TotalCost           *float64
 	CodCarrierFee       *float64
+	CodCollectAmount    *float64
 }

@@ -44,6 +44,8 @@ type Order struct {
 	CodCarrierFeeSource         string   `json:"cod_carrier_fee_source"`
 	CodChargedCarrierFee        float64  `json:"cod_charged_carrier_fee"`
 	CodBusinessNet              float64  `json:"cod_business_net"`
+	CodCollectAmount            float64  `json:"cod_collect_amount"`
+	CodCarrierChanged           bool     `json:"cod_carrier_changed"`
 
 	SubtotalPresentment    float64 `json:"subtotal_presentment,omitempty"`
 	TaxPresentment          float64 `json:"tax_presentment,omitempty"`

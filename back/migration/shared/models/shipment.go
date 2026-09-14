@@ -53,6 +53,7 @@ type Shipment struct {
 	AppliedMargin        *float64 `gorm:"type:decimal(12,2)"`
 	CodCarrierFee        *float64 `gorm:"type:decimal(12,2)"`
 	CodProbabilityMargin *float64 `gorm:"type:decimal(12,2)"`
+	CodCollectAmount     *float64 `gorm:"type:decimal(12,2)"`
 
 	Weight *float64 `gorm:"type:decimal(10,2)"`
 	Height *float64 `gorm:"type:decimal(10,2)"`

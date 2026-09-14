@@ -673,6 +673,21 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     )}
                                 </div>
 
+                                {isCodOrder && order.cod_carrier_changed && (
+                                    <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+                                        <p className="font-bold">Transportadora distinta a la cotizada en la tienda</p>
+                                        <p>
+                                            El cliente cotiz&oacute; con <strong>{order.quoted_shipping?.carrier || 'otra transportadora'}</strong>
+                                            {' '}(comisi&oacute;n {formatCurrency(order.quoted_shipping?.cod_carrier_fee || order.cod_checkout_carrier_fee || 0, order.currency)})
+                                            {' '}y la gu&iacute;a se gener&oacute; con <strong>{order.shipment?.carrier || 'otra transportadora'}</strong>
+                                            {' '}(comisi&oacute;n {formatCurrency(codCarrierFee, order.currency)}).
+                                            {(order.cod_collect_amount ?? 0) > 0 && (
+                                                <>{' '}Valor a recaudar en la gu&iacute;a: <strong>{formatCurrency(order.cod_collect_amount ?? 0, order.currency)}</strong>.</>
+                                            )}
+                                        </p>
+                                    </div>
+                                )}
+
                                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
                                     <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2 dark:border-gray-700">
                                         <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-300">

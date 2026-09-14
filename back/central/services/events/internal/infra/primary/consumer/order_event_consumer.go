@@ -36,6 +36,7 @@ type orderSnapshot struct {
 	IsCod                 bool     `json:"is_cod"`
 	CodIncludesShipping   bool     `json:"cod_includes_shipping"`
 	CodCheckoutCarrierFee float64  `json:"cod_checkout_carrier_fee"`
+	CodCollectAmount      *float64 `json:"cod_collect_amount,omitempty"`
 	Currency              string   `json:"currency"`
 	CustomerName          string   `json:"customer_name"`
 	CustomerEmail         string   `json:"customer_email,omitempty"`
@@ -121,6 +122,9 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		}
 		if msg.Order.CodCarrierFee != nil {
 			data["cod_carrier_fee"] = *msg.Order.CodCarrierFee
+		}
+		if msg.Order.CodCollectAmount != nil {
+			data["cod_collect_amount"] = *msg.Order.CodCollectAmount
 		}
 		data["currency"] = msg.Order.Currency
 		data["customer_name"] = msg.Order.CustomerName

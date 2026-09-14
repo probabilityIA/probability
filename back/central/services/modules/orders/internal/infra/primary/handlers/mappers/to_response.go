@@ -9,19 +9,35 @@ import (
 	"github.com/secamc93/probability/back/central/shared/cod"
 )
 
-func codBreakdown(codTotal *float64, includesShipping bool, checkoutCarrierFee float64, carrierFee *float64) cod.Breakdown {
+type codShipmentFacts struct {
+	carrier       *string
+	carrierFee    *float64
+	collectAmount *float64
+}
+
+func codBreakdown(codTotal *float64, includesShipping bool, checkoutCarrierFee float64, quoted *response.QuotedShipping, shipment codShipmentFacts) cod.Breakdown {
 	if codTotal == nil {
 		return cod.Breakdown{}
 	}
-	fee := 0.0
-	if carrierFee != nil {
-		fee = *carrierFee
-	}
-	return cod.Summarize(cod.Order{
+	order := cod.Order{
 		CodTotal:           *codTotal,
 		IncludesShipping:   includesShipping,
 		CheckoutCarrierFee: checkoutCarrierFee,
-	}, fee)
+	}
+	if quoted != nil {
+		order.QuotedCarrier = quoted.Carrier
+	}
+	if shipment.carrier != nil {
+		order.GuideCarrier = *shipment.carrier
+	}
+	if shipment.collectAmount != nil {
+		order.CollectAmount = *shipment.collectAmount
+	}
+	fee := 0.0
+	if shipment.carrierFee != nil {
+		fee = *shipment.carrierFee
+	}
+	return cod.Summarize(order, fee)
 }
 
 func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
@@ -91,11 +107,16 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		}
 	}
 
-	var shipmentCarrierFee *float64
+	quotedShipping := buildQuotedShipping(dto.ShippingDetails)
+	var shipmentFacts codShipmentFacts
 	if dto.Shipment != nil {
-		shipmentCarrierFee = dto.Shipment.CodCarrierFee
+		shipmentFacts = codShipmentFacts{carrier: dto.Shipment.Carrier, carrierFee: dto.Shipment.CodCarrierFee, collectAmount: dto.Shipment.CodCollectAmount}
 	}
-	codAmounts := codBreakdown(dto.CodTotal, dto.CodIncludesShipping, dto.CodCheckoutCarrierFee, shipmentCarrierFee)
+	codAmounts := codBreakdown(dto.CodTotal, dto.CodIncludesShipping, dto.CodCheckoutCarrierFee, quotedShipping, shipmentFacts)
+	collectAmount := 0.0
+	if shipmentFacts.collectAmount != nil {
+		collectAmount = *shipmentFacts.collectAmount
+	}
 
 	return &response.Order{
 		ID:                          dto.ID,
@@ -131,6 +152,8 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		CodCarrierFeeSource:         codAmounts.CarrierFeeSource,
 		CodChargedCarrierFee:        codAmounts.ChargedCarrierFee,
 		CodBusinessNet:              codAmounts.BusinessNet,
+		CodCollectAmount:            collectAmount,
+		CodCarrierChanged:           codAmounts.CarrierChanged,
 		SubtotalPresentment:         dto.SubtotalPresentment,
 		TaxPresentment:              dto.TaxPresentment,
 		DiscountPresentment:         dto.DiscountPresentment,
@@ -212,7 +235,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		Metadata:                    metadataJSON,
 		FinancialDetails:            financialDetailsJSON,
 		ShippingDetails:             shippingDetailsJSON,
-		QuotedShipping:              buildQuotedShipping(dto.ShippingDetails),
+		QuotedShipping:              quotedShipping,
 		FreeShipping:                dto.FreeShipping,
 		PaymentDetails:              paymentDetailsJSON,
 		FulfillmentDetails:          fulfillmentDetailsJSON,
@@ -254,18 +277,19 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		}
 	}
 
-	var summaryCarrierFee *float64
+	summaryQuoted := buildQuotedShipping(dto.ShippingDetails)
+	var summaryFacts codShipmentFacts
 	if dto.Shipment != nil {
-		summaryCarrierFee = dto.Shipment.CodCarrierFee
+		summaryFacts = codShipmentFacts{carrier: dto.Shipment.Carrier, carrierFee: dto.Shipment.CodCarrierFee, collectAmount: dto.Shipment.CodCollectAmount}
 	}
-	summaryCod := codBreakdown(dto.CodTotal, dto.CodIncludesShipping, dto.CodCheckoutCarrierFee, summaryCarrierFee)
+	summaryCod := codBreakdown(dto.CodTotal, dto.CodIncludesShipping, dto.CodCheckoutCarrierFee, summaryQuoted, summaryFacts)
 
 	return &response.OrderSummary{
 		CodIncludesShipping:    dto.CodIncludesShipping,
 		CodCheckoutCarrierFee:  dto.CodCheckoutCarrierFee,
 		CodCustomerCharge:      summaryCod.CustomerCharge,
 		CodCheckoutTotal:       summaryCod.CheckoutTotal,
-		QuotedShipping:        buildQuotedShipping(dto.ShippingDetails),
+		QuotedShipping:         summaryQuoted,
 		FreeShipping:           dto.FreeShipping,
 		StatusSource:           dto.StatusSource,
 		StatusChangedBy:        dto.StatusChangedBy,

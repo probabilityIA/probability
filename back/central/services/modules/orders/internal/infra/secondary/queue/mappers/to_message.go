@@ -22,6 +22,7 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		IsCod:                 order.IsCod,
 		CodIncludesShipping:   order.CodIncludesShipping,
 		CodCheckoutCarrierFee: order.CodCheckoutCarrierFee,
+		CodCollectAmount:      extractCodCollectAmount(order),
 		Currency:              order.Currency,
 		PaymentMethodID:       order.PaymentMethodID,
 		PaymentStatusID:       order.PaymentStatusID,
@@ -203,6 +204,15 @@ func extractCodCarrierFee(order *entities.ProbabilityOrder) *float64 {
 	for i := range order.Shipments {
 		if order.Shipments[i].CodCarrierFee != nil && *order.Shipments[i].CodCarrierFee > 0 {
 			return order.Shipments[i].CodCarrierFee
+		}
+	}
+	return nil
+}
+
+func extractCodCollectAmount(order *entities.ProbabilityOrder) *float64 {
+	for i := range order.Shipments {
+		if order.Shipments[i].CodCollectAmount != nil && *order.Shipments[i].CodCollectAmount > 0 {
+			return order.Shipments[i].CodCollectAmount
 		}
 	}
 	return nil

@@ -57,6 +57,9 @@ func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uin
 		}
 		data["cod_includes_shipping"] = notification.CodIncludesShipping
 		data["cod_checkout_carrier_fee"] = notification.CodCheckoutCarrierFee
+		if notification.CodCollectAmount > 0 {
+			data["cod_collect_amount"] = notification.CodCollectAmount
+		}
 		if notification.TrackingURL != "" {
 			data["tracking_url"] = notification.TrackingURL
 		}

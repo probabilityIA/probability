@@ -151,15 +151,26 @@ func (r *Repository) GetOrderCodBasis(ctx context.Context, orderUUID string) (*d
 		CodTotal              *float64 `gorm:"column:cod_total"`
 		CodIncludesShipping   bool     `gorm:"column:cod_includes_shipping"`
 		CodCheckoutCarrierFee float64  `gorm:"column:cod_checkout_carrier_fee"`
+		QuotedCarrier         string   `gorm:"column:quoted_carrier"`
 	}
 
-	err := r.db.Conn(ctx).
-		Table("orders").
-		Select("total_amount, cod_total, cod_includes_shipping, cod_checkout_carrier_fee").
-		Where("id = ?", orderUUID).
-		Where("deleted_at IS NULL").
-		Limit(1).
-		Scan(&result).Error
+	err := r.db.Conn(ctx).Raw(`
+SELECT o.total_amount, o.cod_total, o.cod_includes_shipping, o.cod_checkout_carrier_fee,
+	COALESCE(
+		(SELECT m.value->>'value'
+		 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(o.shipping_details::jsonb->'shipping_lines') = 'array' THEN o.shipping_details::jsonb->'shipping_lines' ELSE '[]'::jsonb END) AS sl(value),
+		      jsonb_array_elements(CASE WHEN jsonb_typeof(sl.value->'meta_data') = 'array' THEN sl.value->'meta_data' ELSE '[]'::jsonb END) AS m(value)
+		 WHERE m.value->>'key' = 'carrier'
+		 LIMIT 1),
+		(SELECT split_part(sl.value->>'title', ' - ', 1)
+		 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(o.shipping_details::jsonb->'shipping_lines') = 'array' THEN o.shipping_details::jsonb->'shipping_lines' ELSE '[]'::jsonb END) AS sl(value)
+		 WHERE sl.value->>'source' = 'probability'
+		 LIMIT 1),
+		''
+	) AS quoted_carrier
+FROM orders o
+WHERE o.id = ? AND o.deleted_at IS NULL
+LIMIT 1`, orderUUID).Scan(&result).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -178,6 +189,7 @@ func (r *Repository) GetOrderCodBasis(ctx context.Context, orderUUID string) (*d
 		CodTotal:              codTotal,
 		CodIncludesShipping:   result.CodIncludesShipping,
 		CodCheckoutCarrierFee: result.CodCheckoutCarrierFee,
+		QuotedCarrier:         result.QuotedCarrier,
 	}, nil
 }
 

@@ -22,6 +22,7 @@ type CodOrder struct {
 	CodCarrierFee         float64
 	CodIncludesShipping   bool
 	CodCheckoutCarrierFee float64
+	CodCollectAmount      float64
 	CustomerCharge        float64
 	ShippingCost          float64
 	DiscountPct           float64

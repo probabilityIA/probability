@@ -184,6 +184,7 @@ func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.Shipm
 		CarrierStatusDetail: s.CarrierStatusDetail,
 		TotalCost:           s.TotalCost,
 		CodCarrierFee:       codCarrierFee,
+		CodCollectAmount:    s.CodCollectAmount,
 	}
 }
 
@@ -206,6 +207,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 			CarrierStatusDetail: s.CarrierStatusDetail,
 			TotalCost:           s.TotalCost,
 			CodCarrierFee:       s.CodCarrierFee,
+			CodCollectAmount:    s.CodCollectAmount,
 		}
 	}
 

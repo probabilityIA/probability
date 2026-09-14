@@ -14,6 +14,7 @@ func setCustomerCharge(o *entities.CodOrder) {
 		CodTotal:           o.CodTotal,
 		IncludesShipping:   o.CodIncludesShipping,
 		CheckoutCarrierFee: o.CodCheckoutCarrierFee,
+		CollectAmount:      o.CodCollectAmount,
 	}, o.CodCarrierFee)
 }
 
