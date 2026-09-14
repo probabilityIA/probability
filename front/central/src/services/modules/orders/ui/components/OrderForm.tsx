@@ -11,6 +11,7 @@ import ProductForm from '../../../products/ui/components/ProductForm';
 import { createOrderAction, updateOrderAction } from '../../infra/actions';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
+import { codCheckoutFee, codCustomerCharge, codEffectiveCarrierFee } from '@/shared/utils/cod-amount';
 import { useClientSearch } from '../hooks/useClientSearch';
 import { useWarehouses } from '../hooks/useWarehouses';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
@@ -586,10 +587,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             const baseData = {
                 ...formData,
                 is_cod: isCOD,
-                // formData.cod_total ya viene correcto desde la orden (o desde
-                // applyProducts al agregar productos); no se recalcula aqui para
-                // no perder comisiones/ajustes que no son solo producto+envio
-                // (p.ej. ordenes de WooCommerce donde el canal ya cobro el total).
                 cod_total: isCOD ? formData.cod_total : 0,
                 payment_method_id: formData.payment_method_id,
                 shipping_street: fullShippingStreet,
@@ -665,12 +662,19 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         }));
     };
 
-    // Igual que "se cobrara contra entrega": si cod_total ya trae un valor distinto
-    // a producto+envio (p.ej. la comision completa que cobro WooCommerce en el
-    // checkout), se usa como el total real de la orden en vez de recalcularlo.
     const yaLiquidadaEnCorte = order?.cod_cut_confirmed === true;
-    const displayTotal = isCOD && !yaLiquidadaEnCorte && formData.cod_total > 0
-        ? formData.cod_total
+    const codAmountSource = {
+        cod_total: formData.cod_total,
+        cod_carrier_fee: order?.shipment?.cod_carrier_fee,
+        cod_includes_shipping: order?.cod_includes_shipping,
+        cod_checkout_carrier_fee: order?.cod_checkout_carrier_fee,
+    };
+    const comisionContraEntrega = isCOD ? codEffectiveCarrierFee(codAmountSource) : 0;
+    const comisionDelCheckout = isCOD && codCheckoutFee(codAmountSource) > 0;
+    const comisionSeSuma = comisionDelCheckout || !order?.cod_includes_shipping;
+    const cobroContraEntrega = codCustomerCharge(codAmountSource);
+    const displayTotal = isCOD && !yaLiquidadaEnCorte && cobroContraEntrega > 0
+        ? cobroContraEntrega
         : formData.total_amount + formData.shipping_cost;
 
     return (
@@ -980,7 +984,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     <p className="text-[11px] leading-snug text-slate-400">
                                         {deliveryType === 'office'
                                             ? 'El cliente recoge el paquete en la oficina que elijas.'
-                                            : 'Apagado: el paquete se entrega en la ' + 'dirección' + ' del cliente.'}
+                                            : 'Apagado: el paquete se entrega en la ' + 'direcci\u00f3n' + ' del cliente.'}
                                     </p>
                                 </div>
                                 <button
@@ -1109,7 +1113,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
-                                        {'Dirección tomada de Google Maps.'}
+                                        {'Direcci\u00f3n tomada de Google Maps.'}
                                     </p>
                                 ) : addressSource === 'channel' ? null : formData.shipping_street?.trim() ? (
                                     <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
@@ -1117,7 +1121,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                                         </svg>
                                         <span>
-                                            {'Dirección escrita a mano. Te recomendamos elegir una de las sugerencias de Google para que la guía llegue con mayor precisión.'}
+                                            {'Direcci\u00f3n escrita a mano. Te recomendamos elegir una de las sugerencias de Google para que la gu\u00eda llegue con mayor precisi\u00f3n.'}
                                         </span>
                                     </p>
                                 ) : null}
@@ -1289,16 +1293,13 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 <p className="mt-1.5 text-[11px] leading-snug text-slate-400">
                                     Se actualiza con el costo de la guia al generarla, o ingresalo manualmente.
                                 </p>
-                                {(() => {
-                                    if (!isCOD || yaLiquidadaEnCorte || formData.cod_total <= 0) return null;
-                                    const comision = formData.cod_total - formData.total_amount - formData.shipping_cost;
-                                    if (comision <= 0) return null;
-                                    return (
-                                        <p className="mt-1 text-[11px] leading-snug text-slate-400">
-                                            + comision contra entrega: <strong>{formData.currency} {comision.toLocaleString('es-CO')}</strong>
-                                        </p>
-                                    );
-                                })()}
+                                {isCOD && !yaLiquidadaEnCorte && comisionContraEntrega > 0 && (
+                                    <p className="mt-1 text-[11px] leading-snug text-slate-400">
+                                        {comisionSeSuma ? '+ ' : ''}{'comisi\u00f3n contra entrega: '}
+                                        <strong>{formData.currency} {comisionContraEntrega.toLocaleString('es-CO')}</strong>
+                                        {comisionDelCheckout ? ' (cotizada en el checkout de la tienda)' : ''}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="mt-3 border-t border-slate-100 pt-3 dark:border-gray-700">
@@ -1326,20 +1327,17 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isCOD ? 'translate-x-6' : 'translate-x-1'}`} />
                                     </button>
                                 </div>
-                                {isCOD && (() => {
-                                    const sumaProductoEnvio = formData.total_amount + formData.shipping_cost;
-                                    const yaLiquidadaEnCorte = order?.cod_cut_confirmed === true;
-                                    const montoCOD = !yaLiquidadaEnCorte && formData.cod_total > 0 ? formData.cod_total : sumaProductoEnvio;
-                                    const liquidado = Math.abs(montoCOD - sumaProductoEnvio) >= 1;
-                                    return (
-                                        <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                                            Se cobrara contra entrega: <strong>{formData.currency} {montoCOD.toLocaleString()}</strong>
-                                            <span className="text-gray-400">
-                                                {liquidado ? ' (valor liquidado por la transportadora)' : ' (producto + env\u00edo)'}
-                                            </span>
-                                        </p>
-                                    );
-                                })()}
+                                {isCOD && (
+                                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                                        {'Se cobrar\u00e1 contra entrega: '}
+                                        <strong>{formData.currency} {displayTotal.toLocaleString('es-CO')}</strong>
+                                        <span className="text-gray-400">
+                                            {!yaLiquidadaEnCorte && comisionContraEntrega > 0 && comisionSeSuma
+                                                ? ' (producto + env\u00edo + comisi\u00f3n)'
+                                                : ' (producto + env\u00edo)'}
+                                        </span>
+                                    </p>
+                                )}
                             </div>
 
                             <div className="flex items-center justify-between rounded-xl px-4 py-3" style={{ backgroundColor: primaryColor }}>
