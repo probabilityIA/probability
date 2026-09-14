@@ -7,29 +7,24 @@ import (
 	"gorm.io/datatypes"
 )
 
-// Order representa la respuesta HTTP de una orden
-// ✅ DTO HTTP - CON TAGS (json + datatypes.JSON)
 type Order struct {
 	ID        string     `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 
-	// Identificadores de integración
 	BusinessID         *uint   `json:"business_id"`
 	IntegrationID      uint    `json:"integration_id"`
 	IntegrationType    string  `json:"integration_type"`
 	IntegrationLogoURL *string `json:"integration_logo_url,omitempty"`
 	IntegrationName    string  `json:"integration_name,omitempty"`
 
-	// Identificadores de la orden
 	Platform       string `json:"platform"`
 	ExternalID     string `json:"external_id"`
 	ChannelPackID  string `json:"channel_pack_id,omitempty"`
 	OrderNumber    string `json:"order_number"`
 	InternalNumber string `json:"internal_number"`
 
-	// Información financiera
 	Subtotal                    float64  `json:"subtotal"`
 	Tax                         float64  `json:"tax"`
 	Discount                    float64  `json:"discount"`
@@ -40,9 +35,9 @@ type Order struct {
 	Currency                    string   `json:"currency"`
 	IsCod                       bool     `json:"is_cod"`
 	CodTotal                    *float64 `json:"cod_total,omitempty"`
+	CodIncludesShipping         bool     `json:"cod_includes_shipping"`
 	CodCutConfirmed             bool     `json:"cod_cut_confirmed"`
 
-	// Precios en moneda presentment
 	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`
 	TaxPresentment          float64 `json:"tax_presentment,omitempty"`
 	DiscountPresentment     float64 `json:"discount_presentment,omitempty"`
@@ -50,7 +45,6 @@ type Order struct {
 	TotalAmountPresentment  float64 `json:"total_amount_presentment,omitempty"`
 	CurrencyPresentment     string  `json:"currency_presentment,omitempty"`
 
-	// Información del cliente
 	CustomerID        *uint  `json:"customer_id,omitempty"`
 	CustomerName      string `json:"customer_name"`
 	CustomerFirstName string `json:"customer_first_name,omitempty"`
@@ -59,7 +53,6 @@ type Order struct {
 	CustomerPhone     string `json:"customer_phone"`
 	CustomerDNI       string `json:"customer_dni"`
 
-	// Dirección de envío
 	ShippingStreet        string   `json:"shipping_street"`
 	ShippingCity          string   `json:"shipping_city"`
 	ShippingState         string   `json:"shipping_state"`
@@ -81,12 +74,10 @@ type Order struct {
 	ShippingBuilding         string          `json:"shipping_building,omitempty"`
 	DestinationDaneCode      string          `json:"destination_dane_code,omitempty"`
 
-	// Información de pago
 	PaymentMethodID uint       `json:"payment_method_id"`
 	IsPaid          bool       `json:"is_paid"`
 	PaidAt          *time.Time `json:"paid_at,omitempty"`
 
-	// Información de envío/logística
 	TrackingNumber      *string    `json:"tracking_number,omitempty"`
 	TrackingLink        *string    `json:"tracking_link,omitempty"`
 	GuideID             *string    `json:"guide_id,omitempty"`
@@ -95,21 +86,18 @@ type Order struct {
 	DeliveredAt         *time.Time `json:"delivered_at,omitempty"`
 	DeliveryProbability *float64   `json:"delivery_probability,omitempty"`
 
-	// Información de fulfillment
 	WarehouseID   *uint  `json:"warehouse_id,omitempty"`
 	WarehouseName string `json:"warehouse_name"`
 	DriverID      *uint  `json:"driver_id,omitempty"`
 	DriverName    string `json:"driver_name"`
 	IsLastMile    bool   `json:"is_last_mile"`
 
-	// Dimensiones y peso
 	Weight *float64 `json:"weight,omitempty"`
 	Height *float64 `json:"height,omitempty"`
 	Width  *float64 `json:"width,omitempty"`
 	Length *float64 `json:"length,omitempty"`
 	Boxes  *string  `json:"boxes,omitempty"`
 
-	// Tipo y estado
 	OrderTypeID    *uint            `json:"order_type_id,omitempty"`
 	OrderTypeName  string           `json:"order_type_name"`
 	Status         string           `json:"status"`
@@ -117,42 +105,33 @@ type Order struct {
 	StatusID       *uint            `json:"status_id,omitempty"`
 	OrderStatus    *OrderStatusInfo `json:"order_status,omitempty"`
 
-	// Estados independientes
 	PaymentStatusID     *uint                  `json:"payment_status_id,omitempty"`
 	FulfillmentStatusID *uint                  `json:"fulfillment_status_id,omitempty"`
 	PaymentStatus       *PaymentStatusInfo     `json:"payment_status,omitempty"`
 	FulfillmentStatus   *FulfillmentStatusInfo `json:"fulfillment_status,omitempty"`
 
-	// Información adicional
 	Notes    *string `json:"notes,omitempty"`
 	Coupon   *string `json:"coupon,omitempty"`
 	Approved *bool   `json:"approved,omitempty"`
 	UserID   *uint   `json:"user_id,omitempty"`
 	UserName string  `json:"user_name"`
 
-	// Novedades
 	IsConfirmed *bool   `json:"is_confirmed"`
 	Novelty     *string `json:"novelty"`
 
-	// Testing
 	IsTest bool `json:"is_test"`
 
-	// Facturación
 	Invoiceable     bool    `json:"invoiceable"`
 	InvoiceURL      *string `json:"invoice_url,omitempty"`
 	InvoiceID       *string `json:"invoice_id,omitempty"`
 	InvoiceProvider *string `json:"invoice_provider,omitempty"`
 
-	// Enlaces Externos
 	OrderStatusURL string `json:"order_status_url,omitempty"`
 
-	// Items de la orden
 	OrderItems []OrderItemResponse `json:"order_items,omitempty"`
 
-	// Información del envío (relación con shipments)
 	Shipment *ShipmentSummary `json:"shipment,omitempty"`
 
-	// Datos estructurados (JSONB) - usando datatypes.JSON
 	Metadata           datatypes.JSON  `json:"metadata,omitempty"`
 	FinancialDetails   datatypes.JSON  `json:"financial_details,omitempty"`
 	ShippingDetails    datatypes.JSON  `json:"shipping_details,omitempty"`
@@ -163,15 +142,12 @@ type Order struct {
 	NegativeFactors    []string        `json:"negative_factors,omitempty"`
 	ScoreBreakdown     json.RawMessage `json:"score_breakdown,omitempty"`
 
-	// Información de factura asociada (si existe y está emitida)
 	Invoice *InvoicePreview `json:"invoice,omitempty"`
 
-	// Timestamps
 	OccurredAt time.Time `json:"occurred_at"`
 	ImportedAt time.Time `json:"imported_at"`
 }
 
-// InvoicePreview contiene datos resumidos de la factura asociada
 type InvoicePreview struct {
 	ID              uint       `json:"id"`
 	InvoiceNumber   string     `json:"invoice_number"`
@@ -180,7 +156,6 @@ type InvoicePreview struct {
 	RetentionAmount float64    `json:"retention_amount"`
 }
 
-// OrderStatusInfo contiene información del estado de orden
 type OrderStatusInfo struct {
 	ID          uint   `json:"id"`
 	Code        string `json:"code"`
@@ -190,7 +165,6 @@ type OrderStatusInfo struct {
 	Color       string `json:"color"`
 }
 
-// PaymentStatusInfo contiene información del estado de pago
 type PaymentStatusInfo struct {
 	ID          uint   `json:"id"`
 	Code        string `json:"code"`
@@ -200,7 +174,6 @@ type PaymentStatusInfo struct {
 	Color       string `json:"color"`
 }
 
-// FulfillmentStatusInfo contiene información del estado de fulfillment
 type FulfillmentStatusInfo struct {
 	ID          uint   `json:"id"`
 	Code        string `json:"code"`

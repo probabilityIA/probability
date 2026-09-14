@@ -262,8 +262,9 @@ type GuideNotificationData struct {
 	BusinessName  string
 	IntegrationID uint
 	CodTotal      *float64
-	CodCarrierFee *float64
-	TrackingURL   string
+	CodCarrierFee       *float64
+	CodIncludesShipping bool
+	TrackingURL         string
 }
 
 type OrderExternalGuide struct {
@@ -315,9 +316,6 @@ func (b OrderCodBasis) NetTarget(guideTotalCost float64, embeddedCarrierFee floa
 		return b.TotalAmount + guideTotalCost
 	}
 	if b.CodIncludesShipping {
-		// CodTotal ya trae la comision del carrier sumada (mapQuoteRatesToWoo
-		// la incluye en el precio de checkout), restarla evita que
-		// AmountToCollect la vuelva a sumar.
 		return b.CodTotal - embeddedCarrierFee
 	}
 	return b.CodTotal

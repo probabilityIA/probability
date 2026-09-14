@@ -9,6 +9,7 @@ import { getCodOrdersAction, getCodSummaryAction, getCarrierConfigsAction, updat
 import { CodOrder, CodState, CodSummary, ReportFilters } from '../../domain/types';
 import { formatMoney, formatDateTime, browserTimeZone, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
+import { codCustomerCharge } from '@/shared/utils/cod-amount';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { GuidePreviewModal } from './GuidePreviewModal';
 
@@ -315,7 +316,7 @@ export default function CodOrdersTab({ filters }: Props) {
         setError(null);
     }, []);
 
-    const filteredTotal = orders.reduce((a, o) => a + o.cod_total + (o.cod_carrier_fee || 0), 0);
+    const filteredTotal = orders.reduce((a, o) => a + codCustomerCharge(o), 0);
     const currency = orders[0]?.currency;
 
     return (
@@ -471,7 +472,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                                 onError={setError}
                                             />
                                         </td>
-                                        <td className="px-3 py-3.5 text-right text-[13.5px] font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
+                                        <td className="px-3 py-3.5 text-right text-[13.5px] font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(codCustomerCharge(o), o.currency)}</td>
                                         <td className="px-3 py-3.5"><RecaudoBadge state={o.cod_state} /></td>
                                         <td className="px-3 py-3.5">
                                             {o.cut_status === 'confirmed' ? (
@@ -479,9 +480,9 @@ export default function CodOrdersTab({ filters }: Props) {
                                             ) : o.collected ? (
                                                 <div className="text-[12.5px] font-semibold text-[#c2410c]">Sin confirmar</div>
                                             ) : (
-                                                <div className="text-[12.5px] font-semibold text-[#9a9aa5]">—</div>
+                                                <div className="text-[12.5px] font-semibold text-[#9a9aa5]">{'\u2014'}</div>
                                             )}
-                                            <div className="text-[11.5px] text-[#a0a0ab] mt-0.5 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '—'}</div>
+                                            <div className="text-[11.5px] text-[#a0a0ab] mt-0.5 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '\u2014'}</div>
                                         </td>
                                     </tr>
                                 );

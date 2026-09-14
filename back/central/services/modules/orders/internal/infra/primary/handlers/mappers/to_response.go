@@ -8,10 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/response"
 )
 
-// OrderToResponse convierte DTO de dominio a HTTP response
-// ✅ Conversión: []byte -> datatypes.JSON
 func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
-	// Convertir []byte a datatypes.JSON
 	var metadataJSON datatypes.JSON
 	if len(dto.Metadata) > 0 {
 		metadataJSON = datatypes.JSON(dto.Metadata)
@@ -37,7 +34,6 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		fulfillmentDetailsJSON = datatypes.JSON(dto.FulfillmentDetails)
 	}
 
-	// Mapear información de estados
 	var orderStatus *response.OrderStatusInfo
 	if dto.OrderStatus != nil {
 		orderStatus = mapOrderStatusToResponse(dto.OrderStatus)
@@ -104,6 +100,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		Currency:                    dto.Currency,
 		IsCod:                       dto.IsCod,
 		CodTotal:                    dto.CodTotal,
+		CodIncludesShipping:         dto.CodIncludesShipping,
 		CodCutConfirmed:             dto.CodCutConfirmed,
 		SubtotalPresentment:         dto.SubtotalPresentment,
 		TaxPresentment:              dto.TaxPresentment,
@@ -197,7 +194,6 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 	}
 }
 
-// OrderSummaryToResponse convierte resumen de orden de dominio a HTTP response
 func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 	var orderStatus *response.OrderStatusInfo
 	if dto.OrderStatus != nil {
@@ -287,7 +283,6 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 	}
 }
 
-// OrderRawToResponse convierte respuesta raw de dominio a HTTP response
 func OrderRawToResponse(dto *dtos.OrderRawResponse) *response.OrderRaw {
 	var rawDataJSON datatypes.JSON
 	if len(dto.RawData) > 0 {
@@ -301,7 +296,6 @@ func OrderRawToResponse(dto *dtos.OrderRawResponse) *response.OrderRaw {
 	}
 }
 
-// OrdersListToResponse convierte lista paginada de dominio a HTTP response
 func OrdersListToResponse(dto *dtos.OrdersListResponse) *response.OrdersList {
 	summaries := make([]response.OrderSummary, len(dto.Data))
 	for i, summary := range dto.Data {
@@ -317,7 +311,6 @@ func OrdersListToResponse(dto *dtos.OrdersListResponse) *response.OrdersList {
 	}
 }
 
-// mapOrderItemsToResponse convierte items de dominio a response HTTP
 func mapOrderItemsToResponse(items []entities.ProbabilityOrderItem) []response.OrderItemResponse {
 	if len(items) == 0 {
 		return nil
@@ -352,7 +345,6 @@ func mapOrderItemsToResponse(items []entities.ProbabilityOrderItem) []response.O
 	return result
 }
 
-// mapOrderStatusToResponse convierte OrderStatusInfo de entities a response
 func mapOrderStatusToResponse(status *entities.OrderStatusInfo) *response.OrderStatusInfo {
 	return &response.OrderStatusInfo{
 		ID:          status.ID,
@@ -364,7 +356,6 @@ func mapOrderStatusToResponse(status *entities.OrderStatusInfo) *response.OrderS
 	}
 }
 
-// mapPaymentStatusToResponse convierte PaymentStatusInfo de entities a response
 func mapPaymentStatusToResponse(status *entities.PaymentStatusInfo) *response.PaymentStatusInfo {
 	return &response.PaymentStatusInfo{
 		ID:          status.ID,
@@ -376,7 +367,6 @@ func mapPaymentStatusToResponse(status *entities.PaymentStatusInfo) *response.Pa
 	}
 }
 
-// mapFulfillmentStatusToResponse convierte FulfillmentStatusInfo de entities a response
 func mapFulfillmentStatusToResponse(status *entities.FulfillmentStatusInfo) *response.FulfillmentStatusInfo {
 	return &response.FulfillmentStatusInfo{
 		ID:          status.ID,

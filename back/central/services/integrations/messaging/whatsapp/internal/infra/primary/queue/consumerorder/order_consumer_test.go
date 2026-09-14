@@ -51,6 +51,38 @@ func TestValorARecaudarUsaCodTotalNoTotalAmount(t *testing.T) {
 	}
 }
 
+func TestValorARecaudarNoDuplicaLaComisionDelCheckout(t *testing.T) {
+	tests := []struct {
+		name                string
+		codTotal            float64
+		codCarrierFee       float64
+		codIncludesShipping bool
+		want                string
+	}{
+		{"checkout woocommerce con la comision incluida (orden 15789)", 73367, 5365, true, "$73.367"},
+		{"orden manual: se suma la comision", 135929, 9451, false, "$145.380"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := vigaEvent()
+			event.CodTotal = tt.codTotal
+			event.CodCarrierFee = tt.codCarrierFee
+			event.CodIncludesShipping = tt.codIncludesShipping
+
+			for template, key := range map[string]string{
+				"confirmacion_pedido_contraentrega": "9",
+				"pedido_en_reparto_cod":             "6",
+				"pedido_entregado_cod":              "11",
+			} {
+				if got := buildVariables(template, event)[key]; got != tt.want {
+					t.Errorf("%s: valor a recaudar = %q, se esperaba %q", template, got, tt.want)
+				}
+			}
+		})
+	}
+}
+
 func TestConfirmacionSinValorNoLlevaMonto(t *testing.T) {
 	vars := buildVariables("confirmacion_pedido_contraentrega_sin_valor", vigaEvent())
 

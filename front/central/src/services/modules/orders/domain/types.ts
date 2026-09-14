@@ -52,6 +52,7 @@ export interface Order {
     total_amount: number;
     currency: string;
     cod_total?: number;
+    cod_includes_shipping?: boolean;
     is_cod?: boolean;
 
     subtotal_presentment?: number;

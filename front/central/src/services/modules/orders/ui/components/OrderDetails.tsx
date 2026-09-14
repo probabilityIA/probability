@@ -15,6 +15,7 @@ import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import { resolveCityState } from '@/shared/utils/dane-lookup';
 import { carrierOfficeLabel } from '@/shared/utils/guide-destination';
+import { codCustomerCharge } from '@/shared/utils/cod-amount';
 import dynamic from 'next/dynamic';
 import { Package, Copy, Check, Link2, X, Calendar, CreditCard, Truck, Receipt, Percent, Wallet, ShoppingBag, User, Phone, Mail, MapPin, ClipboardList, Save, MessageCircle, History, AlertTriangle, RefreshCw, Clock, FileText, ChevronRight, ArrowRight, Plus, CircleCheck, Scissors } from 'lucide-react';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
@@ -122,7 +123,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     }
                 })
                 .catch(err => {
-                    console.warn("Recomendación AI no disponible:", err);
+                    console.warn("Recomendaci\u00f3n AI no disponible:", err);
                     setAIRecommendation(null);
                 })
                 .finally(() => setLoadingAI(false));
@@ -165,13 +166,13 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
             const result = await requestWhatsAppConfirmationAction(order.id);
             if (result.success) {
                 setWhatsAppSent(true);
-                alert('Mensaje de confirmación enviado por WhatsApp');
+                alert('Mensaje de confirmaci\u00f3n enviado por WhatsApp');
             } else {
-                alert(result.message || 'Error al enviar confirmación por WhatsApp');
+                alert(result.message || 'Error al enviar confirmaci\u00f3n por WhatsApp');
             }
         } catch (error: any) {
             console.error('Error sending WhatsApp confirmation:', error);
-            alert('Error al enviar confirmación por WhatsApp');
+            alert('Error al enviar confirmaci\u00f3n por WhatsApp');
         } finally {
             setIsSendingWhatsApp(false);
         }
@@ -277,7 +278,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const isCodOrder = order.is_cod === true || (order.cod_total || 0) > 0;
     const codCarrierFee = order.shipment?.cod_carrier_fee || 0;
     const codNet = order.cod_total || 0;
-    const codToCollect = codNet + codCarrierFee;
+    const codToCollect = codCustomerCharge({ ...order, cod_carrier_fee: codCarrierFee });
     const envioNeto = (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0);
     const envioMasComision = envioNeto + codCarrierFee;
 
@@ -338,7 +339,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                     <div className="relative z-10">
                         <h3 className="text-lg font-bold flex items-center gap-2 mb-2" style={{ color: primaryColor }}>
-                            <span className="text-2xl">🤖</span> Recomendación Inteligente
+                            <span className="text-2xl">{'\u{1F916}'}</span> {'Recomendaci\u00f3n Inteligente'}
                         </h3>
 
                         {isReady ? (
@@ -360,7 +361,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                             backgroundColor: quaternaryColor + '80'
                                                         }}
                                                     >
-                                                        Mejor Opción
+                                                        {'Mejor Opci\u00f3n'}
                                                     </span>
                                                     <p className="text-4xl font-extrabold mt-2" style={{ color: secondaryColor }}>
                                                         {aiRecommendation.recommended_carrier}
@@ -374,12 +375,12 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         boxShadow: `0 0 0 20px ${secondaryColor}20`
                                                     }}
                                                 >
-                                                    <span>📦</span> Cotizar y Generar Guía
+                                                    <span>{'\u{1F4E6}'}</span> {'Cotizar y Generar Gu\u00eda'}
                                                 </button>
                                             </div>
 
                                             <div className="bg-white dark:bg-gray-800/80 p-5 rounded-lg border text-gray-700 dark:text-gray-200 text-sm leading-relaxed shadow-sm" style={{ borderColor: tertiaryColor }}>
-                                                <p className="font-semibold mb-1" style={{ color: primaryColor }}>Análisis:</p>
+                                                <p className="font-semibold mb-1" style={{ color: primaryColor }}>{'An\u00e1lisis:'}</p>
                                                 {aiRecommendation.reasoning}
                                             </div>
                                         </div>
@@ -387,7 +388,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         {aiRecommendation.quotations && aiRecommendation.quotations.length > 0 && (
                                             <div className="pt-6 mt-2" style={{ borderTop: `1px solid ${tertiaryColor}` }}>
                                                 <h4 className="text-sm font-bold uppercase tracking-wide mb-4 flex items-center gap-2" style={{ color: secondaryColor }}>
-                                                    <span>📊</span> Cotizaciones Estimadas
+                                                    <span>{'\u{1F4CA}'}</span> Cotizaciones Estimadas
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                     {aiRecommendation.quotations.map((quote, idx) => {
@@ -409,7 +410,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                         {quote.carrier}
                                                                     </p>
                                                                     <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                                                                        <span>⏱️</span> {quote.estimated_delivery_days} días hábiles
+                                                                        <span>{'\u23f1\ufe0f'}</span> {quote.estimated_delivery_days} {'d\u00edas h\u00e1biles'}
                                                                     </p>
                                                                 </div>
                                                                 <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
@@ -435,7 +436,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     </div>
                                 ) : (
                                     <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-100 dark:border-gray-700">
-                                        No hay recomendación disponible. Verifique que la orden tenga dirección completa (Ciudad y Departamento).
+                                        {'No hay recomendaci\u00f3n disponible. Verifique que la orden tenga direcci\u00f3n completa (Ciudad y Departamento).'}
                                     </div>
                                 )}
                             </>

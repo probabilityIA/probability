@@ -69,8 +69,9 @@ type codOrderResponse struct {
 	CustomerName  string     `json:"customer_name"`
 	Carrier       string     `json:"carrier"`
 	CodTotal      float64    `json:"cod_total"`
-	CodCarrierFee float64    `json:"cod_carrier_fee"`
-	ShippingCost  float64    `json:"shipping_cost"`
+	CodCarrierFee       float64    `json:"cod_carrier_fee"`
+	CodIncludesShipping bool       `json:"cod_includes_shipping"`
+	ShippingCost        float64    `json:"shipping_cost"`
 	DiscountPct   float64    `json:"discount_pct"`
 	Discount      float64    `json:"discount"`
 	Net           float64    `json:"net"`
@@ -85,19 +86,19 @@ type codOrderResponse struct {
 }
 
 type paymentCutResponse struct {
-	ID              uint                       `json:"id"`
-	PeriodStart     time.Time                  `json:"period_start"`
-	PeriodEnd       time.Time                  `json:"period_end"`
-	Status          string                     `json:"status"`
-	OrdersCount     int                        `json:"orders_count"`
-	TotalCollected  float64                    `json:"total_collected"`
-	TotalDiscount   float64                    `json:"total_discount"`
-	TotalNet        float64                    `json:"total_net"`
-	ByCarrier       []carrierAggregateResponse `json:"by_carrier"`
-	ConfirmedBy       uint                     `json:"confirmed_by"`
-	ConfirmedByName   string                   `json:"confirmed_by_name"`
-	ConfirmedByAvatar string                   `json:"confirmed_by_avatar"`
-	ConfirmedAt       *time.Time               `json:"confirmed_at"`
+	ID                uint                       `json:"id"`
+	PeriodStart       time.Time                  `json:"period_start"`
+	PeriodEnd         time.Time                  `json:"period_end"`
+	Status            string                     `json:"status"`
+	OrdersCount       int                        `json:"orders_count"`
+	TotalCollected    float64                    `json:"total_collected"`
+	TotalDiscount     float64                    `json:"total_discount"`
+	TotalNet          float64                    `json:"total_net"`
+	ByCarrier         []carrierAggregateResponse `json:"by_carrier"`
+	ConfirmedBy       uint                       `json:"confirmed_by"`
+	ConfirmedByName   string                     `json:"confirmed_by_name"`
+	ConfirmedByAvatar string                     `json:"confirmed_by_avatar"`
+	ConfirmedAt       *time.Time                 `json:"confirmed_at"`
 }
 
 type cutEmailLogResponse struct {
@@ -216,8 +217,9 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 			CustomerName:  in[i].CustomerName,
 			Carrier:       in[i].Carrier,
 			CodTotal:      in[i].CodTotal,
-			CodCarrierFee: in[i].CodCarrierFee,
-			ShippingCost:  in[i].ShippingCost,
+			CodCarrierFee:       in[i].CodCarrierFee,
+			CodIncludesShipping: in[i].CodIncludesShipping,
+			ShippingCost:        in[i].ShippingCost,
 			DiscountPct:   in[i].DiscountPct,
 			Discount:      in[i].Discount,
 			Net:           in[i].Net,
@@ -236,14 +238,14 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 
 func mapCut(c *entities.PaymentCut) paymentCutResponse {
 	return paymentCutResponse{
-		ID:              c.ID,
-		PeriodStart:     c.PeriodStart,
-		PeriodEnd:       c.PeriodEnd,
-		Status:          c.Status,
-		OrdersCount:     c.OrdersCount,
-		TotalCollected:  c.TotalCollected,
-		TotalDiscount:   c.TotalDiscount,
-		TotalNet:        c.TotalNet,
+		ID:                c.ID,
+		PeriodStart:       c.PeriodStart,
+		PeriodEnd:         c.PeriodEnd,
+		Status:            c.Status,
+		OrdersCount:       c.OrdersCount,
+		TotalCollected:    c.TotalCollected,
+		TotalDiscount:     c.TotalDiscount,
+		TotalNet:          c.TotalNet,
 		ByCarrier:         mapCarrierAggregates(c.ByCarrier),
 		ConfirmedBy:       c.ConfirmedBy,
 		ConfirmedByName:   c.ConfirmedByName,

@@ -16,6 +16,7 @@ type ShipmentGuideEvent struct {
 	CorrelationID  string  `json:"correlation_id"`
 	TotalAmount    float64 `json:"total_amount"`
 	CodTotal       float64 `json:"cod_total"`
-	CodCarrierFee  float64 `json:"cod_carrier_fee"`
-	TrackingURL    string  `json:"tracking_url"`
+	CodCarrierFee       float64 `json:"cod_carrier_fee"`
+	CodIncludesShipping bool    `json:"cod_includes_shipping"`
+	TrackingURL         string  `json:"tracking_url"`
 }

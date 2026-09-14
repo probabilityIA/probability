@@ -3,12 +3,11 @@ package mapper
 import (
 	"encoding/json"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos" // Added import for service
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"gorm.io/datatypes"
 )
 
-// ToOrderResponse convierte un modelo Order a OrderResponse
 func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 	if order == nil {
 		return nil
@@ -20,21 +19,18 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		UpdatedAt: order.UpdatedAt,
 		DeletedAt: order.DeletedAt,
 
-		// Identificadores de integración
 		BusinessID:         order.BusinessID,
 		IntegrationID:      order.IntegrationID,
 		IntegrationType:    order.IntegrationType,
 		IntegrationLogoURL: order.IntegrationLogoURL,
 		IntegrationName:    order.IntegrationName,
 
-		// Identificadores de la orden
 		Platform:       order.Platform,
 		ExternalID:     order.ExternalID,
 		ChannelPackID:  order.ChannelPackID,
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,
 
-		// Información financiera
 		Subtotal:                    order.Subtotal,
 		Tax:                         order.Tax,
 		Discount:                    order.Discount,
@@ -45,6 +41,7 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		Currency:                    order.Currency,
 		IsCod:                       order.IsCod,
 		CodTotal:                    order.CodTotal,
+		CodIncludesShipping:         order.CodIncludesShipping,
 		CodCutConfirmed:             order.CodCutConfirmed,
 		SubtotalPresentment:         order.SubtotalPresentment,
 		TaxPresentment:              order.TaxPresentment,
@@ -53,7 +50,6 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		TotalAmountPresentment:      order.TotalAmountPresentment,
 		CurrencyPresentment:         order.CurrencyPresentment,
 
-		// Información del cliente
 		CustomerID:        order.CustomerID,
 		CustomerName:      order.CustomerName,
 		CustomerFirstName: order.CustomerFirstName,
@@ -62,7 +58,6 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		CustomerPhone:     order.CustomerPhone,
 		CustomerDNI:       order.CustomerDNI,
 
-		// Dirección de envío (desnormalizado)
 		ShippingStreet:           order.ShippingStreet,
 		ShippingCity:             order.ShippingCity,
 		ShippingState:            order.ShippingState,
@@ -83,12 +78,10 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		ShippingBuilding:         order.ShippingBuilding,
 		DestinationDaneCode:      order.DestinationDaneCode,
 
-		// Información de pago
 		PaymentMethodID: order.PaymentMethodID,
 		IsPaid:          order.IsPaid,
 		PaidAt:          order.PaidAt,
 
-		// Información de envío/logística
 		TrackingNumber:      order.TrackingNumber,
 		TrackingLink:        order.TrackingLink,
 		GuideID:             order.GuideID,
@@ -97,21 +90,18 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		DeliveredAt:         order.DeliveredAt,
 		DeliveryProbability: order.DeliveryProbability,
 
-		// Información de fulfillment
 		WarehouseID:   order.WarehouseID,
 		WarehouseName: order.WarehouseName,
 		DriverID:      order.DriverID,
 		DriverName:    order.DriverName,
 		IsLastMile:    order.IsLastMile,
 
-		// Dimensiones y peso
 		Weight: order.Weight,
 		Height: order.Height,
 		Width:  order.Width,
 		Length: order.Length,
 		Boxes:  order.Boxes,
 
-		// Tipo y estado
 		OrderTypeID:         order.OrderTypeID,
 		OrderTypeName:       order.OrderTypeName,
 		Status:              order.Status,
@@ -123,34 +113,27 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		PaymentStatus:       order.PaymentStatus,
 		FulfillmentStatus:   order.FulfillmentStatus,
 
-		// Información adicional
 		Notes:    order.Notes,
 		Coupon:   order.Coupon,
 		Approved: order.Approved,
 		UserID:   order.UserID,
 		UserName: order.UserName,
 
-		// Novedades
 		IsConfirmed: order.IsConfirmed,
 		Novelty:     order.Novelty,
 
-		// Testing
 		IsTest: order.IsTest,
 
-		// Facturación
 		Invoiceable:     order.Invoiceable,
 		InvoiceURL:      order.InvoiceURL,
 		InvoiceID:       order.InvoiceID,
 		InvoiceProvider: order.InvoiceProvider,
 		OrderStatusURL:  order.OrderStatusURL,
 
-		// Items de la orden
 		OrderItems: order.OrderItems,
 
-		// Información del envío (relación con shipments)
 		Shipment: mapShipmentToResponse(order.Shipments),
 
-		// Datos estructurados
 		Metadata:           order.Metadata,
 		FinancialDetails:   order.FinancialDetails,
 		ShippingDetails:    order.ShippingDetails,
@@ -158,11 +141,9 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		PaymentDetails:     order.PaymentDetails,
 		FulfillmentDetails: order.FulfillmentDetails,
 
-		// Timestamps
 		OccurredAt: order.OccurredAt,
 		ImportedAt: order.ImportedAt,
 
-		// Calculated Fields
 		NegativeFactors: UnmarshalNegativeFactors(order.NegativeFactors),
 		ScoreBreakdown:  json.RawMessage(order.ScoreBreakdown),
 	}
@@ -177,8 +158,6 @@ func UnmarshalNegativeFactors(jsonData datatypes.JSON) []string {
 	return factors
 }
 
-// mapShipmentToResponse convierte el slice de shipments al primer ShipmentData
-// (esperamos solo 1 debido al Limit(1) en el Preload)
 func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.ShipmentData {
 	if len(shipments) == 0 {
 		return nil
@@ -207,14 +186,12 @@ func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.Shipm
 	}
 }
 
-// ToOrderSummary convierte un modelo Order a OrderSummary
 func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 	var businessID uint
 	if order.BusinessID != nil {
 		businessID = *order.BusinessID
 	}
 
-	// Mapear el primer shipment si existe
 	var shipment *dtos.ShipmentSummary
 	if len(order.Shipments) > 0 {
 		s := order.Shipments[0]
@@ -273,9 +250,9 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		DeliveryProbability:    order.DeliveryProbability,
 		NegativeFactors:        UnmarshalNegativeFactors(order.NegativeFactors),
 		ScoreBreakdown:         json.RawMessage(order.ScoreBreakdown),
-		OrderStatus:            order.OrderStatus,       // Información del estado de Probability
-		PaymentStatus:          order.PaymentStatus,     // Información completa del estado de pago
-		FulfillmentStatus:      order.FulfillmentStatus, // Información completa del estado de fulfillment
+		OrderStatus:            order.OrderStatus,
+		PaymentStatus:          order.PaymentStatus,
+		FulfillmentStatus:      order.FulfillmentStatus,
 		OrderStatusURL:         order.OrderStatusURL,
 		GuideLink:              order.GuideLink,
 		IsPaid:                 order.IsPaid,

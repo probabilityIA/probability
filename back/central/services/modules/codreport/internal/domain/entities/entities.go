@@ -19,9 +19,10 @@ type CodOrder struct {
 	CustomerName  string
 	Carrier       string
 	CodTotal      float64
-	CodCarrierFee float64
-	ShippingCost  float64
-	DiscountPct   float64
+	CodCarrierFee       float64
+	CodIncludesShipping bool
+	ShippingCost        float64
+	DiscountPct         float64
 	Discount      float64
 	Net           float64
 	Currency      string
@@ -90,15 +91,15 @@ type HistoryPoint struct {
 }
 
 type PaymentCut struct {
-	ID              uint
-	BusinessID      uint
-	PeriodStart     time.Time
-	PeriodEnd       time.Time
-	Status          string
-	OrdersCount     int
-	TotalCollected  float64
-	TotalDiscount   float64
-	TotalNet        float64
+	ID                uint
+	BusinessID        uint
+	PeriodStart       time.Time
+	PeriodEnd         time.Time
+	Status            string
+	OrdersCount       int
+	TotalCollected    float64
+	TotalDiscount     float64
+	TotalNet          float64
 	ByCarrier         []CarrierAggregate
 	ConfirmedBy       uint
 	ConfirmedByName   string

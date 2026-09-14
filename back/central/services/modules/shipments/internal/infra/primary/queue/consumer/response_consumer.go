@@ -67,7 +67,7 @@ func (c *ResponseConsumer) Start(ctx context.Context) error {
 
 	c.log.Info(ctx).
 		Str("queue", QueueTransportResponses).
-		Msg("📥 Starting transport response consumer")
+		Msg("Starting transport response consumer")
 
 	if err := c.queue.Consume(ctx, QueueTransportResponses, c.handleResponse); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al iniciar consumer de transport responses")
@@ -91,7 +91,7 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		Str("operation", response.Operation).
 		Str("status", response.Status).
 		Str("correlation_id", response.CorrelationID).
-		Msg("📨 Processing transport response")
+		Msg("Processing transport response")
 
 	switch response.Operation {
 	case "quote":
@@ -127,7 +127,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 		c.log.Error(ctx).
 			Str("error", response.Error).
 			Str("correlation_id", response.CorrelationID).
-			Msg("❌ Guide generation failed")
+			Msg("Guide generation failed")
 
 		unconfirmed := response.ErrorKind == "unreachable"
 		errorMessage := response.Error
@@ -196,7 +196,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 		Float64("id_order", idOrder).
 		Str("correlation_id", response.CorrelationID).
 		Interface("all_datafield_values", dataField).
-		Msg("✅ Guide generated successfully")
+		Msg("Guide generated successfully")
 
 	if response.ShipmentID != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
@@ -309,7 +309,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 						Str("order_id", *shipment.OrderID).
 						Str("guide_link", labelURL).
 						Str("carrier", carrier).
-						Msg("✅ guide_link and carrier synced to order")
+						Msg("guide_link and carrier synced to order")
 				}
 
 				c.publishGuideGeneratedForInvoicing(ctx, *shipment.OrderID, businessID)
@@ -332,8 +332,10 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
-				if freshCod, err := c.repo.GetOrderCodTotal(ctx, *shipment.OrderID); err == nil {
-					notification.CodTotal = freshCod
+				if basis, err := c.repo.GetOrderCodBasis(ctx, *shipment.OrderID); err == nil {
+					freshCod := basis.CodTotal
+					notification.CodTotal = &freshCod
+					notification.CodIncludesShipping = basis.CodIncludesShipping
 				} else {
 					c.log.Warn(ctx).Err(err).
 						Str("order_id", *shipment.OrderID).
@@ -407,7 +409,7 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 		c.log.Error(ctx).
 			Str("error", response.Error).
 			Str("correlation_id", response.CorrelationID).
-			Msg("❌ Quote request failed")
+			Msg("Quote request failed")
 
 		c.storeQuoteResult(ctx, response.CorrelationID, nil, response.Error)
 		c.ssePublisher.PublishQuoteFailed(ctx, businessID, response.CorrelationID, response.Error)
@@ -416,7 +418,7 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 
 	c.log.Info(ctx).
 		Str("correlation_id", response.CorrelationID).
-		Msg("✅ Quote response received")
+		Msg("Quote response received")
 
 	c.applyServiceFeeToQuoteData(ctx, response.Data, response.Provider, businessID)
 
@@ -459,7 +461,7 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 		c.log.Error(ctx).
 			Str("error", response.Error).
 			Str("correlation_id", response.CorrelationID).
-			Msg("❌ Tracking request failed")
+			Msg("Tracking request failed")
 
 		c.ssePublisher.PublishTrackingFailed(ctx, businessID, response.CorrelationID, response.Error)
 		return
@@ -467,7 +469,7 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 
 	c.log.Info(ctx).
 		Str("correlation_id", response.CorrelationID).
-		Msg("✅ Tracking response received")
+		Msg("Tracking response received")
 
 	if response.ShipmentID != nil && response.Data != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
@@ -510,7 +512,7 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 				} else {
 					c.log.Info(ctx).
 						Str("shipment_id", fmt.Sprintf("%d", *response.ShipmentID)).
-						Msg("✅ Shipment status/history updated from tracking response")
+						Msg("Shipment status/history updated from tracking response")
 				}
 			}
 		}
@@ -526,7 +528,7 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 		c.log.Error(ctx).
 			Str("error", response.Error).
 			Str("correlation_id", response.CorrelationID).
-			Msg("❌ Shipment cancellation failed")
+			Msg("Shipment cancellation failed")
 
 		shipmentID := uint(0)
 		if response.ShipmentID != nil {
@@ -538,7 +540,7 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 
 	c.log.Info(ctx).
 		Str("correlation_id", response.CorrelationID).
-		Msg("✅ Shipment cancelled successfully")
+		Msg("Shipment cancelled successfully")
 
 	if response.ShipmentID != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
@@ -661,7 +663,7 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 		Str("new_status", probabilityStatus).
 		Str("provider", response.Provider).
 		Str("correlation_id", response.CorrelationID).
-		Msg("✅ Shipment updated from provider webhook")
+		Msg("Shipment updated from provider webhook")
 
 	businessID, _ := c.repo.GetShipmentBusinessIDByID(ctx, shipment.ID)
 
@@ -690,7 +692,7 @@ func appendCancelEvent(shipment *domain.Shipment, provider string) {
 		"date":        time.Now().Format(time.RFC3339),
 		"status":      "cancelled",
 		"raw_status":  "Cancelado",
-		"description": "Envío cancelado",
+		"description": "Env\u00edo cancelado",
 		"source":      provider,
 	}
 	mergeTrackingEvent(shipment, event)
@@ -700,8 +702,8 @@ func appendGuideGeneratedEvent(shipment *domain.Shipment, provider, trackingNumb
 	event := map[string]any{
 		"date":        time.Now().Format(time.RFC3339),
 		"status":      "pending",
-		"raw_status":  "Guía generada",
-		"description": fmt.Sprintf("Guía creada con %s (tracking: %s)", carrierOrDefault(carrier, provider), trackingNumber),
+		"raw_status":  "Gu\u00eda generada",
+		"description": fmt.Sprintf("Gu\u00eda creada con %s (tracking: %s)", carrierOrDefault(carrier, provider), trackingNumber),
 		"source":      provider,
 	}
 	mergeTrackingEvent(shipment, event)

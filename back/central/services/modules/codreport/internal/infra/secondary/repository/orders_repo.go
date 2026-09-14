@@ -16,9 +16,10 @@ type codOrderRow struct {
 	CustomerName  string
 	Carrier       string
 	CodTotal      float64
-	CodCarrierFee float64
-	ShippingCost  float64
-	Currency      string
+	CodCarrierFee       float64
+	CodIncludesShipping bool
+	ShippingCost        float64
+	Currency            string
 	Status        string
 	Collected     bool
 	ShipmentID    uint
@@ -110,7 +111,7 @@ func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]
 	offset := (page - 1) * pageSize
 
 	listSQL := fmt.Sprintf(`
-SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currency, o.created_at,
+SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_includes_shipping, o.currency, o.created_at,
 	s.id AS shipment_id,
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
@@ -142,11 +143,12 @@ LIMIT ? OFFSET ?`, latestShipmentJoin, where)
 			CustomerName:  rows[i].CustomerName,
 			Carrier:       rows[i].Carrier,
 			CodTotal:      rows[i].CodTotal,
-			CodCarrierFee: rows[i].CodCarrierFee,
-			ShippingCost:  rows[i].ShippingCost,
-			Currency:      rows[i].Currency,
-			Status:        rows[i].Status,
-			Collected:     rows[i].Collected,
+			CodCarrierFee:       rows[i].CodCarrierFee,
+			CodIncludesShipping: rows[i].CodIncludesShipping,
+			ShippingCost:        rows[i].ShippingCost,
+			Currency:            rows[i].Currency,
+			Status:              rows[i].Status,
+			Collected:           rows[i].Collected,
 			Paid:          rows[i].Paid,
 			CreatedAt:     rows[i].CreatedAt,
 			DeliveredAt:   rows[i].DeliveredAt,

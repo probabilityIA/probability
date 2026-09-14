@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder/request"
@@ -126,11 +127,10 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			trackingURL += "&b=" + strconv.FormatUint(uint64(*event.BusinessID), 10)
 		}
 	}
-	amountToCollect := event.CodTotal
-	if amountToCollect <= 0 {
-		amountToCollect = event.TotalAmount
-	}
-	if amountToCollect > 0 && event.CodCarrierFee > 0 {
+	amountToCollect := event.TotalAmount
+	if event.CodTotal > 0 {
+		amountToCollect = entities.CodAmountToCollect(event.CodTotal, event.CodCarrierFee, event.CodIncludesShipping)
+	} else if amountToCollect > 0 && event.CodCarrierFee > 0 {
 		amountToCollect += event.CodCarrierFee
 	}
 

@@ -15,7 +15,7 @@ import (
 
 func (r *Repository) SelectableCutOrders(ctx context.Context, f dtos.SelectableOrdersFilter) ([]entities.CodOrder, error) {
 	sql := fmt.Sprintf(`
-SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currency, o.created_at,
+SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_includes_shipping, o.currency, o.created_at,
 	s.id AS shipment_id,
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
@@ -48,8 +48,9 @@ ORDER BY COALESCE(s.delivered_at, o.created_at) DESC`, latestShipmentJoin, linke
 			CustomerName:  rows[i].CustomerName,
 			Carrier:       rows[i].Carrier,
 			CodTotal:      rows[i].CodTotal,
-			CodCarrierFee: rows[i].CodCarrierFee,
-			ShippingCost:  rows[i].ShippingCost,
+			CodCarrierFee:       rows[i].CodCarrierFee,
+			CodIncludesShipping: rows[i].CodIncludesShipping,
+			ShippingCost:        rows[i].ShippingCost,
 			Currency:      rows[i].Currency,
 			Status:        rows[i].Status,
 			DeliveredAt:   rows[i].DeliveredAt,
@@ -60,7 +61,7 @@ ORDER BY COALESCE(s.delivered_at, o.created_at) DESC`, latestShipmentJoin, linke
 
 func (r *Repository) CutOrders(ctx context.Context, businessID uint, cutID uint) ([]entities.CodOrder, error) {
 	sql := fmt.Sprintf(`
-SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currency, o.created_at,
+SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.cod_includes_shipping, o.currency, o.created_at,
 	s.id AS shipment_id,
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
@@ -91,8 +92,9 @@ ORDER BY cpo.paid_at DESC, o.created_at DESC`, latestShipmentJoin)
 			CustomerName:  rows[i].CustomerName,
 			Carrier:       rows[i].Carrier,
 			CodTotal:      rows[i].CodTotal,
-			CodCarrierFee: rows[i].CodCarrierFee,
-			ShippingCost:  rows[i].ShippingCost,
+			CodCarrierFee:       rows[i].CodCarrierFee,
+			CodIncludesShipping: rows[i].CodIncludesShipping,
+			ShippingCost:        rows[i].ShippingCost,
 			Currency:      rows[i].Currency,
 			Status:        rows[i].Status,
 			Collected:     true,
