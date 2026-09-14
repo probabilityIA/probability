@@ -11,7 +11,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/request"
 )
 
-// ChangeStatus maneja la petición PUT /orders/:id/status
 func (h *Handlers) ChangeStatus(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -25,7 +24,10 @@ func (h *Handlers) ChangeStatus(c *gin.Context) {
 		return
 	}
 
-	// Extraer usuario del JWT context
+	if !h.ensureOrderOwnership(c, id) {
+		return
+	}
+
 	var userID *uint
 	if uid, exists := c.Get("user_id"); exists {
 		if id, ok := uid.(uint); ok {
@@ -39,7 +41,6 @@ func (h *Handlers) ChangeStatus(c *gin.Context) {
 		}
 	}
 
-	// Mapear a DTO de dominio
 	domainReq := &dtos.ChangeStatusRequest{
 		Status:   req.Status,
 		Metadata: req.Metadata,
@@ -47,7 +48,6 @@ func (h *Handlers) ChangeStatus(c *gin.Context) {
 		UserName: userName,
 	}
 
-	// Ejecutar caso de uso
 	result, err := h.statusUC.ChangeStatus(c.Request.Context(), id, domainReq)
 	if err != nil {
 		switch {

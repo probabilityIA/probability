@@ -96,17 +96,6 @@ export const LoginForm = () => {
                         }
                     } catch (permErr) {
                         console.warn('No se pudieron obtener los permisos:', permErr);
-                        if (response.data.is_super_admin) {
-                            TokenStorage.setPermissions({
-                                is_super: true,
-                                business_id: 0,
-                                business_name: '',
-                                role_id: 0,
-                                role_name: 'Super Admin',
-                                resources: [],
-                                subscription_status: 'active',
-                            });
-                        }
                     }
 
                     const destino = destinoSeguro(searchParams.get('next'));

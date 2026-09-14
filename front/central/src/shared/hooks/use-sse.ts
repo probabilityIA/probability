@@ -16,20 +16,16 @@ export const useSSE = (options: UseSSEOptions = {}) => {
     const [isConnected, setIsConnected] = useState(false);
     const eventSourceRef = useRef<EventSource | null>(null);
 
-    // Use refs for callbacks to avoid reconnecting when they change (e.g. inline functions)
     const onMessageRef = useRef(options.onMessage);
     const onErrorRef = useRef(options.onError);
     const onOpenRef = useRef(options.onOpen);
 
-    // Update refs on every render
     useEffect(() => {
         onMessageRef.current = options.onMessage;
         onErrorRef.current = options.onError;
         onOpenRef.current = options.onOpen;
     });
 
-    // Memoize connection parameters to avoid unnecessary reconnects
-    // We use JSON.stringify to compare arrays/objects by value
     const enabled = options.enabled ?? true;
     const connectionParams = JSON.stringify({
         eventTypes: options.eventTypes,
@@ -64,15 +60,10 @@ export const useSSE = (options: UseSSEOptions = {}) => {
             params.append('order_ids', orderIds.join(','));
         }
 
-        // SSE debe ir directo al backend, no a través de Next.js proxy
         const baseUrl = `${envPublic.SSE_BASE_URL}/notify/sse/order-notify`;
-        // If businessId is provided in options, we might want to use the /sse/:businessID endpoint
-        // But based on routes.go, /sse/:businessID is also supported.
-        // Let's use the query param approach for flexibility as per the handler logic.
-
         const url = `${baseUrl}?${params.toString()}`;
 
-        const eventSource = new EventSource(url);
+        const eventSource = new EventSource(url, { withCredentials: true });
 
         eventSource.onopen = (event) => {
             setIsConnected(true);
@@ -86,10 +77,8 @@ export const useSSE = (options: UseSSEOptions = {}) => {
         eventSource.onerror = (event) => {
             setIsConnected(false);
             if (onErrorRef.current) onErrorRef.current(event);
-            // EventSource automatically attempts to reconnect, but we can handle custom logic here if needed
         };
 
-        // Add custom event listeners if eventTypes are specified
         if (eventTypes) {
             eventTypes.forEach((type: string) => {
                 eventSource.addEventListener(type, (event) => {
@@ -99,7 +88,7 @@ export const useSSE = (options: UseSSEOptions = {}) => {
         }
 
         eventSourceRef.current = eventSource;
-    }, [connectionParams]); // Only reconnect if connection parameters change
+    }, [connectionParams]);
 
     const disconnect = useCallback(() => {
         if (eventSourceRef.current) {
