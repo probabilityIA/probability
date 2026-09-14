@@ -3,22 +3,25 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/email/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/email/internal/infra/primary/queue/consumer/request"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// Start inicia el consumer de la cola de emails
 func (c *emailConsumer) Start(ctx context.Context) error {
 	c.logger.Info(ctx).
 		Str("queue", rabbitmq.QueueMessagingEmailRequests).
 		Msg("Iniciando consumer de email notifications")
 
+	if err := c.rabbitMQ.DeclareQueue(rabbitmq.QueueMessagingEmailRequests, true); err != nil {
+		return fmt.Errorf("failed to declare queue %s: %w", rabbitmq.QueueMessagingEmailRequests, err)
+	}
+
 	return c.rabbitMQ.Consume(ctx, rabbitmq.QueueMessagingEmailRequests, c.handleMessage)
 }
 
-// handleMessage procesa un mensaje individual de la cola
 func (c *emailConsumer) handleMessage(body []byte) error {
 	ctx := context.Background()
 
@@ -28,7 +31,7 @@ func (c *emailConsumer) handleMessage(body []byte) error {
 			Err(err).
 			Str("raw", string(body)).
 			Msg("Error deserializando mensaje de email")
-		return nil // No reintentar mensajes malformados
+		return nil
 	}
 
 	if event.CustomerEmail == "" {
@@ -48,7 +51,6 @@ func (c *emailConsumer) handleMessage(body []byte) error {
 		EventData:     event.EventData,
 	}
 
-	// El use case maneja el envío + logging internamente
 	_ = c.useCase.SendNotificationEmail(ctx, dto)
 
 	return nil

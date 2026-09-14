@@ -9,6 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/email/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/email/internal/infra/primary/queue/consumer/request"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/email/internal/mocks"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 func newTestConsumer(uc *mocks.UseCaseMock) *emailConsumer {
@@ -162,5 +163,33 @@ func TestHandleMessage_MapsAllFieldsToDTO(t *testing.T) {
 	}
 	if call.CustomerEmail != "test@test.com" {
 		t.Errorf("customer_email: got %s, want test@test.com", call.CustomerEmail)
+	}
+}
+
+func TestStart_DeclaresQueueBeforeConsuming(t *testing.T) {
+	rabbit := &mocks.RabbitMQMock{}
+	c := &emailConsumer{rabbitMQ: rabbit, useCase: &mocks.UseCaseMock{}, logger: mocks.NewLoggerMock()}
+
+	if err := c.Start(context.Background()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(rabbit.DeclaredQueues) != 1 || rabbit.DeclaredQueues[0] != rabbitmq.QueueMessagingEmailRequests {
+		t.Fatalf("the email queue must be declared, got %v", rabbit.DeclaredQueues)
+	}
+	if len(rabbit.ConsumedQueues) != 1 || rabbit.ConsumedQueues[0] != rabbitmq.QueueMessagingEmailRequests {
+		t.Fatalf("the email queue must be consumed, got %v", rabbit.ConsumedQueues)
+	}
+}
+
+func TestStart_DoesNotConsumeWhenDeclareFails(t *testing.T) {
+	rabbit := &mocks.RabbitMQMock{DeclareQueueFn: func(string, bool) error { return errors.New("broker down") }}
+	c := &emailConsumer{rabbitMQ: rabbit, useCase: &mocks.UseCaseMock{}, logger: mocks.NewLoggerMock()}
+
+	if err := c.Start(context.Background()); err == nil {
+		t.Fatal("expected error when the queue cannot be declared")
+	}
+	if len(rabbit.ConsumedQueues) != 0 {
+		t.Fatalf("must not consume an undeclared queue, got %v", rabbit.ConsumedQueues)
 	}
 }

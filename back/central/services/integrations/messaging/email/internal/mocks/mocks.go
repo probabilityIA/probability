@@ -55,9 +55,12 @@ func (m *UseCaseMock) SendNotificationEmail(ctx context.Context, dto dtos.SendEm
 }
 
 type RabbitMQMock struct {
-	PublishFn func(ctx context.Context, queue string, body []byte) error
-	ConsumeFn func(ctx context.Context, queue string, handler func([]byte) error) error
-	Published []PublishedMessage
+	PublishFn      func(ctx context.Context, queue string, body []byte) error
+	ConsumeFn      func(ctx context.Context, queue string, handler func([]byte) error) error
+	DeclareQueueFn func(name string, durable bool) error
+	Published      []PublishedMessage
+	DeclaredQueues []string
+	ConsumedQueues []string
 }
 
 type PublishedMessage struct {
@@ -74,6 +77,7 @@ func (m *RabbitMQMock) Publish(ctx context.Context, queue string, body []byte) e
 }
 
 func (m *RabbitMQMock) Consume(ctx context.Context, queue string, handler func([]byte) error) error {
+	m.ConsumedQueues = append(m.ConsumedQueues, queue)
 	if m.ConsumeFn != nil {
 		return m.ConsumeFn(ctx, queue, handler)
 	}
@@ -88,8 +92,14 @@ func (m *RabbitMQMock) ConsumeConcurrent(ctx context.Context, queue string, hand
 }
 
 func (m *RabbitMQMock) DeclareExchange(name, kind string, durable bool) error { return nil }
-func (m *RabbitMQMock) DeclareQueue(name string, durable bool) error          { return nil }
-func (m *RabbitMQMock) BindQueue(queue, exchange, routingKey string) error    { return nil }
+func (m *RabbitMQMock) DeclareQueue(name string, durable bool) error {
+	m.DeclaredQueues = append(m.DeclaredQueues, name)
+	if m.DeclareQueueFn != nil {
+		return m.DeclareQueueFn(name, durable)
+	}
+	return nil
+}
+func (m *RabbitMQMock) BindQueue(queue, exchange, routingKey string) error { return nil }
 func (m *RabbitMQMock) PublishToExchange(ctx context.Context, exchange, routingKey string, body []byte) error {
 	return nil
 }
