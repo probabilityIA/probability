@@ -44,5 +44,15 @@ func (r *Repository) ComputeOverageAmount(ctx context.Context, businessID uint, 
 		}
 	}
 
+	if plan.IncludedTemplateMessages != nil && plan.TemplateMessageOveragePrice != nil {
+		count, err := r.countTemplateMessagesInRange(ctx, businessID, cycleStart, cycleEnd)
+		if err != nil {
+			return 0, err
+		}
+		if extra := count - int64(*plan.IncludedTemplateMessages); extra > 0 {
+			overage += float64(extra) * *plan.TemplateMessageOveragePrice
+		}
+	}
+
 	return overage, nil
 }

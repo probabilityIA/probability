@@ -28,6 +28,10 @@ export interface SubscriptionType {
     invoice_overage_price?: number;
     included_orders?: number;
     order_overage_price?: number;
+    included_template_messages?: number;
+    template_message_overage_price?: number;
+    included_templates?: number;
+    template_overage_price?: number;
     created_at?: string;
     updated_at?: string;
 }
@@ -111,6 +115,12 @@ export interface SubscriptionUsage {
     included_orders?: number;
     order_overage_price?: number;
     orders_used: number;
+    included_template_messages?: number;
+    template_message_overage_price?: number;
+    template_messages_used: number;
+    included_templates?: number;
+    template_overage_price?: number;
+    templates_used: number;
     forecasted_payment?: number;
 }
 
@@ -196,6 +206,10 @@ export async function createSubscriptionTypeAction(payload: {
     invoice_overage_price?: number;
     included_orders?: number;
     order_overage_price?: number;
+    included_template_messages?: number;
+    template_message_overage_price?: number;
+    included_templates?: number;
+    template_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -228,6 +242,10 @@ export async function updateSubscriptionTypeAction(id: number, payload: {
     invoice_overage_price?: number;
     included_orders?: number;
     order_overage_price?: number;
+    included_template_messages?: number;
+    template_message_overage_price?: number;
+    included_templates?: number;
+    template_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -293,6 +311,10 @@ export async function createCustomPlanAction(payload: {
     invoice_overage_price?: number;
     included_orders?: number;
     order_overage_price?: number;
+    included_template_messages?: number;
+    template_message_overage_price?: number;
+    included_templates?: number;
+    template_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -325,6 +347,10 @@ export async function updateCustomPlanAction(id: number, payload: {
     invoice_overage_price?: number;
     included_orders?: number;
     order_overage_price?: number;
+    included_template_messages?: number;
+    template_message_overage_price?: number;
+    included_templates?: number;
+    template_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();

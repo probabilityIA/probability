@@ -26,20 +26,24 @@ func (uc *UseCase) CreateSubscriptionType(ctx context.Context, dto dtos.CreateSu
 	}
 
 	subType := &entities.SubscriptionType{
-		Name:                 dto.Name,
-		Code:                 dto.Code,
-		Description:          dto.Description,
-		Price:                dto.Price,
-		BillingPeriod:        billingPeriod,
-		Active:               true,
-		ModuleCodes:          dto.ModuleCodes,
-		MaxEcommerceChannels: dto.MaxEcommerceChannels,
-		IncludedShipments:    dto.IncludedShipments,
-		ShipmentOveragePrice: dto.ShipmentOveragePrice,
-		IncludedInvoices:     dto.IncludedInvoices,
-		InvoiceOveragePrice:  dto.InvoiceOveragePrice,
-		IncludedOrders:       dto.IncludedOrders,
-		OrderOveragePrice:    dto.OrderOveragePrice,
+		Name:                        dto.Name,
+		Code:                        dto.Code,
+		Description:                 dto.Description,
+		Price:                       dto.Price,
+		BillingPeriod:               billingPeriod,
+		Active:                      true,
+		ModuleCodes:                 dto.ModuleCodes,
+		MaxEcommerceChannels:        dto.MaxEcommerceChannels,
+		IncludedShipments:           dto.IncludedShipments,
+		ShipmentOveragePrice:        dto.ShipmentOveragePrice,
+		IncludedInvoices:            dto.IncludedInvoices,
+		InvoiceOveragePrice:         dto.InvoiceOveragePrice,
+		IncludedOrders:              dto.IncludedOrders,
+		OrderOveragePrice:           dto.OrderOveragePrice,
+		IncludedTemplateMessages:    dto.IncludedTemplateMessages,
+		TemplateMessageOveragePrice: dto.TemplateMessageOveragePrice,
+		IncludedTemplates:           dto.IncludedTemplates,
+		TemplateOveragePrice:        dto.TemplateOveragePrice,
 	}
 
 	if err := uc.repo.CreateSubscriptionType(ctx, subType); err != nil {

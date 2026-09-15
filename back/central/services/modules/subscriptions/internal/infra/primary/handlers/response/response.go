@@ -7,46 +7,54 @@ import (
 )
 
 type SubscriptionTypeResponse struct {
-	ID                   uint      `json:"id"`
-	Name                 string    `json:"name"`
-	Code                 string    `json:"code"`
-	Description          string    `json:"description"`
-	Price                float64   `json:"price"`
-	BillingPeriod        string    `json:"billing_period"`
-	Active               bool      `json:"active"`
-	ModuleCodes          []string  `json:"module_codes"`
-	MaxEcommerceChannels int       `json:"max_ecommerce_channels"`
-	BusinessID           *uint     `json:"business_id,omitempty"`
-	IncludedShipments    *int      `json:"included_shipments,omitempty"`
-	ShipmentOveragePrice *float64  `json:"shipment_overage_price,omitempty"`
-	IncludedInvoices     *int      `json:"included_invoices,omitempty"`
-	InvoiceOveragePrice  *float64  `json:"invoice_overage_price,omitempty"`
-	IncludedOrders       *int      `json:"included_orders,omitempty"`
-	OrderOveragePrice    *float64  `json:"order_overage_price,omitempty"`
-	CreatedAt            time.Time `json:"created_at"`
-	UpdatedAt            time.Time `json:"updated_at"`
+	ID                          uint      `json:"id"`
+	Name                        string    `json:"name"`
+	Code                        string    `json:"code"`
+	Description                 string    `json:"description"`
+	Price                       float64   `json:"price"`
+	BillingPeriod               string    `json:"billing_period"`
+	Active                      bool      `json:"active"`
+	ModuleCodes                 []string  `json:"module_codes"`
+	MaxEcommerceChannels        int       `json:"max_ecommerce_channels"`
+	BusinessID                  *uint     `json:"business_id,omitempty"`
+	IncludedShipments           *int      `json:"included_shipments,omitempty"`
+	ShipmentOveragePrice        *float64  `json:"shipment_overage_price,omitempty"`
+	IncludedInvoices            *int      `json:"included_invoices,omitempty"`
+	InvoiceOveragePrice         *float64  `json:"invoice_overage_price,omitempty"`
+	IncludedOrders              *int      `json:"included_orders,omitempty"`
+	OrderOveragePrice           *float64  `json:"order_overage_price,omitempty"`
+	IncludedTemplateMessages    *int      `json:"included_template_messages,omitempty"`
+	TemplateMessageOveragePrice *float64  `json:"template_message_overage_price,omitempty"`
+	IncludedTemplates           *int      `json:"included_templates,omitempty"`
+	TemplateOveragePrice        *float64  `json:"template_overage_price,omitempty"`
+	CreatedAt                   time.Time `json:"created_at"`
+	UpdatedAt                   time.Time `json:"updated_at"`
 }
 
 func FromSubscriptionType(t *entities.SubscriptionType) SubscriptionTypeResponse {
 	return SubscriptionTypeResponse{
-		ID:                   t.ID,
-		Name:                 t.Name,
-		Code:                 t.Code,
-		Description:          t.Description,
-		Price:                t.Price,
-		BillingPeriod:        t.BillingPeriod,
-		Active:               t.Active,
-		ModuleCodes:          t.ModuleCodes,
-		MaxEcommerceChannels: t.MaxEcommerceChannels,
-		BusinessID:           t.BusinessID,
-		IncludedShipments:    t.IncludedShipments,
-		ShipmentOveragePrice: t.ShipmentOveragePrice,
-		IncludedInvoices:     t.IncludedInvoices,
-		InvoiceOveragePrice:  t.InvoiceOveragePrice,
-		IncludedOrders:       t.IncludedOrders,
-		OrderOveragePrice:    t.OrderOveragePrice,
-		CreatedAt:            t.CreatedAt,
-		UpdatedAt:            t.UpdatedAt,
+		ID:                          t.ID,
+		Name:                        t.Name,
+		Code:                        t.Code,
+		Description:                 t.Description,
+		Price:                       t.Price,
+		BillingPeriod:               t.BillingPeriod,
+		Active:                      t.Active,
+		ModuleCodes:                 t.ModuleCodes,
+		MaxEcommerceChannels:        t.MaxEcommerceChannels,
+		BusinessID:                  t.BusinessID,
+		IncludedShipments:           t.IncludedShipments,
+		ShipmentOveragePrice:        t.ShipmentOveragePrice,
+		IncludedInvoices:            t.IncludedInvoices,
+		InvoiceOveragePrice:         t.InvoiceOveragePrice,
+		IncludedOrders:              t.IncludedOrders,
+		OrderOveragePrice:           t.OrderOveragePrice,
+		IncludedTemplateMessages:    t.IncludedTemplateMessages,
+		TemplateMessageOveragePrice: t.TemplateMessageOveragePrice,
+		IncludedTemplates:           t.IncludedTemplates,
+		TemplateOveragePrice:        t.TemplateOveragePrice,
+		CreatedAt:                   t.CreatedAt,
+		UpdatedAt:                   t.UpdatedAt,
 	}
 }
 
@@ -244,28 +252,42 @@ type SubscriptionUsageResponse struct {
 	OrderOveragePrice *float64 `json:"order_overage_price,omitempty"`
 	OrdersUsed        int64    `json:"orders_used"`
 
+	IncludedTemplateMessages    *int     `json:"included_template_messages,omitempty"`
+	TemplateMessageOveragePrice *float64 `json:"template_message_overage_price,omitempty"`
+	TemplateMessagesUsed        int64    `json:"template_messages_used"`
+
+	IncludedTemplates    *int     `json:"included_templates,omitempty"`
+	TemplateOveragePrice *float64 `json:"template_overage_price,omitempty"`
+	TemplatesUsed        int64    `json:"templates_used"`
+
 	ForecastedPayment *float64 `json:"forecasted_payment,omitempty"`
 }
 
 func FromSubscriptionUsage(u *entities.SubscriptionUsage) SubscriptionUsageResponse {
 	return SubscriptionUsageResponse{
-		PlanName:             u.PlanName,
-		PlanPrice:            u.PlanPrice,
-		BillingPeriod:        u.BillingPeriod,
-		ModuleCodes:          u.ModuleCodes,
-		MaxEcommerceChannels: u.MaxEcommerceChannels,
-		CycleStartDate:       u.CycleStartDate,
-		CycleEndDate:         u.CycleEndDate,
-		IncludedShipments:    u.IncludedShipments,
-		ShipmentOveragePrice: u.ShipmentOveragePrice,
-		ShipmentsUsed:        u.ShipmentsUsed,
-		IncludedInvoices:     u.IncludedInvoices,
-		InvoiceOveragePrice:  u.InvoiceOveragePrice,
-		InvoicesUsed:         u.InvoicesUsed,
-		IncludedOrders:       u.IncludedOrders,
-		OrderOveragePrice:    u.OrderOveragePrice,
-		OrdersUsed:           u.OrdersUsed,
-		ForecastedPayment:    u.ForecastedPayment,
+		PlanName:                    u.PlanName,
+		PlanPrice:                   u.PlanPrice,
+		BillingPeriod:               u.BillingPeriod,
+		ModuleCodes:                 u.ModuleCodes,
+		MaxEcommerceChannels:        u.MaxEcommerceChannels,
+		CycleStartDate:              u.CycleStartDate,
+		CycleEndDate:                u.CycleEndDate,
+		IncludedShipments:           u.IncludedShipments,
+		ShipmentOveragePrice:        u.ShipmentOveragePrice,
+		ShipmentsUsed:               u.ShipmentsUsed,
+		IncludedInvoices:            u.IncludedInvoices,
+		InvoiceOveragePrice:         u.InvoiceOveragePrice,
+		InvoicesUsed:                u.InvoicesUsed,
+		IncludedOrders:              u.IncludedOrders,
+		OrderOveragePrice:           u.OrderOveragePrice,
+		OrdersUsed:                  u.OrdersUsed,
+		IncludedTemplateMessages:    u.IncludedTemplateMessages,
+		TemplateMessageOveragePrice: u.TemplateMessageOveragePrice,
+		TemplateMessagesUsed:        u.TemplateMessagesUsed,
+		IncludedTemplates:           u.IncludedTemplates,
+		TemplateOveragePrice:        u.TemplateOveragePrice,
+		TemplatesUsed:               u.TemplatesUsed,
+		ForecastedPayment:           u.ForecastedPayment,
 	}
 }
 

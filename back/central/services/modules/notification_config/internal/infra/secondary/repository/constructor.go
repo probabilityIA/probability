@@ -86,3 +86,10 @@ func NewCampaignAudienceQuerier(database db.IDatabase, logger log.ILogger) ports
 func NewCampaignSenderQuerier(database db.IDatabase, logger log.ILogger) ports.ICampaignSenderQuerier {
 	return newCampaignSenderQuerier(database, logger)
 }
+
+func NewTemplateOverageBillingRepository(database db.IDatabase, logger log.ILogger) ports.ITemplateOverageBillingRepository {
+	return &templateOverageBillingRepository{
+		db:     database,
+		logger: logger.WithModule("template_overage_billing_repository"),
+	}
+}
