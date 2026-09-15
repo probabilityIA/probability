@@ -12,6 +12,7 @@ import { SubscriptionGuard } from '@/shared/ui/SubscriptionGuard';
 import AnnouncementModal from '@/services/modules/announcements/ui/components/AnnouncementModal';
 import AnnouncementTicker from '@/services/modules/announcements/ui/components/AnnouncementTicker';
 import LegalAcceptanceGate from '@/services/modules/legal/ui/components/LegalAcceptanceGate';
+import { AssistantWidget } from '@/services/modules/assistant/ui';
 
 interface LayoutContentProps {
   user: {
@@ -98,6 +99,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
                         </SubscriptionGuard>
                       </div>
                       {!pathname.startsWith('/tickets') && <TourLauncherFloating />}
+                      <AssistantWidget />
           </TourProvider>
         </SelectedBusinessProvider>
         <style jsx>{`

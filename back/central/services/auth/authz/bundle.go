@@ -50,6 +50,26 @@ func (b *Bundle) SetModuleAccess(modules IModuleAccess) {
 	b.UseCase.SetModuleAccess(modules)
 }
 
+func (b *Bundle) VisibleNavigation(ctx context.Context, userID, tokenBusinessID, requestedBusinessID uint) ([]sharedauthz.NavEntry, error) {
+	access, err := b.UseCase.GetEffectiveAccess(ctx, userID, tokenBusinessID, requestedBusinessID)
+	if err != nil {
+		return nil, err
+	}
+
+	visible := make(map[string]bool)
+	for _, item := range b.UseCase.Navigation(access) {
+		visible[item.Key] = true
+	}
+
+	entries := make([]sharedauthz.NavEntry, 0, len(visible))
+	for _, entry := range sharedauthz.Navigation {
+		if visible[entry.Key] {
+			entries = append(entries, entry)
+		}
+	}
+	return entries, nil
+}
+
 func (b *Bundle) ReportCoverage(ctx context.Context, routes gin.RoutesInfo) {
 	missing := guardmw.Coverage(sharedauthz.RoutePolicies, routes, apiPrefix)
 	if len(missing) > 0 {
