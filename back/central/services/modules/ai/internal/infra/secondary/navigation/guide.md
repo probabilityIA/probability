@@ -12,6 +12,18 @@ Pestañas de esta sección: «Órdenes», «Envíos», «Recaudo contra entrega�
 - Varias guías a la vez: «Generación masiva de guías», eligiendo la bodega de origen.
 - Otras acciones por fila: «Ver orden», «Editar orden», «Cambiar estado», «Ver guía de envío», «Eliminar orden». También hay «Descargar órdenes en Excel» y «Cotizador Expres».
 
+## orders.generate_guide
+Destino que SEÑALA en pantalla el botón «Ver recomendación IA» (ícono de robot) de la orden. Es el mejor destino cuando preguntan cómo o dónde generar, crear o hacer una guía de envío de una orden. Si la orden ya tiene guía, el botón aparece desactivado.
+
+## orders.create
+Destino que SEÑALA en pantalla el botón «Nueva orden». Úsalo cuando preguntan cómo crear o registrar una orden o pedido a mano.
+
+## orders.bulk_upload
+Destino que SEÑALA en pantalla el botón «Carga masiva de órdenes». Úsalo cuando preguntan cómo subir o importar muchas órdenes con un archivo CSV o Excel.
+
+## orders.bulk_guides
+Destino que SEÑALA en pantalla el botón «Generación masiva de guías». Úsalo cuando preguntan cómo generar guías de varias órdenes a la vez.
+
 ## products
 Catálogo de productos con pestañas «SKUs / Productos» y «Familias de variantes». Botón «Crear» para un producto nuevo, carga y descarga de peso y dimensiones en Excel, y «Grupos de clientes y precios por catalogo». Filtros por integración, estado, categoría, marca, precio, stock y peso. En cada producto: «Ver detalle», «Editar», «Integraciones» y «Eliminar».
 

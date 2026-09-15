@@ -45,6 +45,7 @@ export default function OrdersPage() {
                 {canCreateOrders && (
                     <IconActionButton
                         label="Nueva orden"
+                        tourId="orders.create"
                         variant="tertiary"
                         tooltipAlign="right"
                         onClick={() => setShowCreateModal(true)}
@@ -53,7 +54,8 @@ export default function OrdersPage() {
                 )}
                 {canCreateOrders && (
                     <IconActionButton
-                        label="Carga masiva de órdenes"
+                        label={'Carga masiva de \u00f3rdenes'}
+                        tourId="orders.bulk-upload"
                         variant="tertiary"
                         tooltipAlign="right"
                         onClick={() => setShowMassUploadModal(true)}
@@ -62,7 +64,8 @@ export default function OrdersPage() {
                 )}
                 {canCreateShipments && (
                     <IconActionButton
-                        label="Generación masiva de guías"
+                        label={'Generaci\u00f3n masiva de gu\u00edas'}
+                        tourId="orders.bulk-guides"
                         variant="tertiary"
                         tooltipAlign="right"
                         onClick={() => setShowMassGuideModal(true)}
@@ -204,13 +207,13 @@ export default function OrdersPage() {
                 order={selectedOrder || undefined}
                 onGuideGenerated={(guideData) => {
 
-                    console.log('🎯 onGuideGenerated callback received:', guideData);
+                    console.log('\u{1f3af} onGuideGenerated callback received:', guideData);
                     if (selectedOrder?.order_number && guideData?.tracking_number) {
                         const key = `guide_${selectedOrder.order_number}`;
                         sessionStorage.setItem(key, JSON.stringify(guideData));
-                        console.log('💾 Saved to sessionStorage:', key, guideData);
+                        console.log('\u{1f4be} Saved to sessionStorage:', key, guideData);
                     } else {
-                        console.warn('⚠️ Missing order_number or tracking_number:', { selectedOrder: selectedOrder?.order_number, guideData });
+                        console.warn('\u26a0\ufe0f Missing order_number or tracking_number:', { selectedOrder: selectedOrder?.order_number, guideData });
                     }
 
                     handleSuccess();

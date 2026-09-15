@@ -16,17 +16,19 @@ import { AssistantAvatar } from './AssistantAvatar';
 import { AssistantDestinationCard } from './AssistantDestinationCard';
 import { ASSISTANT_NAME, formatResetTime, isCurrentRoute, isHubDestination } from '../../app/use-cases';
 import type { AssistantChat } from '../hooks/use-assistant-chat';
+import type { AssistantDestination } from '../../domain/types';
 
 interface AssistantPanelProps {
     chat: AssistantChat;
     suggestions: string[];
     onClose: () => void;
+    onShowMe: (destination: AssistantDestination, messageId?: string) => void;
 }
 
 const feedbackButton =
     'rounded-md p-1 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#5B1BE6]';
 
-export function AssistantPanel({ chat, suggestions, onClose }: AssistantPanelProps) {
+export function AssistantPanel({ chat, suggestions, onClose, onShowMe }: AssistantPanelProps) {
     const [draft, setDraft] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
@@ -146,6 +148,7 @@ export function AssistantPanel({ chat, suggestions, onClose }: AssistantPanelPro
                                             destination={entry.destination}
                                             isCurrent={!isHubDestination(entry.destination.key) && isCurrentRoute(chat.pathname, entry.destination.route)}
                                             onGo={(destination) => chat.goTo(destination, entry.messageId)}
+                                            onShowMe={(destination) => onShowMe(destination, entry.messageId)}
                                         />
                                     )}
                                 </div>

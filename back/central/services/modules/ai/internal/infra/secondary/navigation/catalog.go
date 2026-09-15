@@ -37,13 +37,21 @@ func (c *Catalog) ForUser(ctx context.Context, scope dtos.AccessScope) (*entitie
 			if sub.Parent != entry.Key || (sub.AlsoRequires != "" && !visible[sub.AlsoRequires]) {
 				continue
 			}
-			catalog.Allowed = append(catalog.Allowed, entities.Destination{
+			destination := entities.Destination{
 				Key:         sub.Key,
 				Label:       sub.Label,
 				Route:       sub.Route,
 				Description: sub.Description,
 				Guide:       c.guides[sub.Key],
-			})
+			}
+			if sub.Highlight != nil {
+				destination.Highlight = &entities.Highlight{
+					Target: sub.Highlight.Target,
+					Title:  sub.Highlight.Title,
+					Hint:   sub.Highlight.Hint,
+				}
+			}
+			catalog.Allowed = append(catalog.Allowed, destination)
 		}
 	}
 

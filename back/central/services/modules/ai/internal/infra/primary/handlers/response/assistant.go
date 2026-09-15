@@ -3,10 +3,17 @@ package response
 import "time"
 
 type Destination struct {
-	Key         string `json:"key"`
-	Label       string `json:"label"`
-	Route       string `json:"route"`
-	Description string `json:"description"`
+	Key         string     `json:"key"`
+	Label       string     `json:"label"`
+	Route       string     `json:"route"`
+	Description string     `json:"description"`
+	Highlight   *Highlight `json:"highlight"`
+}
+
+type Highlight struct {
+	Target string `json:"target"`
+	Title  string `json:"title"`
+	Hint   string `json:"hint"`
 }
 
 type AssistantReply struct {

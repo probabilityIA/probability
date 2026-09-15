@@ -20,6 +20,13 @@ type Destination struct {
 	Route       string
 	Description string
 	Guide       string
+	Highlight   *Highlight
+}
+
+type Highlight struct {
+	Target string
+	Title  string
+	Hint   string
 }
 
 type NavigationCatalog struct {

@@ -33,6 +33,9 @@ func FromReply(reply *entities.AssistantReply) response.AssistantReply {
 			Route:       reply.Destination.Route,
 			Description: reply.Destination.Description,
 		}
+		if h := reply.Destination.Highlight; h != nil {
+			out.Destination.Highlight = &response.Highlight{Target: h.Target, Title: h.Title, Hint: h.Hint}
+		}
 	}
 	return out
 }

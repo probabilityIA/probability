@@ -51,6 +51,7 @@ export function MyIntegrationsButton({ businessId }: MyIntegrationsButtonProps) 
                 <button
                     onClick={open}
                     disabled={disabled}
+                    data-tour="integrations.hub-button"
                     aria-label="Tus Integraciones"
                     className={`inline-flex items-center justify-center rounded-lg text-sm transition-colors ${
                         disabled

@@ -5,11 +5,18 @@ export interface AssistantHistoryMessage {
     text: string;
 }
 
+export interface AssistantHighlight {
+    target: string;
+    title: string;
+    hint: string;
+}
+
 export interface AssistantDestination {
     key: string;
     label: string;
     route: string;
     description: string;
+    highlight?: AssistantHighlight | null;
 }
 
 export interface AssistantReply {

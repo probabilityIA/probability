@@ -172,6 +172,15 @@ export function useAssistantChat() {
         [append, pathname, point, router],
     );
 
+    const prepareHighlight = useCallback(
+        (destination: AssistantDestination, messageId?: string) => {
+            if (messageId) void markAssistantClickAction(messageId).catch(() => null);
+            if (!isCurrentRoute(pathname, destination.route)) router.push(destination.route);
+            append({ id: entryId(), kind: 'system', text: `Te mostr\u00e9 d\u00f3nde est\u00e1 ${destination.label}` });
+        },
+        [append, pathname, router],
+    );
+
     const rate = useCallback((id: string, pressed: 1 | -1) => {
         const entry = entriesRef.current.find((e) => e.id === id);
         if (!entry || entry.kind !== 'assistant' || !entry.messageId) return;
@@ -201,7 +210,7 @@ export function useAssistantChat() {
         if (state.remaining <= 0 && state.reset_at) setBlockedUntil(state.reset_at);
     }, []);
 
-    return { entries, pending, mood, blocked, blockedUntil, pathname, send, retry, goTo, rate, reset, applyState };
+    return { entries, pending, mood, blocked, blockedUntil, pathname, send, retry, goTo, prepareHighlight, rate, reset, applyState };
 }
 
 export type AssistantChat = ReturnType<typeof useAssistantChat>;
