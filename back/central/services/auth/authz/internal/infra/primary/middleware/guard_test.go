@@ -83,6 +83,22 @@ func TestGuard_Enforce_SinPermisoEs403(t *testing.T) {
 	}
 }
 
+func TestDenialMessage_HablaEnTerminosDelUsuario(t *testing.T) {
+	cases := map[string]decision{
+		"No tienes permiso de creaci\u00f3n en \u00d3rdenes.":       {reason: "missing_permission", permission: "orders.create"},
+		"No tienes permiso para esta acci\u00f3n.":                  {reason: "missing_permission", permission: "integrations.read|orders.read"},
+		"Tu sesi\u00f3n expir\u00f3. Vuelve a iniciar sesi\u00f3n.": {reason: "unauthenticated"},
+	}
+	for want, d := range cases {
+		if got := denialMessage(d); got != want {
+			t.Fatalf("denialMessage(%+v) = %q, se esperaba %q", d, got, want)
+		}
+	}
+	if denialCode(decision{reason: "subscription_suspended"}) != "subscription_suspended" {
+		t.Fatalf("codigo de suscripcion incorrecto")
+	}
+}
+
 func TestGuard_Enforce_ConPermisoPasa(t *testing.T) {
 	code, reached := runGuard(t, newGuard(adminAccess("orders.read"), ModeEnforce), http.MethodGet, "/orders", 26, true)
 	if code != http.StatusOK || !reached {

@@ -88,10 +88,12 @@ func (g *Guard) Handler() gin.HandlerFunc {
 			Uint("business_id", businessID)
 		if enforced {
 			event.Msg("[authz] acceso denegado")
+			message := denialMessage(d)
 			c.AbortWithStatusJSON(d.status, gin.H{
 				"success":    false,
-				"error":      "forbidden",
-				"message":    "No tienes permiso para esta acci\u00f3n",
+				"code":       denialCode(d),
+				"error":      message,
+				"message":    message,
 				"reason":     d.reason,
 				"permission": d.permission,
 			})
@@ -100,6 +102,43 @@ func (g *Guard) Handler() gin.HandlerFunc {
 		event.Msg("[authz] denegacion en auditoria")
 		c.Next()
 	}
+}
+
+var actionVerbs = map[string]string{
+	authz.ActionRead:   "consulta",
+	authz.ActionCreate: "creaci\u00f3n",
+	authz.ActionUpdate: "edici\u00f3n",
+	authz.ActionDelete: "eliminaci\u00f3n",
+}
+
+func denialCode(d decision) string {
+	switch d.reason {
+	case "unauthenticated":
+		return "unauthenticated"
+	case "subscription_suspended":
+		return "subscription_suspended"
+	default:
+		return "forbidden"
+	}
+}
+
+func denialMessage(d decision) string {
+	switch d.reason {
+	case "unauthenticated":
+		return "Tu sesi\u00f3n expir\u00f3. Vuelve a iniciar sesi\u00f3n."
+	case "subscription_suspended":
+		return "Tu suscripci\u00f3n est\u00e1 vencida. Ponte al d\u00eda en el m\u00f3dulo de Suscripci\u00f3n para seguir usando esta funci\u00f3n."
+	case "super_admin_required":
+		return "No tienes permiso para esta acci\u00f3n: es exclusiva del equipo de Probability."
+	}
+	if resourceCode, action, ok := splitPermission(d.permission); ok && !strings.Contains(d.permission, "|") {
+		verb, hasVerb := actionVerbs[action]
+		resource, hasResource := authz.ResourceByCode(resourceCode)
+		if hasVerb && hasResource {
+			return "No tienes permiso de " + verb + " en " + resource.Label + "."
+		}
+	}
+	return "No tienes permiso para esta acci\u00f3n."
 }
 
 func (g *Guard) modeFor(enforced bool) string {

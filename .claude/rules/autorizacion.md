@@ -60,6 +60,28 @@ verificando que el recurso sea del `business_id` resuelto.
 4. En el front, usar `hasNav('clave')` para el menu y `can('recurso.accion')`
    para botones. Nunca comparar nombres de rol ni nombres de recurso.
 
+## Errores de acceso en el front (401, 402, 403)
+
+El backend responde siempre `{ code, message, permission }` con un `message`
+ya redactado para el usuario ("No tienes permiso de creación en Órdenes.").
+El front lo convierte en un modal global (`AccessDeniedModal`, montado en el
+`PermissionsProvider`) sin que cada pantalla tenga que manejarlo:
+
+| Camino | Donde se detecta |
+|---|---|
+| Server Action (fetch en el servidor) | `src/instrumentation.ts` intercepta el fetch al API y deja la cookie `pb_access_denied`; el provider la lee cada segundo |
+| fetch desde el navegador | el provider envuelve `window.fetch` |
+| Pantalla que muestra el error con toast o `alert` | `ToastProvider` y el `alert` envuelto reconocen el mensaje y abren el modal en su lugar |
+
+Comportamiento: 403 muestra "No tienes permiso" y recarga el acceso (menú y
+botones se ajustan); 402 lleva a Suscripción; 401 pide iniciar sesión.
+
+La cookie existe porque en producción Next.js borra el texto de los errores
+lanzados desde Server Actions: sin ella, el usuario vería un error genérico.
+
+Al construir una pantalla nueva no hace falta nada: basta con no tragarse el
+error. Para disparar el modal a mano: `notifyAccessDenied({ code, message })`.
+
 ## Modos
 
 | Variable | Valores | Efecto |
