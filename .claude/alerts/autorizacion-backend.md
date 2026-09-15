@@ -42,12 +42,11 @@ De ~235 rutas autenticadas, la autorizacion se reducia a `JWT()`,
 
 ## URGENTE (abierto) - para llevar a produccion
 
-- [ ] **Crear en produccion los permisos que le faltan al rol Administrador**
-      ANTES de activar enforce: Ordenes Delete, Productos Create/Update/Delete,
-      Integraciones Update/Delete, y asignarlos al rol 4 mandando la lista
-      COMPLETA (`POST /roles/:id/permissions` reemplaza). Sin esto, con enforce,
-      un administrador no puede crear ordenes. (Ordenes Create ya existe, id 128,
-      pero no estaba asignado al rol.)
+- [x] **Permisos del rol Administrador en produccion** (2026-09-14): por API de
+      produccion se crearon los permisos 129-134 (Ordenes Delete, Productos
+      Create/Update/Delete, Integraciones Update/Delete) y se asignaron al rol 4
+      con la lista completa (1-21, 38-85, 128-134). Verificado en BD de prod:
+      76 permisos = 69 previos + 7 nuevos.
 - [ ] Desplegar en `AUTHZ_MODE=audit` y revisar en produccion los logs
       `[authz] denegacion en auditoria` al menos una semana antes de enforce.
 - [ ] Versiones viejas de la app movil pierden el SSE (ahora exige token).
