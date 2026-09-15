@@ -73,7 +73,7 @@ func Init(ctx context.Context) error {
 
 	integrationCore, dianEmitter := integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
 
-	modulesBundle := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter)
+	modulesBundle := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter, authzBundle.VisibleNavigation)
 
 	authzBundle.SetModuleAccess(modulesBundle.Subscriptions.UseCase)
 	authzBundle.ReportCoverage(ctx, r.Routes())

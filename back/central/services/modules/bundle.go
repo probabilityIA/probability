@@ -67,7 +67,7 @@ type ModuleBundles struct {
 	Subscriptions *subscriptions.Bundle
 }
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore, dianEmitter *factusinv.PlatformEmitter) *ModuleBundles {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore, dianEmitter *factusinv.PlatformEmitter, visibleNavigation ai.VisibleNavigationFunc) *ModuleBundles {
 	announcementsBundle := announcements.New(router, database, logger, s3)
 	payments.New(router, database, logger, environment)
 	orderstatus.New(router, database, logger, environment)
@@ -97,7 +97,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	notification_config.New(router, database, redisClient, logger, rabbitMQ, s3, environment)
 	push.New(router, database, logger, environment, rabbitMQ)
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
-	ai.New(router, logger)
+	ai.New(router, logger, environment, bedrockClient, redisClient, visibleNavigation)
 	dashboard.New(router, database, redisClient, logger)
 	payBundle := pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
 	subscriptionsBundle := subscriptions.New(router, database, logger, payBundle, announcementsBundle, rabbitMQ)

@@ -102,6 +102,9 @@ var authenticatedRoutes = []string{
 	get("/notify/sse/order-notify"),
 	get("/notify/sse/order-notify/:businessID"),
 	get("/ai/recommendation"),
+	post("/ai/assistant/chat"),
+	get("/ai/assistant/state"),
+	post("/ai/assistant/intro-seen"),
 
 	get("/businesses/:id"),
 	put("/businesses/:id"),
