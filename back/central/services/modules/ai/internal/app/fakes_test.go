@@ -27,6 +27,7 @@ func (f *recommendationFake) GetRecommendation(_ context.Context, origin, destin
 
 type modelFake struct {
 	reply    *dtos.ModelReply
+	replies  []*dtos.ModelReply
 	err      error
 	requests []dtos.ModelRequest
 }
@@ -34,8 +35,20 @@ type modelFake struct {
 var _ ports.IAssistantModel = (*modelFake)(nil)
 
 func (f *modelFake) Reply(_ context.Context, req dtos.ModelRequest) (*dtos.ModelReply, error) {
-	f.requests = append(f.requests, req)
-	return f.reply, f.err
+	snapshot := req
+	snapshot.Messages = append([]dtos.ModelMessage(nil), req.Messages...)
+	f.requests = append(f.requests, snapshot)
+	if f.err != nil {
+		return nil, f.err
+	}
+	if len(f.replies) > 0 {
+		index := len(f.requests) - 1
+		if index >= len(f.replies) {
+			index = len(f.replies) - 1
+		}
+		return f.replies[index], nil
+	}
+	return f.reply, nil
 }
 
 type navigationFake struct {
@@ -79,6 +92,35 @@ func (f *storeFake) MarkIntroSeen(_ context.Context, _ uint) error {
 	return nil
 }
 
+type readerFake struct {
+	orders      []entities.OrderInfo
+	businessIDs []uint
+	numbers     []string
+}
+
+var _ ports.IBusinessDataReader = (*readerFake)(nil)
+
+func (f *readerFake) FindOrders(_ context.Context, businessID uint, number string) ([]entities.OrderInfo, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	f.numbers = append(f.numbers, number)
+	return f.orders, nil
+}
+
+func (f *readerFake) FindShipments(_ context.Context, businessID uint, _ string) ([]entities.ShipmentInfo, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	return nil, nil
+}
+
+func (f *readerFake) ListOrders(_ context.Context, businessID uint, _ dtos.OrderQuery) ([]entities.OrderSummary, int64, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	return nil, 0, nil
+}
+
+func (f *readerFake) SummarizeOrders(_ context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	return &entities.OrdersOverview{From: from, To: to}, nil
+}
+
 func sampleCatalog() *entities.NavigationCatalog {
 	return &entities.NavigationCatalog{
 		Allowed: []entities.Destination{
@@ -94,5 +136,11 @@ func newTestUseCase(model *modelFake, store *storeFake) *UseCase {
 	if store != nil {
 		s = store
 	}
-	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, nil, nil, log.New()).(*UseCase)
+	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, nil, nil, nil, log.New()).(*UseCase)
+}
+
+func newDataUseCase(model *modelFake, reader *readerFake, catalog *entities.NavigationCatalog) *UseCase {
+	uc := New(&recommendationFake{}, model, &navigationFake{catalog: catalog}, &storeFake{}, nil, nil, reader, log.New()).(*UseCase)
+	uc.now = func() time.Time { return time.Date(2026, 9, 14, 15, 0, 0, 0, colombia) }
+	return uc
 }

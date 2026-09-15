@@ -9,6 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/infra/primary/queue/consumer"
 	bedrockadapter "github.com/secamc93/probability/back/central/services/modules/ai/internal/infra/secondary/bedrock"
+	"github.com/secamc93/probability/back/central/services/modules/ai/internal/infra/secondary/businessdata"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/infra/secondary/navigation"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/infra/secondary/openrouter"
@@ -44,6 +45,7 @@ func New(router *gin.RouterGroup, logger log.ILogger, deps Dependencies) {
 		cache.New(deps.Redis),
 		queue.New(deps.RabbitMQ),
 		repository.New(deps.Database),
+		businessdata.New(deps.Database),
 		moduleLogger,
 	)
 

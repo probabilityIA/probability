@@ -43,21 +43,37 @@ func (uc *UseCase) Chat(ctx context.Context, input dtos.ChatInput) (*entities.As
 		return nil, err
 	}
 
-	reply, err := uc.model.Reply(ctx, dtos.ModelRequest{
-		SystemPrompt:    buildSystemPrompt(catalog),
-		Messages:        messages,
+	access := uc.resolveDataAccess(catalog, input.Scope)
+	request := dtos.ModelRequest{
+		SystemPrompt:    buildSystemPrompt(catalog, access, uc.now()),
+		Messages:        toModelMessages(messages),
 		DestinationKeys: catalog.Keys(),
-	})
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Uint("user_id", input.Scope.UserID).Msg("[ai.assistant] el modelo no respondio")
-		record.ErrorCode = entities.ErrorCodeUnavailable
-		uc.recordMessage(ctx, record, started)
-		return nil, domainerrors.ErrModelUnavailable
+		Tools:           access.Tools,
 	}
 
-	record.Model = reply.Model
-	record.InputTokens = reply.InputTokens
-	record.OutputTokens = reply.OutputTokens
+	var reply *dtos.ModelReply
+	for round := 0; ; round++ {
+		request.ForceReply = len(request.Tools) == 0 || round >= MaxToolRounds
+		reply, err = uc.model.Reply(ctx, request)
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Uint("user_id", input.Scope.UserID).Int("round", round).Msg("[ai.assistant] el modelo no respondio")
+			record.ErrorCode = entities.ErrorCodeUnavailable
+			uc.recordMessage(ctx, record, started)
+			return nil, domainerrors.ErrModelUnavailable
+		}
+
+		record.Model = reply.Model
+		record.InputTokens += reply.InputTokens
+		record.OutputTokens += reply.OutputTokens
+
+		if request.ForceReply || len(reply.ToolCalls) == 0 {
+			break
+		}
+		request.Messages = append(request.Messages,
+			dtos.ModelMessage{Role: entities.RoleAssistant, Text: reply.Message, ToolCalls: reply.ToolCalls},
+			dtos.ModelMessage{Role: entities.RoleUser, ToolResults: uc.runTools(ctx, access, reply.ToolCalls)},
+		)
+	}
 
 	result, err := composeReply(reply, catalog)
 	if err != nil {
@@ -127,6 +143,14 @@ func businessOf(scope dtos.AccessScope) *uint {
 		return &id
 	}
 	return nil
+}
+
+func toModelMessages(messages []entities.ChatMessage) []dtos.ModelMessage {
+	out := make([]dtos.ModelMessage, 0, len(messages))
+	for _, m := range messages {
+		out = append(out, dtos.ModelMessage{Role: m.Role, Text: m.Text})
+	}
+	return out
 }
 
 func normalizePathname(raw string) string {
@@ -206,16 +230,22 @@ func composeReply(reply *dtos.ModelReply, catalog *entities.NavigationCatalog) (
 	return &entities.AssistantReply{Message: message, Destination: destination}, nil
 }
 
-var inlineDestinationPattern = regexp.MustCompile(`(?im)^[\s*_]*destination[\s*_]*[:=][\s*_]*([a-z_.]+)[\s*_.]*$`)
+var inlineDestinationPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?is)\{\s*"?destination"?\s*:\s*"([a-z_.]+)"\s*\}`),
+	regexp.MustCompile(`(?im)^[\s*_]*destination[\s*_]*[:=][\s*_]*([a-z_.]+)[\s*_.]*$`),
+}
 
 func extractInlineDestination(text string) (string, string) {
-	match := inlineDestinationPattern.FindStringSubmatchIndex(text)
-	if match == nil {
-		return text, ""
+	for _, pattern := range inlineDestinationPatterns {
+		match := pattern.FindStringSubmatchIndex(text)
+		if match == nil {
+			continue
+		}
+		key := text[match[2]:match[3]]
+		cleaned := strings.TrimSpace(text[:match[0]] + text[match[1]:])
+		return cleaned, key
 	}
-	key := text[match[2]:match[3]]
-	cleaned := strings.TrimSpace(text[:match[0]] + text[match[1]:])
-	return cleaned, key
+	return text, ""
 }
 
 func cleanModelText(text string) string {

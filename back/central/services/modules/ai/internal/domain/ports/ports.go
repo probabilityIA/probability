@@ -27,6 +27,13 @@ type IAssistantStore interface {
 	MarkIntroSeen(ctx context.Context, userID uint) error
 }
 
+type IBusinessDataReader interface {
+	FindOrders(ctx context.Context, businessID uint, number string) ([]entities.OrderInfo, error)
+	FindShipments(ctx context.Context, businessID uint, trackingNumber string) ([]entities.ShipmentInfo, error)
+	ListOrders(ctx context.Context, businessID uint, query dtos.OrderQuery) ([]entities.OrderSummary, int64, error)
+	SummarizeOrders(ctx context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error)
+}
+
 type IConversationRecorder interface {
 	RecordMessage(ctx context.Context, record entities.MessageRecord) error
 	RecordFeedback(ctx context.Context, userID uint, messageID string, value int, at time.Time) error

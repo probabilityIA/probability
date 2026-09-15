@@ -60,8 +60,9 @@ export class AssistantApiRepository implements IAssistantRepository {
         return body.data as T;
     }
 
-    chat(messages: AssistantHistoryMessage[], conversationId: string, pathname: string): Promise<AssistantReply> {
-        return this.request<AssistantReply>('/ai/assistant/chat', {
+    chat(messages: AssistantHistoryMessage[], conversationId: string, pathname: string, businessId?: number | null): Promise<AssistantReply> {
+        const query = businessId ? `?business_id=${businessId}` : '';
+        return this.request<AssistantReply>(`/ai/assistant/chat${query}`, {
             method: 'POST',
             body: JSON.stringify({ messages, conversation_id: conversationId, pathname }),
         });

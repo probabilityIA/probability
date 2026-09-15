@@ -19,7 +19,7 @@ const (
 	replyToolName  = "responder"
 	noDestination  = "none"
 	requestTimeout = 30 * time.Second
-	maxTokens      = 600
+	maxTokens      = 700
 	temperature    = 0.3
 )
 
@@ -33,22 +33,28 @@ func (m *AssistantModel) Reply(ctx context.Context, req dtos.ModelRequest) (*dto
 		return nil, fmt.Errorf("cliente de Bedrock no inicializado")
 	}
 
+	messages, err := toBedrockMessages(req.Messages)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
 	output, err := m.client.Converse(ctx, &bedrockruntime.ConverseInput{
 		ModelId:  aws.String(m.modelID),
 		System:   []types.SystemContentBlock{&types.SystemContentBlockMemberText{Value: req.SystemPrompt}},
-		Messages: toBedrockMessages(req.Messages),
+		Messages: messages,
 		InferenceConfig: &types.InferenceConfiguration{
 			MaxTokens:   aws.Int32(maxTokens),
 			Temperature: aws.Float32(temperature),
 		},
-		ToolConfig: replyToolConfig(req.DestinationKeys),
+		ToolConfig: toolConfig(req),
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	reply, err := parseOutput(output)
 	if err != nil {
 		return nil, err
@@ -61,31 +67,75 @@ func (m *AssistantModel) Reply(ctx context.Context, req dtos.ModelRequest) (*dto
 	return reply, nil
 }
 
-func toBedrockMessages(messages []entities.ChatMessage) []types.Message {
+func toBedrockMessages(messages []dtos.ModelMessage) ([]types.Message, error) {
 	result := make([]types.Message, 0, len(messages))
 	for _, msg := range messages {
 		role := types.ConversationRoleUser
 		if msg.Role == entities.RoleAssistant {
 			role = types.ConversationRoleAssistant
 		}
-		result = append(result, types.Message{
-			Role:    role,
-			Content: []types.ContentBlock{&types.ContentBlockMemberText{Value: msg.Text}},
-		})
+
+		var content []types.ContentBlock
+		if strings.TrimSpace(msg.Text) != "" {
+			content = append(content, &types.ContentBlockMemberText{Value: msg.Text})
+		}
+		for _, call := range msg.ToolCalls {
+			input := call.Input
+			if input == nil {
+				input = map[string]any{}
+			}
+			content = append(content, &types.ContentBlockMemberToolUse{Value: types.ToolUseBlock{
+				ToolUseId: aws.String(call.ID),
+				Name:      aws.String(call.Name),
+				Input:     document.NewLazyDocument(input),
+			}})
+		}
+		for _, res := range msg.ToolResults {
+			payload := res.Content
+			if payload == nil {
+				payload = map[string]any{}
+			}
+			content = append(content, &types.ContentBlockMemberToolResult{Value: types.ToolResultBlock{
+				ToolUseId: aws.String(res.ToolCallID),
+				Content:   []types.ToolResultContentBlock{&types.ToolResultContentBlockMemberJson{Value: document.NewLazyDocument(payload)}},
+			}})
+		}
+		if len(content) == 0 {
+			return nil, fmt.Errorf("mensaje vacio para Bedrock")
+		}
+		result = append(result, types.Message{Role: role, Content: content})
 	}
-	return result
+	return result, nil
 }
 
-func replyToolConfig(destinationKeys []string) *types.ToolConfiguration {
+func toolConfig(req dtos.ModelRequest) *types.ToolConfiguration {
+	tools := make([]types.Tool, 0, len(req.Tools)+1)
+	for _, def := range req.Tools {
+		tools = append(tools, &types.ToolMemberToolSpec{Value: types.ToolSpecification{
+			Name:        aws.String(def.Name),
+			Description: aws.String(def.Description),
+			InputSchema: &types.ToolInputSchemaMemberJson{Value: document.NewLazyDocument(def.Schema)},
+		}})
+	}
+	tools = append(tools, replyTool(req.DestinationKeys))
+
+	var choice types.ToolChoice = &types.ToolChoiceMemberTool{Value: types.SpecificToolChoice{Name: aws.String(replyToolName)}}
+	if len(req.Tools) > 0 && !req.ForceReply {
+		choice = &types.ToolChoiceMemberAny{Value: types.AnyToolChoice{}}
+	}
+	return &types.ToolConfiguration{Tools: tools, ToolChoice: choice}
+}
+
+func replyTool(destinationKeys []string) types.Tool {
 	enum := append([]string{noDestination}, destinationKeys...)
-	schema := map[string]interface{}{
+	schema := map[string]any{
 		"type": "object",
-		"properties": map[string]interface{}{
-			"message": map[string]interface{}{
+		"properties": map[string]any{
+			"message": map[string]any{
 				"type":        "string",
 				"description": "Respuesta breve para el usuario, sin URLs ni rutas.",
 			},
-			"destination": map[string]interface{}{
+			"destination": map[string]any{
 				"type":        "string",
 				"enum":        enum,
 				"description": "Clave del destino permitido que resuelve la pregunta, o none.",
@@ -93,17 +143,11 @@ func replyToolConfig(destinationKeys []string) *types.ToolConfiguration {
 		},
 		"required": []string{"message", "destination"},
 	}
-
-	return &types.ToolConfiguration{
-		Tools: []types.Tool{
-			&types.ToolMemberToolSpec{Value: types.ToolSpecification{
-				Name:        aws.String(replyToolName),
-				Description: aws.String("Entrega la respuesta al usuario y, si aplica, el destino de la plataforma."),
-				InputSchema: &types.ToolInputSchemaMemberJson{Value: document.NewLazyDocument(schema)},
-			}},
-		},
-		ToolChoice: &types.ToolChoiceMemberTool{Value: types.SpecificToolChoice{Name: aws.String(replyToolName)}},
-	}
+	return &types.ToolMemberToolSpec{Value: types.ToolSpecification{
+		Name:        aws.String(replyToolName),
+		Description: aws.String("Entrega la respuesta final al usuario y, si aplica, el destino de la plataforma."),
+		InputSchema: &types.ToolInputSchemaMemberJson{Value: document.NewLazyDocument(schema)},
+	}}
 }
 
 func parseOutput(output *bedrockruntime.ConverseOutput) (*dtos.ModelReply, error) {
@@ -117,29 +161,47 @@ func parseOutput(output *bedrockruntime.ConverseOutput) (*dtos.ModelReply, error
 
 	reply := &dtos.ModelReply{}
 	var texts []string
+	var calls []dtos.ToolCall
+	final := false
 	for _, block := range message.Value.Content {
 		switch v := block.(type) {
 		case *types.ContentBlockMemberText:
 			texts = append(texts, v.Value)
 		case *types.ContentBlockMemberToolUse:
-			if aws.ToString(v.Value.Name) != replyToolName || v.Value.Input == nil {
+			input := decodeInput(v.Value.Input)
+			name := aws.ToString(v.Value.Name)
+			if name == replyToolName {
+				raw, _ := json.Marshal(input)
+				var payload toolPayload
+				if err := json.Unmarshal(raw, &payload); err == nil {
+					reply.Message = payload.Message
+					reply.DestinationKey = payload.Destination
+					final = true
+				}
 				continue
 			}
-			raw, err := v.Value.Input.MarshalSmithyDocument()
-			if err != nil {
-				continue
-			}
-			var payload toolPayload
-			if err := json.Unmarshal(raw, &payload); err != nil {
-				continue
-			}
-			reply.Message = payload.Message
-			reply.DestinationKey = payload.Destination
+			calls = append(calls, dtos.ToolCall{ID: aws.ToString(v.Value.ToolUseId), Name: name, Input: input})
 		}
 	}
 
+	if !final {
+		reply.ToolCalls = calls
+	}
 	if strings.TrimSpace(reply.Message) == "" {
 		reply.Message = strings.Join(texts, "\n")
 	}
 	return reply, nil
+}
+
+func decodeInput(doc document.Interface) map[string]any {
+	out := map[string]any{}
+	if doc == nil {
+		return out
+	}
+	raw, err := doc.MarshalSmithyDocument()
+	if err != nil {
+		return out
+	}
+	_ = json.Unmarshal(raw, &out)
+	return out
 }

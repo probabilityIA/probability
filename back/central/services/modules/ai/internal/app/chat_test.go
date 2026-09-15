@@ -63,6 +63,18 @@ func TestChat_RecuperaElDestinoEscritoEnElTexto(t *testing.T) {
 	assert.Equal(t, "Puedes verlas en Ordenes.\n\n1. Filtra por estado.", reply.Message)
 }
 
+func TestChat_RecuperaElDestinoEscritoComoJSON(t *testing.T) {
+	model := &modelFake{reply: &dtos.ModelReply{Message: "No tienes guias con novedad.\n\n{ \"destination\": \"orders\" }"}}
+	uc := newTestUseCase(model, &storeFake{})
+
+	reply, err := uc.Chat(context.Background(), chatInput(userMessage("tengo guias con novedad")))
+
+	require.NoError(t, err)
+	require.NotNil(t, reply.Destination)
+	assert.Equal(t, "/orders", reply.Destination.Route)
+	assert.Equal(t, "No tienes guias con novedad.", reply.Message)
+}
+
 func TestChat_SinTextoPeroConDestinoArmaUnMensaje(t *testing.T) {
 	model := &modelFake{reply: &dtos.ModelReply{DestinationKey: "shipments.cod"}}
 	uc := newTestUseCase(model, &storeFake{})

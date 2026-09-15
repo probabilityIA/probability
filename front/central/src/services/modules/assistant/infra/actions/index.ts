@@ -33,8 +33,9 @@ export async function sendAssistantMessageAction(
     messages: AssistantHistoryMessage[],
     conversationId: string,
     pathname: string,
+    businessId?: number | null,
 ): Promise<AssistantResult<AssistantReply>> {
-    return withRepository((repo) => repo.chat(messages, conversationId, pathname));
+    return withRepository((repo) => repo.chat(messages, conversationId, pathname, businessId));
 }
 
 export async function getAssistantStateAction(): Promise<AssistantResult<AssistantState>> {

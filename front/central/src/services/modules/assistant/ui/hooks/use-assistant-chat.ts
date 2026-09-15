@@ -19,6 +19,7 @@ import {
     rateLimitText,
 } from '../../app/use-cases';
 import { queueIntegrationsHub, requestIntegrationsHub } from '@/services/modules/my-integrations/ui/open-hub';
+import { useSelectedBusiness } from '@/shared/contexts/selected-business-context';
 import type {
     AssistantDestination,
     AssistantHistoryMessage,
@@ -41,6 +42,7 @@ function withoutNotices(entries: ChatEntry[]): ChatEntry[] {
 export function useAssistantChat() {
     const router = useRouter();
     const pathname = usePathname();
+    const { selectedBusinessId } = useSelectedBusiness();
     const [entries, setEntries] = useState<ChatEntry[]>(() => [greetingEntry()]);
     const [pending, setPending] = useState(false);
     const [mood, setMood] = useState<AvatarMood>('idle');
@@ -88,7 +90,7 @@ export function useAssistantChat() {
             setPending(true);
             setMood('thinking');
             if (!conversationRef.current) conversationRef.current = newConversationId();
-            const result = await sendAssistantMessageAction(history, conversationRef.current, pathname).catch(() => null);
+            const result = await sendAssistantMessageAction(history, conversationRef.current, pathname, selectedBusinessId).catch(() => null);
             setPending(false);
 
             if (result?.success) {
@@ -124,7 +126,7 @@ export function useAssistantChat() {
                 text: 'No pude conectarme para responder. Tu mensaje qued\u00f3 guardado.',
             });
         },
-        [append, limit, pathname, point],
+        [append, limit, pathname, point, selectedBusinessId],
     );
 
     const blocked = blockedUntil !== null;

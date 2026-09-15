@@ -18,6 +18,11 @@ const (
 	MaxAssistantRunes     = 2000
 	MaxPathnameRunes      = 255
 
+	MaxToolRounds       = 4
+	MaxToolCallsPerTurn = 3
+	MaxListedOrders     = 10
+	DefaultSummaryDays  = 7
+
 	ConversationRetention = 365 * 24 * time.Hour
 
 	InputCostPerMillionUSD  = 0.15
@@ -26,6 +31,8 @@ const (
 	DefaultReviewPageSize = 20
 	MaxReviewPageSize     = 100
 )
+
+var colombia = time.FixedZone("COT", -5*60*60)
 
 type IUseCase interface {
 	GetRecommendation(ctx context.Context, origin, destination string) (*entities.Recommendation, error)
@@ -53,7 +60,9 @@ type UseCase struct {
 	store           ports.IAssistantStore
 	recorder        ports.IConversationRecorder
 	conversations   ports.IConversationRepository
+	businessData    ports.IBusinessDataReader
 	log             log.ILogger
+	now             func() time.Time
 }
 
 func New(
@@ -63,6 +72,7 @@ func New(
 	store ports.IAssistantStore,
 	recorder ports.IConversationRecorder,
 	conversations ports.IConversationRepository,
+	businessData ports.IBusinessDataReader,
 	logger log.ILogger,
 ) IUseCase {
 	return &UseCase{
@@ -72,6 +82,8 @@ func New(
 		store:           store,
 		recorder:        recorder,
 		conversations:   conversations,
+		businessData:    businessData,
 		log:             logger,
+		now:             time.Now,
 	}
 }

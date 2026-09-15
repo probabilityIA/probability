@@ -7,8 +7,10 @@ export const ASSISTANT_NAME = 'V\u00eda';
 export const GREETING = `Hola, soy ${ASSISTANT_NAME}. Te ayudo a encontrar cualquier cosa en Probability. \u00bfQu\u00e9 necesitas?`;
 
 const SUGGESTIONS: { navKey: string; text: string }[] = [
-    { navKey: 'orders', text: '\u00bfD\u00f3nde veo las \u00f3rdenes?' },
+    { navKey: 'orders', text: '\u00bfCu\u00e1ntas \u00f3rdenes tuve esta semana?' },
     { navKey: 'orders', text: '\u00bfC\u00f3mo genero una gu\u00eda de env\u00edo?' },
+    { navKey: 'shipments', text: '\u00bfTengo gu\u00edas con novedad?' },
+    { navKey: 'orders', text: '\u00bfD\u00f3nde veo las \u00f3rdenes?' },
     { navKey: 'shipments', text: '\u00bfD\u00f3nde veo el recaudo contra entrega?' },
     { navKey: 'wallet', text: '\u00bfC\u00f3mo recargo la billetera?' },
     { navKey: 'integrations', text: '\u00bfD\u00f3nde conecto mi tienda?' },
