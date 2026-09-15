@@ -44,6 +44,19 @@ class LoginApiRepository implements ILoginRepository {
   }
 
   @override
+  Future<Set<String>> getNavigationKeys() async {
+    final response = await _client.get('/auth/me/access');
+    final data = response.data['data'];
+    final navigation = data is Map ? data['navigation'] : null;
+    if (navigation is! List) return <String>{};
+    return navigation
+        .whereType<Map>()
+        .map((item) => item['key'])
+        .whereType<String>()
+        .toSet();
+  }
+
+  @override
   Future<List<RecoveryChannel>> getRecoveryChannels(String email) async {
     final response = await _client.post(
       '/auth/recovery-channels',

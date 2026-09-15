@@ -6,19 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// DeleteOrder godoc
-// @Summary      Eliminar orden
-// @Description  Elimina (soft delete) una orden del sistema
-// @Tags         Orders
-// @Accept       json
-// @Produce      json
-// @Param        id   path      string  true  "ID de la orden (UUID)"
-// @Security     BearerAuth
-// @Success      200  {object}  map[string]interface{}
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      404  {object}  map[string]interface{}
-// @Failure      500  {object}  map[string]interface{}
-// @Router       /orders/{id} [delete]
 func (h *Handlers) DeleteOrder(c *gin.Context) {
 	id := c.Param("id")
 
@@ -31,7 +18,10 @@ func (h *Handlers) DeleteOrder(c *gin.Context) {
 		return
 	}
 
-	// Llamar al caso de uso
+	if !h.ensureOrderOwnership(c, id) {
+		return
+	}
+
 	err := h.orderCRUD.DeleteOrder(c.Request.Context(), id)
 	if err != nil {
 		if err.Error() == "order not found" {

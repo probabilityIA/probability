@@ -2,29 +2,15 @@ package handlers
 
 import (
 	"errors"
-	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	orderErrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/mappers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/request"
 )
 
-// UpdateOrder godoc
-// @Summary      Actualizar orden
-// @Description  Actualiza una orden existente
-// @Tags         Orders
-// @Accept       json
-// @Produce      json
-// @Param        id     path      string                              true  "ID de la orden (UUID)"
-// @Param        order  body      request.UpdateOrder                 true  "Datos a actualizar"
-// @Security     BearerAuth
-// @Success      200  {object}  dtos.OrderResponse
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      404  {object}  map[string]interface{}
-// @Failure      500  {object}  map[string]interface{}
-// @Router       /orders/{id} [put]
 func (h *Handlers) UpdateOrder(c *gin.Context) {
 	id := c.Param("id")
 
@@ -45,6 +31,10 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 			"message": "Datos de entrada inválidos",
 			"error":   err.Error(),
 		})
+		return
+	}
+
+	if !h.ensureOrderOwnership(c, id) {
 		return
 	}
 

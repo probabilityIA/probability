@@ -7,9 +7,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/request"
 )
 
-// SendManualReply maneja el endpoint POST /whatsapp/conversations/:id/reply
-// Permite a un agente responder manualmente a un cliente de WhatsApp desde el dashboard.
-// Requiere ventana de servicio activa (cliente escribió en las últimas 24h).
 func (h *handler) SendManualReply(c *gin.Context) {
 	ctx := c.Request.Context()
 	conversationID := c.Param("id")
@@ -25,14 +22,18 @@ func (h *handler) SendManualReply(c *gin.Context) {
 		return
 	}
 
-	// Extraer user_id del JWT para auditoría
+	businessID, ok := resolveBusinessID(c, req.BusinessID)
+	if !ok {
+		return
+	}
+
 	sentBy, _ := c.Get("user_id")
 	sentByStr, _ := sentBy.(string)
 
 	h.log.Info(ctx).
 		Str("conversation_id", conversationID).
 		Str("phone_number", req.PhoneNumber).
-		Uint("business_id", req.BusinessID).
+		Uint("business_id", businessID).
 		Str("sent_by", sentByStr).
 		Msg("[ManualReply Handler] - enviando reply manual")
 
@@ -40,7 +41,7 @@ func (h *handler) SendManualReply(c *gin.Context) {
 		ctx,
 		conversationID,
 		req.PhoneNumber,
-		req.BusinessID,
+		businessID,
 		req.Text,
 		sentByStr,
 	)

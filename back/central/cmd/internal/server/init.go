@@ -6,6 +6,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/cmd/internal/routes"
 	"github.com/secamc93/probability/back/central/services/auth"
+	"github.com/secamc93/probability/back/central/services/auth/authz"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/events"
 	"github.com/secamc93/probability/back/central/services/integrations"
@@ -27,10 +28,8 @@ func Init(ctx context.Context) error {
 	database := db.New(logger, environment)
 	emailService := email.New(environment, logger)
 
-	// Initialize S3
 	s3Service := storage.New(environment, logger)
 
-	// Initialize RabbitMQ
 	queueRegistry := NewQueueRegistry()
 	rabbitMQ, err := rabbitmq.New(logger, environment)
 	if err != nil {
@@ -39,8 +38,6 @@ func Init(ctx context.Context) error {
 			Msg("Failed to initialize RabbitMQ - consumers will be disabled")
 		rabbitMQ = rabbitmq.NewNoop()
 	} else {
-		// RabbitMQ info mostrada en LogStartupInfo() - no duplicar aquí
-		// Configurar registry para registrar colas declaradas
 		if rmq, ok := rabbitMQ.(interface {
 			SetQueueRegistry(rabbitmq.QueueRegistryCallback)
 		}); ok {
@@ -48,11 +45,9 @@ func Init(ctx context.Context) error {
 		}
 	}
 
-	// Initialize Redis
 	redisRegistry := NewRedisRegistry()
 	redisClient := redis.New(logger, environment)
 	if redisClient != nil {
-		// Configurar registry para registrar prefijos y canales
 		if rc, ok := redisClient.(interface {
 			SetCacheRegistry(redis.CacheRegistryCallback)
 			SetChannelRegistry(redis.ChannelRegistryCallback)
@@ -62,30 +57,27 @@ func Init(ctx context.Context) error {
 		}
 	}
 
-	// Initialize Bedrock (AI)
 	bedrockClient := bedrock.New(logger, environment)
 
 	middleware.InitFromEnv(environment, logger)
 	r := routes.BuildRouter(ctx, logger, environment)
 
-	// jwtService := middleware.GetJWTService()
-
 	v1Group := r.Group("/api/v1")
 
-	// Initialize Auth Modules
+	authzBundle := authz.New(v1Group, database, redisClient, logger)
+	v1Group.Use(authzBundle.Middleware())
+
 	authBundle := auth.New(v1Group, database, logger, environment, s3Service, rabbitMQ)
 
-	// Initialize unified events module (SSE + RabbitMQ consumer + publisher)
 	events.New(v1Group, logger, rabbitMQ, redisClient)
 
-	// Initialize Integrations Module first so core is available for modules
 	integrationCore, dianEmitter := integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
 
-	// Initialize Order Module (and others) — receives integrationCore for shared platform-credentials access
 	modulesBundle := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter)
 
-	// Todo negocio nuevo (autoregistro publico o creado desde el backoffice de admin)
-	// arranca en el plan de prueba
+	authzBundle.SetModuleAccess(modulesBundle.Subscriptions.UseCase)
+	authzBundle.ReportCoverage(ctx, r.Routes())
+
 	authBundle.Demo.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
 	authBundle.Business.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
 

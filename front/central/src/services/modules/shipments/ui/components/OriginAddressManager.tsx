@@ -12,7 +12,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { useToast } from '@/shared/providers/toast-provider';
-import { useHasPermission } from '@/shared/contexts/permissions-context';
+import { useCan } from '@/shared/contexts/permissions-context';
 import { Plus, Edit2, Trash2, CheckCircle, MapPin, Phone, Mail, Building, X } from 'lucide-react';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 
@@ -22,9 +22,9 @@ interface OriginAddressManagerProps {
 
 export function OriginAddressManager({ selectedBusinessId }: OriginAddressManagerProps = {}) {
     const { showToast } = useToast();
-    const canCreate = useHasPermission('Envios', 'Create');
-    const canUpdate = useHasPermission('Envios', 'Update');
-    const canDelete = useHasPermission('Envios', 'Delete');
+    const canCreate = useCan('shipments.create');
+    const canUpdate = useCan('shipments.update');
+    const canDelete = useCan('shipments.delete');
     const businessId = selectedBusinessId ?? undefined;
     const [addresses, setAddresses] = useState<OriginAddress[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);

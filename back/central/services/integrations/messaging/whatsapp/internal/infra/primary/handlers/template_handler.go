@@ -9,17 +9,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/response"
 )
 
-// SendTemplate maneja el endpoint POST /integrations/whatsapp/send-template
-// @Summary Envía una plantilla de WhatsApp
-// @Description Envía una plantilla de WhatsApp con variables dinámicas y botones opcionales
-// @Tags WhatsApp
-// @Accept json
-// @Produce json
-// @Param request body SendTemplateRequest true "Datos de la plantilla a enviar"
-// @Success 200 {object} SendTemplateResponse
-// @Failure 400 {object} map[string]interface{} "Error de validación"
-// @Failure 500 {object} map[string]interface{} "Error interno del servidor"
-// @Router /integrations/whatsapp/send-template [post]
 func (h *handler) SendTemplate(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -34,25 +23,29 @@ func (h *handler) SendTemplate(c *gin.Context) {
 		return
 	}
 
+	businessID, ok := resolveBusinessID(c, req.BusinessID)
+	if !ok {
+		return
+	}
+
 	h.log.Info(ctx).
 		Str("template_name", req.TemplateName).
 		Str("phone_number", req.PhoneNumber).
 		Str("order_number", req.OrderNumber).
+		Uint("business_id", businessID).
 		Msg("[Template Handler] - procesando solicitud de envío de plantilla")
 
-	// Inicializar variables si es nil
 	if req.Variables == nil {
 		req.Variables = make(map[string]string)
 	}
 
-	// Enviar plantilla
 	messageID, err := h.useCase.SendTemplate(
 		ctx,
 		req.TemplateName,
 		req.PhoneNumber,
 		req.Variables,
 		req.OrderNumber,
-		req.BusinessID,
+		businessID,
 	)
 
 	if err != nil {
@@ -61,11 +54,9 @@ func (h *handler) SendTemplate(c *gin.Context) {
 			Str("phone_number", req.PhoneNumber).
 			Msg("[Template Handler] - error enviando plantilla")
 
-		// Determinar código de error apropiado
 		statusCode := http.StatusInternalServerError
 		errorType := "internal_error"
 
-		// Errores específicos del dominio
 		errorMsg := err.Error()
 		if strings.Contains(errorMsg, "plantilla no encontrada") {
 			statusCode = http.StatusBadRequest

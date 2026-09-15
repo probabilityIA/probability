@@ -51,6 +51,7 @@ class AppRouter {
           !AppModules.isRouteAllowed(
             state.matchedLocation,
             isSuperAdmin: loginProvider.isSuperAdmin,
+            canNav: loginProvider.canNav,
           )) {
         return '/dashboard';
       }

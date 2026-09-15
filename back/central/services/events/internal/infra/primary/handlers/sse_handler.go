@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/entities"
 )
 
-// HandleSSE maneja la conexión SSE por business_id con filtros opcionales
 func (h *SSEHandler) HandleSSE(c *gin.Context) {
 	h.logger.Info(c.Request.Context()).
 		Str("method", c.Request.Method).
@@ -27,36 +27,9 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 		return
 	}
 
-	var businessID uint
-
-	if businessIDStr := c.Param("businessID"); businessIDStr != "" {
-		if id, parseErr := strconv.ParseUint(businessIDStr, 10, 32); parseErr == nil {
-			businessID = uint(id)
-		} else {
-			h.logger.Warn(c.Request.Context()).
-				Err(parseErr).
-				Str("business_id_raw", businessIDStr).
-				Msg("ID de negocio invalido en path param")
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "INVALID_BUSINESS_ID",
-				"message": "El ID de negocio proporcionado no es valido",
-			})
-			return
-		}
-	} else if businessIDStr := c.Query("business_id"); businessIDStr != "" {
-		if id, parseErr := strconv.ParseUint(businessIDStr, 10, 32); parseErr == nil {
-			businessID = uint(id)
-		} else {
-			h.logger.Warn(c.Request.Context()).
-				Err(parseErr).
-				Str("business_id_raw", businessIDStr).
-				Msg("ID de negocio invalido en query param")
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "INVALID_BUSINESS_ID",
-				"message": "El ID de negocio proporcionado no es valido",
-			})
-			return
-		}
+	businessID, ok := h.resolveSSEBusinessID(c)
+	if !ok {
+		return
 	}
 
 	filter := h.buildFilterFromQuery(c)
@@ -65,8 +38,6 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 
 	connectionID := h.eventManager.AddConnection(businessID, filter, c.Writer)
 
-	// Precargar caché SOLO en reconexión (cuando el browser envía Last-Event-ID)
-	// En conexión nueva (page load/refresh), NO replay para evitar flood de notificaciones
 	if businessID > 0 {
 		if lastEventID := c.GetHeader("Last-Event-ID"); lastEventID != "" {
 			sinceSeq, _ := strconv.ParseInt(lastEventID, 10, 64)
@@ -74,7 +45,6 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 		}
 	}
 
-	// Enviar mensaje de conexión
 	message := fmt.Sprintf("Conexión SSE establecida para business %d", businessID)
 	if businessID == 0 {
 		message = "Conexión SSE establecida (super usuario - todos los businesses)"
@@ -97,7 +67,42 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 	h.keepConnectionAlive(c.Writer, connectionID, c.Request.Context())
 }
 
-// buildFilterFromQuery construye filtros desde query parameters
+func (h *SSEHandler) resolveSSEBusinessID(c *gin.Context) (uint, bool) {
+	tokenBusinessID, ok := middleware.GetBusinessIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "UNAUTHORIZED",
+			"message": "contexto de negocio no encontrado",
+		})
+		return 0, false
+	}
+	if tokenBusinessID > 0 {
+		return tokenBusinessID, true
+	}
+
+	raw := c.Param("businessID")
+	if raw == "" {
+		raw = c.Query("business_id")
+	}
+	if raw == "" {
+		return 0, true
+	}
+
+	id, err := strconv.ParseUint(raw, 10, 32)
+	if err != nil {
+		h.logger.Warn(c.Request.Context()).
+			Err(err).
+			Str("business_id_raw", raw).
+			Msg("ID de negocio invalido en SSE")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "INVALID_BUSINESS_ID",
+			"message": "El ID de negocio proporcionado no es valido",
+		})
+		return 0, false
+	}
+	return uint(id), true
+}
+
 func (h *SSEHandler) buildFilterFromQuery(c *gin.Context) *entities.SSEConnectionFilter {
 	filter := &entities.SSEConnectionFilter{}
 
@@ -133,18 +138,13 @@ func (h *SSEHandler) buildFilterFromQuery(c *gin.Context) *entities.SSEConnectio
 	return filter
 }
 
-// setupSSEHeaders configura los headers HTTP para SSE
 func (h *SSEHandler) setupSSEHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Expires", "0")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Cache-Control, Last-Event-ID")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Type, Cache-Control")
-	w.Header().Del("Access-Control-Allow-Credentials")
 	w.Header().Set("X-Accel-Buffering", "no")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
@@ -153,7 +153,6 @@ func (h *SSEHandler) setupSSEHeaders(w http.ResponseWriter) {
 	}
 }
 
-// keepConnectionAlive mantiene la conexión viva y detecta desconexiones
 func (h *SSEHandler) keepConnectionAlive(w http.ResponseWriter, connectionID string, ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -184,7 +183,6 @@ func (h *SSEHandler) keepConnectionAlive(w http.ResponseWriter, connectionID str
 	}
 }
 
-// preloadCacheEventsSince precarga eventos del caché posteriores a sinceSeq (reconexión)
 func (h *SSEHandler) preloadCacheEventsSince(w http.ResponseWriter, businessID uint, sinceSeq int64, ctx context.Context) {
 	events := h.eventManager.GetRecentEventsByBusiness(businessID, sinceSeq)
 
@@ -197,7 +195,6 @@ func (h *SSEHandler) preloadCacheEventsSince(w http.ResponseWriter, businessID u
 
 		for _, event := range events {
 			eventJSON := h.eventToSSEJSON(event)
-			// Include id: for Last-Event-ID tracking on reconnect
 			idLine := ""
 			if seqVal, ok := event.Metadata["sse_seq"]; ok {
 				idLine = fmt.Sprintf("id: %v\n", seqVal)
@@ -218,7 +215,6 @@ func (h *SSEHandler) preloadCacheEventsSince(w http.ResponseWriter, businessID u
 	}
 }
 
-// eventToSSEJSON convierte un evento a JSON para SSE
 func (h *SSEHandler) eventToSSEJSON(event entities.Event) string {
 	eventData := map[string]interface{}{
 		"id":          event.ID,
@@ -245,7 +241,6 @@ func (h *SSEHandler) eventToSSEJSON(event entities.Event) string {
 	return string(jsonBytes)
 }
 
-// sendSSEMessage envía un mensaje SSE formateado
 func (h *SSEHandler) sendSSEMessage(w http.ResponseWriter, eventType, data string) error {
 	message := fmt.Sprintf("event: %s\ndata: %s\n\n", eventType, data)
 	if _, err := w.Write([]byte(message)); err != nil {

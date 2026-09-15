@@ -5,7 +5,7 @@ export const shipmentsTour: TourDefinition = {
     version: 1,
     title: 'Envios',
     routes: ['/shipments'],
-    resource: 'Envios',
+    resource: 'shipments',
     autoStart: true,
     steps: [
         {
@@ -53,7 +53,7 @@ export const shipmentsCodTour: TourDefinition = {
     version: 1,
     title: 'Recaudo contra entrega',
     routes: ['/shipments/cod'],
-    resource: 'Envios',
+    resource: 'shipments',
     autoStart: true,
     steps: [
         {
@@ -82,7 +82,7 @@ export const shipmentsQuotesTour: TourDefinition = {
     version: 1,
     title: 'Cotizaciones',
     routes: ['/shipments/quotes'],
-    resource: 'Envios',
+    resource: 'shipments',
     autoStart: true,
     steps: [
         {

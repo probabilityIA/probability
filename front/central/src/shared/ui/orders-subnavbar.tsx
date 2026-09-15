@@ -17,14 +17,12 @@ export const ORDERS_ACTIONS_SLOT_ID = 'orders-actions-slot';
 
 export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
     const pathname = usePathname();
-    const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
+    const { hasNav, isSuperAdmin } = usePermissions();
     const { actionButtons } = useNavbarActions();
     const { selectedBusinessId, setSelectedBusinessId } = useOrdersBusiness();
 
-    const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
-
-    const canViewOrders = permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read');
-    const canViewShipments = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
+    const canViewOrders = hasNav('orders');
+    const canViewShipments = hasNav('shipments');
 
     const isInOrdersModule = pathname.startsWith('/orders') ||
                             pathname.startsWith('/shipments') ||

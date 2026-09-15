@@ -53,6 +53,8 @@ export interface UserPermissions {
     subscription_end_date?: string;
 }
 
+let inMemoryPermissions: UserPermissions | null = null;
+
 const KEYS = {
     SESSION_TOKEN: 'session_token',
     BUSINESS_TOKEN: 'business_token',
@@ -304,15 +306,16 @@ export const CookieStorage = {
 
     // Permissions
     getPermissions: (): UserPermissions | null => {
-        const data = getItem(KEYS.PERMISSIONS);
-        return data ? JSON.parse(data) : null;
+        return inMemoryPermissions;
     },
 
     setPermissions: (permissions: UserPermissions) => {
-        setItem(KEYS.PERMISSIONS, JSON.stringify(permissions));
+        inMemoryPermissions = permissions;
+        removeItem(KEYS.PERMISSIONS);
     },
 
     removeUserPermissions: () => {
+        inMemoryPermissions = null;
         removeItem(KEYS.PERMISSIONS);
     },
 

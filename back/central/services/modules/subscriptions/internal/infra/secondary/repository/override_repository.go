@@ -33,7 +33,9 @@ func (r *Repository) DeleteOverride(ctx context.Context, businessID uint, module
 
 func (r *Repository) ListOverridesByBusiness(ctx context.Context, businessID uint) ([]entities.BusinessModuleOverride, error) {
 	var overridesDB []models.BusinessModuleOverride
-	if err := r.db.Conn(ctx).Where("business_id = ?", businessID).Find(&overridesDB).Error; err != nil {
+	if err := r.db.Conn(ctx).
+		Where("business_id = ? AND (expires_at IS NULL OR expires_at > NOW())", businessID).
+		Find(&overridesDB).Error; err != nil {
 		return nil, err
 	}
 

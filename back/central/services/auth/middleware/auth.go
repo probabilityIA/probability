@@ -13,7 +13,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// Re-export types for backward compatibility
 type AuthType = domain.AuthType
 type AuthInfo = domain.AuthInfo
 type AuthError = domain.AuthError
@@ -42,10 +41,8 @@ func InitFromEnv(cfg env.IConfig, logger log.ILogger) {
 	secret := cfg.Get("JWT_SECRET")
 	shared := sharedjwt.New(secret)
 
-	// Create adapters
 	jwtAdapter := jwtinfra.NewAdapter(shared)
 
-	// Configure global
 	Configure(jwtAdapter, nil, logger)
 }
 
@@ -71,7 +68,6 @@ func GetJWTService() domain.IJWTService {
 	return defaultJWTService
 }
 
-// Middlewares
 func JWT() gin.HandlerFunc {
 	ensureInitialized()
 	return defaultMiddleware.AuthMiddleware()
@@ -92,27 +88,23 @@ func BusinessTokenAuth() gin.HandlerFunc {
 	return defaultMiddleware.BusinessTokenAuthMiddleware()
 }
 
-// Deprecated: Use Configure and JWT() instead, or use this for custom instances
 func AuthMiddleware(jwtService domain.IJWTService, logger log.ILogger) gin.HandlerFunc {
 	svc := app.NewAuthService(jwtService)
 	mw := httpinfra.NewMiddleware(svc, nil, logger)
 	return mw.AuthMiddleware()
 }
 
-// Deprecated: Use Configure and APIKey() instead
 func APIKeyMiddleware(authUseCase domain.IAuthUseCase, logger log.ILogger) gin.HandlerFunc {
 	mw := httpinfra.NewMiddleware(nil, authUseCase, logger)
 	return mw.APIKeyMiddleware()
 }
 
-// Deprecated: Use Configure and Auto() instead
 func AutoAuthMiddleware(jwtService domain.IJWTService, authUseCase domain.IAuthUseCase, logger log.ILogger) gin.HandlerFunc {
 	svc := app.NewAuthService(jwtService)
 	mw := httpinfra.NewMiddleware(svc, authUseCase, logger)
 	return mw.AutoAuthMiddleware()
 }
 
-// Helpers
 func GetAuthInfo(c *gin.Context) (*domain.AuthInfo, bool) {
 	authInfo, exists := c.Get("auth_info")
 	if !exists {
@@ -250,17 +242,12 @@ func IsSuperAdmin(c *gin.Context) bool {
 	return false
 }
 
-// GetScope retorna el scope del usuario autenticado ("platform" o "business")
 func GetScope(c *gin.Context) string {
-	// Primero intentar obtener del auth_info
 	authInfo, exists := GetAuthInfo(c)
 	if exists && authInfo.Scope != "" {
 		return authInfo.Scope
 	}
 
-	// Si no hay scope en auth_info, determinar por business_id
-	// Si business_id == 0, es scope platform (super admin)
-	// Si business_id > 0, es scope business
 	businessID, exists := GetBusinessID(c)
 	if exists {
 		if businessID == 0 {
@@ -269,7 +256,6 @@ func GetScope(c *gin.Context) string {
 		return "business"
 	}
 
-	// Por defecto, retornar business
 	return "business"
 }
 
@@ -283,73 +269,6 @@ func RequireSuperAdmin() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Next()
-	}
-}
-
-func RequireRole(requiredRole string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		roles, exists := GetUserRoles(c)
-		if !exists {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Acceso denegado: roles no disponibles",
-			})
-			c.Abort()
-			return
-		}
-
-		hasRole := false
-		for _, role := range roles {
-			if role == requiredRole {
-				hasRole = true
-				break
-			}
-		}
-
-		if !hasRole {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Acceso denegado: rol requerido",
-			})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
-func RequireAnyRole(requiredRoles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		roles, exists := GetUserRoles(c)
-		if !exists {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Acceso denegado: roles no disponibles",
-			})
-			c.Abort()
-			return
-		}
-
-		hasRole := false
-		for _, userRole := range roles {
-			for _, requiredRole := range requiredRoles {
-				if userRole == requiredRole {
-					hasRole = true
-					break
-				}
-			}
-			if hasRole {
-				break
-			}
-		}
-
-		if !hasRole {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Acceso denegado: rol requerido",
-			})
-			c.Abort()
-			return
-		}
-
 		c.Next()
 	}
 }
@@ -385,7 +304,6 @@ func RequireAPIKey() gin.HandlerFunc {
 	return RequireAuthType(domain.AuthTypeAPIKey)
 }
 
-// AuthBuilder
 type AuthBuilder struct {
 	jwtService  domain.IJWTService
 	authUseCase domain.IAuthUseCase

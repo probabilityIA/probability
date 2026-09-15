@@ -8,19 +8,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/mappers"
 )
 
-// GetOrderRaw godoc
-// @Summary      Obtener datos crudos de orden
-// @Description  Obtiene el JSON original recibido del canal de venta
-// @Tags         Orders
-// @Accept       json
-// @Produce      json
-// @Param        id   path      string  true  "ID de la orden (UUID)"
-// @Security     BearerAuth
-// @Success      200  {object}  response.OrderRaw
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      404  {object}  map[string]interface{}
-// @Failure      500  {object}  map[string]interface{}
-// @Router       /orders/{id}/raw [get]
 func (h *Handlers) GetOrderRaw(c *gin.Context) {
 	id := c.Param("id")
 
@@ -33,10 +20,12 @@ func (h *Handlers) GetOrderRaw(c *gin.Context) {
 		return
 	}
 
-	// Llamar al caso de uso (retorna DTO de dominio)
+	if !h.ensureOrderOwnership(c, id) {
+		return
+	}
+
 	domainResp, err := h.orderCRUD.GetOrderRaw(c.Request.Context(), id)
 	if err != nil {
-		// Verificar si es un error de "no encontrado" (puede estar envuelto)
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "raw data not found for this order") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -55,7 +44,6 @@ func (h *Handlers) GetOrderRaw(c *gin.Context) {
 		return
 	}
 
-	// ✅ Convertir Domain response -> HTTP response ([]byte -> datatypes.JSON)
 	httpResp := mappers.OrderRawToResponse(domainResp)
 
 	c.JSON(http.StatusOK, gin.H{

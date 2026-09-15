@@ -5,7 +5,7 @@ export const ordersTour: TourDefinition = {
     version: 1,
     title: 'Ordenes',
     routes: ['/orders'],
-    resource: 'Ordenes',
+    resource: 'orders',
     autoStart: true,
     steps: [
         {

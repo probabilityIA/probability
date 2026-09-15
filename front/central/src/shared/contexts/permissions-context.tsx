@@ -1,165 +1,180 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { TokenStorage } from '../utils';
-import type { UserPermissions, ResourcePermission } from '../utils';
+import type { UserPermissions } from '../utils';
+import { getMyAccessAction } from '@/services/auth/access/infra/actions';
+import type { Access, AccessNavItem } from '@/services/auth/access/domain/types';
+import { AccessDeniedModal } from '../ui/access-denied-modal';
+import {
+    ACCESS_DENIED_EVENT,
+    infoFromBody,
+    isAccessDeniedMessage,
+    isPublicAuthRequest,
+    readAccessDeniedCookie,
+    type AccessDeniedInfo,
+} from '../utils/access-denied';
 
-// Mapeo de recursos del backend a rutas del frontend
-const RESOURCE_ROUTE_MAP: Record<string, string> = {
-    'Usuarios': '/users',
-    'Roles': '/roles',
-    'Permisos': '/permissions',
-    'Recursos': '/resources',
-    'Empresas': '/businesses',
-    'Ordenes': '/orders',
-    'Productos': '/products',
-    'Envios': '/shipments',
-    'Integraciones': '/integrations',
-    'Configuración de Notificaciones': '/notification-config',
-    'Facturacion': '/invoicing',
-};
+const COOKIE_POLL_MS = 1000;
 
-// Mapeo inverso: rutas a recursos
-const ROUTE_RESOURCE_MAP: Record<string, string> = Object.entries(RESOURCE_ROUTE_MAP).reduce(
-    (acc, [resource, route]) => ({ ...acc, [route]: resource }),
-    {}
-);
-
-// Acciones estándar
-export type ActionType = 'Create' | 'Read' | 'Update' | 'Delete' | 'List';
+const ALWAYS_ALLOWED_ROUTES = ['/home', '/profile', '/subscription'];
 
 interface PermissionsContextType {
+    access: Access | null;
     permissions: UserPermissions | null;
     isLoading: boolean;
+    loadError: string | null;
     isSuperAdmin: boolean;
-    // Verificar si tiene permiso sobre un recurso y acción
-    hasPermission: (resource: string, action: ActionType) => boolean;
-    // Verificar si tiene acceso a una ruta
-    hasRouteAccess: (route: string) => boolean;
-    // Obtener las acciones permitidas para un recurso
-    getResourceActions: (resource: string) => string[];
-    // Recargar permisos
-    reloadPermissions: () => void;
-    // Establecer permisos (después del login)
-    setUserPermissions: (permissions: UserPermissions) => void;
+    roleCode: string;
+    navigation: AccessNavItem[];
+    can: (permission: string) => boolean;
+    hasNav: (key: string) => boolean;
+    canAccessRoute: (pathname: string) => boolean;
+    reloadAccess: () => Promise<void>;
 }
 
 const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
 
-export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [permissions, setPermissions] = useState<UserPermissions | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+function toLegacyPermissions(access: Access): UserPermissions {
+    return {
+        is_super: access.is_super,
+        business_id: access.business?.id ?? 0,
+        business_name: access.business?.name ?? '',
+        role_id: access.role.id,
+        role_name: access.role.name,
+        resources: [],
+        subscription_status: access.subscription.status,
+    };
+}
 
-    useEffect(() => {
-        const stored = TokenStorage.getPermissions();
-        if (stored) {
-            setPermissions(stored);
+function routeBase(route: string): string {
+    const first = route.split('/').filter(Boolean)[0];
+    return first ? `/${first}` : '/';
+}
+
+function matchesRoute(pathname: string, route: string): boolean {
+    return pathname === route || pathname.startsWith(`${route}/`);
+}
+
+export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [access, setAccess] = useState<Access | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    const reloadAccess = useCallback(async () => {
+        setIsLoading(true);
+        const res = await getMyAccessAction();
+        if (res.success && res.data) {
+            setAccess(res.data);
+            setLoadError(null);
+            TokenStorage.setPermissions(toLegacyPermissions(res.data));
+        } else {
+            setAccess(null);
+            setLoadError(res.error || 'No se pudo cargar el acceso');
+            TokenStorage.removeUserPermissions();
         }
         setIsLoading(false);
+    }, []);
 
-        (async () => {
-            try {
-                const { getRolesPermissionsAction } = await import('@/services/auth/login/infra/actions');
-                const res = await getRolesPermissionsAction();
-                if (res?.success && res.data) {
-                    const raw = res.data as any;
-                    const fresh = {
-                        ...raw,
-                        role_name: raw.role_name ?? raw.role?.name ?? '',
-                        role_id: raw.role_id ?? raw.role?.id ?? 0,
-                    } as UserPermissions;
-                    TokenStorage.setPermissions(fresh);
-                    setPermissions(fresh);
-                }
-            } catch {
+    useEffect(() => {
+        reloadAccess();
+    }, [reloadAccess]);
+
+    const [denied, setDenied] = useState<AccessDeniedInfo | null>(null);
+
+    const handleDenied = useCallback(
+        (info: AccessDeniedInfo) => {
+            setDenied((current) => current ?? info);
+            if (info.code !== 'unauthenticated') {
+                reloadAccess();
             }
-        })();
-    }, []);
+        },
+        [reloadAccess],
+    );
 
-    const isSuperAdmin = permissions?.is_super === true;
+    useEffect(() => {
+        const onDenied = (event: Event) => handleDenied((event as CustomEvent<AccessDeniedInfo>).detail);
+        window.addEventListener(ACCESS_DENIED_EVENT, onDenied);
 
-    // Verificar permiso sobre recurso y acción
-    const hasPermission = useCallback((resource: string, action: ActionType): boolean => {
-        // Super admin tiene todos los permisos
-        if (isSuperAdmin) return true;
+        const poll = window.setInterval(() => {
+            const info = readAccessDeniedCookie();
+            if (info) handleDenied(info);
+        }, COOKIE_POLL_MS);
 
-        if (!permissions?.resources) return false;
+        const originalFetch = window.fetch;
+        window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+            const response = await originalFetch(input, init);
+            if (response.status === 401 || response.status === 402 || response.status === 403) {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+                if (url.includes('/api/v1/') && !isPublicAuthRequest(url)) {
+                    const body = await response.clone().json().catch(() => ({}));
+                    const info = infoFromBody(response.status, body);
+                    if (info) handleDenied(info);
+                }
+            }
+            return response;
+        };
 
-        const resourcePermission = permissions.resources.find(
-            (r) => r.resource.toLowerCase() === resource.toLowerCase() && r.active
-        );
+        const originalAlert = window.alert;
+        window.alert = (message?: unknown) => {
+            const denied = isAccessDeniedMessage(String(message ?? ''));
+            if (denied) {
+                handleDenied(denied);
+                return;
+            }
+            originalAlert(message as string);
+        };
 
-        if (!resourcePermission) return false;
+        return () => {
+            window.removeEventListener(ACCESS_DENIED_EVENT, onDenied);
+            window.clearInterval(poll);
+            window.fetch = originalFetch;
+            window.alert = originalAlert;
+        };
+    }, [handleDenied]);
 
-        return resourcePermission.actions.some(
-            (a) => a.toLowerCase() === action.toLowerCase()
-        );
-    }, [permissions, isSuperAdmin]);
+    const permissionSet = useMemo(() => new Set(access?.permissions ?? []), [access]);
+    const navKeys = useMemo(() => new Set((access?.navigation ?? []).map((n) => n.key)), [access]);
+    const isSuperAdmin = access?.is_super === true;
 
-    // Verificar acceso a una ruta
-    const hasRouteAccess = useCallback((route: string): boolean => {
-        // Super admin tiene acceso a todo
-        if (isSuperAdmin) return true;
+    const can = useCallback(
+        (permission: string) => isSuperAdmin || permissionSet.has(permission),
+        [isSuperAdmin, permissionSet],
+    );
 
-        if (!permissions?.resources) return false;
+    const hasNav = useCallback((key: string) => navKeys.has(key), [navKeys]);
 
-        // Normalizar la ruta (quitar parámetros y trailing slash)
-        const normalizedRoute = '/' + route.split('/').filter(Boolean)[0];
-        const resourceName = ROUTE_RESOURCE_MAP[normalizedRoute];
+    const canAccessRoute = useCallback(
+        (pathname: string) => {
+            if (!access) return false;
+            if (isSuperAdmin) return true;
+            if (ALWAYS_ALLOWED_ROUTES.some((route) => matchesRoute(pathname, route))) return true;
+            return access.navigation.some((item) => matchesRoute(pathname, routeBase(item.route)));
+        },
+        [access, isSuperAdmin],
+    );
 
-        if (!resourceName) {
-            // Si no está mapeado, permitir acceso (rutas públicas o no controladas)
-            return true;
-        }
-
-        const resourcePermission = permissions.resources.find(
-            (r) => r.resource === resourceName && r.active
-        );
-
-        // Si tiene el recurso y al menos una acción, tiene acceso
-        return resourcePermission ? resourcePermission.actions.length > 0 : false;
-    }, [permissions, isSuperAdmin]);
-
-    // Obtener acciones permitidas para un recurso
-    const getResourceActions = useCallback((resource: string): string[] => {
-        // Super admin tiene todas las acciones
-        if (isSuperAdmin) return ['Create', 'Read', 'Update', 'Delete', 'List'];
-
-        if (!permissions?.resources) return [];
-
-        const resourcePermission = permissions.resources.find(
-            (r) => r.resource.toLowerCase() === resource.toLowerCase() && r.active
-        );
-
-        return resourcePermission?.actions || [];
-    }, [permissions, isSuperAdmin]);
-
-    // Recargar permisos del localStorage
-    const reloadPermissions = useCallback(() => {
-        const stored = TokenStorage.getPermissions();
-        setPermissions(stored);
-    }, []);
-
-    // Establecer permisos (después del login)
-    const setUserPermissions = useCallback((newPermissions: UserPermissions) => {
-        TokenStorage.setPermissions(newPermissions);
-        setPermissions(newPermissions);
-    }, []);
+    const value = useMemo<PermissionsContextType>(
+        () => ({
+            access,
+            permissions: access ? toLegacyPermissions(access) : null,
+            isLoading,
+            loadError,
+            isSuperAdmin,
+            roleCode: access?.role.code ?? '',
+            navigation: access?.navigation ?? [],
+            can,
+            hasNav,
+            canAccessRoute,
+            reloadAccess,
+        }),
+        [access, isLoading, loadError, isSuperAdmin, can, hasNav, canAccessRoute, reloadAccess],
+    );
 
     return (
-        <PermissionsContext.Provider
-            value={{
-                permissions,
-                isLoading,
-                isSuperAdmin,
-                hasPermission,
-                hasRouteAccess,
-                getResourceActions,
-                reloadPermissions,
-                setUserPermissions,
-            }}
-        >
+        <PermissionsContext.Provider value={value}>
             {children}
+            <AccessDeniedModal info={denied} onClose={() => setDenied(null)} />
         </PermissionsContext.Provider>
     );
 };
@@ -172,23 +187,8 @@ export const usePermissions = (): PermissionsContextType => {
     return context;
 };
 
-// Hook para verificar un permiso específico
-export const useHasPermission = (resource: string, action: ActionType): boolean => {
-    const { hasPermission, isLoading } = usePermissions();
+export const useCan = (permission: string): boolean => {
+    const { can, isLoading } = usePermissions();
     if (isLoading) return false;
-    return hasPermission(resource, action);
-};
-
-// Componente para renderizado condicional basado en permisos
-export const PermissionGate: React.FC<{
-    resource: string;
-    action: ActionType;
-    children: ReactNode;
-    fallback?: ReactNode;
-}> = ({ resource, action, children, fallback = null }) => {
-    const { hasPermission, isLoading } = usePermissions();
-
-    if (isLoading) return null;
-
-    return hasPermission(resource, action) ? <>{children}</> : <>{fallback}</>;
+    return can(permission);
 };

@@ -108,6 +108,9 @@ func Summarize(o Order, carrierFee float64) Breakdown {
 		netFee = o.CheckoutCarrierFee
 	}
 	b.BusinessNet = charge - netFee
+	if o.CollectAmount > 0 && carrierFee > 0 {
+		b.BusinessNet = math.Min(o.CodTotal, o.CollectAmount-carrierFee)
+	}
 	return b
 }
 

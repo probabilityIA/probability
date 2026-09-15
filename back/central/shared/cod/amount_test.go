@@ -106,8 +106,13 @@ func TestCambioDeTransportadora(t *testing.T) {
 	}
 
 	mismaTransportadora := Order{CodTotal: 199068, IncludesShipping: true, CheckoutCarrierFee: 11501, QuotedCarrier: "INTERRAPIDISIMO", GuideCarrier: "INTERRAPIDISIMO", CollectAmount: 210569}
-	if got := Summarize(mismaTransportadora, 13528); got.CustomerCharge != 210569 || got.BusinessNet != 199068 || got.CarrierChanged {
-		t.Errorf("Summarize() error de cotizacion (14685) = %+v, el negocio recibe su neto", got)
+	if got := Summarize(mismaTransportadora, 13528); got.CustomerCharge != 210569 || got.BusinessNet != 197041 || got.CarrierChanged {
+		t.Errorf("Summarize() error de cotizacion (14685) = %+v, el neto no supera lo que devuelve la guia", got)
+	}
+
+	aFavor := Order{CodTotal: 211809, IncludesShipping: true, CheckoutCarrierFee: 6388, QuotedCarrier: "COORDINADORA", GuideCarrier: "COORDINADORA", CollectAmount: 218197}
+	if got := Summarize(aFavor, 6193); got.BusinessNet != 211809 {
+		t.Errorf("Summarize() guia a favor (15787) = %+v, el negocio recibe su cod_total", got)
 	}
 }
 

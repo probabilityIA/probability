@@ -10,7 +10,6 @@ import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { UserProfileModal } from './user-profile-modal';
 import { BusinessSettingsModal } from '@/services/auth/business/ui/components/BusinessSettingsModal';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { getMyModulesAction } from '@/services/modules/wallet/infra/subscription-actions';
 
 interface SidebarProps {
   user: {
@@ -28,17 +27,7 @@ export function Sidebar({ user }: SidebarProps) {
   const { primaryExpanded, requestExpand, requestCollapse, isMobileOpen, setIsMobileOpen } = useSidebar();
   const [showUserModal, setShowUserModal] = useState(false);
   const [invoicingOpen, setInvoicingOpen] = useState(false);
-  const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
-  const isDemo = permissions?.role_name === 'demo';
-
-  const [accessibleModules, setAccessibleModules] = useState<string[] | null>(null);
-  useEffect(() => {
-    if (isSuperAdmin) return;
-    getMyModulesAction().then((res) => {
-      if (res.success && res.data) setAccessibleModules(res.data);
-    });
-  }, [isSuperAdmin]);
-  const hasSubscriptionModule = (code: string) => isSuperAdmin || (accessibleModules?.includes(code) ?? false);
+  const { hasNav, isSuperAdmin, isLoading, permissions } = usePermissions();
 
   const businessLogo = useMemo(() => {
     if (isSuperAdmin) return null;
@@ -94,52 +83,42 @@ export function Sidebar({ user }: SidebarProps) {
     invoicingRoutes.some(route => pathname.startsWith(route)) ||
     deliveryRoutes.some(route => pathname.startsWith(route));
 
-  const canViewResources = isSuperAdmin;
-  const canViewBusinesses = isSuperAdmin || hasPermission('Empresas', 'Read');
+  const canViewResources = hasNav('resources');
+  const canViewBusinesses = hasNav('businesses');
 
-  const canViewUsers = isSuperAdmin || hasPermission('Usuarios', 'Read') || hasPermission('Users', 'Read') || hasPermission('Empleados', 'Read');
-  const canViewRoles = isSuperAdmin || hasPermission('Roles', 'Read') || hasPermission('Roles y Permisos', 'Read');
-  const canViewPermissions = isSuperAdmin || hasPermission('Permisos', 'Read') || hasPermission('Permissions', 'Read');
+  const canViewUsers = hasNav('users');
+  const canViewRoles = hasNav('roles');
+  const canViewPermissions = hasNav('permissions');
 
-  const canViewProducts = isSuperAdmin || hasPermission('Productos', 'Read') || hasPermission('Products', 'Read');
-  const canViewOrders = isSuperAdmin || hasPermission('Ordenes', 'Read') || hasPermission('Orders', 'Read');
-  const canViewShipments = isSuperAdmin || hasPermission('Envios', 'Read') || hasPermission('Shipments', 'Read');
+  const canViewProducts = hasNav('products');
+  const canViewOrders = hasNav('orders');
+  const canViewShipments = hasNav('shipments');
 
-  const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
+  const canViewCustomers = hasNav('customers');
 
-  const canViewAnnouncements = isSuperAdmin;
-  const canViewTickets = isSuperAdmin && !isDemo && hasSubscriptionModule('tickets');
+  const canViewAnnouncements = hasNav('announcements');
+  const canViewTickets = hasNav('tickets');
 
-  const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
-  const canViewInventory = isSuperAdmin
-    || hasPermission('Inventario', 'Read') || hasPermission('Inventory', 'Read')
-    || hasPermission('Inventario-Stock', 'Read')
-    || hasPermission('Inventario-Movimientos', 'Read')
-    || hasPermission('Inventario-Trazabilidad', 'Read')
-    || hasPermission('Inventario-Kardex', 'Read')
-    || hasPermission('Inventario-Operaciones', 'Read')
-    || hasPermission('Inventario-Slotting', 'Read')
-    || hasPermission('Inventario-Auditoria', 'Read')
-    || hasPermission('Inventario-LPN', 'Read')
-    || hasPermission('Inventario-Scan', 'Read')
-    || hasPermission('Inventario-Sync-Logs', 'Read');
+  const canViewWarehouses = hasNav('warehouses');
+  const canViewInventory = hasNav('inventory');
 
-  const canViewNotifications = isSuperAdmin || hasPermission('Notificaciones', 'Read');
+  const canViewNotifications = hasNav('notifications');
 
-  const canViewWallet = isSuperAdmin || hasPermission('Billetera', 'Read');
+  const canViewWallet = hasNav('wallet');
 
-  const canViewIntegrations = isSuperAdmin || user?.role === 'Administrador' || hasPermission('Integraciones', 'Read') || hasPermission('Integrations', 'Read');
+  const canViewIntegrations = hasNav('integrations');
 
-  const canViewInvoices = isSuperAdmin || hasPermission('Facturacion', 'Read');
-  const canViewInvoicingProviders = isSuperAdmin || hasPermission('Facturacion', 'Read');
-  const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Facturacion', 'Read');
+  const canViewInvoices = hasNav('invoicing');
+  const canViewInvoicingProviders = hasNav('invoicing');
+  const canViewInvoicingConfigs = hasNav('invoicing');
 
-  const canViewAccounting = isSuperAdmin;
+  const canViewAccounting = hasNav('accounting');
 
-  const canViewStorefront = (isSuperAdmin || hasPermission('Storefront', 'Read')) && hasSubscriptionModule('storefront');
-  const canViewWebsiteConfig = isSuperAdmin || user?.role === 'Administrador';
+  const canViewStorefront = hasNav('storefront');
+  const canViewWebsiteConfig = hasNav('website_config');
 
-  const canViewDelivery = (isSuperAdmin || hasPermission('Ultima Milla', 'Read') || hasPermission('Delivery', 'Read')) && hasSubscriptionModule('delivery');
+  const canViewDelivery = hasNav('delivery');
+  const canViewSubscription = hasNav('subscription');
 
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
   const canAccessOrders = canViewOrders || canViewShipments;
@@ -612,7 +591,7 @@ export function Sidebar({ user }: SidebarProps) {
               {(canViewStorefront || canViewWebsiteConfig) && (
                 <li>
                   <Link
-                    href="/storefront/catalogo"
+                    href={canViewStorefront ? '/storefront/catalogo' : '/website-config'}
                     className={`
                       flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 px-3 py-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/storefront') || pathname.startsWith('/website-config')
@@ -694,7 +673,7 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {!isDemo && (
+              {canViewSubscription && (
               <li>
                 <Link
                   href="/subscription"

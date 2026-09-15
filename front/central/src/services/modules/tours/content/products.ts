@@ -5,7 +5,7 @@ export const productsTour: TourDefinition = {
     version: 2,
     title: 'Productos',
     routes: ['/products'],
-    resource: 'Productos',
+    resource: 'products',
     autoStart: true,
     legacyStorageKey: 'products_tour_seen_v1',
     steps: [

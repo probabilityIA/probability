@@ -9,14 +9,14 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 export function StorefrontNav() {
     const pathname = usePathname();
     const router = useRouter();
-    const { permissions } = usePermissions();
+    const { roleCode } = usePermissions();
 
     const handleLogout = () => {
         TokenStorage.clearSession();
         router.push('/login');
     };
 
-    const isClienteFinal = permissions?.role_name === 'cliente_final';
+    const isClienteFinal = roleCode === 'cliente_final';
 
     const links = [
         { href: '/storefront/catalogo', label: 'Catalogo', icon: ShoppingBagIcon },

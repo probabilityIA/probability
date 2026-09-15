@@ -33,7 +33,7 @@ export const integrationsTour: TourDefinition = {
     version: 1,
     title: 'Integraciones',
     routes: ['/integrations'],
-    resource: 'Integraciones',
+    resource: 'integrations',
     autoStart: true,
     steps: [
         {

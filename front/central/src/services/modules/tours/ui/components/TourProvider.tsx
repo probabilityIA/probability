@@ -60,7 +60,7 @@ function readBusinessId(): number | undefined {
 export function TourProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { hasPermission, isSuperAdmin, isLoading: permisosCargando } = usePermissions();
+    const { can, isSuperAdmin, isLoading: permisosCargando } = usePermissions();
 
     const [progress, setProgress] = useState<Record<string, TourProgress>>({});
     const [cargado, setCargado] = useState(false);
@@ -119,11 +119,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
         const encontrado = findTourForRoute(TOUR_LIST, pathname ?? '');
         if (!encontrado) return undefined;
         if (encontrado.superAdminOnly && !isSuperAdmin) return undefined;
-        if (encontrado.resource && !isSuperAdmin && !hasPermission(encontrado.resource, 'Read')) {
+        if (encontrado.resource && !can(`${encontrado.resource}.read`)) {
             return undefined;
         }
         return encontrado;
-    }, [pathname, hasPermission, isSuperAdmin]);
+    }, [pathname, can, isSuperAdmin]);
 
     const toursVisibles = useMemo(
         () => TOUR_LIST.filter((tour) => !tour.superAdminOnly || isSuperAdmin),

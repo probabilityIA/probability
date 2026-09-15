@@ -27,6 +27,7 @@ class LoginProvider extends ChangeNotifier {
   bool _isSuperAdmin = false;
   List<BusinessInfo> _businesses = [];
   UserRolesPermissionsResponse? _rolesPermissions;
+  Set<String> _navigationKeys = <String>{};
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -84,6 +85,8 @@ class LoginProvider extends ChangeNotifier {
 
   LoginUseCases get _useCases => LoginUseCases(LoginApiRepository(_apiClient));
 
+  bool canNav(String key) => _isSuperAdmin || _navigationKeys.contains(key);
+
   void clearError() {
     if (_error == null) return;
     _error = null;
@@ -108,6 +111,7 @@ class LoginProvider extends ChangeNotifier {
 
       await _persistSession();
       await _fetchRolesPermissions();
+      await _fetchNavigation();
 
       _isLoading = false;
       notifyListeners();
@@ -147,6 +151,14 @@ class LoginProvider extends ChangeNotifier {
     try {
       _rolesPermissions = await _useCases.getRolesPermissions();
     } catch (_) {}
+  }
+
+  Future<void> _fetchNavigation() async {
+    try {
+      _navigationKeys = await _useCases.getNavigationKeys();
+    } catch (_) {
+      _navigationKeys = <String>{};
+    }
   }
 
   Future<ChangePasswordResponse?> changePassword(
@@ -205,6 +217,7 @@ class LoginProvider extends ChangeNotifier {
     try {
       _rolesPermissions = await _useCases.getRolesPermissions();
       _isSuperAdmin = _rolesPermissions?.isSuper ?? false;
+      await _fetchNavigation();
 
       final userData = await _tokenStorage.getUserData();
       if (userData != null) {
@@ -222,7 +235,6 @@ class LoginProvider extends ChangeNotifier {
       final sessionData = await _tokenStorage.getSessionData();
       if (sessionData != null) {
         final json = jsonDecode(sessionData) as Map<String, dynamic>;
-        _isSuperAdmin = json['is_super_admin'] ?? _isSuperAdmin;
         _businesses = (json['businesses'] as List<dynamic>?)
                 ?.map((e) => BusinessInfo.fromJson(Map<String, dynamic>.from(e)))
                 .toList() ??
@@ -242,17 +254,10 @@ class LoginProvider extends ChangeNotifier {
     _isSuperAdmin = false;
     _businesses = [];
     _rolesPermissions = null;
+    _navigationKeys = <String>{};
     _error = null;
     _biometricEnabled = false;
     _locked = false;
     notifyListeners();
-  }
-
-  bool hasPermission(String resource, String action) {
-    if (_isSuperAdmin) return true;
-    if (_rolesPermissions == null) return false;
-    return _rolesPermissions!.resources.any(
-      (r) => r.resource == resource && r.actions.contains(action),
-    );
   }
 }

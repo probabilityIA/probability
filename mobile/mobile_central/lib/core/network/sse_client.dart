@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import '../config/environment.dart';
+import '../storage/token_storage.dart';
 
 class SseEvent {
   const SseEvent({required this.type, required this.data});
@@ -23,12 +24,14 @@ abstract class SseSource {
 }
 
 class SseClient implements SseSource {
-  SseClient({Dio? dio, String? baseUrl})
+  SseClient({Dio? dio, String? baseUrl, Future<String?> Function()? tokenProvider})
       : _dio = dio ?? Dio(),
-        _baseUrl = baseUrl ?? Environment.apiBaseUrl;
+        _baseUrl = baseUrl ?? Environment.apiBaseUrl,
+        _tokenProvider = tokenProvider ?? TokenStorage().getToken;
 
   final Dio _dio;
   final String _baseUrl;
+  final Future<String?> Function() _tokenProvider;
 
   final StreamController<SseEvent> _events = StreamController<SseEvent>.broadcast();
   CancelToken? _cancel;
@@ -59,6 +62,7 @@ class SseClient implements SseSource {
     if (token == null || _closed) return;
 
     try {
+      final session = await _tokenProvider();
       final response = await _dio.get<ResponseBody>(
         '$_baseUrl/notify/sse/order-notify',
         queryParameters: <String, dynamic>{
@@ -67,7 +71,10 @@ class SseClient implements SseSource {
         },
         options: Options(
           responseType: ResponseType.stream,
-          headers: const {'Accept': 'text/event-stream'},
+          headers: {
+            'Accept': 'text/event-stream',
+            if (session != null && session.isNotEmpty) 'Authorization': 'Bearer $session',
+          },
           receiveTimeout: Duration.zero,
         ),
         cancelToken: token,

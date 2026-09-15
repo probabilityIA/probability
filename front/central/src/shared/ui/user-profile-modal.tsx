@@ -30,7 +30,7 @@ interface UserProfileModalProps {
 
 export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfileModalProps) {
   const { isDark, toggleDarkMode } = useDarkMode();
-  const { permissions, isSuperAdmin } = usePermissions();
+  const { permissions, isSuperAdmin, hasNav, roleCode } = usePermissions();
   const { setColors, getColors } = useTheme();
   const [themeSaving, setThemeSaving] = useState<string | null>(null);
   const [themeError, setThemeError] = useState<string | null>(null);
@@ -59,10 +59,9 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
 
   if (!user) return null;
 
-  const roleName = (permissions?.role_name || '').toLowerCase();
   const businessId = permissions?.business_id || 0;
   const canChangeBusinessTheme =
-    businessId > 0 && (isSuperAdmin || roleName === 'demo' || roleName.includes('admin'));
+    businessId > 0 && (isSuperAdmin || hasNav('website_config') || roleCode === 'demo');
   const currentColors = getColors();
 
   const handlePaletteSelect = async (palette: { name: string; colors: BusinessPaletteColors }) => {

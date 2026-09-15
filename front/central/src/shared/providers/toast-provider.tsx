@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Toast, ToastType } from '../ui/toast';
+import { isAccessDeniedMessage, notifyAccessDenied } from '../utils/access-denied';
 
 interface ToastMessage {
     id: string;
@@ -26,6 +27,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, []);
 
     const showToast = useCallback((message: string, type: ToastType, duration = 6000) => {
+        if (type === 'error') {
+            const denied = isAccessDeniedMessage(message);
+            if (denied) {
+                notifyAccessDenied(denied);
+                return;
+            }
+        }
         const id = Math.random().toString(36).substr(2, 9);
         setToasts((prev) => [...prev, { id, message, type, duration }]);
     }, []);

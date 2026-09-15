@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { loginAction, getRolesPermissionsAction, loginServerAction } from '../../infra/actions';
+import { loginAction, loginServerAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
 import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-theme';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -79,34 +79,6 @@ export const LoginForm = () => {
                         applyBusinessTheme(response.data.businesses[0]);
                     } else {
                         resetTheme();
-                    }
-
-                    try {
-                        const permissionsResponse = await getRolesPermissionsAction();
-                        if (permissionsResponse.success && permissionsResponse.data) {
-                            TokenStorage.setPermissions({
-                                is_super: permissionsResponse.data.is_super,
-                                business_id: permissionsResponse.data.business_id,
-                                business_name: permissionsResponse.data.business_name,
-                                role_id: permissionsResponse.data.role?.id || 0,
-                                role_name: permissionsResponse.data.role?.name || '',
-                                resources: permissionsResponse.data.resources || [],
-                                subscription_status: permissionsResponse.data.subscription_status,
-                            });
-                        }
-                    } catch (permErr) {
-                        console.warn('No se pudieron obtener los permisos:', permErr);
-                        if (response.data.is_super_admin) {
-                            TokenStorage.setPermissions({
-                                is_super: true,
-                                business_id: 0,
-                                business_name: '',
-                                role_id: 0,
-                                role_name: 'Super Admin',
-                                resources: [],
-                                subscription_status: 'active',
-                            });
-                        }
                     }
 
                     const destino = destinoSeguro(searchParams.get('next'));

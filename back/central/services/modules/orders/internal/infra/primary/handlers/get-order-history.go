@@ -7,18 +7,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/response"
 )
 
-// GetOrderHistory godoc
-// @Summary      Obtener historial de estados de una orden
-// @Description  Obtiene el historial de cambios de estado de una orden
-// @Tags         Orders
-// @Accept       json
-// @Produce      json
-// @Param        id   path      string  true  "ID de la orden (UUID)"
-// @Security     BearerAuth
-// @Success      200  {object}  map[string]interface{}
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      500  {object}  map[string]interface{}
-// @Router       /orders/{id}/history [get]
 func (h *Handlers) GetOrderHistory(c *gin.Context) {
 	id := c.Param("id")
 
@@ -28,6 +16,10 @@ func (h *Handlers) GetOrderHistory(c *gin.Context) {
 			"message": "ID de orden inválido",
 			"error":   "El ID de la orden es requerido",
 		})
+		return
+	}
+
+	if !h.ensureOrderOwnership(c, id) {
 		return
 	}
 
@@ -41,7 +33,6 @@ func (h *Handlers) GetOrderHistory(c *gin.Context) {
 		return
 	}
 
-	// Mapear a response HTTP
 	httpHistory := make([]response.OrderHistoryResponse, len(history))
 	for i, h := range history {
 		httpHistory[i] = response.OrderHistoryResponse{

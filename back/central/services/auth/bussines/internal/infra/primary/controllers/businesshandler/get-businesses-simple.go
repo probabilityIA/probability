@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/infra/primary/controllers/businesshandler/response"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
 const (
@@ -45,8 +46,13 @@ func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
 		return
 	}
 
+	tokenBusinessID, _ := middleware.GetBusinessIDFromContext(c)
+
 	simpleBusinesses := make([]response.BusinessSimpleResponse, 0, len(businesses))
 	for _, business := range businesses {
+		if tokenBusinessID > 0 && business.ID != tokenBusinessID {
+			continue
+		}
 		simpleBusinesses = append(simpleBusinesses, response.BusinessSimpleResponse{
 			ID:              business.ID,
 			Name:            business.Name,
@@ -59,6 +65,10 @@ func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
 			SidebarColor:    business.SidebarColor,
 			TopbarColor:     business.TopbarColor,
 		})
+	}
+
+	if tokenBusinessID > 0 {
+		total = int64(len(simpleBusinesses))
 	}
 
 	totalPages := 0

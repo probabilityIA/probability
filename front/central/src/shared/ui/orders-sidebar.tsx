@@ -14,12 +14,9 @@ export const OrdersSidebar = memo(function OrdersSidebar() {
         requestSecondaryExpand,
         requestSecondaryCollapse
     } = useSidebar();
-    const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
+    const { hasNav } = usePermissions();
     
     const isActive = useCallback((path: string) => pathname === path || pathname.startsWith(path), [pathname]);
-    
-    // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
-    const permissionsNotLoaded = useMemo(() => isLoading || !permissions || !permissions.resources || permissions.resources.length === 0, [isLoading, permissions]);
     
     // Calcular la posición izquierda basada en el estado del sidebar primario
     const leftPosition = primaryExpanded ? '250px' : '80px';
@@ -38,11 +35,10 @@ export const OrdersSidebar = memo(function OrdersSidebar() {
         requestSecondaryCollapse();
     }, [requestSecondaryCollapse]);
 
-    // Verificar permisos para cada recurso (al menos Read)
-    const canViewProducts = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
-    const canViewOrders = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
-    const canViewShipments = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
-    const canViewNotifications = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Configuración de Notificaciones', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
+    const canViewProducts = hasNav('products');
+    const canViewOrders = hasNav('orders');
+    const canViewShipments = hasNav('shipments');
+    const canViewNotifications = hasNav('notifications');
 
     const hasAnyPermission = useMemo(() => canViewProducts || canViewOrders || canViewShipments || canViewNotifications, [canViewProducts, canViewOrders, canViewShipments, canViewNotifications]);
     if (!hasAnyPermission) {

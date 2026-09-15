@@ -57,6 +57,9 @@ class MockLoginRepository implements ILoginRepository {
   }
 
   @override
+  Future<Set<String>> getNavigationKeys() async => <String>{};
+
+  @override
   Future<List<RecoveryChannel>> getRecoveryChannels(String email) async => const [];
 
   @override
