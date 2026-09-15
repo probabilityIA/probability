@@ -45,8 +45,10 @@ func (c NavigationCatalog) Keys() []string {
 }
 
 type AssistantReply struct {
-	Message     string
-	Destination *Destination
+	MessageID      string
+	ConversationID string
+	Message        string
+	Destination    *Destination
 }
 
 type Usage struct {

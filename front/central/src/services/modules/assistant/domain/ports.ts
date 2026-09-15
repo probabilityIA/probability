@@ -1,7 +1,20 @@
-import type { AssistantHistoryMessage, AssistantReply, AssistantState } from './types';
+import type {
+    AssistantHistoryMessage,
+    AssistantReply,
+    AssistantState,
+    FeedbackValue,
+    PaginatedResponse,
+    ReviewFilters,
+    ReviewMessage,
+    ReviewSummary,
+} from './types';
 
 export interface IAssistantRepository {
-    chat(messages: AssistantHistoryMessage[]): Promise<AssistantReply>;
+    chat(messages: AssistantHistoryMessage[], conversationId: string, pathname: string): Promise<AssistantReply>;
     getState(): Promise<AssistantState>;
     markIntroSeen(): Promise<void>;
+    sendFeedback(messageId: string, value: FeedbackValue): Promise<void>;
+    markClick(messageId: string): Promise<void>;
+    listReviewMessages(filters: ReviewFilters): Promise<PaginatedResponse<ReviewMessage>>;
+    getReviewSummary(filters: ReviewFilters): Promise<ReviewSummary>;
 }

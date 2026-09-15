@@ -126,6 +126,7 @@ var Navigation = []NavEntry{
 	{Key: "accounting", Label: "Contabilidad", Route: "/accounting", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Contabilidad de la plataforma"},
 	{Key: "commercial", Label: "Comercial", Route: "/commercial", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Prospectos y seguimiento comercial"},
 	{Key: "marketing_leads", Label: "Leads", Route: "/marketing-leads", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Contactos del sitio web"},
+	{Key: "assistant_review", Label: "Asistente V\u00eda", Route: "/assistant-review", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Conversaciones con el asistente"},
 	{Key: "siigo_referrals", Label: "Referidos Siigo", Route: "/siigo-referrals", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Referidos de Siigo"},
 	{Key: "notification_channels", Label: "Canales de notificaci\u00f3n", Route: "/notification-channels", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Canales de env\u00edo de notificaciones"},
 	{Key: "notification_event_types", Label: "Eventos de notificaci\u00f3n", Route: "/notification-event-types", Section: "platform", Rule: NavRuleSuperAdminOnly, Description: "Tipos de evento que disparan notificaciones"},

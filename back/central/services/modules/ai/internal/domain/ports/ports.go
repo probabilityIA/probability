@@ -26,3 +26,18 @@ type IAssistantStore interface {
 	IsIntroSeen(ctx context.Context, userID uint) (bool, error)
 	MarkIntroSeen(ctx context.Context, userID uint) error
 }
+
+type IConversationRecorder interface {
+	RecordMessage(ctx context.Context, record entities.MessageRecord) error
+	RecordFeedback(ctx context.Context, userID uint, messageID string, value int, at time.Time) error
+	RecordClick(ctx context.Context, userID uint, messageID string, at time.Time) error
+}
+
+type IConversationRepository interface {
+	SaveMessage(ctx context.Context, record entities.MessageRecord) error
+	ApplyFeedback(ctx context.Context, userID uint, messageID string, value int, at time.Time) (bool, error)
+	ApplyClick(ctx context.Context, userID uint, messageID string, at time.Time) (bool, error)
+	ListMessages(ctx context.Context, filter dtos.ReviewFilter) ([]entities.ReviewMessage, int64, error)
+	Summary(ctx context.Context, filter dtos.ReviewFilter) (*entities.ReviewSummary, error)
+	DeleteOlderThan(ctx context.Context, cutoff time.Time) (int64, error)
+}

@@ -64,6 +64,30 @@ export function rateLimitText(limit: number, resetAt: string | null | undefined)
     return time ? `${base} Puedes volver a escribir a las ${time}.` : `${base} Intenta de nuevo m\u00e1s tarde.`;
 }
 
+export function newConversationId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.floor(Math.random() * 16);
+        return (c === 'x' ? r : (r % 4) + 8).toString(16);
+    });
+}
+
+export function nextFeedback(current: number | undefined, pressed: 1 | -1): -1 | 0 | 1 {
+    return current === pressed ? 0 : pressed;
+}
+
+export function percent(part: number, total: number): string {
+    if (!total) return '0 %';
+    return `${Math.round((part / total) * 100)} %`;
+}
+
+export function reviewRange(days: number, now: Date = new Date()): { from: string; to: string } {
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const start = new Date(now);
+    start.setDate(start.getDate() - (days - 1));
+    return { from: fmt(start), to: fmt(now) };
+}
+
 let sequence = 0;
 export function entryId(): string {
     sequence += 1;

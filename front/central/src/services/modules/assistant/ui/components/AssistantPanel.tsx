@@ -1,7 +1,17 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowPathIcon, ArrowRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import {
+    ArrowPathIcon,
+    ArrowRightIcon,
+    HandThumbDownIcon,
+    HandThumbUpIcon,
+    XMarkIcon,
+} from '@heroicons/react/24/outline';
+import {
+    HandThumbDownIcon as HandThumbDownSolid,
+    HandThumbUpIcon as HandThumbUpSolid,
+} from '@heroicons/react/24/solid';
 import { AssistantAvatar } from './AssistantAvatar';
 import { AssistantDestinationCard } from './AssistantDestinationCard';
 import { ASSISTANT_NAME, formatResetTime, isCurrentRoute, isHubDestination } from '../../app/use-cases';
@@ -12,6 +22,9 @@ interface AssistantPanelProps {
     suggestions: string[];
     onClose: () => void;
 }
+
+const feedbackButton =
+    'rounded-md p-1 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#5B1BE6]';
 
 export function AssistantPanel({ chat, suggestions, onClose }: AssistantPanelProps) {
     const [draft, setDraft] = useState('');
@@ -125,14 +138,41 @@ export function AssistantPanel({ chat, suggestions, onClose }: AssistantPanelPro
                                 className="mt-0.5"
                                 mood={entry.id === lastAssistantId && chat.mood === 'pointing' ? 'pointing' : 'idle'}
                             />
-                            <div className="max-w-[85%] space-y-2.5 rounded-2xl rounded-tl-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-100">
-                                <p className="whitespace-pre-wrap">{entry.text}</p>
-                                {entry.destination && (
-                                    <AssistantDestinationCard
-                                        destination={entry.destination}
-                                        isCurrent={!isHubDestination(entry.destination.key) && isCurrentRoute(chat.pathname, entry.destination.route)}
-                                        onGo={chat.goTo}
-                                    />
+                            <div className="max-w-[85%] space-y-1.5">
+                                <div className="space-y-2.5 rounded-2xl rounded-tl-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-100">
+                                    <p className="whitespace-pre-wrap">{entry.text}</p>
+                                    {entry.destination && (
+                                        <AssistantDestinationCard
+                                            destination={entry.destination}
+                                            isCurrent={!isHubDestination(entry.destination.key) && isCurrentRoute(chat.pathname, entry.destination.route)}
+                                            onGo={(destination) => chat.goTo(destination, entry.messageId)}
+                                        />
+                                    )}
+                                </div>
+                                {entry.messageId && (
+                                    <div className="flex items-center gap-0.5 pl-1">
+                                        <span className="mr-1 text-[11px] text-gray-400 dark:text-gray-500">{'\u00bfTe sirvi\u00f3?'}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => chat.rate(entry.id, 1)}
+                                            aria-label={'Me sirvi\u00f3'}
+                                            aria-pressed={entry.feedback === 1}
+                                            title={'Me sirvi\u00f3'}
+                                            className={`${feedbackButton} ${entry.feedback === 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                        >
+                                            {entry.feedback === 1 ? <HandThumbUpSolid className="h-4 w-4" /> : <HandThumbUpIcon className="h-4 w-4" />}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => chat.rate(entry.id, -1)}
+                                            aria-label={'No me sirvi\u00f3'}
+                                            aria-pressed={entry.feedback === -1}
+                                            title={'No me sirvi\u00f3'}
+                                            className={`${feedbackButton} ${entry.feedback === -1 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                        >
+                                            {entry.feedback === -1 ? <HandThumbDownSolid className="h-4 w-4" /> : <HandThumbDownIcon className="h-4 w-4" />}
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -189,8 +229,8 @@ export function AssistantPanel({ chat, suggestions, onClose }: AssistantPanelPro
                     <ArrowRightIcon className="h-4 w-4" />
                 </button>
             </form>
-            <p className="px-4 pb-2 text-center text-[11px] text-gray-400 dark:text-gray-500">
-                {`${ASSISTANT_NAME} puede equivocarse. Nunca cambia de pantalla sin tu clic.`}
+            <p className="px-4 pb-2 text-center text-[11px] leading-snug text-gray-400 dark:text-gray-500">
+                {`${ASSISTANT_NAME} puede equivocarse y nunca cambia de pantalla sin tu clic. Guardamos las conversaciones para mejorarlo.`}
             </p>
         </section>
     );

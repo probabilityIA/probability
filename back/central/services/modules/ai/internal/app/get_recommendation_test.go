@@ -14,7 +14,7 @@ import (
 
 func TestGetRecommendation_TrasladaOrigenYDestinoAlProveedor(t *testing.T) {
 	provider := &recommendationFake{}
-	uc := New(provider, nil, nil, nil, log.New())
+	uc := New(provider, nil, nil, nil, nil, nil, log.New())
 
 	rec, err := uc.GetRecommendation(context.Background(), "BOGOTA", "MEDELLIN")
 
@@ -27,7 +27,7 @@ func TestGetRecommendation_TrasladaOrigenYDestinoAlProveedor(t *testing.T) {
 func TestGetRecommendation_PropagaElErrorDelProveedor(t *testing.T) {
 	fallo := errors.New("openrouter 429: rate limit")
 	provider := &recommendationFake{fn: func(string, string) (*entities.Recommendation, error) { return nil, fallo }}
-	uc := New(provider, nil, nil, nil, log.New())
+	uc := New(provider, nil, nil, nil, nil, nil, log.New())
 
 	rec, err := uc.GetRecommendation(context.Background(), "BOGOTA", "MEDELLIN")
 
@@ -43,7 +43,7 @@ func TestGetRecommendation_DevuelveLasCotizacionesTalComoLlegan(t *testing.T) {
 			Quotations:         []entities.Quotation{{Carrier: "INTERRAPIDISIMO", EstimatedCost: 15000, EstimatedDeliveryDays: 3}},
 		}, nil
 	}}
-	uc := New(provider, nil, nil, nil, log.New())
+	uc := New(provider, nil, nil, nil, nil, nil, log.New())
 
 	rec, err := uc.GetRecommendation(context.Background(), "PEREIRA", "ARMENIA")
 

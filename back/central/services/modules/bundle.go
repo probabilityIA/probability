@@ -97,7 +97,14 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	notification_config.New(router, database, redisClient, logger, rabbitMQ, s3, environment)
 	push.New(router, database, logger, environment, rabbitMQ)
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
-	ai.New(router, logger, environment, bedrockClient, redisClient, visibleNavigation)
+	ai.New(router, logger, ai.Dependencies{
+		Config:            environment,
+		Database:          database,
+		RabbitMQ:          rabbitMQ,
+		Bedrock:           bedrockClient,
+		Redis:             redisClient,
+		VisibleNavigation: visibleNavigation,
+	})
 	dashboard.New(router, database, redisClient, logger)
 	payBundle := pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
 	subscriptionsBundle := subscriptions.New(router, database, logger, payBundle, announcementsBundle, rabbitMQ)

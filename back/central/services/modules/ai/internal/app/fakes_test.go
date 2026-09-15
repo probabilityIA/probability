@@ -94,5 +94,5 @@ func newTestUseCase(model *modelFake, store *storeFake) *UseCase {
 	if store != nil {
 		s = store
 	}
-	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, log.New()).(*UseCase)
+	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, nil, nil, log.New()).(*UseCase)
 }

@@ -9,8 +9,10 @@ type AccessScope struct {
 }
 
 type ChatInput struct {
-	Scope    AccessScope
-	Messages []entities.ChatMessage
+	Scope          AccessScope
+	ConversationID string
+	Pathname       string
+	Messages       []entities.ChatMessage
 }
 
 type ModelRequest struct {
@@ -22,4 +24,7 @@ type ModelRequest struct {
 type ModelReply struct {
 	Message        string
 	DestinationKey string
+	Model          string
+	InputTokens    int
+	OutputTokens   int
 }

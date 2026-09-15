@@ -49,7 +49,16 @@ func (m *AssistantModel) Reply(ctx context.Context, req dtos.ModelRequest) (*dto
 	if err != nil {
 		return nil, err
 	}
-	return parseOutput(output)
+	reply, err := parseOutput(output)
+	if err != nil {
+		return nil, err
+	}
+	reply.Model = m.modelID
+	if output.Usage != nil {
+		reply.InputTokens = int(aws.ToInt32(output.Usage.InputTokens))
+		reply.OutputTokens = int(aws.ToInt32(output.Usage.OutputTokens))
+	}
+	return reply, nil
 }
 
 func toBedrockMessages(messages []entities.ChatMessage) []types.Message {

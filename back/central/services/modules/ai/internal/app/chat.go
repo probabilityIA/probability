@@ -4,8 +4,10 @@ import (
 	"context"
 	"regexp"
 	"strings"
+	"time"
 	"unicode/utf8"
 
+	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/ai/internal/domain/errors"
@@ -19,12 +21,25 @@ func (uc *UseCase) Chat(ctx context.Context, input dtos.ChatInput) (*entities.As
 		return nil, err
 	}
 
+	started := time.Now()
+	record := entities.MessageRecord{
+		ID:             uuid.NewString(),
+		ConversationID: conversationIDOrNew(input.ConversationID),
+		BusinessID:     businessOf(input.Scope),
+		UserID:         input.Scope.UserID,
+		Pathname:       normalizePathname(input.Pathname),
+		Question:       messages[len(messages)-1].Text,
+		CreatedAt:      started,
+	}
+
 	catalog, err := uc.navigation.ForUser(ctx, input.Scope)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := uc.consumeQuota(ctx, input.Scope.UserID); err != nil {
+		record.ErrorCode = entities.ErrorCodeRateLimited
+		uc.recordMessage(ctx, record, started)
 		return nil, err
 	}
 
@@ -35,10 +50,32 @@ func (uc *UseCase) Chat(ctx context.Context, input dtos.ChatInput) (*entities.As
 	})
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Uint("user_id", input.Scope.UserID).Msg("[ai.assistant] el modelo no respondio")
+		record.ErrorCode = entities.ErrorCodeUnavailable
+		uc.recordMessage(ctx, record, started)
 		return nil, domainerrors.ErrModelUnavailable
 	}
 
-	return composeReply(reply, catalog)
+	record.Model = reply.Model
+	record.InputTokens = reply.InputTokens
+	record.OutputTokens = reply.OutputTokens
+
+	result, err := composeReply(reply, catalog)
+	if err != nil {
+		record.ErrorCode = entities.ErrorCodeUnavailable
+		uc.recordMessage(ctx, record, started)
+		return nil, err
+	}
+
+	record.Answer = result.Message
+	if result.Destination != nil {
+		record.DestinationKey = result.Destination.Key
+		record.DestinationRoute = result.Destination.Route
+	}
+	uc.recordMessage(ctx, record, started)
+
+	result.MessageID = record.ID
+	result.ConversationID = record.ConversationID
+	return result, nil
 }
 
 func (uc *UseCase) consumeQuota(ctx context.Context, userID uint) error {
@@ -54,6 +91,50 @@ func (uc *UseCase) consumeQuota(ctx context.Context, userID uint) error {
 		return &domainerrors.RateLimitedError{Limit: AssistantMessageLimit, ResetAt: usage.ResetAt}
 	}
 	return nil
+}
+
+func (uc *UseCase) recordMessage(ctx context.Context, record entities.MessageRecord, started time.Time) {
+	record.LatencyMs = int(time.Since(started).Milliseconds())
+
+	var err error
+	switch {
+	case uc.recorder != nil:
+		err = uc.recorder.RecordMessage(ctx, record)
+	case uc.conversations != nil:
+		err = uc.conversations.SaveMessage(ctx, record)
+	default:
+		return
+	}
+	if err != nil {
+		uc.log.Warn(ctx).Err(err).Str("message_id", record.ID).Msg("[ai.assistant] no se pudo guardar el mensaje")
+	}
+}
+
+func conversationIDOrNew(raw string) string {
+	if parsed, err := uuid.Parse(strings.TrimSpace(raw)); err == nil {
+		return parsed.String()
+	}
+	return uuid.NewString()
+}
+
+func businessOf(scope dtos.AccessScope) *uint {
+	if scope.TokenBusinessID > 0 {
+		id := scope.TokenBusinessID
+		return &id
+	}
+	if scope.RequestedBusinessID > 0 {
+		id := scope.RequestedBusinessID
+		return &id
+	}
+	return nil
+}
+
+func normalizePathname(raw string) string {
+	path := strings.TrimSpace(raw)
+	if !strings.HasPrefix(path, "/") {
+		return ""
+	}
+	return truncateRunes(path, MaxPathnameRunes)
 }
 
 func normalizeConversation(messages []entities.ChatMessage) ([]entities.ChatMessage, error) {
@@ -114,6 +195,7 @@ func composeReply(reply *dtos.ModelReply, catalog *entities.NavigationCatalog) (
 			destination = d
 		}
 	}
+
 	if message == "" {
 		if destination == nil {
 			return nil, domainerrors.ErrModelUnavailable

@@ -98,6 +98,7 @@ export function Sidebar({ user }: SidebarProps) {
 
   const canViewAnnouncements = hasNav('announcements');
   const canViewTickets = hasNav('tickets');
+  const canViewAssistantReview = hasNav('assistant_review');
 
   const canViewWarehouses = hasNav('warehouses');
   const canViewInventory = hasNav('inventory');
@@ -583,6 +584,34 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Anuncios</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {canViewAssistantReview && (
+                <li>
+                  <Link
+                    href="/assistant-review"
+                    className={`
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 px-3 py-1.5 rounded-lg transition-colors duration-300 w-full
+                      ${pathname.startsWith('/assistant-review')
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/assistant-review') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">{'Asistente V\u00eda'}</span>
                     )}
                   </Link>
                 </li>

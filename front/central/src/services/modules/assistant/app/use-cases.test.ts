@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_HISTORY, buildHistory, hubEnvironmentFor, isCurrentRoute, isHubDestination, pickSuggestions, rateLimitText } from './use-cases';
+import { MAX_HISTORY, buildHistory, hubEnvironmentFor, isCurrentRoute, isHubDestination, newConversationId, nextFeedback, percent, pickSuggestions, rateLimitText, reviewRange } from './use-cases';
+
+describe('conversaciones guardadas', () => {
+    it('genera un id de conversacion con formato uuid', () => {
+        expect(newConversationId()).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    });
+
+    it('al tocar la misma calificacion se quita', () => {
+        expect(nextFeedback(0, 1)).toBe(1);
+        expect(nextFeedback(1, 1)).toBe(0);
+        expect(nextFeedback(1, -1)).toBe(-1);
+    });
+
+    it('calcula porcentajes sin dividir por cero y rangos de fechas inclusivos', () => {
+        expect(percent(1, 0)).toBe('0 %');
+        expect(percent(1, 4)).toBe('25 %');
+        expect(reviewRange(7, new Date(2026, 8, 14))).toEqual({ from: '2026-09-08', to: '2026-09-14' });
+    });
+});
 
 describe('destinos de Tus Integraciones', () => {
     it('reconoce el hub y traduce cada accion a su ambiente', () => {
