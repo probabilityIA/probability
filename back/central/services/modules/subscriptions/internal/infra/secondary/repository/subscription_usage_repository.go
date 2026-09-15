@@ -32,23 +32,27 @@ func (r *Repository) GetSubscriptionUsage(ctx context.Context, businessID uint) 
 	plan := *sub.SubscriptionType
 
 	usage := &entities.SubscriptionUsage{
-		PlanCode:             plan.Code,
-		PlanName:             plan.Name,
-		PlanPrice:            plan.Price,
-		BillingPeriod:        plan.BillingPeriod,
-		ModuleCodes:          unmarshalModuleCodes(plan.Features),
-		MaxEcommerceChannels: plan.MaxEcommerceChannels,
-		CycleStartDate:       sub.StartDate,
-		CycleEndDate:         sub.EndDate,
-		IncludedShipments:    plan.IncludedShipments,
-		ShipmentOveragePrice: plan.ShipmentOveragePrice,
-		IncludedInvoices:     plan.IncludedInvoices,
-		InvoiceOveragePrice:  plan.InvoiceOveragePrice,
-		IncludedOrders:       plan.IncludedOrders,
-		OrderOveragePrice:    plan.OrderOveragePrice,
-		OverageAccepted:      sub.OverageAccepted,
-		OverageAmountDue:     sub.OverageAmountDue,
-		OverageAmountPaidAt:  sub.OverageAmountPaidAt,
+		PlanCode:                    plan.Code,
+		PlanName:                    plan.Name,
+		PlanPrice:                   plan.Price,
+		BillingPeriod:               plan.BillingPeriod,
+		ModuleCodes:                 unmarshalModuleCodes(plan.Features),
+		MaxEcommerceChannels:        plan.MaxEcommerceChannels,
+		CycleStartDate:              sub.StartDate,
+		CycleEndDate:                sub.EndDate,
+		IncludedShipments:           plan.IncludedShipments,
+		ShipmentOveragePrice:        plan.ShipmentOveragePrice,
+		IncludedInvoices:            plan.IncludedInvoices,
+		InvoiceOveragePrice:         plan.InvoiceOveragePrice,
+		IncludedOrders:              plan.IncludedOrders,
+		OrderOveragePrice:           plan.OrderOveragePrice,
+		IncludedTemplateMessages:    plan.IncludedTemplateMessages,
+		TemplateMessageOveragePrice: plan.TemplateMessageOveragePrice,
+		IncludedTemplates:           plan.IncludedTemplates,
+		TemplateOveragePrice:        plan.TemplateOveragePrice,
+		OverageAccepted:             sub.OverageAccepted,
+		OverageAmountDue:            sub.OverageAmountDue,
+		OverageAmountPaidAt:         sub.OverageAmountPaidAt,
 	}
 
 	if plan.IncludedShipments != nil {
@@ -71,6 +75,20 @@ func (r *Repository) GetSubscriptionUsage(ctx context.Context, businessID uint) 
 			return nil, cerr
 		}
 		usage.OrdersUsed = count
+	}
+	if plan.IncludedTemplateMessages != nil {
+		count, cerr := r.countTemplateMessagesInRange(ctx, businessID, sub.StartDate, sub.EndDate)
+		if cerr != nil {
+			return nil, cerr
+		}
+		usage.TemplateMessagesUsed = count
+	}
+	if plan.IncludedTemplates != nil {
+		count, cerr := r.countTemplatesInRange(ctx, businessID, sub.StartDate, sub.EndDate)
+		if cerr != nil {
+			return nil, cerr
+		}
+		usage.TemplatesUsed = count
 	}
 
 	forecast, ferr := r.forecastNextPayment(ctx, businessID, plan, sub.StartDate, sub.EndDate)

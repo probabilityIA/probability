@@ -46,6 +46,7 @@ type useCase struct {
 	flowRepository ports.ITemplateFlowRepository
 	flowGroups     ports.IFlowRepository
 	segments       ports.ISegmentQuerier
+	billing        ports.ITemplateOverageBillingRepository
 	publisher      ISubmissionPublisher
 	flowPublisher  IFlowPublisher
 	logger         log.ILogger
@@ -56,6 +57,7 @@ func New(
 	flowRepository ports.ITemplateFlowRepository,
 	flowGroups ports.IFlowRepository,
 	segments ports.ISegmentQuerier,
+	billing ports.ITemplateOverageBillingRepository,
 	publisher ISubmissionPublisher,
 	flowPublisher IFlowPublisher,
 	logger log.ILogger,
@@ -65,6 +67,7 @@ func New(
 		flowRepository: flowRepository,
 		flowGroups:     flowGroups,
 		segments:       segments,
+		billing:        billing,
 		publisher:      publisher,
 		flowPublisher:  flowPublisher,
 		logger:         logger.WithModule("whatsapp_templates_usecase"),

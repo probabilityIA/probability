@@ -79,6 +79,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	templateFlowRepo := repository.NewTemplateFlowRepository(database, logger)
 	flowGroupRepo := repository.NewFlowRepository(database, logger)
 	segmentQuerier := repository.NewSegmentQuerier(database, logger)
+	templateOverageBillingRepo := repository.NewTemplateOverageBillingRepository(database, logger)
 
 	var templatePublisher templates.ISubmissionPublisher
 	var flowPublisher templates.IFlowPublisher
@@ -92,6 +93,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 		templateFlowRepo,
 		flowGroupRepo,
 		segmentQuerier,
+		templateOverageBillingRepo,
 		templatePublisher,
 		flowPublisher,
 		logger,

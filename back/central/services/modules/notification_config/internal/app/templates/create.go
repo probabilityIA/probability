@@ -41,7 +41,38 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateTemplateDTO) (*ent
 		return nil, err
 	}
 
+	uc.chargeTemplateOverage(ctx, dto.BusinessID, template.ID)
+
 	return template, nil
+}
+
+func (uc *useCase) chargeTemplateOverage(ctx context.Context, businessID, templateID uint) {
+	if uc.billing == nil {
+		return
+	}
+
+	cycleStart, cycleEnd, includedTemplates, overagePrice, found, err := uc.billing.GetActiveTemplatePlanLimits(ctx, businessID)
+	if err != nil {
+		uc.logger.Error().Err(err).Uint("business_id", businessID).Msg("Error consultando el plan de suscripcion para el cobro de excedente de plantillas")
+		return
+	}
+	if !found || includedTemplates == nil || overagePrice == nil {
+		return
+	}
+
+	count, err := uc.billing.CountTemplatesInCycle(ctx, businessID, cycleStart, cycleEnd)
+	if err != nil {
+		uc.logger.Error().Err(err).Uint("business_id", businessID).Msg("Error contando plantillas creadas en el ciclo para el cobro de excedente")
+		return
+	}
+	if count <= int64(*includedTemplates) {
+		return
+	}
+
+	if err := uc.billing.DebitWalletForTemplateOverage(ctx, businessID, *overagePrice, templateID); err != nil {
+		uc.logger.Error().Err(err).Uint("business_id", businessID).Uint("template_id", templateID).
+			Msg("Error debitando el wallet por excedente de plantillas creadas")
+	}
 }
 
 func (uc *useCase) sendToMeta(ctx context.Context, template *entities.WhatsappTemplate) error {

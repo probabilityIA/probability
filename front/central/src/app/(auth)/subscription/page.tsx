@@ -1341,6 +1341,7 @@ function SubscriptionTypesAdminPanel() {
         module_codes: [] as string[], max_ecommerce_channels: '0',
         included_shipments: '', shipment_overage_price: '', included_invoices: '', invoice_overage_price: '',
         included_orders: '', order_overage_price: '',
+        included_template_messages: '', template_message_overage_price: '', included_templates: '', template_overage_price: '',
     };
     const [form, setForm] = useState(emptyTypeForm);
 
@@ -1369,6 +1370,10 @@ function SubscriptionTypesAdminPanel() {
             invoice_overage_price: t.invoice_overage_price != null ? String(t.invoice_overage_price) : '',
             included_orders: t.included_orders != null ? String(t.included_orders) : '',
             order_overage_price: t.order_overage_price != null ? String(t.order_overage_price) : '',
+            included_template_messages: t.included_template_messages != null ? String(t.included_template_messages) : '',
+            template_message_overage_price: t.template_message_overage_price != null ? String(t.template_message_overage_price) : '',
+            included_templates: t.included_templates != null ? String(t.included_templates) : '',
+            template_overage_price: t.template_overage_price != null ? String(t.template_overage_price) : '',
         });
         setEditModal({ open: true, type: t });
     };
@@ -1402,6 +1407,10 @@ function SubscriptionTypesAdminPanel() {
         const invoiceOveragePrice = form.invoice_overage_price.trim() ? Number(form.invoice_overage_price) : undefined;
         const includedOrders = form.included_orders.trim() ? Number(form.included_orders) : undefined;
         const orderOveragePrice = form.order_overage_price.trim() ? Number(form.order_overage_price) : undefined;
+        const includedTemplateMessages = form.included_template_messages.trim() ? Number(form.included_template_messages) : undefined;
+        const templateMessageOveragePrice = form.template_message_overage_price.trim() ? Number(form.template_message_overage_price) : undefined;
+        const includedTemplates = form.included_templates.trim() ? Number(form.included_templates) : undefined;
+        const templateOveragePrice = form.template_overage_price.trim() ? Number(form.template_overage_price) : undefined;
 
         const res = editModal.type
             ? await updateSubscriptionTypeAction(editModal.type.id, {
@@ -1418,6 +1427,10 @@ function SubscriptionTypesAdminPanel() {
                 invoice_overage_price: invoiceOveragePrice,
                 included_orders: includedOrders,
                 order_overage_price: orderOveragePrice,
+                included_template_messages: includedTemplateMessages,
+                template_message_overage_price: templateMessageOveragePrice,
+                included_templates: includedTemplates,
+                template_overage_price: templateOveragePrice,
             })
             : await createSubscriptionTypeAction({
                 name: form.name,
@@ -1433,6 +1446,10 @@ function SubscriptionTypesAdminPanel() {
                 invoice_overage_price: invoiceOveragePrice,
                 included_orders: includedOrders,
                 order_overage_price: orderOveragePrice,
+                included_template_messages: includedTemplateMessages,
+                template_message_overage_price: templateMessageOveragePrice,
+                included_templates: includedTemplates,
+                template_overage_price: templateOveragePrice,
             });
 
         if (res.success) {
@@ -1514,7 +1531,7 @@ function SubscriptionTypesAdminPanel() {
                                 </div>
                             </div>
 
-                            {(t.included_shipments != null || t.included_invoices != null || t.included_orders != null) && (
+                            {(t.included_shipments != null || t.included_invoices != null || t.included_orders != null || t.included_template_messages != null || t.included_templates != null) && (
                                 <div className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                                     {t.included_shipments != null && (
                                         <p>
@@ -1532,6 +1549,18 @@ function SubscriptionTypesAdminPanel() {
                                         <p>
                                             Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{t.included_orders}</span> ordenes/mes
                                             {t.order_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(t.order_overage_price)}</span>/orden</>}
+                                        </p>
+                                    )}
+                                    {t.included_template_messages != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{t.included_template_messages}</span> mensajes de plantilla/mes
+                                            {t.template_message_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(t.template_message_overage_price)}</span>/mensaje</>}
+                                        </p>
+                                    )}
+                                    {t.included_templates != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{t.included_templates}</span> plantillas creadas/ciclo
+                                            {t.template_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(t.template_overage_price)}</span>/plantilla</>}
                                         </p>
                                     )}
                                 </div>
@@ -1745,6 +1774,58 @@ function SubscriptionTypesAdminPanel() {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mensajes de plantilla incluidos <span className="font-normal text-gray-400">/ ciclo</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_template_messages}
+                                        onChange={(e) => setForm({ ...form, included_template_messages: e.target.value })}
+                                        placeholder="ej: 1000"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo mensaje extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.template_message_overage_price}
+                                            onChange={(e) => setForm({ ...form, template_message_overage_price: e.target.value })}
+                                            placeholder="ej: 450"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Plantillas creadas incluidas <span className="font-normal text-gray-400">/ ciclo</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_templates}
+                                        onChange={(e) => setForm({ ...form, included_templates: e.target.value })}
+                                        placeholder="ej: 10"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo plantilla extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.template_overage_price}
+                                            onChange={(e) => setForm({ ...form, template_overage_price: e.target.value })}
+                                            placeholder="ej: 3200"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <div className="flex items-center justify-between mb-2.5">
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Módulos incluidos</label>
@@ -1797,6 +1878,7 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
         module_codes: [] as string[], max_ecommerce_channels: '0', business_id: '', months: '1', notes: '',
         included_shipments: '', shipment_overage_price: '', included_invoices: '', invoice_overage_price: '',
         included_orders: '', order_overage_price: '',
+        included_template_messages: '1000', template_message_overage_price: '450', included_templates: '10', template_overage_price: '3200',
     };
     const [form, setForm] = useState(emptyForm);
 
@@ -1827,6 +1909,10 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
             invoice_overage_price: p.invoice_overage_price != null ? String(p.invoice_overage_price) : '',
             included_orders: p.included_orders != null ? String(p.included_orders) : '',
             order_overage_price: p.order_overage_price != null ? String(p.order_overage_price) : '',
+            included_template_messages: p.included_template_messages != null ? String(p.included_template_messages) : '',
+            template_message_overage_price: p.template_message_overage_price != null ? String(p.template_message_overage_price) : '',
+            included_templates: p.included_templates != null ? String(p.included_templates) : '',
+            template_overage_price: p.template_overage_price != null ? String(p.template_overage_price) : '',
         });
         setEditModal({ open: true, plan: p });
     };
@@ -1866,6 +1952,10 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
         const invoiceOveragePrice = form.invoice_overage_price.trim() ? Number(form.invoice_overage_price) : undefined;
         const includedOrders = form.included_orders.trim() ? Number(form.included_orders) : undefined;
         const orderOveragePrice = form.order_overage_price.trim() ? Number(form.order_overage_price) : undefined;
+        const includedTemplateMessages = form.included_template_messages.trim() ? Number(form.included_template_messages) : undefined;
+        const templateMessageOveragePrice = form.template_message_overage_price.trim() ? Number(form.template_message_overage_price) : undefined;
+        const includedTemplates = form.included_templates.trim() ? Number(form.included_templates) : undefined;
+        const templateOveragePrice = form.template_overage_price.trim() ? Number(form.template_overage_price) : undefined;
 
         const res = editModal.plan
             ? await updateCustomPlanAction(editModal.plan.id, {
@@ -1882,6 +1972,10 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                 invoice_overage_price: invoiceOveragePrice,
                 included_orders: includedOrders,
                 order_overage_price: orderOveragePrice,
+                included_template_messages: includedTemplateMessages,
+                template_message_overage_price: templateMessageOveragePrice,
+                included_templates: includedTemplates,
+                template_overage_price: templateOveragePrice,
             })
             : await createCustomPlanAction({
                 name: form.name,
@@ -1900,6 +1994,10 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                 invoice_overage_price: invoiceOveragePrice,
                 included_orders: includedOrders,
                 order_overage_price: orderOveragePrice,
+                included_template_messages: includedTemplateMessages,
+                template_message_overage_price: templateMessageOveragePrice,
+                included_templates: includedTemplates,
+                template_overage_price: templateOveragePrice,
             });
 
         if (res.success) {
@@ -1987,7 +2085,7 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                                 </div>
                             </div>
 
-                            {(p.included_shipments != null || p.included_invoices != null || p.included_orders != null) && (
+                            {(p.included_shipments != null || p.included_invoices != null || p.included_orders != null || p.included_template_messages != null || p.included_templates != null) && (
                                 <div className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                                     {p.included_shipments != null && (
                                         <p>
@@ -2005,6 +2103,18 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                                         <p>
                                             Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{p.included_orders}</span> ordenes/mes
                                             {p.order_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(p.order_overage_price)}</span>/orden</>}
+                                        </p>
+                                    )}
+                                    {p.included_template_messages != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{p.included_template_messages}</span> mensajes de plantilla/mes
+                                            {p.template_message_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(p.template_message_overage_price)}</span>/mensaje</>}
+                                        </p>
+                                    )}
+                                    {p.included_templates != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{p.included_templates}</span> plantillas creadas/ciclo
+                                            {p.template_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(p.template_overage_price)}</span>/plantilla</>}
                                         </p>
                                     )}
                                 </div>
@@ -2243,6 +2353,58 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mensajes de plantilla incluidos <span className="font-normal text-gray-400">/ ciclo</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_template_messages}
+                                        onChange={(e) => setForm({ ...form, included_template_messages: e.target.value })}
+                                        placeholder="ej: 1000"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo mensaje extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.template_message_overage_price}
+                                            onChange={(e) => setForm({ ...form, template_message_overage_price: e.target.value })}
+                                            placeholder="ej: 450"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Plantillas creadas incluidas <span className="font-normal text-gray-400">/ ciclo</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_templates}
+                                        onChange={(e) => setForm({ ...form, included_templates: e.target.value })}
+                                        placeholder="ej: 10"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo plantilla extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.template_overage_price}
+                                            onChange={(e) => setForm({ ...form, template_overage_price: e.target.value })}
+                                            placeholder="ej: 3200"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <div className="flex items-center justify-between mb-2.5">
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Módulos incluidos</label>
@@ -2469,6 +2631,8 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
             { label: 'Envíos', used: usage.shipments_used, included: usage.included_shipments, overagePrice: usage.shipment_overage_price, unit: 'envío' },
             { label: 'Facturas', used: usage.invoices_used, included: usage.included_invoices, overagePrice: usage.invoice_overage_price, unit: 'factura' },
             { label: 'Órdenes', used: usage.orders_used, included: usage.included_orders, overagePrice: usage.order_overage_price, unit: 'orden' },
+            { label: 'Mensajes de plantilla', used: usage.template_messages_used, included: usage.included_template_messages, overagePrice: usage.template_message_overage_price, unit: 'mensaje' },
+            { label: 'Plantillas creadas', used: usage.templates_used, included: usage.included_templates, overagePrice: usage.template_overage_price, unit: 'plantilla' },
         ].filter((r): r is typeof r & { included: number } => r.included != null)
         : [];
 

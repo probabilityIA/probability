@@ -112,12 +112,16 @@ func (r *Repository) ListBusinessesForAdmin(ctx context.Context, page, pageSize 
 
 func (r *Repository) forecastNextPayment(ctx context.Context, businessID uint, plan models.SubscriptionType, cycleStart, cycleEnd time.Time) (float64, error) {
 	overage, err := r.ComputeOverageAmount(ctx, businessID, &entities.SubscriptionType{
-		IncludedShipments:    plan.IncludedShipments,
-		ShipmentOveragePrice: plan.ShipmentOveragePrice,
-		IncludedInvoices:     plan.IncludedInvoices,
-		InvoiceOveragePrice:  plan.InvoiceOveragePrice,
-		IncludedOrders:       plan.IncludedOrders,
-		OrderOveragePrice:    plan.OrderOveragePrice,
+		IncludedShipments:           plan.IncludedShipments,
+		ShipmentOveragePrice:        plan.ShipmentOveragePrice,
+		IncludedInvoices:            plan.IncludedInvoices,
+		InvoiceOveragePrice:         plan.InvoiceOveragePrice,
+		IncludedOrders:              plan.IncludedOrders,
+		OrderOveragePrice:           plan.OrderOveragePrice,
+		IncludedTemplateMessages:    plan.IncludedTemplateMessages,
+		TemplateMessageOveragePrice: plan.TemplateMessageOveragePrice,
+		IncludedTemplates:           plan.IncludedTemplates,
+		TemplateOveragePrice:        plan.TemplateOveragePrice,
 	}, cycleStart, cycleEnd)
 	if err != nil {
 		return 0, err
@@ -145,6 +149,23 @@ func (r *Repository) countInvoicesInRange(ctx context.Context, businessID uint, 
 func (r *Repository) countOrdersInRange(ctx context.Context, businessID uint, start, end time.Time) (int64, error) {
 	var count int64
 	err := r.db.Conn(ctx).Table("orders").
+		Where("business_id = ? AND deleted_at IS NULL AND created_at BETWEEN ? AND ?", businessID, start, end).
+		Count(&count).Error
+	return count, err
+}
+
+func (r *Repository) countTemplateMessagesInRange(ctx context.Context, businessID uint, start, end time.Time) (int64, error) {
+	var count int64
+	err := r.db.Conn(ctx).Table("whatsapp_message_logs").
+		Joins("JOIN whatsapp_conversations ON whatsapp_conversations.id = whatsapp_message_logs.conversation_id").
+		Where("whatsapp_conversations.business_id = ? AND whatsapp_message_logs.direction = 'outbound' AND whatsapp_message_logs.template_name <> '' AND whatsapp_message_logs.created_at BETWEEN ? AND ?", businessID, start, end).
+		Count(&count).Error
+	return count, err
+}
+
+func (r *Repository) countTemplatesInRange(ctx context.Context, businessID uint, start, end time.Time) (int64, error) {
+	var count int64
+	err := r.db.Conn(ctx).Table("whatsapp_templates").
 		Where("business_id = ? AND deleted_at IS NULL AND created_at BETWEEN ? AND ?", businessID, start, end).
 		Count(&count).Error
 	return count, err

@@ -27,5 +27,13 @@ type SubscriptionUsage struct {
 	OrderOveragePrice *float64
 	OrdersUsed        int64
 
+	IncludedTemplateMessages    *int
+	TemplateMessageOveragePrice *float64
+	TemplateMessagesUsed        int64
+
+	IncludedTemplates    *int
+	TemplateOveragePrice *float64
+	TemplatesUsed        int64
+
 	ForecastedPayment *float64
 }

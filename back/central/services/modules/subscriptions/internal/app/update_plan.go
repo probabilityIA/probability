@@ -46,6 +46,10 @@ func (uc *UseCase) UpdateSubscriptionType(ctx context.Context, dto dtos.UpdateSu
 	existing.InvoiceOveragePrice = dto.InvoiceOveragePrice
 	existing.IncludedOrders = dto.IncludedOrders
 	existing.OrderOveragePrice = dto.OrderOveragePrice
+	existing.IncludedTemplateMessages = dto.IncludedTemplateMessages
+	existing.TemplateMessageOveragePrice = dto.TemplateMessageOveragePrice
+	existing.IncludedTemplates = dto.IncludedTemplates
+	existing.TemplateOveragePrice = dto.TemplateOveragePrice
 
 	if err := uc.repo.UpdateSubscriptionType(ctx, existing); err != nil {
 		return nil, err
