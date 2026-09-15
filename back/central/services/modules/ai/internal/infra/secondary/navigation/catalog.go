@@ -19,10 +19,13 @@ func (c *Catalog) ForUser(ctx context.Context, scope dtos.AccessScope) (*entitie
 		return nil, fmt.Errorf("resolver navegacion visible: %w", err)
 	}
 
-	catalog := &entities.NavigationCatalog{}
 	visible := make(map[string]bool, len(entries))
 	for _, entry := range entries {
 		visible[entry.Key] = true
+	}
+
+	catalog := &entities.NavigationCatalog{}
+	for _, entry := range entries {
 		catalog.Allowed = append(catalog.Allowed, entities.Destination{
 			Key:         entry.Key,
 			Label:       entry.Label,
@@ -31,7 +34,7 @@ func (c *Catalog) ForUser(ctx context.Context, scope dtos.AccessScope) (*entitie
 			Guide:       c.guides[entry.Key],
 		})
 		for _, sub := range subpages {
-			if sub.Parent != entry.Key {
+			if sub.Parent != entry.Key || (sub.AlsoRequires != "" && !visible[sub.AlsoRequires]) {
 				continue
 			}
 			catalog.Allowed = append(catalog.Allowed, entities.Destination{

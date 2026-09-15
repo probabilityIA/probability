@@ -7,9 +7,12 @@ import {
     GREETING,
     buildHistory,
     entryId,
+    hubEnvironmentFor,
     isCurrentRoute,
+    isHubDestination,
     rateLimitText,
 } from '../../app/use-cases';
+import { queueIntegrationsHub, requestIntegrationsHub } from '@/services/modules/my-integrations/ui/open-hub';
 import type {
     AssistantDestination,
     AssistantHistoryMessage,
@@ -130,7 +133,20 @@ export function useAssistantChat() {
 
     const goTo = useCallback(
         (destination: AssistantDestination) => {
-            if (isCurrentRoute(pathname, destination.route)) return;
+            const onRoute = isCurrentRoute(pathname, destination.route);
+            if (isHubDestination(destination.key)) {
+                const intent = { environment: hubEnvironmentFor(destination.key) };
+                if (onRoute) {
+                    requestIntegrationsHub(intent);
+                } else {
+                    queueIntegrationsHub(intent);
+                    router.push(destination.route);
+                }
+                append({ id: entryId(), kind: 'system', text: `Te abr\u00ed ${destination.label}` });
+                point();
+                return;
+            }
+            if (onRoute) return;
             router.push(destination.route);
             append({ id: entryId(), kind: 'system', text: `Te llev\u00e9 a ${destination.label} \u00b7 ${destination.route}` });
             point();

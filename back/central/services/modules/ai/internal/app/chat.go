@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 
@@ -101,15 +102,18 @@ func composeReply(reply *dtos.ModelReply, catalog *entities.NavigationCatalog) (
 		return nil, domainerrors.ErrModelUnavailable
 	}
 
+	message, inlineKey := extractInlineDestination(cleanModelText(reply.Message))
+
 	var destination *entities.Destination
 	key := strings.TrimSpace(reply.DestinationKey)
+	if key == "" || key == noDestination {
+		key = inlineKey
+	}
 	if key != "" && key != noDestination {
 		if d, ok := catalog.Find(key); ok {
 			destination = d
 		}
 	}
-
-	message := cleanModelText(reply.Message)
 	if message == "" {
 		if destination == nil {
 			return nil, domainerrors.ErrModelUnavailable
@@ -118,6 +122,18 @@ func composeReply(reply *dtos.ModelReply, catalog *entities.NavigationCatalog) (
 	}
 
 	return &entities.AssistantReply{Message: message, Destination: destination}, nil
+}
+
+var inlineDestinationPattern = regexp.MustCompile(`(?im)^[\s*_]*destination[\s*_]*[:=][\s*_]*([a-z_.]+)[\s*_.]*$`)
+
+func extractInlineDestination(text string) (string, string) {
+	match := inlineDestinationPattern.FindStringSubmatchIndex(text)
+	if match == nil {
+		return text, ""
+	}
+	key := text[match[2]:match[3]]
+	cleaned := strings.TrimSpace(text[:match[0]] + text[match[1]:])
+	return cleaned, key
 }
 
 func cleanModelText(text string) string {

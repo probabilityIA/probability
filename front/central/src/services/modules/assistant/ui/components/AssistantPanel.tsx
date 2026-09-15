@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowPathIcon, ArrowRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { AssistantAvatar } from './AssistantAvatar';
 import { AssistantDestinationCard } from './AssistantDestinationCard';
-import { ASSISTANT_NAME, formatResetTime, isCurrentRoute } from '../../app/use-cases';
+import { ASSISTANT_NAME, formatResetTime, isCurrentRoute, isHubDestination } from '../../app/use-cases';
 import type { AssistantChat } from '../hooks/use-assistant-chat';
 
 interface AssistantPanelProps {
@@ -130,7 +130,7 @@ export function AssistantPanel({ chat, suggestions, onClose }: AssistantPanelPro
                                 {entry.destination && (
                                     <AssistantDestinationCard
                                         destination={entry.destination}
-                                        isCurrent={isCurrentRoute(chat.pathname, entry.destination.route)}
+                                        isCurrent={!isHubDestination(entry.destination.key) && isCurrentRoute(chat.pathname, entry.destination.route)}
                                         onGo={chat.goTo}
                                     />
                                 )}

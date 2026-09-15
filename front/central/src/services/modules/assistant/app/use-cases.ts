@@ -33,6 +33,24 @@ export function isCurrentRoute(pathname: string, route: string): boolean {
     return pathname === route || pathname.startsWith(`${route}/`);
 }
 
+export type HubEnvironment = 'products' | 'data' | 'inventory' | 'orders_compare';
+
+const HUB_DESTINATIONS: Record<string, HubEnvironment | null> = {
+    'integrations.hub': null,
+    'integrations.hub.products': 'products',
+    'integrations.hub.data': 'data',
+    'integrations.hub.inventory': 'inventory',
+    'integrations.hub.orders': 'orders_compare',
+};
+
+export function isHubDestination(key: string): boolean {
+    return key in HUB_DESTINATIONS;
+}
+
+export function hubEnvironmentFor(key: string): HubEnvironment | null {
+    return HUB_DESTINATIONS[key] ?? null;
+}
+
 export function formatResetTime(iso: string | null | undefined): string | null {
     if (!iso) return null;
     const date = new Date(iso);

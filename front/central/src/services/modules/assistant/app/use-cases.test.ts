@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_HISTORY, buildHistory, isCurrentRoute, pickSuggestions, rateLimitText } from './use-cases';
+import { MAX_HISTORY, buildHistory, hubEnvironmentFor, isCurrentRoute, isHubDestination, pickSuggestions, rateLimitText } from './use-cases';
+
+describe('destinos de Tus Integraciones', () => {
+    it('reconoce el hub y traduce cada accion a su ambiente', () => {
+        expect(isHubDestination('integrations.hub')).toBe(true);
+        expect(isHubDestination('integrations')).toBe(false);
+        expect(hubEnvironmentFor('integrations.hub')).toBeNull();
+        expect(hubEnvironmentFor('integrations.hub.inventory')).toBe('inventory');
+        expect(hubEnvironmentFor('integrations.hub.orders')).toBe('orders_compare');
+    });
+});
 import type { ChatEntry } from '../domain/types';
 
 describe('buildHistory', () => {

@@ -67,9 +67,27 @@ Mensajes automáticos a los clientes. Tiene «Reglas de Notificación» y las pe
 Tienda B2B para que los clientes del negocio hagan pedidos: catálogo con buscador y filtros, «Agregar al carrito» y envío del pedido desde el carrito. También «Mis Pedidos» y «Clientes».
 
 ## integrations
+Catálogo para conectar integraciones nuevas. Para ver, administrar o sincronizar las integraciones que ya están conectadas, el destino es Tus Integraciones, no esta pantalla.
 Conexión con otros sistemas. Botón «Crear Integración»: se elige la categoría, luego el proveedor y se llenan los datos (Shopify, MercadoLibre, Jumpseller y Tiendanube se conectan iniciando sesión en su cuenta; WhatsApp con «Conectar WhatsApp»).
 Categorías: tiendas en línea (Shopify, WooCommerce, MercadoLibre, Tiendanube, Jumpseller, VTEX, Magento, Amazon, Falabella, Éxito, TikTok), facturación electrónica (Siigo, Alegra, Factus, Helisa, Softpymes, World Office), mensajería (WhatsApp), pagos (Bold, ePayco, Nequi, PayU, Stripe, Wompi) y transportadoras (EnvioClick, MiPaquete, Enviame, Shipit). Algunas aparecen como «Próximamente».
 En cada integración: «Probar conexión», «Sincronizar órdenes» (con rango de fechas), «Editar integración» y «Eliminar integración».
+
+## integrations.hub
+Vista «Tus Integraciones». Es el destino cuando piden ver, mostrar, revisar o administrar SUS integraciones, o sincronizar productos, inventario u órdenes con sus canales.
+Se abre con el botón de enlace de la barra superior de Órdenes (también está en Inventario, Facturación, Última milla, Notificaciones y Catálogo). Muestra un diagrama con cada canal de venta conectado (Shopify, WooCommerce, MercadoLibre, Tiendanube, VTEX, Jumpseller, etc.) con sus órdenes, productos y estados, además de la mensajería (WhatsApp), la facturación electrónica y la configuración de envíos. Tiene las vistas «Diagrama» e «Informe» (tabla).
+Desde aquí cada integración se activa o desactiva con su interruptor, se edita con el botón de ajustes y se agrega una nueva con «Crear Integracion». Las acciones de la barra son «Vista general», «Comparar productos», «Actualizar productos», «Sincronizar inventario» y «Comparar órdenes».
+
+## integrations.hub.products
+«Comparar productos» dentro de Tus Integraciones: muestra qué producto está en cada canal y cuál falta por publicar, y permite asociarlo, crearlo en el canal o crearlo en Probability. Es el destino para sincronizar o comparar productos entre Probability y los canales.
+
+## integrations.hub.data
+«Actualizar productos» dentro de Tus Integraciones: muestra qué datos del canal (nombre, imagen, categoría) pueden entrar a Probability para actualizar los productos.
+
+## integrations.hub.inventory
+«Sincronizar inventario» dentro de Tus Integraciones: compara el stock de cada canal con el de Probability y muestra cuál quedaría distinto, para sincronizarlo.
+
+## integrations.hub.orders
+«Comparar órdenes» dentro de Tus Integraciones: muestra las órdenes que existen en el canal y no en Probability, y permite crearlas desde ahí. Es el destino para sincronizar órdenes que no llegaron.
 
 ## users
 Equipo del negocio: «Crear usuario», «Asignar rol», «Editar usuario» y «Eliminar usuario».

@@ -50,6 +50,19 @@ func TestChat_DescartaUnDestinoQueNoEstaPermitido(t *testing.T) {
 	assert.Equal(t, "Mira contabilidad.", reply.Message)
 }
 
+func TestChat_RecuperaElDestinoEscritoEnElTexto(t *testing.T) {
+	model := &modelFake{reply: &dtos.ModelReply{Message: "Puedes verlas en Ordenes.\n\n1. Filtra por estado.\n\ndestination: orders"}}
+	uc := newTestUseCase(model, &storeFake{})
+
+	reply, err := uc.Chat(context.Background(), chatInput(userMessage("donde veo las ordenes")))
+
+	require.NoError(t, err)
+	require.NotNil(t, reply.Destination)
+	assert.Equal(t, "/orders", reply.Destination.Route)
+	assert.NotContains(t, reply.Message, "destination")
+	assert.Equal(t, "Puedes verlas en Ordenes.\n\n1. Filtra por estado.", reply.Message)
+}
+
 func TestChat_SinTextoPeroConDestinoArmaUnMensaje(t *testing.T) {
 	model := &modelFake{reply: &dtos.ModelReply{DestinationKey: "shipments.cod"}}
 	uc := newTestUseCase(model, &storeFake{})
