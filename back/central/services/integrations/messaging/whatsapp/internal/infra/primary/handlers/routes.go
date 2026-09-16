@@ -8,7 +8,6 @@ import (
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	whatsapp := router.Group("/whatsapp")
 	{
-
 		whatsapp.POST("/send-template", middleware.JWT(), h.SendTemplate)
 		whatsapp.POST("/conversations/:id/reply", middleware.JWT(), h.SendManualReply)
 		whatsapp.POST("/conversations/:id/reply-media", middleware.JWT(), h.SendManualMedia)
@@ -31,6 +30,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		whatsapp.POST("/embedded-signup", middleware.JWT(), h.CompleteEmbeddedSignup)
 		whatsapp.GET("/templates/status", middleware.JWT(), h.GetTemplatesStatus)
 		whatsapp.GET("/templates/preview", middleware.JWT(), h.PreviewTemplates)
+		whatsapp.GET("/system-flows", middleware.JWT(), h.GetSystemFlows)
 		whatsapp.POST("/templates/provision", middleware.JWT(), h.ProvisionTemplates)
 
 		whatsapp.GET("/webhook", h.VerifyWebhook)

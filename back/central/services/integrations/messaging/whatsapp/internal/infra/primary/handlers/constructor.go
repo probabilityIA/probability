@@ -18,6 +18,7 @@ type IHandler interface {
 
 	SendTemplate(c *gin.Context)
 	PreviewTemplates(c *gin.Context)
+	GetSystemFlows(c *gin.Context)
 
 	SendManualReply(c *gin.Context)
 	SendManualMedia(c *gin.Context)

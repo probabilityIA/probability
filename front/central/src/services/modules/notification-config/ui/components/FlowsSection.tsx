@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "@/shared/ui/modal";
 import { useToast } from "@/shared/providers/toast-provider";
-import { Flow, TemplateFlow, WhatsappTemplate } from "../../domain/scheduled-types";
+import { Flow, SystemFlow, TemplateFlow, WhatsappTemplate } from "../../domain/scheduled-types";
+import { listSystemFlowsAction } from "../../infra/actions/system-flows";
 import {
   createFlowAction,
   deleteFlowAction,
@@ -14,6 +15,7 @@ import {
   listTemplatesAction,
   updateFlowAction,
 } from "../../infra/actions/whatsapp-templates";
+import { SystemFlowView } from "./SystemFlowView";
 import { TemplateFlowView } from "./TemplateFlowView";
 
 export const NOTIFICATIONS_ACTIONS_SLOT_ID = "notifications-actions-slot";
@@ -29,6 +31,8 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
   const { showToast } = useToast();
 
   const [flows, setFlows] = useState<Flow[]>([]);
+  const [systemFlows, setSystemFlows] = useState<SystemFlow[]>([]);
+  const [expandedSystem, setExpandedSystem] = useState<Record<string, boolean>>({});
   const [transitions, setTransitions] = useState<TemplateFlow[]>([]);
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
   const [catalog, setCatalog] = useState<Record<string, string>>({});
@@ -56,12 +60,15 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
   const load = useCallback(async () => {
     setLoading(true);
 
-    const [flowsResult, transitionsResult, templatesResult, catalogResult] = await Promise.all([
+    const [flowsResult, transitionsResult, templatesResult, catalogResult, systemResult] = await Promise.all([
       listFlowsAction(businessId),
       listAllTemplateFlowsAction(businessId),
       listTemplatesAction(businessId, "all", undefined, 1, 100),
       getTemplateVariablesAction(businessId),
+      listSystemFlowsAction(businessId),
     ]);
+
+    if (systemResult.success) setSystemFlows(systemResult.data);
 
     if (flowsResult.success) setFlows(flowsResult.data);
     if (transitionsResult.success) setTransitions(transitionsResult.data);
@@ -202,6 +209,31 @@ export function FlowsSection({ businessId }: FlowsSectionProps) {
           </button>,
           actionsSlot,
         )}
+
+      {systemFlows.length > 0 && (
+        <section className="space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{"Flujos del sistema"}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {"Los usa Probability en todos los negocios y no se pueden editar. Sus mensajes se activan desde Reglas."}
+            </p>
+          </div>
+          {systemFlows.map((flow) => (
+            <SystemFlowView
+              key={flow.key}
+              flow={flow}
+              templates={templates}
+              collapsed={!expandedSystem[flow.key]}
+              onToggleCollapsed={() =>
+                setExpandedSystem((current) => ({ ...current, [flow.key]: !current[flow.key] }))
+              }
+            />
+          ))}
+          {flows.length > 0 && (
+            <h3 className="pt-2 text-sm font-semibold text-gray-900 dark:text-white">{"Flujos del negocio"}</h3>
+          )}
+        </section>
+      )}
 
       {flows.length === 0 ? (
         <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-600">

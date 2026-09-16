@@ -253,6 +253,7 @@ var permissionRoutes = map[string]RoutePolicy{
 	post("/customers/upload-bulk"):                                     PermAction("customers", ActionCreate),
 	get("/integrations"):                                               AnyPermission("integrations.read", "orders.read"),
 	get("/integrations/stats"):                                         AnyPermission("integrations.read", "orders.read"),
+	get("/integrations/whatsapp/system-flows"):                         PermAction("notifications", ActionRead),
 	post("/integrations/whatsapp/send-template"):                       Perm("notifications"),
 	post("/integrations/whatsapp/conversations/:id/reply"):             Perm("notifications"),
 	post("/integrations/whatsapp/conversations/:id/reply-media"):       Perm("notifications"),
