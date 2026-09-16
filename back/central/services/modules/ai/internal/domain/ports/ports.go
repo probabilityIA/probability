@@ -32,6 +32,7 @@ type IBusinessDataReader interface {
 	FindShipments(ctx context.Context, businessID uint, trackingNumber string) ([]entities.ShipmentInfo, error)
 	ListOrders(ctx context.Context, businessID uint, query dtos.OrderQuery) ([]entities.OrderSummary, int64, error)
 	SummarizeOrders(ctx context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error)
+	DescribeIdentity(ctx context.Context, userID uint, businessID *uint) (*entities.ChatIdentity, error)
 }
 
 type IConversationRecorder interface {
@@ -47,4 +48,13 @@ type IConversationRepository interface {
 	ListMessages(ctx context.Context, filter dtos.ReviewFilter) ([]entities.ReviewMessage, int64, error)
 	Summary(ctx context.Context, filter dtos.ReviewFilter) (*entities.ReviewSummary, error)
 	DeleteOlderThan(ctx context.Context, cutoff time.Time) (int64, error)
+}
+
+type IAlertRepository interface {
+	SaveAlert(ctx context.Context, alert entities.Alert) (bool, error)
+	ListAlerts(ctx context.Context, query dtos.AlertQuery) ([]entities.Alert, int64, error)
+	CountUnread(ctx context.Context, businessID, userID uint) (int64, *entities.Alert, error)
+	MarkSeen(ctx context.Context, businessID, userID uint, at time.Time) error
+	RecentAlerts(ctx context.Context, businessID uint, limit int) ([]entities.Alert, error)
+	DeleteAlertsOlderThan(ctx context.Context, cutoff time.Time) (int64, error)
 }

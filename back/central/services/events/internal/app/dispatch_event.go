@@ -8,7 +8,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/entities"
 )
 
-// HandleEvent procesa un evento: consulta configs en cache, rutea por canal
 func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event) error {
 	d.logger.Info(ctx).
 		Str("event_id", event.ID).
@@ -17,7 +16,6 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 		Uint("integration_id", event.IntegrationID).
 		Msg("Procesando evento en dispatcher")
 
-	// Lookup configs en Redis cache
 	configs, err := d.configCache.GetActiveConfigsByIntegrationAndTrigger(ctx, event.IntegrationID, event.Type)
 	if err == nil {
 		configs = d.applyVariants(ctx, event, configs)
@@ -32,7 +30,6 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 		return nil
 	}
 
-	// Si no hay configs -> broadcast SSE por defecto (backward compatible)
 	if len(configs) == 0 {
 		d.logger.Info(ctx).
 			Str("event_id", event.ID).
@@ -50,10 +47,8 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 		Int("configs_count", len(configs)).
 		Msg("Configs de notificación encontradas, ruteando por canal")
 
-	// Para cada config habilitada -> validar condiciones -> rutear por canal
 	ssePublished := false
 	for _, config := range configs {
-		// Validar condiciones (OrderStatusCodes)
 		if !d.validateConditions(event, config) {
 			d.logger.Debug(ctx).
 				Uint("config_id", config.ID).
@@ -96,6 +91,9 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 					Msg("Evento ruteado a Email")
 			}
 
+		case dtos.NotificationTypeAssistant:
+			d.forwardToAssistant(ctx, event, config)
+
 		case dtos.NotificationTypePush:
 			if err := d.channelPublisher.PublishToPush(ctx, event, config); err != nil {
 				d.logger.Error(ctx).
@@ -115,7 +113,6 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 		}
 	}
 
-	// Si ninguna config era SSE, broadcast SSE por defecto
 	if !ssePublished {
 		d.ssePublisher.PublishEvent(event)
 	}
@@ -123,19 +120,15 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 	return nil
 }
 
-// validateConditions valida si un evento cumple las condiciones de una config
 func (d *EventDispatcher) validateConditions(event entities.Event, config entities.CachedNotificationConfig) bool {
-	// La confirmacion de pedido por WhatsApp solo aplica a ordenes contra entrega
 	if isOrderConfirmation(config) && !event.IsCOD() {
 		return false
 	}
 
-	// Si no hay filtros de estado configurados -> aceptar todo
 	if len(config.OrderStatusCodes) == 0 && len(config.OrderStatusIDs) == 0 {
 		return true
 	}
 
-	// 1. Intentar validar por código de estado (current_status string de Changes)
 	if len(config.OrderStatusCodes) > 0 {
 		if status, ok := event.Data["current_status"]; ok {
 			if statusStr, ok := status.(string); ok && statusStr != "" {
@@ -144,8 +137,6 @@ func (d *EventDispatcher) validateConditions(event entities.Event, config entiti
 		}
 	}
 
-	// 2. Fallback: validar por ID de estado (order_status_id del snapshot)
-	//    Esto cubre eventos como order.created donde current_status no está en Changes
 	if len(config.OrderStatusIDs) > 0 {
 		if statusID, ok := event.Data["order_status_id"]; ok {
 			var orderStatusID uint
@@ -169,24 +160,18 @@ func (d *EventDispatcher) validateConditions(event entities.Event, config entiti
 		}
 	}
 
-	// Si no hay información de estado en el evento -> no filtrar (backward compatible)
 	return true
 }
 
-// isOrderConfirmation identifica la regla de confirmacion de pedido por WhatsApp
 func isOrderConfirmation(config entities.CachedNotificationConfig) bool {
 	return config.NotificationTypeID == dtos.NotificationTypeWhatsApp &&
 		config.EventCode == dtos.EventCodeOrderCreated
 }
 
-
 var eventVariants = map[string]string{
 	dtos.EventCodeOrderCreated: "order.created_with_map",
 }
 
-// applyVariants agrega las configs de la variante del evento y, si la variante
-// esta activa para un canal, descarta la config base de ese mismo canal: el
-// negocio elige una plantilla u otra, nunca las dos.
 func (d *EventDispatcher) applyVariants(ctx context.Context, event entities.Event, configs []entities.CachedNotificationConfig) []entities.CachedNotificationConfig {
 	variantCode, tieneVariante := eventVariants[event.Type]
 	if !tieneVariante {
@@ -216,4 +201,16 @@ func (d *EventDispatcher) applyVariants(ctx context.Context, event entities.Even
 	}
 
 	return append(resultado, variantes...)
+}
+
+func (d *EventDispatcher) forwardToAssistant(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) {
+	if d.alerts == nil {
+		return
+	}
+	if err := d.alerts.PublishToAssistant(ctx, event); err != nil {
+		d.logger.Error(ctx).Err(err).Uint("config_id", config.ID).Str("event_type", event.Type).
+			Msg("Error publicando la alerta al asistente")
+		return
+	}
+	d.logger.Info(ctx).Uint("config_id", config.ID).Msg("Evento ruteado al asistente")
 }

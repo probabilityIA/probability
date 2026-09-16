@@ -46,15 +46,22 @@ func New(router *gin.RouterGroup, logger log.ILogger, deps Dependencies) {
 		queue.New(deps.RabbitMQ),
 		repository.New(deps.Database),
 		businessdata.New(deps.Database),
+		repository.NewAlerts(deps.Database),
 		moduleLogger,
 	)
 
 	handlers.New(useCase, moduleLogger).RegisterRoutes(router)
 
 	if deps.RabbitMQ != nil {
+		queueConsumer := consumer.New(deps.RabbitMQ, useCase, moduleLogger)
 		go func() {
-			if err := consumer.New(deps.RabbitMQ, useCase, moduleLogger).Start(ctx); err != nil {
+			if err := queueConsumer.Start(ctx); err != nil {
 				moduleLogger.Error(ctx).Err(err).Msg("[ai.assistant] no se pudo iniciar el consumidor de conversaciones")
+			}
+		}()
+		go func() {
+			if err := queueConsumer.StartAlerts(ctx); err != nil {
+				moduleLogger.Error(ctx).Err(err).Msg("[ai.assistant] no se pudo iniciar el consumidor de alertas")
 			}
 		}()
 	}
@@ -73,6 +80,14 @@ func startConversationRetention(ctx context.Context, useCase app.IUseCase, logge
 		}
 		if deleted > 0 {
 			logger.Info(ctx).Int64("deleted", deleted).Msg("[ai.assistant] mensajes de mas de un ano eliminados")
+		}
+		purged, err := useCase.PurgeExpiredAlerts(ctx)
+		if err != nil {
+			logger.Warn(ctx).Err(err).Msg("[ai.assistant] fallo la limpieza de alertas vencidas")
+			return
+		}
+		if purged > 0 {
+			logger.Info(ctx).Int64("deleted", purged).Msg("[ai.assistant] alertas de mas de 90 dias eliminadas")
 		}
 	}
 	run()

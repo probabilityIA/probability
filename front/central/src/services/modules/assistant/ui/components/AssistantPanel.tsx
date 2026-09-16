@@ -12,35 +12,42 @@ import {
     HandThumbDownIcon as HandThumbDownSolid,
     HandThumbUpIcon as HandThumbUpSolid,
 } from '@heroicons/react/24/solid';
+import { AssistantAlertsList } from './AssistantAlertsList';
 import { AssistantAvatar } from './AssistantAvatar';
 import { AssistantDestinationCard } from './AssistantDestinationCard';
 import { ASSISTANT_NAME, formatResetTime, isCurrentRoute, isHubDestination } from '../../app/use-cases';
 import type { AssistantChat } from '../hooks/use-assistant-chat';
-import type { AssistantDestination } from '../../domain/types';
+import type { AssistantAlerts } from '../hooks/use-assistant-alerts';
+import type { AssistantDestination, AssistantTab } from '../../domain/types';
 
 interface AssistantPanelProps {
     chat: AssistantChat;
+    alerts: AssistantAlerts;
+    tab: AssistantTab;
+    onTabChange: (tab: AssistantTab) => void;
     suggestions: string[];
     onClose: () => void;
     onShowMe: (destination: AssistantDestination, messageId?: string) => void;
 }
 
+const tabButton = 'relative flex-1 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#5B1BE6]';
+
 const feedbackButton =
     'rounded-md p-1 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#5B1BE6]';
 
-export function AssistantPanel({ chat, suggestions, onClose, onShowMe }: AssistantPanelProps) {
+export function AssistantPanel({ chat, alerts, tab, onTabChange, suggestions, onClose, onShowMe }: AssistantPanelProps) {
     const [draft, setDraft] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        inputRef.current?.focus();
-    }, []);
+        if (tab === 'chat') inputRef.current?.focus();
+    }, [tab]);
 
     useEffect(() => {
         const list = listRef.current;
         if (list) list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
-    }, [chat.entries.length, chat.pending]);
+    }, [chat.entries.length, chat.pending, tab]);
 
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
@@ -76,15 +83,17 @@ export function AssistantPanel({ chat, suggestions, onClose, onShowMe }: Assista
                     <p className="text-base font-bold text-gray-900 dark:text-white">{ASSISTANT_NAME}</p>
                     <p className="truncate text-xs text-gray-500 dark:text-gray-400">{'Conoce los m\u00f3dulos de tu cuenta'}</p>
                 </div>
-                <button
-                    type="button"
-                    onClick={chat.reset}
-                    title={'Nueva conversaci\u00f3n'}
-                    aria-label={'Nueva conversaci\u00f3n'}
-                    className="ml-auto rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                >
-                    <ArrowPathIcon className="h-5 w-5" />
-                </button>
+                {tab === 'chat' && (
+                    <button
+                        type="button"
+                        onClick={chat.reset}
+                        title={'Nueva conversaci\u00f3n'}
+                        aria-label={'Nueva conversaci\u00f3n'}
+                        className="ml-auto rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                    >
+                        <ArrowPathIcon className="h-5 w-5" />
+                    </button>
+                )}
                 <button
                     type="button"
                     onClick={onClose}
@@ -96,6 +105,44 @@ export function AssistantPanel({ chat, suggestions, onClose, onShowMe }: Assista
                 </button>
             </header>
 
+            <div role="tablist" className="flex border-b border-gray-200 dark:border-gray-700">
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === 'chat'}
+                    onClick={() => onTabChange('chat')}
+                    className={`${tabButton} ${tab === 'chat' ? 'text-[#5B1BE6] dark:text-violet-300' : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'}`}
+                >
+                    {'Chat'}
+                    {tab === 'chat' && <span className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-[#5B1BE6] dark:bg-violet-300" />}
+                </button>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === 'alerts'}
+                    onClick={() => onTabChange('alerts')}
+                    className={`${tabButton} ${tab === 'alerts' ? 'text-[#5B1BE6] dark:text-violet-300' : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'}`}
+                >
+                    <span className="inline-flex items-center gap-1.5">
+                        {'Alertas'}
+                        {alerts.unread > 0 && (
+                            <span className="rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-4 text-white">{alerts.unread > 99 ? '99+' : alerts.unread}</span>
+                        )}
+                    </span>
+                    {tab === 'alerts' && <span className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-[#5B1BE6] dark:bg-violet-300" />}
+                </button>
+            </div>
+
+            {tab === 'alerts' && (
+                <AssistantAlertsList
+                    alerts={alerts}
+                    pathname={chat.pathname}
+                    onGo={(destination) => chat.goTo(destination)}
+                    onShowMe={(destination) => onShowMe(destination)}
+                />
+            )}
+
+            {tab === 'chat' && (<>
             <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
                 {chat.entries.map((entry) => {
                     if (entry.kind === 'user') {
@@ -235,6 +282,7 @@ export function AssistantPanel({ chat, suggestions, onClose, onShowMe }: Assista
             <p className="px-4 pb-2 text-center text-[11px] leading-snug text-gray-400 dark:text-gray-500">
                 {`${ASSISTANT_NAME} puede equivocarse y nunca cambia de pantalla sin tu clic. Guardamos las conversaciones para mejorarlo.`}
             </p>
+            </>)}
         </section>
     );
 }

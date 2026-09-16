@@ -36,14 +36,16 @@ const dataRules = "- Si preguntan por una orden, una gu\u00eda, estados, cantida
 	"- No muestres tel\u00e9fonos, correos ni direcciones.\n" +
 	"- Escribe los montos en pesos colombianos con punto de miles, por ejemplo $300.000.\n" +
 	"- Para hoy, ayer, esta semana o este mes, calcula desde y hasta a partir de la fecha de hoy.\n" +
+	"- Si preguntan por alertas, novedades o avisos recientes, usa consultar_alertas: son los mismos avisos que ve la persona en la pesta\u00f1a Alertas del chat.\n" +
 	"- Cuando termines de consultar, entrega la respuesta con la herramienta responder; si ayuda, pon un destino como orders o shipments.\n"
 
 var spanishMonths = []string{"enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"}
 var spanishWeekdays = []string{"domingo", "lunes", "martes", "mi\u00e9rcoles", "jueves", "viernes", "s\u00e1bado"}
 
-func buildSystemPrompt(catalog *entities.NavigationCatalog, access dataAccess, now time.Time) string {
+func buildSystemPrompt(catalog *entities.NavigationCatalog, access dataAccess, identity *entities.ChatIdentity, now time.Time) string {
 	var b strings.Builder
 	b.WriteString(promptIntro)
+	writeIdentity(&b, identity)
 
 	b.WriteString("\n\nDESTINOS PERMITIDOS\n")
 	if len(catalog.Allowed) == 0 {
@@ -85,4 +87,23 @@ func buildSystemPrompt(catalog *entities.NavigationCatalog, access dataAccess, n
 func spanishDate(now time.Time) string {
 	local := now.In(colombia)
 	return fmt.Sprintf("%s %d de %s de %d", spanishWeekdays[local.Weekday()], local.Day(), spanishMonths[local.Month()-1], local.Year())
+}
+
+func writeIdentity(b *strings.Builder, identity *entities.ChatIdentity) {
+	if identity == nil {
+		return
+	}
+	b.WriteString("\n\nCONTEXTO\n")
+	if identity.UserName != "" {
+		fmt.Fprintf(b, "La persona se llama %s.\n", identity.UserName)
+	}
+	switch {
+	case identity.IsSuperAdmin && identity.BusinessName != "":
+		fmt.Fprintf(b, "Es administradora de Probability (super admin) y est\u00e1 viendo el negocio %s.\n", identity.BusinessName)
+	case identity.IsSuperAdmin:
+		b.WriteString("Es administradora de Probability (super admin) y no ha seleccionado ning\u00fan negocio.\n")
+	case identity.BusinessName != "":
+		fmt.Fprintf(b, "Su negocio se llama %s.\n", identity.BusinessName)
+	}
+	b.WriteString("Si pregunta c\u00f3mo se llama su negocio o qui\u00e9n es, responde con estos datos.\n")
 }

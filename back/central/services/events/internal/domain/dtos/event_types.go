@@ -118,3 +118,5 @@ const NotificationTypeEmail = 3
 
 // NotificationTypePush es el ID del tipo de notificación Push (FCM)
 const NotificationTypePush = 5
+
+const NotificationTypeAssistant = 6

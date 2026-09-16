@@ -116,6 +116,10 @@ func (f *readerFake) ListOrders(_ context.Context, businessID uint, _ dtos.Order
 	return nil, 0, nil
 }
 
+func (f *readerFake) DescribeIdentity(_ context.Context, _ uint, _ *uint) (*entities.ChatIdentity, error) {
+	return &entities.ChatIdentity{UserName: "Ana", BusinessName: "Demo"}, nil
+}
+
 func (f *readerFake) SummarizeOrders(_ context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error) {
 	f.businessIDs = append(f.businessIDs, businessID)
 	return &entities.OrdersOverview{From: from, To: to}, nil
@@ -136,11 +140,11 @@ func newTestUseCase(model *modelFake, store *storeFake) *UseCase {
 	if store != nil {
 		s = store
 	}
-	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, nil, nil, nil, log.New()).(*UseCase)
+	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, nil, nil, nil, nil, log.New()).(*UseCase)
 }
 
 func newDataUseCase(model *modelFake, reader *readerFake, catalog *entities.NavigationCatalog) *UseCase {
-	uc := New(&recommendationFake{}, model, &navigationFake{catalog: catalog}, &storeFake{}, nil, nil, reader, log.New()).(*UseCase)
+	uc := New(&recommendationFake{}, model, &navigationFake{catalog: catalog}, &storeFake{}, nil, nil, reader, nil, log.New()).(*UseCase)
 	uc.now = func() time.Time { return time.Date(2026, 9, 14, 15, 0, 0, 0, colombia) }
 	return uc
 }

@@ -192,3 +192,12 @@ func TestGetAssistantState(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, state.IntroSeen)
 }
+
+func TestComposeReplyDescartaJSONFiltrado(t *testing.T) {
+	reply := &dtos.ModelReply{Message: "Hay una alerta reciente.\n\n{\"message\": \"Hay una alerta reciente: DEM-0048 fue cancelada.\", \"destination\": \"orders\"}"}
+	out, err := composeReply(reply, sampleCatalog())
+	require.NoError(t, err)
+	assert.Equal(t, "Hay una alerta reciente: DEM-0048 fue cancelada.", out.Message)
+	require.NotNil(t, out.Destination)
+	assert.Equal(t, "orders", out.Destination.Key)
+}

@@ -15,6 +15,7 @@ const (
 	toolFindShipment  = "consultar_guia"
 	toolListOrders    = "listar_ordenes"
 	toolOrdersSummary = "resumen_ordenes"
+	toolListAlerts    = "consultar_alertas"
 
 	dateLayout = "2006-01-02"
 )
@@ -62,7 +63,23 @@ func (uc *UseCase) resolveDataAccess(catalog *entities.NavigationCatalog, scope 
 		access.Tools = append(access.Tools, findOrderTool(), listOrdersTool(), ordersSummaryTool())
 	}
 	access.Tools = append(access.Tools, findShipmentTool())
+	if uc.alerts != nil {
+		access.Tools = append(access.Tools, listAlertsTool())
+	}
 	return access
+}
+
+func listAlertsTool() dtos.ToolDefinition {
+	return dtos.ToolDefinition{
+		Name:        toolListAlerts,
+		Description: "Lista las \u00faltimas alertas o novedades del negocio que V\u00eda registr\u00f3: cancelaciones, gu\u00edas rechazadas, novedades de transportadora, saldo bajo, facturas fallidas. Dice cu\u00e1ndo pas\u00f3 cada una y a qu\u00e9 orden o gu\u00eda pertenece.",
+		Schema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"limite": map[string]any{"type": "integer", "minimum": 1, "maximum": RecentAlertsForModel},
+			},
+		},
+	}
 }
 
 func findOrderTool() dtos.ToolDefinition {
@@ -229,6 +246,24 @@ func (uc *UseCase) runTool(ctx context.Context, businessID uint, call dtos.ToolC
 			return nil, err
 		}
 		return overviewToMap(overview), nil
+
+	case toolListAlerts:
+		limit := intArg(call.Input, "limite", RecentAlertsForModel)
+		if limit < 1 || limit > RecentAlertsForModel {
+			limit = RecentAlertsForModel
+		}
+		alerts, err := uc.alerts.RecentAlerts(ctx, businessID, limit)
+		if err != nil {
+			return nil, err
+		}
+		if len(alerts) == 0 {
+			return map[string]any{"encontradas": 0, "mensaje": "No hay alertas registradas para este negocio."}, nil
+		}
+		items := make([]map[string]any, 0, len(alerts))
+		for _, alert := range alerts {
+			items = append(items, alertToMap(alert))
+		}
+		return map[string]any{"encontradas": len(items), "alertas": items}, nil
 	}
 	return map[string]any{"error": "Consulta desconocida."}, nil
 }
@@ -411,4 +446,20 @@ func dateRangeArgs(input map[string]any) (*time.Time, *time.Time) {
 		}
 	}
 	return from, to
+}
+
+func alertToMap(alert entities.Alert) map[string]any {
+	item := map[string]any{
+		"titulo":  alert.Title,
+		"detalle": alert.Body,
+		"fecha":   alert.CreatedAt.In(colombia).Format("2006-01-02 15:04"),
+		"tipo":    alert.EventType,
+	}
+	if alert.ReferenceID != "" {
+		item["referencia"] = map[string]any{"tipo": alert.ReferenceType, "numero": alert.ReferenceID}
+	}
+	if alert.DestinationKey != "" {
+		item["modulo"] = alert.DestinationKey
+	}
+	return item
 }

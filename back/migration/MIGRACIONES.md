@@ -117,3 +117,4 @@ script, verificar, y dejar `Migrate()` en cero otra vez.
 
 Antes de esta fecha no habia registro: todas las migraciones listadas en
 `migrateHistorico()` se aplicaron corriendo la cadena completa.
+| 2026-09-16 | `migrateAssistantAlerts` | Crea `assistant_alerts` (alertas por negocio con event_id unico, titulo, cuerpo, destino, referencia) y `assistant_alert_cursors` (ultimo visto por usuario y negocio). Inserta el canal de notificacion `assistant` ("Via") con **id 6 fijo** (el dispatcher de `services/events` lo espera asi; la migracion falla si queda con otro id) y sus 8 tipos de evento. Corrida en local (TKT-000096). **Pendiente en produccion: correrla ANTES de desplegar el backend**, si no el consumidor de `ai.assistant.alerts` y los endpoints `/ai/assistant/alerts*` fallan | local |

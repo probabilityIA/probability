@@ -1,6 +1,8 @@
 import { env } from '@/shared/config/env';
 import type { IAssistantRepository } from '../../domain/ports';
 import type {
+    AssistantAlert,
+    AssistantAlertsUnread,
     AssistantErrorCode,
     AssistantHistoryMessage,
     AssistantReply,
@@ -100,5 +102,35 @@ export class AssistantApiRepository implements IAssistantRepository {
 
     getReviewSummary(filters: ReviewFilters): Promise<ReviewSummary> {
         return this.request<ReviewSummary>(`/ai/assistant/admin/summary${toQuery(filters)}`, { method: 'GET' });
+    }
+
+    private alertsQuery(businessId: number | null | undefined, extra: Record<string, string | number> = {}): string {
+        const params = new URLSearchParams();
+        if (businessId) params.append('business_id', String(businessId));
+        Object.entries(extra).forEach(([key, value]) => params.append(key, String(value)));
+        const query = params.toString();
+        return query ? `?${query}` : '';
+    }
+
+    async listAlerts(businessId: number | null | undefined, page: number, pageSize: number): Promise<PaginatedResponse<AssistantAlert>> {
+        const data = await this.request<PaginatedResponse<AssistantAlert>>(
+            `/ai/assistant/alerts${this.alertsQuery(businessId, { page, page_size: pageSize })}`,
+            { method: 'GET' },
+        );
+        return {
+            data: data?.data || [],
+            total: Number(data?.total) || 0,
+            page: Number(data?.page) || page,
+            page_size: Number(data?.page_size) || pageSize,
+            total_pages: Number(data?.total_pages) || 1,
+        };
+    }
+
+    getAlertsUnread(businessId: number | null | undefined): Promise<AssistantAlertsUnread> {
+        return this.request<AssistantAlertsUnread>(`/ai/assistant/alerts/unread${this.alertsQuery(businessId)}`, { method: 'GET' });
+    }
+
+    async markAlertsSeen(businessId: number | null | undefined): Promise<void> {
+        await this.requestBody(`/ai/assistant/alerts/seen${this.alertsQuery(businessId)}`, { method: 'POST' });
     }
 }

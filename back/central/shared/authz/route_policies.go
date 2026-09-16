@@ -107,6 +107,9 @@ var authenticatedRoutes = []string{
 	post("/ai/assistant/intro-seen"),
 	post("/ai/assistant/messages/:id/feedback"),
 	post("/ai/assistant/messages/:id/click"),
+	get("/ai/assistant/alerts"),
+	get("/ai/assistant/alerts/unread"),
+	post("/ai/assistant/alerts/seen"),
 
 	get("/businesses/:id"),
 	put("/businesses/:id"),

@@ -95,3 +95,30 @@ export function entryId(): string {
     sequence += 1;
     return `${Date.now().toString(36)}-${sequence}`;
 }
+
+export const ALERT_EVENT_TYPES = [
+    'order.cancelled',
+    'order.status_changed',
+    'shipment.guide_failed',
+    'shipment.tracking_updated',
+    'shipment.cancel_failed',
+    'invoice.failed',
+    'wallet.low_balance',
+    'wallet.recharge.failed',
+];
+
+export const ALERT_TOAST_MS = 14000;
+export const ALERT_REFRESH_DELAY_MS = 1500;
+
+export function relativeTime(iso: string, now: Date = new Date()): string {
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) return '';
+    const minutes = Math.max(0, Math.round((now.getTime() - then) / 60000));
+    if (minutes < 1) return 'ahora';
+    if (minutes < 60) return `hace ${minutes} min`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    const days = Math.round(hours / 24);
+    if (days < 7) return `hace ${days} d`;
+    return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+}

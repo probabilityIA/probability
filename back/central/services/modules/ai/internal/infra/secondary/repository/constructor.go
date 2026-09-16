@@ -15,3 +15,10 @@ func New(database db.IDatabase) ports.IConversationRepository {
 	}
 	return &Repository{db: database}
 }
+
+func NewAlerts(database db.IDatabase) ports.IAlertRepository {
+	if database == nil {
+		return nil
+	}
+	return &Repository{db: database}
+}

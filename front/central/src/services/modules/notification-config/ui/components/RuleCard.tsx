@@ -46,6 +46,7 @@ const CHANNEL_COLORS: Record<string, { bg: string; selectedBg: string }> = {
   email: { bg: "bg-orange-50 border-orange-200 text-orange-700", selectedBg: "bg-orange-500 border-orange-600 text-white" },
   sms: { bg: "bg-purple-50 border-purple-200 text-purple-700", selectedBg: "bg-purple-500 border-purple-600 text-white" },
   sse: { bg: "bg-purple-50 border-purple-200 text-purple-700", selectedBg: "bg-purple-500 border-purple-600 text-white" },
+  assistant: { bg: "bg-violet-50 border-violet-200 text-[#3E0FA8]", selectedBg: "bg-[#5B1BE6] border-[#4A12C9] text-white" },
 };
 
 const CHANNEL_BADGE: Record<string, string> = {
@@ -53,6 +54,7 @@ const CHANNEL_BADGE: Record<string, string> = {
   email: "bg-orange-100 text-orange-700",
   sms: "bg-purple-100 text-purple-700",
   sse: "bg-purple-100 text-purple-700",
+  assistant: "bg-violet-100 text-[#3E0FA8]",
 };
 
 export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onDelete }: RuleCardProps) {

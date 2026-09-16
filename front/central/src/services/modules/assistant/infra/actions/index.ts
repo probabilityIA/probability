@@ -3,6 +3,8 @@
 import { getAuthToken } from '@/shared/utils/server-auth';
 import { AssistantApiError, AssistantApiRepository } from '../repository/api-repository';
 import type {
+    AssistantAlert,
+    AssistantAlertsUnread,
     AssistantHistoryMessage,
     AssistantReply,
     AssistantResult,
@@ -71,4 +73,25 @@ export async function getAssistantReviewMessagesAction(
 
 export async function getAssistantReviewSummaryAction(filters: ReviewFilters): Promise<AssistantResult<ReviewSummary>> {
     return withRepository((repo) => repo.getReviewSummary(filters));
+}
+
+export async function getAssistantAlertsAction(
+    businessId: number | null | undefined,
+    page = 1,
+    pageSize = 20,
+): Promise<AssistantResult<PaginatedResponse<AssistantAlert>>> {
+    return withRepository((repo) => repo.listAlerts(businessId, page, pageSize));
+}
+
+export async function getAssistantAlertsUnreadAction(
+    businessId: number | null | undefined,
+): Promise<AssistantResult<AssistantAlertsUnread>> {
+    return withRepository((repo) => repo.getAlertsUnread(businessId));
+}
+
+export async function markAssistantAlertsSeenAction(businessId: number | null | undefined): Promise<AssistantResult<null>> {
+    return withRepository(async (repo) => {
+        await repo.markAlertsSeen(businessId);
+        return null;
+    });
 }

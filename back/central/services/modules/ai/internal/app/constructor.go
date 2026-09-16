@@ -51,6 +51,12 @@ type IUseCase interface {
 	ListReviewMessages(ctx context.Context, filter dtos.ReviewFilter) (*dtos.PaginatedResponse[entities.ReviewMessage], error)
 	GetReviewSummary(ctx context.Context, filter dtos.ReviewFilter) (*entities.ReviewSummary, error)
 	PurgeExpiredConversations(ctx context.Context) (int64, error)
+
+	IngestAlertEvent(ctx context.Context, event dtos.AlertEvent) error
+	ListAlerts(ctx context.Context, query dtos.AlertQuery) (*dtos.PaginatedResponse[entities.Alert], error)
+	GetAlertsUnread(ctx context.Context, businessID, userID uint) (*entities.AlertsUnread, error)
+	MarkAlertsSeen(ctx context.Context, businessID, userID uint) error
+	PurgeExpiredAlerts(ctx context.Context) (int64, error)
 }
 
 type UseCase struct {
@@ -61,6 +67,7 @@ type UseCase struct {
 	recorder        ports.IConversationRecorder
 	conversations   ports.IConversationRepository
 	businessData    ports.IBusinessDataReader
+	alerts          ports.IAlertRepository
 	log             log.ILogger
 	now             func() time.Time
 }
@@ -73,6 +80,7 @@ func New(
 	recorder ports.IConversationRecorder,
 	conversations ports.IConversationRepository,
 	businessData ports.IBusinessDataReader,
+	alerts ports.IAlertRepository,
 	logger log.ILogger,
 ) IUseCase {
 	return &UseCase{
@@ -83,6 +91,7 @@ func New(
 		recorder:        recorder,
 		conversations:   conversations,
 		businessData:    businessData,
+		alerts:          alerts,
 		log:             logger,
 		now:             time.Now,
 	}

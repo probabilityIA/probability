@@ -239,6 +239,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                     const channelBg = chCode.includes('whatsapp') ? 'bg-green-100 text-green-700'
                       : chCode.includes('email') ? 'bg-orange-100 text-orange-700'
                       : chCode.includes('sms') ? 'bg-purple-100 text-purple-700'
+                      : chCode.includes('assistant') ? 'bg-violet-100 text-[#3E0FA8]'
                       : 'bg-purple-100 text-purple-700';
                     return (
                       <span

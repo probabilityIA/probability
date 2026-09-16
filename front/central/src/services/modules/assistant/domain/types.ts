@@ -45,7 +45,28 @@ export type AssistantResult<T> =
     | { success: true; data: T }
     | { success: false; code: AssistantErrorCode; message: string; resetAt?: string | null };
 
-export type AvatarMood = 'idle' | 'thinking' | 'pointing';
+export type AvatarMood = 'idle' | 'thinking' | 'pointing' | 'talking' | 'happy';
+
+export type AssistantTab = 'chat' | 'alerts';
+
+export type AlertSeverity = 'info' | 'warning' | 'critical';
+
+export interface AssistantAlert {
+    id: string;
+    event_type: string;
+    severity: AlertSeverity;
+    title: string;
+    body: string;
+    destination: AssistantDestination | null;
+    reference: { type: string; id: string } | null;
+    unread: boolean;
+    created_at: string;
+}
+
+export interface AssistantAlertsUnread {
+    count: number;
+    latest: AssistantAlert | null;
+}
 
 export type FeedbackValue = -1 | 0 | 1;
 

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"regexp"
 	"strings"
 	"time"
@@ -45,7 +46,7 @@ func (uc *UseCase) Chat(ctx context.Context, input dtos.ChatInput) (*entities.As
 
 	access := uc.resolveDataAccess(catalog, input.Scope)
 	request := dtos.ModelRequest{
-		SystemPrompt:    buildSystemPrompt(catalog, access, uc.now()),
+		SystemPrompt:    buildSystemPrompt(catalog, access, uc.describeIdentity(ctx, input.Scope), uc.now()),
 		Messages:        toModelMessages(messages),
 		DestinationKeys: catalog.Keys(),
 		Tools:           access.Tools,
@@ -207,7 +208,7 @@ func composeReply(reply *dtos.ModelReply, catalog *entities.NavigationCatalog) (
 		return nil, domainerrors.ErrModelUnavailable
 	}
 
-	message, inlineKey := extractInlineDestination(cleanModelText(reply.Message))
+	message, inlineKey := extractInlineDestination(extractInlinePayload(cleanModelText(reply.Message)))
 
 	var destination *entities.Destination
 	key := strings.TrimSpace(reply.DestinationKey)
@@ -248,6 +249,34 @@ func extractInlineDestination(text string) (string, string) {
 	return text, ""
 }
 
+type inlinePayload struct {
+	Message     string `json:"message"`
+	Destination string `json:"destination"`
+}
+
+func extractInlinePayload(text string) string {
+	start := strings.LastIndex(text, "{\"message\"")
+	if start < 0 {
+		start = strings.LastIndex(text, "{ \"message\"")
+	}
+	if start < 0 {
+		return text
+	}
+	end := strings.LastIndex(text, "}")
+	if end < start {
+		return strings.TrimSpace(text[:start])
+	}
+	var payload inlinePayload
+	if err := json.Unmarshal([]byte(text[start:end+1]), &payload); err != nil || strings.TrimSpace(payload.Message) == "" {
+		return strings.TrimSpace(text[:start])
+	}
+	message := strings.TrimSpace(payload.Message)
+	if payload.Destination != "" && payload.Destination != noDestination {
+		message += "\n{\"destination\": \"" + payload.Destination + "\"}"
+	}
+	return message
+}
+
 func cleanModelText(text string) string {
 	for {
 		start := strings.Index(text, "<think>")
@@ -269,4 +298,19 @@ func truncateRunes(text string, max int) string {
 		return text
 	}
 	return string([]rune(text)[:max])
+}
+
+func (uc *UseCase) describeIdentity(ctx context.Context, scope dtos.AccessScope) *entities.ChatIdentity {
+	if uc.businessData == nil {
+		return nil
+	}
+	identity, err := uc.businessData.DescribeIdentity(ctx, scope.UserID, businessOf(scope))
+	if err != nil {
+		uc.log.Warn(ctx).Err(err).Uint("user_id", scope.UserID).Msg("[ai.assistant] no se pudo resolver la identidad")
+		return nil
+	}
+	if identity != nil {
+		identity.IsSuperAdmin = scope.TokenBusinessID == 0
+	}
+	return identity
 }
