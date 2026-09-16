@@ -51,7 +51,7 @@ SELECT setval(
 
 	seeds := []assistantEventSeed{
 		{"order.cancelled", "El cliente pidio cancelar", "El cliente cancelo el pedido desde WhatsApp"},
-		{"order.status_changed", "Cambio de estado de la orden", "Cancelada, fallida, en espera, novedad de entrega, devuelta, entregada: se filtra por estado"},
+		{"order.status_changed", "Cambio de estado de la orden", "Elige que estados avisan: cancelada, fallida, rechazada, en espera, reembolsada, novedad de entrega, entrega fallida, devuelta, novedad de inventario o entregada"},
 		{"shipment.guide_failed", "Guia rechazada", "La transportadora no genero la guia"},
 		{"shipment.tracking_updated", "Novedad de transportadora", "Novedad, devolucion o entrega fallida reportada por la transportadora"},
 		{"shipment.cancel_failed", "Cancelacion de guia fallida", "La transportadora no acepto cancelar la guia"},
@@ -68,6 +68,17 @@ ON CONFLICT (notification_type_id, event_code) DO NOTHING
 `, typeID, s.code, s.name, s.desc).Error; err != nil {
 			return fmt.Errorf("insert assistant event %s: %w", s.code, err)
 		}
+	}
+
+	if err := db.Exec(`
+INSERT INTO notification_event_type_allowed_statuses (notification_event_type_id, order_status_id)
+SELECT net.id, os.id
+FROM notification_event_types net
+JOIN order_statuses os ON os.code IN ('cancelled','failed','rejected','on_hold','refunded','delivery_novelty','delivery_failed','returned','inventory_issue','delivered')
+WHERE net.notification_type_id = ? AND net.event_code = 'order.status_changed'
+ON CONFLICT DO NOTHING
+`, typeID).Error; err != nil {
+		return fmt.Errorf("insert assistant allowed statuses: %w", err)
 	}
 
 	return nil

@@ -25,9 +25,6 @@ var orderStatusPhrases = map[string]statusPhrase{
 	"returned":         {"Orden devuelta", "fue devuelta", entities.AlertSeverityWarning},
 	"inventory_issue":  {"Novedad de inventario", "tiene una novedad de inventario", entities.AlertSeverityWarning},
 	"delivered":        {"Orden entregada", "fue entregada", entities.AlertSeverityInfo},
-	"shipped":          {"Orden enviada", "sali\u00f3 a despacho", entities.AlertSeverityInfo},
-	"processing":       {"Orden en proceso", "pas\u00f3 a procesamiento", entities.AlertSeverityInfo},
-	"completed":        {"Orden completada", "se complet\u00f3", entities.AlertSeverityInfo},
 }
 
 var trackingAlertStatuses = map[string]string{
