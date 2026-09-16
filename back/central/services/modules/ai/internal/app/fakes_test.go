@@ -93,10 +93,11 @@ func (f *storeFake) MarkIntroSeen(_ context.Context, _ uint) error {
 }
 
 type readerFake struct {
-	unread      []entities.UnreadChats
-	orders      []entities.OrderInfo
-	businessIDs []uint
-	numbers     []string
+	customerName string
+	unread       []entities.UnreadChats
+	orders       []entities.OrderInfo
+	businessIDs  []uint
+	numbers      []string
 }
 
 var _ ports.IBusinessDataReader = (*readerFake)(nil)
@@ -119,6 +120,10 @@ func (f *readerFake) ListOrders(_ context.Context, businessID uint, _ dtos.Order
 
 func (f *readerFake) DescribeIdentity(_ context.Context, _ uint, _ *uint) (*entities.ChatIdentity, error) {
 	return &entities.ChatIdentity{UserName: "Ana", BusinessName: "Demo"}, nil
+}
+
+func (f *readerFake) FindCustomerNameByPhone(_ context.Context, _ uint, _ string) (string, error) {
+	return f.customerName, nil
 }
 
 func (f *readerFake) CountUnreadWhatsAppChats(_ context.Context) ([]entities.UnreadChats, error) {

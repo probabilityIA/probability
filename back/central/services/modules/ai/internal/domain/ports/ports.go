@@ -34,6 +34,7 @@ type IBusinessDataReader interface {
 	SummarizeOrders(ctx context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error)
 	DescribeIdentity(ctx context.Context, userID uint, businessID *uint) (*entities.ChatIdentity, error)
 	CountUnreadWhatsAppChats(ctx context.Context) ([]entities.UnreadChats, error)
+	FindCustomerNameByPhone(ctx context.Context, businessID uint, phone string) (string, error)
 }
 
 type IConversationRecorder interface {

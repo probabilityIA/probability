@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { BellSlashIcon } from '@heroicons/react/24/outline';
 import { AssistantAvatar } from './AssistantAvatar';
 import { AssistantDestinationCard } from './AssistantDestinationCard';
-import { isCurrentRoute, relativeTime } from '../../app/use-cases';
+import { isCurrentRoute, isWhatsAppAlert, relativeTime } from '../../app/use-cases';
+import { WhatsAppMark } from './WhatsAppMark';
 import type { AssistantAlerts } from '../hooks/use-assistant-alerts';
 import type { AssistantAlert, AssistantDestination } from '../../domain/types';
 
@@ -46,14 +47,21 @@ export function AssistantAlertsList({ alerts, pathname, onGo, onShowMe }: Assist
 
     return (
         <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-            {items.map((alert) => (
+            {items.map((alert) => {
+                const whatsapp = isWhatsAppAlert(alert.event_type);
+                const card = whatsapp
+                    ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-950/50'
+                    : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/60';
+                return (
                 <article key={alert.id} className="flex items-start gap-2">
                     <AssistantAvatar size={24} className="mt-0.5" mood="idle" />
                     <div className="max-w-[88%] space-y-1.5">
-                        <div className="space-y-2 rounded-2xl rounded-tl-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-100">
+                        <div className={`space-y-2 rounded-2xl rounded-tl-md border px-3 py-2 text-sm text-gray-800 dark:text-gray-100 ${card}`}>
                             <div className="flex items-center gap-1.5">
-                                <span className={`h-2 w-2 shrink-0 rounded-full ${severityDot[alert.severity] || severityDot.info}`} />
-                                <p className="font-semibold">{alert.title}</p>
+                                {whatsapp
+                                    ? <WhatsAppMark className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                                    : <span className={`h-2 w-2 shrink-0 rounded-full ${severityDot[alert.severity] || severityDot.info}`} />}
+                                <p className={`font-semibold ${whatsapp ? 'text-emerald-800 dark:text-emerald-200' : ''}`}>{alert.title}</p>
                                 {alert.unread && (
                                     <span className="rounded-full bg-[#5B1BE6] px-1.5 text-[10px] font-semibold text-white dark:bg-[#7148FF]">{'Nueva'}</span>
                                 )}
@@ -71,7 +79,8 @@ export function AssistantAlertsList({ alerts, pathname, onGo, onShowMe }: Assist
                         <p className="pl-1 text-[11px] text-gray-400 dark:text-gray-500">{relativeTime(alert.created_at)}</p>
                     </div>
                 </article>
-            ))}
+                );
+            })}
             {hasMore && (
                 <div className="flex justify-center pt-1">
                     <button

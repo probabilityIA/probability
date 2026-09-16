@@ -152,7 +152,7 @@ func buildAlert(event dtos.AlertEvent) (*entities.Alert, bool) {
 			content = "(archivo adjunto)"
 		}
 		alert.Title = "Nuevo mensaje de WhatsApp"
-		alert.Body = fmt.Sprintf("%s escribi\u00f3: \u201c%s\u201d", nameOr(formatPhone(phone), "Un cliente"), truncateRunes(content, 180))
+		alert.Body = whatsAppAlertBody("", phone, content)
 		alert.Severity = entities.AlertSeverityInfo
 		alert.DestinationKey = "notifications"
 		alert.DestinationRoute = "/notification-config?tab=conversations&conversation=" + conversationID
@@ -283,4 +283,14 @@ func formatPhone(raw string) string {
 		return "+57 " + digits[2:5] + " " + digits[5:8] + " " + digits[8:]
 	}
 	return "+" + digits
+}
+
+func whatsAppAlertBody(customerName, phone, content string) string {
+	who := strings.TrimSpace(customerName)
+	if who == "" {
+		who = nameOr(formatPhone(phone), "Un cliente")
+	} else if formatted := formatPhone(phone); formatted != "" {
+		who += " (" + formatted + ")"
+	}
+	return fmt.Sprintf("%s escribi\u00f3: \u201c%s\u201d", who, truncateRunes(strings.TrimSpace(content), 180))
 }

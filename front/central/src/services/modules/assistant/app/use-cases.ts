@@ -124,3 +124,7 @@ export function relativeTime(iso: string, now: Date = new Date()): string {
     if (days < 7) return `hace ${days} d`;
     return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
 }
+
+export function isWhatsAppAlert(eventType: string): boolean {
+    return eventType.startsWith('whatsapp.');
+}

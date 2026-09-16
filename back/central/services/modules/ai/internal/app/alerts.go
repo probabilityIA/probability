@@ -28,6 +28,7 @@ func (uc *UseCase) IngestAlertEvent(ctx context.Context, event dtos.AlertEvent) 
 		alert.CreatedAt = uc.now()
 	}
 	alert.ID = uuid.NewString()
+	uc.enrichWhatsAppAlert(ctx, alert, event)
 
 	created, err := uc.alerts.SaveAlert(ctx, *alert)
 	if err != nil {
@@ -86,4 +87,24 @@ func (uc *UseCase) PurgeExpiredAlerts(ctx context.Context) (int64, error) {
 		return 0, nil
 	}
 	return uc.alerts.DeleteAlertsOlderThan(ctx, uc.now().Add(-AlertRetention))
+}
+
+func (uc *UseCase) enrichWhatsAppAlert(ctx context.Context, alert *entities.Alert, event dtos.AlertEvent) {
+	if alert.EventType != "whatsapp.message_received" || uc.businessData == nil {
+		return
+	}
+	phone := firstString(event.Data, "phone_number")
+	name, err := uc.businessData.FindCustomerNameByPhone(ctx, alert.BusinessID, phone)
+	if err != nil {
+		uc.log.Warn(ctx).Err(err).Uint("business_id", alert.BusinessID).Msg("[ai.assistant] no se pudo resolver el nombre del cliente")
+		return
+	}
+	if name == "" {
+		return
+	}
+	content := firstString(event.Data, "content")
+	if content == "" {
+		content = "(archivo adjunto)"
+	}
+	alert.Body = whatsAppAlertBody(name, phone, content)
 }
