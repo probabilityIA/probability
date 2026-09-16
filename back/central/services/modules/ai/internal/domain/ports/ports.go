@@ -33,6 +33,7 @@ type IBusinessDataReader interface {
 	ListOrders(ctx context.Context, businessID uint, query dtos.OrderQuery) ([]entities.OrderSummary, int64, error)
 	SummarizeOrders(ctx context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error)
 	DescribeIdentity(ctx context.Context, userID uint, businessID *uint) (*entities.ChatIdentity, error)
+	CountUnreadWhatsAppChats(ctx context.Context) ([]entities.UnreadChats, error)
 }
 
 type IConversationRecorder interface {
@@ -57,4 +58,5 @@ type IAlertRepository interface {
 	MarkSeen(ctx context.Context, businessID, userID uint, at time.Time) error
 	RecentAlerts(ctx context.Context, businessID uint, limit int) ([]entities.Alert, error)
 	DeleteAlertsOlderThan(ctx context.Context, cutoff time.Time) (int64, error)
+	LastAlertOfType(ctx context.Context, businessID uint, eventType string) (*entities.Alert, error)
 }

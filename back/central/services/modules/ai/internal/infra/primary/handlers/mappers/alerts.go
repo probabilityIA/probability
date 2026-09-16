@@ -7,10 +7,11 @@ import (
 )
 
 var alertRoutes = map[string]response.Destination{
-	"orders":    {Key: "orders", Label: "Órdenes", Route: "/orders", Description: "Pedidos de todos los canales de venta"},
-	"shipments": {Key: "shipments", Label: "Envíos", Route: "/shipments", Description: "Guías, seguimiento y contra entrega"},
-	"invoicing": {Key: "invoicing", Label: "Facturación", Route: "/invoicing/invoices", Description: "Facturas electrónicas"},
-	"wallet":    {Key: "wallet", Label: "Billetera", Route: "/wallet", Description: "Saldo, recargas y movimientos"},
+	"orders":        {Key: "orders", Label: "Órdenes", Route: "/orders", Description: "Pedidos de todos los canales de venta"},
+	"shipments":     {Key: "shipments", Label: "Envíos", Route: "/shipments", Description: "Guías, seguimiento y contra entrega"},
+	"invoicing":     {Key: "invoicing", Label: "Facturación", Route: "/invoicing/invoices", Description: "Facturas electrónicas"},
+	"wallet":        {Key: "wallet", Label: "Billetera", Route: "/wallet", Description: "Saldo, recargas y movimientos"},
+	"notifications": {Key: "notifications", Label: "Notificaciones", Route: "/notification-config", Description: "Mensajes autom\u00e1ticos y conversaciones"},
 }
 
 func FromAlert(alert entities.Alert) response.Alert {

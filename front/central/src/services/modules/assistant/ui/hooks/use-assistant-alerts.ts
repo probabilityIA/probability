@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelectedBusiness } from '@/shared/contexts/selected-business-context';
 import { useSSE } from '@/shared/hooks/use-sse';
 import { getAssistantAlertsAction, getAssistantAlertsUnreadAction, markAssistantAlertsSeenAction } from '../../infra/actions';
-import { ALERT_EVENT_TYPES, ALERT_REFRESH_DELAY_MS, ALERT_TOAST_MS } from '../../app/use-cases';
+import { ALERT_EVENT_TYPES, ALERT_POLL_MS, ALERT_REFRESH_DELAY_MS, ALERT_TOAST_MS } from '../../app/use-cases';
 import type { AssistantAlert } from '../../domain/types';
 
 const PAGE_SIZE = 20;
@@ -74,6 +74,8 @@ export function useAssistantAlerts(enabled: boolean) {
         dismissToast();
         if (!enabled) return;
         void refreshUnread(false);
+        const poll = window.setInterval(() => void refreshUnread(true), ALERT_POLL_MS);
+        return () => window.clearInterval(poll);
     }, [enabled, selectedBusinessId, refreshUnread, dismissToast]);
 
     useSSE({

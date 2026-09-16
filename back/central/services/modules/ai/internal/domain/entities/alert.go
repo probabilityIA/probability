@@ -34,3 +34,9 @@ type ChatIdentity struct {
 	BusinessName string
 	IsSuperAdmin bool
 }
+
+type UnreadChats struct {
+	BusinessID uint
+	Count      int64
+	OldestAt   time.Time
+}

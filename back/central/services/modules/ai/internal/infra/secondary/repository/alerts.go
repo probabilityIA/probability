@@ -132,3 +132,16 @@ func toAlert(row models.AssistantAlert, seen time.Time) entities.Alert {
 		Unread:           row.CreatedAt.After(seen),
 	}
 }
+
+func (r *Repository) LastAlertOfType(ctx context.Context, businessID uint, eventType string) (*entities.Alert, error) {
+	var row models.AssistantAlert
+	err := r.db.Conn(ctx).Where("business_id = ? AND event_type = ?", businessID, eventType).Order("created_at DESC").First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	alert := toAlert(row, time.Time{})
+	return &alert, nil
+}

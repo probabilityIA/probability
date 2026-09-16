@@ -68,6 +68,7 @@ func New(router *gin.RouterGroup, logger log.ILogger, deps Dependencies) {
 
 	if deps.Database != nil {
 		go startConversationRetention(ctx, useCase, moduleLogger)
+		go startSystemAlerts(ctx, useCase, moduleLogger)
 	}
 }
 
@@ -92,6 +93,31 @@ func startConversationRetention(ctx context.Context, useCase app.IUseCase, logge
 	}
 	run()
 	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			run()
+		}
+	}
+}
+
+func startSystemAlerts(ctx context.Context, useCase app.IUseCase, logger log.ILogger) {
+	run := func() {
+		created, err := useCase.PublishSystemAlerts(ctx)
+		if err != nil {
+			logger.Warn(ctx).Err(err).Msg("[ai.assistant] fallo la revision de alertas del sistema")
+			return
+		}
+		if created > 0 {
+			logger.Info(ctx).Int("created", created).Msg("[ai.assistant] alertas del sistema publicadas")
+		}
+	}
+	time.Sleep(20 * time.Second)
+	run()
+	ticker := time.NewTicker(app.SystemAlertInterval)
 	defer ticker.Stop()
 	for {
 		select {

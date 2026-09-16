@@ -93,6 +93,7 @@ func (f *storeFake) MarkIntroSeen(_ context.Context, _ uint) error {
 }
 
 type readerFake struct {
+	unread      []entities.UnreadChats
 	orders      []entities.OrderInfo
 	businessIDs []uint
 	numbers     []string
@@ -118,6 +119,10 @@ func (f *readerFake) ListOrders(_ context.Context, businessID uint, _ dtos.Order
 
 func (f *readerFake) DescribeIdentity(_ context.Context, _ uint, _ *uint) (*entities.ChatIdentity, error) {
 	return &entities.ChatIdentity{UserName: "Ana", BusinessName: "Demo"}, nil
+}
+
+func (f *readerFake) CountUnreadWhatsAppChats(_ context.Context) ([]entities.UnreadChats, error) {
+	return f.unread, nil
 }
 
 func (f *readerFake) SummarizeOrders(_ context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error) {
@@ -147,4 +152,41 @@ func newDataUseCase(model *modelFake, reader *readerFake, catalog *entities.Navi
 	uc := New(&recommendationFake{}, model, &navigationFake{catalog: catalog}, &storeFake{}, nil, nil, reader, nil, log.New()).(*UseCase)
 	uc.now = func() time.Time { return time.Date(2026, 9, 14, 15, 0, 0, 0, colombia) }
 	return uc
+}
+
+type alertsFake struct {
+	saved []entities.Alert
+	last  map[uint]*entities.Alert
+}
+
+var _ ports.IAlertRepository = (*alertsFake)(nil)
+
+func (f *alertsFake) SaveAlert(_ context.Context, alert entities.Alert) (bool, error) {
+	f.saved = append(f.saved, alert)
+	return true, nil
+}
+
+func (f *alertsFake) ListAlerts(_ context.Context, _ dtos.AlertQuery) ([]entities.Alert, int64, error) {
+	return nil, 0, nil
+}
+
+func (f *alertsFake) CountUnread(_ context.Context, _, _ uint) (int64, *entities.Alert, error) {
+	return 0, nil, nil
+}
+
+func (f *alertsFake) MarkSeen(_ context.Context, _, _ uint, _ time.Time) error { return nil }
+
+func (f *alertsFake) RecentAlerts(_ context.Context, _ uint, _ int) ([]entities.Alert, error) {
+	return nil, nil
+}
+
+func (f *alertsFake) DeleteAlertsOlderThan(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
+
+func (f *alertsFake) LastAlertOfType(_ context.Context, businessID uint, _ string) (*entities.Alert, error) {
+	if f.last == nil {
+		return nil, nil
+	}
+	return f.last[businessID], nil
 }

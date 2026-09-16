@@ -108,6 +108,7 @@ export const ALERT_EVENT_TYPES = [
 ];
 
 export const ALERT_TOAST_MS = 14000;
+export const ALERT_POLL_MS = 5 * 60 * 1000;
 export const ALERT_REFRESH_DELAY_MS = 1500;
 
 export function relativeTime(iso: string, now: Date = new Date()): string {

@@ -57,6 +57,7 @@ type IUseCase interface {
 	GetAlertsUnread(ctx context.Context, businessID, userID uint) (*entities.AlertsUnread, error)
 	MarkAlertsSeen(ctx context.Context, businessID, userID uint) error
 	PurgeExpiredAlerts(ctx context.Context) (int64, error)
+	PublishSystemAlerts(ctx context.Context) (int, error)
 }
 
 type UseCase struct {
