@@ -1,0 +1,230 @@
+---
+import privacidad from '../content/legal/privacidad.html?raw';
+import terminos from '../content/legal/terminos.html?raw';
+
+const docs = {
+  privacidad: { titulo: 'Política de privacidad', actualizado: '9 de agosto de 2026', html: privacidad },
+  terminos: { titulo: 'Términos y condiciones', actualizado: '9 de agosto de 2026', html: terminos },
+};
+---
+
+<div id="legal-modal-wrapper">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="legal-modal-title"></h2>
+      <button class="modal-close" aria-label="Cerrar" title="Cerrar (ESC)">×</button>
+    </div>
+    <p id="legal-modal-updated" class="modal-updated"></p>
+    <div id="legal-modal-body" class="modal-body legal"></div>
+  </div>
+</div>
+
+<template id="legal-doc-privacidad">
+  <Fragment set:html={docs.privacidad.html} />
+</template>
+<template id="legal-doc-terminos">
+  <Fragment set:html={docs.terminos.html} />
+</template>
+
+<script define:vars={{ titles: { privacidad: docs.privacidad.titulo, terminos: docs.terminos.titulo }, dates: { privacidad: docs.privacidad.actualizado, terminos: docs.terminos.actualizado } }} is:inline>
+  function initializeLegalModal() {
+    const modal = document.getElementById('legal-modal-wrapper');
+    if (!modal) return;
+
+    const overlay = modal.querySelector('.modal-overlay');
+    const closeBtn = modal.querySelector('.modal-close');
+    const titleEl = document.getElementById('legal-modal-title');
+    const updatedEl = document.getElementById('legal-modal-updated');
+    const bodyEl = document.getElementById('legal-modal-body');
+
+    function openModal(doc) {
+      const tpl = document.getElementById('legal-doc-' + doc);
+      if (!tpl || !bodyEl) return;
+      bodyEl.innerHTML = '';
+      bodyEl.appendChild(tpl.content.cloneNode(true));
+      if (titleEl) titleEl.textContent = titles[doc] || '';
+      if (updatedEl) updatedEl.textContent = dates[doc] ? ('Última actualización: ' + dates[doc]) : '';
+      bodyEl.scrollTop = 0;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const trigger = e.target.closest('[data-legal-modal]');
+      if (!trigger) return;
+      e.preventDefault();
+      openModal(trigger.getAttribute('data-legal-modal'));
+    });
+
+    window.openLegalModal = openModal;
+    window.closeLegalModal = closeModal;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeLegalModal);
+  } else {
+    initializeLegalModal();
+  }
+</script>
+
+<style>
+  #legal-modal-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  #legal-modal-wrapper.active {
+    display: flex !important;
+  }
+
+  .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+  }
+
+  .modal-content {
+    position: relative;
+    background: #ffffff;
+    border-radius: 20px;
+    max-width: 760px;
+    width: 100%;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    z-index: 1;
+    overflow: hidden;
+    padding: 1.5rem 1.5rem 0;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .modal-header h2 {
+    color: #181225;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .modal-updated {
+    color: #6B7280;
+    font-size: 0.8rem;
+    margin: 0.35rem 0 1rem;
+  }
+
+  .modal-close {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    background: #F3F1FA;
+    color: #3A2E5C;
+    font-size: 1.25rem;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .modal-close:hover {
+    background: #E7E2F5;
+  }
+
+  .modal-body {
+    overflow-y: auto;
+    padding-bottom: 1.75rem;
+    color: #3A2E5C;
+    line-height: 1.75;
+    font-size: 0.9rem;
+  }
+
+  .modal-body :global(h2) {
+    margin-top: 2rem;
+    margin-bottom: 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #181225;
+  }
+
+  .modal-body :global(h3) {
+    margin-top: 1.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.975rem;
+    font-weight: 600;
+    color: #181225;
+  }
+
+  .modal-body :global(p) {
+    margin-bottom: 0.65rem;
+  }
+
+  .modal-body :global(ul),
+  .modal-body :global(ol) {
+    margin: 0.65rem 0 0.9rem 1.4rem;
+    list-style: disc;
+  }
+
+  .modal-body :global(ol) {
+    list-style: decimal;
+  }
+
+  .modal-body :global(li) {
+    margin-bottom: 0.3rem;
+  }
+
+  .modal-body :global(a) {
+    color: #7C3AED;
+    text-decoration: underline;
+  }
+
+  .modal-body :global(strong) {
+    color: #181225;
+  }
+
+  .modal-body :global(table) {
+    width: 100%;
+    margin: 0.9rem 0;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .modal-body :global(th),
+  .modal-body :global(td) {
+    border: 1px solid #E7E2F5;
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+  }
+</style>
