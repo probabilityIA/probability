@@ -14,6 +14,7 @@ interface StatusMultiSelectProps {
   selected: number[];
   onChange: (ids: number[]) => void;
   disabled?: boolean;
+  emptyLabel?: string;
 }
 
 export function StatusMultiSelect({
@@ -21,6 +22,7 @@ export function StatusMultiSelect({
   selected,
   onChange,
   disabled,
+  emptyLabel,
 }: StatusMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
@@ -64,7 +66,7 @@ export function StatusMultiSelect({
         <span className="flex flex-wrap gap-1">
           {elegidos.length === 0 ? (
             <span className="text-[10px] italic text-gray-400">
-              Todos los estados
+              {emptyLabel || 'Todos los estados'}
             </span>
           ) : (
             elegidos.map((o) => (

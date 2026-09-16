@@ -130,6 +130,9 @@ func (d *EventDispatcher) validateConditions(event entities.Event, config entiti
 	}
 
 	if len(config.OrderStatusCodes) == 0 && len(config.OrderStatusIDs) == 0 {
+		if config.NotificationTypeID == dtos.NotificationTypeAssistant && config.EventCode == dtos.OrderStatusChanged {
+			return false
+		}
 		return true
 	}
 

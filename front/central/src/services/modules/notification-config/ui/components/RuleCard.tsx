@@ -205,6 +205,7 @@ export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onD
             options={filteredStatuses}
             selected={rule.order_status_ids}
             onChange={(ids) => onChange({ ...rule, order_status_ids: ids })}
+            emptyLabel={channelCode === "assistant" ? "Elige los estados" : undefined}
           />
         ) : (
           <span className="text-[10px] text-gray-400 italic">Sin filtro de estado</span>
