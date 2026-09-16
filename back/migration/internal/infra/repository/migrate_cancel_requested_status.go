@@ -26,7 +26,7 @@ ON CONFLICT (code) DO NOTHING
 
 	if err := db.Exec(`
 INSERT INTO whatsapp_templates (created_at, updated_at, origin, name, language, category, body_text, meta_template_id, status, scope, header_type)
-SELECT NOW(), NOW(), 'system', 'solicitud_cancelacion_recibida', 'es', 'UTILITY', ?, '1782177306268808', 'pending', 'order_event', 'TEXT'
+SELECT NOW(), NOW(), 'system', 'solicitud_cancelacion_recibida', 'es', 'UTILITY', ?, '1782177306268808', 'approved', 'order_event', 'TEXT'
 WHERE NOT EXISTS (
 	SELECT 1 FROM whatsapp_templates WHERE business_id IS NULL AND name = 'solicitud_cancelacion_recibida' AND deleted_at IS NULL
 )

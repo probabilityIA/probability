@@ -30,9 +30,8 @@ El codigo del backend asume que existen las tablas `assistant_alerts` y
 
 ## Importante
 
-- [ ] La plantilla `solicitud_cancelacion_recibida` quedo `PENDING` en Meta
-  (id 1782177306268808). Mientras no se apruebe, el cliente con guia no recibe
-  la confirmacion de su solicitud. Revisar el estado antes del deploy.
+- [x] La plantilla `solicitud_cancelacion_recibida` (id 1782177306268808) quedo
+  `APPROVED` en Meta el 2026-09-16.
 - [ ] Informar a los negocios: los filtros de estado de las reglas de WhatsApp
   nunca se habian guardado (62 reglas en prod, 0 estados guardados). Desde este
   deploy si se guardan; quien los haya elegido tiene que volver a elegirlos.
