@@ -24,9 +24,9 @@ func (r *Repository) migrateAssistantAlerts(ctx context.Context) error {
 
 	if err := db.Exec(`
 INSERT INTO notification_types (id, created_at, updated_at, name, code, description, icon, is_active)
-VALUES (?, NOW(), NOW(), 'Via', 'assistant', 'Alertas dentro de la plataforma, en el chat del asistente Via', 'sparkles', true)
+VALUES (?, NOW(), NOW(), ?, 'assistant', 'Alertas dentro de la plataforma, en el chat del asistente Via', 'sparkles', true)
 ON CONFLICT (code) DO NOTHING
-`, assistantNotificationTypeID).Error; err != nil {
+`, assistantNotificationTypeID, "V\u00eda").Error; err != nil {
 		return fmt.Errorf("insert assistant notification type: %w", err)
 	}
 
