@@ -13,7 +13,7 @@ El codigo del backend asume que existen las tablas `assistant_alerts` y
 
 ## Urgente
 
-- [ ] Correr en produccion, en este orden y **antes** de que el deploy del
+- [x] (2026-09-16, resuelto) Correr en produccion, en este orden y **antes** de que el deploy del
   backend quede activo, con `./scripts/run-migration-prod.sh` (agregarlas a
   `Migrate()` y dejarlo en cero despues):
   1. `migrateCancelRequestedStatus` (estado `cancel_requested` + plantilla)
@@ -22,7 +22,7 @@ El codigo del backend asume que existen las tablas `assistant_alerts` y
   El orden importa: la 2 necesita el estado de la 1 y la 3 necesita el evento de la 2. Sin la migracion:
   el consumidor de `ai.assistant.alerts` falla al insertar (5 reintentos y DLQ)
   y `GET /ai/assistant/alerts*` responde 500.
-- [ ] Verificar `SELECT id, code FROM notification_types WHERE code='assistant'`
+- [x] (2026-09-16, verificado: id 6) Verificar `SELECT id, code FROM notification_types WHERE code='assistant'`
   devuelve 6. Si produccion ya tenia un id 6 con otro codigo, la migracion se
   detiene con error y hay que cambiar `NotificationTypeAssistant` en
   `services/events/internal/domain/dtos/event_types.go` y
