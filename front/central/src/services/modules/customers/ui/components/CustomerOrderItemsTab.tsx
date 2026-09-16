@@ -26,6 +26,7 @@ const statusConfig: Record<string, { label: string; colors: string }> = {
     out_for_delivery: { label: 'En reparto final', colors: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
     delivered: { label: 'Entregada', colors: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
     completed: { label: 'Completada', colors: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+    cancel_requested: { label: 'Cliente solicita cancelar', colors: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
     cancelled: { label: 'Cancelada', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
     refunded: { label: 'Reembolsada', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
     failed: { label: 'Fallida', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },

@@ -52,13 +52,13 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 	if err != nil {
 		u.log.Debug(ctx).
 			Str("phone_number", phoneNumber).
-			Msg("[WhatsApp Webhook] - no hay conversación activa para este usuario")
+			Msg("[WhatsApp Webhook] - no hay conversaci\u00f3n activa para este usuario")
 
 		if humanSession, hsErr := u.conversationCache.GetHumanSession(ctx, phoneNumber); hsErr == nil && humanSession != nil {
 			u.log.Info(ctx).
 				Str("phone_number", phoneNumber).
 				Str("conversation_id", humanSession.ConversationID).
-				Msg("[WhatsApp Webhook] - mensaje enrutado a sesión humana (dashboard)")
+				Msg("[WhatsApp Webhook] - mensaje enrutado a sesi\u00f3n humana (dashboard)")
 
 			humanLog := &entities.MessageLog{
 				ConversationID: humanSession.ConversationID,
@@ -72,7 +72,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 			if logErr := u.persistPublisher.PublishMessageLogCreated(ctx, humanLog); logErr != nil {
 				u.log.Error(ctx).Err(logErr).
 					Str("conversation_id", humanSession.ConversationID).
-					Msg("[WhatsApp Webhook] - error persistiendo mensaje de sesión humana")
+					Msg("[WhatsApp Webhook] - error persistiendo mensaje de sesi\u00f3n humana")
 			}
 
 			if sseErr := u.ssePublisher.PublishMessageReceived(
@@ -85,7 +85,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 			); sseErr != nil {
 				u.log.Error(ctx).Err(sseErr).
 					Str("conversation_id", humanSession.ConversationID).
-					Msg("[WhatsApp Webhook] - error publicando SSE de sesión humana")
+					Msg("[WhatsApp Webhook] - error publicando SSE de sesi\u00f3n humana")
 			}
 
 			return nil
@@ -112,7 +112,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		u.log.Warn(ctx).
 			Str("conversation_id", conversation.ID).
 			Str("phone_number", phoneNumber).
-			Msg("[WhatsApp Webhook] - conversación expirada")
+			Msg("[WhatsApp Webhook] - conversaci\u00f3n expirada")
 		return &errors.ErrConversationExpired{ConversationID: conversation.ID}
 	}
 
@@ -231,7 +231,7 @@ func (u *usecases) routeToOwnNumberBusiness(
 		u.log.Error(ctx).Err(err).
 			Str("phone_number", phoneNumber).
 			Uint("business_id", owner.BusinessID).
-			Msg("[WhatsApp Webhook] - error creando conversación entrante para número propio")
+			Msg("[WhatsApp Webhook] - error creando conversaci\u00f3n entrante para n\u00famero propio")
 		return true, err
 	}
 
@@ -247,7 +247,7 @@ func (u *usecases) routeToOwnNumberBusiness(
 	if logErr := u.persistPublisher.PublishMessageLogCreated(ctx, messageLog); logErr != nil {
 		u.log.Error(ctx).Err(logErr).
 			Str("conversation_id", conversation.ID).
-			Msg("[WhatsApp Webhook] - error persistiendo mensaje entrante de número propio")
+			Msg("[WhatsApp Webhook] - error persistiendo mensaje entrante de n\u00famero propio")
 	}
 
 	if sseErr := u.ssePublisher.PublishMessageReceived(
@@ -269,7 +269,7 @@ func (u *usecases) routeToOwnNumberBusiness(
 		Uint("business_id", owner.BusinessID).
 		Uint("integration_id", owner.IntegrationID).
 		Str("conversation_id", conversation.ID).
-		Msg("[WhatsApp Webhook] - mensaje enrutado al negocio dueño del número")
+		Msg("[WhatsApp Webhook] - mensaje enrutado al negocio due\u00f1o del n\u00famero")
 
 	return true, nil
 }
@@ -301,7 +301,7 @@ func (u *usecases) getOrCreateInboundConversation(
 	if err := u.persistPublisher.PublishConversationCreated(ctx, conversation); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversation.ID).
-			Msg("[WhatsApp Webhook] - error publicando creación de conversación entrante")
+			Msg("[WhatsApp Webhook] - error publicando creaci\u00f3n de conversaci\u00f3n entrante")
 	}
 
 	if err := u.ssePublisher.PublishConversationStarted(ctx, businessID, conversation.ID, phoneNumber); err != nil {
@@ -313,7 +313,7 @@ func (u *usecases) getOrCreateInboundConversation(
 	if err := u.conversationCache.ActivateHumanSession(ctx, phoneNumber, conversation.ID, businessID); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversation.ID).
-			Msg("[WhatsApp Webhook] - error activando sesión humana para el número propio")
+			Msg("[WhatsApp Webhook] - error activando sesi\u00f3n humana para el n\u00famero propio")
 		return nil, err
 	}
 
@@ -332,14 +332,14 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 		Str("conversation_id", conversation.ID).
 		Str("current_state", string(conversation.CurrentState)).
 		Str("user_response", userResponse).
-		Msg("[WhatsApp Webhook] - evaluando transición de estado")
+		Msg("[WhatsApp Webhook] - evaluando transici\u00f3n de estado")
 
 	transition, err := u.TransitionState(ctx, conversation, userResponse)
 	if err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("state", string(conversation.CurrentState)).
 			Str("response", userResponse).
-			Msg("[WhatsApp Webhook] - transición inválida")
+			Msg("[WhatsApp Webhook] - transici\u00f3n inv\u00e1lida")
 		return err
 	}
 
@@ -353,13 +353,15 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 	}
 
 	var templateSendErr error
-	_, templateSendErr = u.SendTemplateWithConversation(
-		ctx,
-		transition.TemplateName,
-		conversation.PhoneNumber,
-		transition.Variables,
-		conversation.ID,
-	)
+	if transition.TemplateName != "" {
+		_, templateSendErr = u.SendTemplateWithConversation(
+			ctx,
+			transition.TemplateName,
+			conversation.PhoneNumber,
+			transition.Variables,
+			conversation.ID,
+		)
+	}
 	if templateSendErr != nil {
 		u.log.Error(ctx).Err(templateSendErr).
 			Str("template", transition.TemplateName).
@@ -372,13 +374,13 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 	if err := u.conversationCache.Save(ctx, conversation); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversation.ID).
-			Msg("[WhatsApp Webhook] - error actualizando conversación en cache")
+			Msg("[WhatsApp Webhook] - error actualizando conversaci\u00f3n en cache")
 	}
 
 	if err := u.persistPublisher.PublishConversationUpdated(ctx, conversation); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversation.ID).
-			Msg("[WhatsApp Webhook] - error publicando actualización de conversación")
+			Msg("[WhatsApp Webhook] - error publicando actualizaci\u00f3n de conversaci\u00f3n")
 	}
 
 	if transition.PublishEvent {
@@ -395,7 +397,7 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 		Str("template_sent", transition.TemplateName).
 		Bool("event_published", transition.PublishEvent).
 		Bool("template_sent_ok", templateSendErr == nil).
-		Msg("[WhatsApp Webhook] - transición de estado completada")
+		Msg("[WhatsApp Webhook] - transici\u00f3n de estado completada")
 
 	return templateSendErr
 }
@@ -517,7 +519,7 @@ func (u *usecases) processMessageStatus(ctx context.Context, status dtos.Webhook
 	if err := u.persistPublisher.PublishMessageStatusUpdated(ctx, status.ID, messageStatus, timestamps); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("message_id", status.ID).
-			Msg("[WhatsApp Webhook] - error publicando actualización de estado")
+			Msg("[WhatsApp Webhook] - error publicando actualizaci\u00f3n de estado")
 		return err
 	}
 

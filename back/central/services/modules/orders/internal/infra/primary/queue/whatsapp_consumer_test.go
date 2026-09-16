@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
@@ -154,4 +155,75 @@ func TestUnPayloadMalformadoSeDescarta(t *testing.T) {
 
 	assert.NoError(t, c.handleConfirmed([]byte("{esto no es json")),
 		"un payload roto no se arregla por reintentar")
+}
+
+type statusFake struct {
+	pedidos []string
+	err     error
+}
+
+func (s *statusFake) ChangeStatus(ctx context.Context, orderID string, req *dtos.ChangeStatusRequest) (*dtos.OrderResponse, error) {
+	s.pedidos = append(s.pedidos, req.Status)
+	return nil, s.err
+}
+
+type plantillaFake struct {
+	nombres []string
+}
+
+func (p *plantillaFake) RequestTemplate(ctx context.Context, businessID uint, phone, templateName string, parameters []string) error {
+	p.nombres = append(p.nombres, templateName)
+	return nil
+}
+
+func eventoCancelacion(t *testing.T) []byte {
+	t.Helper()
+	cuerpo, err := json.Marshal(WhatsAppCancelledEvent{EventType: "cancelled", OrderNumber: "DEMO-1", PhoneNumber: "573001234567", BusinessID: 26})
+	require.NoError(t, err)
+	return cuerpo
+}
+
+func consumerCancelacion(orden *entities.ProbabilityOrder) (*WhatsAppConsumer, *statusFake, *plantillaFake) {
+	status := &statusFake{}
+	plantillas := &plantillaFake{}
+	return &WhatsAppConsumer{repository: &repoFake{orden: orden}, statusUseCase: status, templateRequester: plantillas, log: log.New()}, status, plantillas
+}
+
+func TestCancelacionSinGuiaCancelaLaOrden(t *testing.T) {
+	c, status, plantillas := consumerCancelacion(&entities.ProbabilityOrder{ID: "ord-1", OrderNumber: "DEMO-1", Status: "pending"})
+
+	require.NoError(t, c.handleCancelled(eventoCancelacion(t)))
+
+	assert.Equal(t, []string{"cancelled"}, status.pedidos)
+	assert.Equal(t, []string{"pedido_cancelado"}, plantillas.nombres)
+}
+
+func TestCancelacionConGuiaQuedaEnSolicitud(t *testing.T) {
+	guia := "240012345678"
+	orden := &entities.ProbabilityOrder{ID: "ord-1", OrderNumber: "DEMO-1", Status: "ready_to_ship", Shipments: []entities.ProbabilityShipment{{TrackingNumber: &guia, Status: "pending"}}}
+	c, status, plantillas := consumerCancelacion(orden)
+
+	require.NoError(t, c.handleCancelled(eventoCancelacion(t)))
+
+	assert.Equal(t, []string{"cancel_requested"}, status.pedidos)
+	assert.Equal(t, []string{"solicitud_cancelacion_recibida"}, plantillas.nombres)
+}
+
+func TestCancelacionConGuiaAnuladaCancelaLaOrden(t *testing.T) {
+	guia := "240012345678"
+	orden := &entities.ProbabilityOrder{ID: "ord-1", OrderNumber: "DEMO-1", Status: "pending", Shipments: []entities.ProbabilityShipment{{TrackingNumber: &guia, Status: "cancelled"}}}
+	c, status, _ := consumerCancelacion(orden)
+
+	require.NoError(t, c.handleCancelled(eventoCancelacion(t)))
+
+	assert.Equal(t, []string{"cancelled"}, status.pedidos)
+}
+
+func TestCancelacionRepetidaNoHaceNada(t *testing.T) {
+	c, status, plantillas := consumerCancelacion(&entities.ProbabilityOrder{ID: "ord-1", OrderNumber: "DEMO-1", Status: "cancel_requested"})
+
+	require.NoError(t, c.handleCancelled(eventoCancelacion(t)))
+
+	assert.Empty(t, status.pedidos)
+	assert.Empty(t, plantillas.nombres)
 }

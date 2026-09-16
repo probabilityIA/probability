@@ -28,6 +28,11 @@ type IRepository interface {
 	) error
 }
 
+type IDefaultRulesQuerier interface {
+	PlatformIntegrationID(ctx context.Context, businessID uint) (uint, error)
+	OrderStatusIDsByCodes(ctx context.Context, codes []string) ([]uint, error)
+}
+
 type IOrderStatusQuerier interface {
 	GetOrderStatusCodesByIDs(ctx context.Context, ids []uint) (map[uint]string, error)
 }

@@ -13,10 +13,10 @@ type useCase struct {
 	cacheManager          ports.ICacheManager
 	messageAuditQuerier   ports.IMessageAuditQuerier
 	aiPauseChecker        ports.IAIPauseChecker
+	defaultRules          ports.IDefaultRulesQuerier
 	logger                log.ILogger
 }
 
-// New crea una nueva instancia del caso de uso
 func New(
 	repository ports.IRepository,
 	notificationTypeRepo ports.INotificationTypeRepository,

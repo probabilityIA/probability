@@ -54,7 +54,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	startChannelRawDataRetention(context.Background(), logger, repo)
 
 	startRabbitMQConsumer(rabbitMQ, logger, createUC, repo, integrationEventPub)
-	startWhatsAppConsumer(rabbitMQ, logger, repo, rabbitPublisher)
+	startWhatsAppConsumer(rabbitMQ, logger, repo, rabbitPublisher, statusUC)
 	startInventoryFeedbackConsumer(rabbitMQ, logger, repo, rabbitPublisher)
 
 	return &Bundle{
@@ -144,13 +144,13 @@ func startRabbitMQConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, createU
 	}()
 }
 
-func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, repo ports.IRepository, rabbitPublisher ports.IOrderRabbitPublisher) {
+func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, repo ports.IRepository, rabbitPublisher ports.IOrderRabbitPublisher, statusUC ports.IOrderStatusUseCase) {
 	if rabbitMQ == nil {
 		logger.Warn(context.Background()).Msg("RabbitMQ not available, WhatsApp consumer disabled")
 		return
 	}
 
-	consumer := queue.NewWhatsAppConsumer(rabbitMQ, repo, rabbitPublisher, logger)
+	consumer := queue.NewWhatsAppConsumer(rabbitMQ, repo, rabbitPublisher, statusUC, rabbitqueue.NewWhatsAppTemplateRequester(rabbitMQ), logger)
 
 	go func() {
 		if err := consumer.Start(context.Background()); err != nil {

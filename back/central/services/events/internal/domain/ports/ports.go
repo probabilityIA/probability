@@ -20,6 +20,7 @@ type ISSEPublisher interface {
 
 type INotificationConfigCache interface {
 	GetActiveConfigsByIntegrationAndTrigger(ctx context.Context, integrationID uint, trigger string) ([]entities.CachedNotificationConfig, error)
+	GetActiveBusinessConfigsByTrigger(ctx context.Context, businessID uint, trigger string) ([]entities.CachedNotificationConfig, error)
 }
 
 type IChannelPublisher interface {

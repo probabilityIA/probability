@@ -16,6 +16,7 @@ type statusPhrase struct {
 
 var orderStatusPhrases = map[string]statusPhrase{
 	"cancelled":        {"Orden cancelada", "fue cancelada", entities.AlertSeverityWarning},
+	"cancel_requested": {"El cliente solicita cancelar", "tiene una solicitud de cancelaci\u00f3n del cliente y ya tiene gu\u00eda: revisa si la transportadora ya la recogi\u00f3", entities.AlertSeverityCritical},
 	"failed":           {"Orden fallida", "pas\u00f3 a estado fallido", entities.AlertSeverityCritical},
 	"rejected":         {"Orden rechazada", "fue rechazada", entities.AlertSeverityCritical},
 	"on_hold":          {"Orden en espera", "qued\u00f3 en espera y necesita revisi\u00f3n", entities.AlertSeverityWarning},

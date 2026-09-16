@@ -159,6 +159,9 @@ export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onD
             {channelName || "—"}
           </span>
         )}
+        {channelCode === "assistant" && (
+          <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">{"Aplica a todo el negocio"}</p>
+        )}
       </td>
 
       <td className="py-3 px-3">
@@ -231,7 +234,7 @@ export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onD
             type="button"
             onClick={() => setPreviewOpen(true)}
             className="p-1.5 rounded-md bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-colors"
-            title="Ver la plantilla que se envia"
+            title={"Ver la plantilla que se env\u00eda"}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

@@ -133,6 +133,16 @@ var Templates = map[string]TemplateDefinition{
 		ButtonLabels: []string{},
 		Description:  "Confirmacion de que el pedido ha sido cancelado",
 	},
+	"solicitud_cancelacion_recibida": {
+		Name:     "solicitud_cancelacion_recibida",
+		Language: "es",
+		Variables: []string{
+			"numero_pedido",
+		},
+		HasButtons:   false,
+		ButtonLabels: []string{},
+		Description:  "Recibimos la solicitud de cancelacion; la orden ya tiene guia y el negocio la revisa",
+	},
 	"novedad_cambio_direccion": {
 		Name:         "novedad_cambio_direccion",
 		Language:     "es",

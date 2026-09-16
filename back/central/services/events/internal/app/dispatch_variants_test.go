@@ -90,6 +90,11 @@ func TestApplyVariantsIgnoraEventosSinVariante(t *testing.T) {
 
 type cacheDePrueba struct {
 	porTrigger map[string][]entities.CachedNotificationConfig
+	porNegocio map[string][]entities.CachedNotificationConfig
+}
+
+func (c *cacheDePrueba) GetActiveBusinessConfigsByTrigger(ctx context.Context, businessID uint, trigger string) ([]entities.CachedNotificationConfig, error) {
+	return c.porNegocio[trigger], nil
 }
 
 func (c *cacheDePrueba) GetActiveConfigsByIntegrationAndTrigger(ctx context.Context, integrationID uint, trigger string) ([]entities.CachedNotificationConfig, error) {
@@ -102,4 +107,45 @@ func dispatcherDePrueba() (*EventDispatcher, *cacheDePrueba) {
 		configCache: cache,
 		logger:      log.New(),
 	}, cache
+}
+
+type alertasDePrueba struct {
+	enviados []string
+}
+
+func (a *alertasDePrueba) PublishToAssistant(ctx context.Context, event entities.Event) error {
+	a.enviados = append(a.enviados, event.Type)
+	return nil
+}
+
+func TestReglaDeViaAplicaATodoElNegocio(t *testing.T) {
+	d, cache := dispatcherDePrueba()
+	alertas := &alertasDePrueba{}
+	d.alerts = alertas
+	d.ssePublisher = nil
+	cache.porNegocio = map[string][]entities.CachedNotificationConfig{
+		"order.status_changed": {{ID: 1, NotificationTypeID: 6, EventCode: "order.status_changed", OrderStatusCodes: []string{"cancelled", "cancel_requested"}}},
+	}
+
+	d.routeToAssistant(context.Background(), entities.Event{Type: "order.status_changed", BusinessID: 26, IntegrationID: 999, Data: map[string]interface{}{"current_status": "cancel_requested"}})
+	d.routeToAssistant(context.Background(), entities.Event{Type: "order.status_changed", BusinessID: 26, IntegrationID: 999, Data: map[string]interface{}{"current_status": "shipped"}})
+
+	if len(alertas.enviados) != 1 {
+		t.Fatalf("debe avisar solo el estado elegido, avisos=%d", len(alertas.enviados))
+	}
+}
+
+func TestReglaDeViaSinEstadosNoAvisa(t *testing.T) {
+	d, cache := dispatcherDePrueba()
+	alertas := &alertasDePrueba{}
+	d.alerts = alertas
+	cache.porNegocio = map[string][]entities.CachedNotificationConfig{
+		"order.status_changed": {{ID: 1, NotificationTypeID: 6, EventCode: "order.status_changed"}},
+	}
+
+	d.routeToAssistant(context.Background(), entities.Event{Type: "order.status_changed", BusinessID: 26, Data: map[string]interface{}{"current_status": "cancelled"}})
+
+	if len(alertas.enviados) != 0 {
+		t.Fatalf("sin estados elegidos no debe avisar, avisos=%d", len(alertas.enviados))
+	}
 }

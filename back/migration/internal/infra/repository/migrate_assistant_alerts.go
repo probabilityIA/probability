@@ -50,7 +50,6 @@ SELECT setval(
 	}
 
 	seeds := []assistantEventSeed{
-		{"order.cancelled", "El cliente pidio cancelar", "El cliente cancelo el pedido desde WhatsApp"},
 		{"order.status_changed", "Cambio de estado de la orden", "Elige que estados avisan: cancelada, fallida, rechazada, en espera, reembolsada, novedad de entrega, entrega fallida, devuelta, novedad de inventario o entregada"},
 		{"shipment.guide_failed", "Guia rechazada", "La transportadora no genero la guia"},
 		{"shipment.tracking_updated", "Novedad de transportadora", "Novedad, devolucion o entrega fallida reportada por la transportadora"},
@@ -71,10 +70,17 @@ ON CONFLICT (notification_type_id, event_code) DO NOTHING
 	}
 
 	if err := db.Exec(`
+UPDATE notification_event_types SET deleted_at = NOW()
+WHERE notification_type_id = ? AND event_code = 'order.cancelled' AND deleted_at IS NULL
+`, typeID).Error; err != nil {
+		return fmt.Errorf("retirar evento order.cancelled del asistente: %w", err)
+	}
+
+	if err := db.Exec(`
 INSERT INTO notification_event_type_allowed_statuses (notification_event_type_id, order_status_id)
 SELECT net.id, os.id
 FROM notification_event_types net
-JOIN order_statuses os ON os.code IN ('cancelled','failed','rejected','on_hold','refunded','delivery_novelty','delivery_failed','returned','inventory_issue','delivered')
+JOIN order_statuses os ON os.code IN ('cancelled','cancel_requested','failed','rejected','on_hold','refunded','delivery_novelty','delivery_failed','returned','inventory_issue','delivered')
 WHERE net.notification_type_id = ? AND net.event_code = 'order.status_changed'
 ON CONFLICT DO NOTHING
 `, typeID).Error; err != nil {

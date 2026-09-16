@@ -9,17 +9,14 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 )
 
-// GetInitialState retorna el estado inicial de una conversación
 func (u *usecases) GetInitialState() entities.ConversationState {
 	return entities.StateAwaitingConfirmation
 }
 
-// IsTerminalState verifica si un estado es terminal (conversación finalizada)
 func (u *usecases) IsTerminalState(state entities.ConversationState) bool {
 	return state == entities.StateCompleted || state == entities.StateHandoffToHuman
 }
 
-// TransitionState evalúa la respuesta del usuario y determina la siguiente transición
 func (u *usecases) TransitionState(
 	ctx context.Context,
 	conversation *entities.Conversation,
@@ -34,7 +31,6 @@ func (u *usecases) TransitionState(
 	var transition *dtos.StateTransitionDTO
 	var err error
 
-	// Evaluar según el estado actual
 	switch conversation.CurrentState {
 	case entities.StateStart:
 		transition = u.handleStartState(ctx, conversation)
@@ -79,10 +75,7 @@ func (u *usecases) TransitionState(
 	return transition, err
 }
 
-// handleStartState maneja el estado inicial (envío de primera plantilla)
 func (u *usecases) handleStartState(ctx context.Context, conversation *entities.Conversation) *dtos.StateTransitionDTO {
-	// Este estado se usa cuando se crea una conversación nueva
-	// Normalmente se envía la plantilla inicial desde SendTemplate directamente
 	getMetaStr := func(key string) string {
 		if conversation.Metadata == nil {
 			return ""
@@ -107,7 +100,6 @@ func (u *usecases) handleStartState(ctx context.Context, conversation *entities.
 	}
 }
 
-// handleAwaitingConfirmationState maneja respuestas en estado AWAITING_CONFIRMATION
 func (u *usecases) handleAwaitingConfirmationState(
 	ctx context.Context,
 	conversation *entities.Conversation,
@@ -154,7 +146,6 @@ func (u *usecases) handleAwaitingConfirmationState(
 	}
 }
 
-// handleAwaitingMenuSelectionState maneja respuestas en estado AWAITING_MENU_SELECTION
 func (u *usecases) handleAwaitingMenuSelectionState(
 	ctx context.Context,
 	conversation *entities.Conversation,
@@ -193,7 +184,6 @@ func (u *usecases) handleAwaitingMenuSelectionState(
 	}
 }
 
-// handleAwaitingNoveltyTypeState maneja respuestas en estado AWAITING_NOVELTY_TYPE
 func (u *usecases) handleAwaitingNoveltyTypeState(
 	ctx context.Context,
 	conversation *entities.Conversation,
@@ -228,7 +218,6 @@ func (u *usecases) handleAwaitingNoveltyTypeState(
 	}
 }
 
-// handleAwaitingCancelConfirmState maneja respuestas en estado AWAITING_CANCEL_CONFIRM
 func (u *usecases) handleAwaitingCancelConfirmState(
 	ctx context.Context,
 	conversation *entities.Conversation,
@@ -237,10 +226,10 @@ func (u *usecases) handleAwaitingCancelConfirmState(
 	switch userResponse {
 	case "Sí, cancelar":
 		return &dtos.StateTransitionDTO{
-			NextState:    entities.StateAwaitingCancelReason,
-			TemplateName: "motivo_cancelacion_pedido",
+			NextState:    entities.StateCompleted,
 			Variables:    map[string]string{},
-			PublishEvent: false,
+			PublishEvent: true,
+			EventType:    "cancelled",
 		}
 
 	case "No, volver":
@@ -258,20 +247,14 @@ func (u *usecases) handleAwaitingCancelConfirmState(
 	}
 }
 
-// handleAwaitingCancelReasonState maneja respuestas en estado AWAITING_CANCEL_REASON
 func (u *usecases) handleAwaitingCancelReasonState(
 	ctx context.Context,
 	conversation *entities.Conversation,
 	userResponse string,
 ) *dtos.StateTransitionDTO {
-	// El usuario envió texto libre con el motivo
-	// Cualquier texto es válido aquí
 	return &dtos.StateTransitionDTO{
 		NextState:    entities.StateCompleted,
-		TemplateName: "pedido_cancelado",
-		Variables: map[string]string{
-			"1": conversation.OrderNumber,
-		},
+		Variables:    map[string]string{},
 		PublishEvent: true,
 		EventType:    "cancelled",
 		EventMetadata: map[string]interface{}{
@@ -280,7 +263,6 @@ func (u *usecases) handleAwaitingCancelReasonState(
 	}
 }
 
-// GetAvailableResponses retorna las respuestas válidas para un estado dado
 func (u *usecases) GetAvailableResponses(state entities.ConversationState) []string {
 	responses := map[entities.ConversationState][]string{
 		entities.StateAwaitingConfirmation: {
@@ -309,13 +291,11 @@ func (u *usecases) GetAvailableResponses(state entities.ConversationState) []str
 	return responses[state]
 }
 
-// ValidateTransition verifica si una transición es válida antes de ejecutarla
 func (u *usecases) ValidateTransition(
 	ctx context.Context,
 	currentState entities.ConversationState,
 	nextState entities.ConversationState,
 ) error {
-	// Definir transiciones válidas
 	validTransitions := map[entities.ConversationState][]entities.ConversationState{
 		entities.StateStart: {
 			entities.StateAwaitingConfirmation,

@@ -9,15 +9,11 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/secondary/cache/mappers"
 )
 
-// CacheConfig cachea UNA configuración después de crearla en BD
-// Escribe en key primaria Y secondary key (por event_code) para lookup rápido
 func (c *cacheManager) CacheConfig(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
 	key := buildCacheKey(config.IntegrationID, config.NotificationTypeID, config.NotificationEventTypeID)
 
-	// Serializar a JSON
 	cachedConfig := mappers.ToCachedConfig(config)
 
-	// Resolver OrderStatusCodes si hay OrderStatusIDs
 	if len(config.OrderStatusIDs) > 0 && c.orderStatusQuerier != nil {
 		codeMap, err := c.orderStatusQuerier.GetOrderStatusCodesByIDs(ctx, config.OrderStatusIDs)
 		if err != nil {
@@ -34,7 +30,6 @@ func (c *cacheManager) CacheConfig(ctx context.Context, config *entities.Integra
 		}
 	}
 
-	// Si no tenemos EventCode del preload, intentar obtener config completa
 	if cachedConfig.EventCode == "" && config.NotificationEventTypeID > 0 {
 		fullConfig, err := c.repo.GetByID(ctx, config.ID)
 		if err == nil && fullConfig.NotificationEventType != nil {
@@ -53,7 +48,6 @@ func (c *cacheManager) CacheConfig(ctx context.Context, config *entities.Integra
 
 	configIDStr := fmt.Sprintf("%d", config.ID)
 
-	// 1. HSET en key primaria
 	if err := c.redis.HSet(ctx, key, configIDStr, string(configJSON)); err != nil {
 		c.logger.Error(ctx).
 			Err(err).
@@ -63,7 +57,6 @@ func (c *cacheManager) CacheConfig(ctx context.Context, config *entities.Integra
 		return fmt.Errorf("error cacheando en Redis: %w", err)
 	}
 
-	// 2. Actualizar índice inverso con key primaria
 	indexKey := buildIndexKey(config.ID)
 	if err := c.redis.HSet(ctx, indexKey, key, "1"); err != nil {
 		c.logger.Warn(ctx).
@@ -72,7 +65,8 @@ func (c *cacheManager) CacheConfig(ctx context.Context, config *entities.Integra
 			Msg("⚠️  Error actualizando índice inverso (primary)")
 	}
 
-	// 3. HSET en key secundaria (por event_code) si tenemos EventCode
+	c.cacheBusinessWide(ctx, config.NotificationTypeID, config.BusinessID, cachedConfig.EventCode, config.ID, string(configJSON))
+
 	if cachedConfig.EventCode != "" {
 		evtKey := buildEventCodeCacheKey(config.IntegrationID, cachedConfig.EventCode)
 		if err := c.redis.HSet(ctx, evtKey, configIDStr, string(configJSON)); err != nil {
@@ -82,7 +76,6 @@ func (c *cacheManager) CacheConfig(ctx context.Context, config *entities.Integra
 				Uint("config_id", config.ID).
 				Msg("⚠️  Error cacheando en Redis (secondary evt key)")
 		} else {
-			// Registrar secondary key en índice inverso
 			if err := c.redis.HSet(ctx, indexKey, evtKey, "1"); err != nil {
 				c.logger.Warn(ctx).
 					Err(err).

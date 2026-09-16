@@ -65,6 +65,7 @@ type ModuleBundles struct {
 	rabbitMQ      rabbitmq.IQueue
 	redisClient   redis.IRedis
 	Subscriptions *subscriptions.Bundle
+	Notifications *notification_config.Bundle
 }
 
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore, dianEmitter *factusinv.PlatformEmitter, visibleNavigation ai.VisibleNavigationFunc) *ModuleBundles {
@@ -94,7 +95,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 			}
 		})
 	}
-	notification_config.New(router, database, redisClient, logger, rabbitMQ, s3, environment)
+	notificationsBundle := notification_config.New(router, database, redisClient, logger, rabbitMQ, s3, environment)
 	push.New(router, database, logger, environment, rabbitMQ)
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger, ai.Dependencies{
@@ -152,5 +153,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		rabbitMQ:      rabbitMQ,
 		redisClient:   redisClient,
 		Subscriptions: subscriptionsBundle,
+		Notifications: notificationsBundle,
 	}
 }

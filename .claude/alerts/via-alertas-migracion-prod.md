@@ -13,9 +13,13 @@ El codigo del backend asume que existen las tablas `assistant_alerts` y
 
 ## Urgente
 
-- [ ] Correr `migrateAssistantAlerts` en produccion con
-  `./scripts/run-migration-prod.sh` (agregarla a `Migrate()` y dejarlo en cero
-  despues) **antes** de que el deploy del backend quede activo. Sin la migracion:
+- [ ] Correr en produccion, en este orden y **antes** de que el deploy del
+  backend quede activo, con `./scripts/run-migration-prod.sh` (agregarlas a
+  `Migrate()` y dejarlo en cero despues):
+  1. `migrateCancelRequestedStatus` (estado `cancel_requested` + plantilla)
+  2. `migrateAssistantAlerts` (tablas de alertas + canal Via id 6)
+  3. `migrateDefaultNotificationRules` (regla predeterminada en los negocios)
+  El orden importa: la 2 necesita el estado de la 1 y la 3 necesita el evento de la 2. Sin la migracion:
   el consumidor de `ai.assistant.alerts` falla al insertar (5 reintentos y DLQ)
   y `GET /ai/assistant/alerts*` responde 500.
 - [ ] Verificar `SELECT id, code FROM notification_types WHERE code='assistant'`
@@ -25,6 +29,13 @@ El codigo del backend asume que existen las tablas `assistant_alerts` y
   `assistantNotificationTypeID` en la migracion al id real.
 
 ## Importante
+
+- [ ] La plantilla `solicitud_cancelacion_recibida` quedo `PENDING` en Meta
+  (id 1782177306268808). Mientras no se apruebe, el cliente con guia no recibe
+  la confirmacion de su solicitud. Revisar el estado antes del deploy.
+- [ ] Informar a los negocios: los filtros de estado de las reglas de WhatsApp
+  nunca se habian guardado (62 reglas en prod, 0 estados guardados). Desde este
+  deploy si se guardan; quien los haya elegido tiene que volver a elegirlos.
 
 - [ ] Crear al menos una regla de prueba en el negocio Demo (26): canal Via,
   evento "Cambio de estado de la orden" filtrado a Cancelada, integracion
