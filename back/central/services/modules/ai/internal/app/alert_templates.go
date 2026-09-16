@@ -138,6 +138,27 @@ func buildAlert(event dtos.AlertEvent) (*entities.Alert, bool) {
 		alert.Body += "."
 		withShipment(&alert, guide, orderNumber)
 
+	case "whatsapp.message_received":
+		if firstString(data, "direction") == "outbound" {
+			return nil, false
+		}
+		conversationID := firstString(data, "conversation_id")
+		if conversationID == "" {
+			return nil, false
+		}
+		phone := firstString(data, "phone_number")
+		content := strings.TrimSpace(firstString(data, "content"))
+		if content == "" {
+			content = "(archivo adjunto)"
+		}
+		alert.Title = "Nuevo mensaje de WhatsApp"
+		alert.Body = fmt.Sprintf("%s escribi\u00f3: \u201c%s\u201d", nameOr(formatPhone(phone), "Un cliente"), truncateRunes(content, 180))
+		alert.Severity = entities.AlertSeverityInfo
+		alert.DestinationKey = "notifications"
+		alert.DestinationRoute = "/notification-config?tab=conversations&conversation=" + conversationID
+		alert.ReferenceType = "conversation"
+		alert.ReferenceID = conversationID
+
 	case "invoice.failed":
 		alert.Title = "Factura rechazada"
 		alert.Body = "No se pudo emitir la factura electrónica"
@@ -251,4 +272,15 @@ func formatPesos(amount float64) string {
 		b.WriteRune(r)
 	}
 	return "$" + b.String()
+}
+
+func formatPhone(raw string) string {
+	digits := strings.TrimLeft(strings.TrimSpace(raw), "+")
+	if digits == "" {
+		return ""
+	}
+	if strings.HasPrefix(digits, "57") && len(digits) == 12 {
+		return "+57 " + digits[2:5] + " " + digits[5:8] + " " + digits[8:]
+	}
+	return "+" + digits
 }

@@ -16,6 +16,10 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 		Uint("integration_id", event.IntegrationID).
 		Msg("Procesando evento en dispatcher")
 
+	if systemAssistantEvents[event.Type] {
+		d.forwardToAssistant(ctx, event, entities.CachedNotificationConfig{})
+	}
+
 	configs, err := d.configCache.GetActiveConfigsByIntegrationAndTrigger(ctx, event.IntegrationID, event.Type)
 	if err == nil {
 		configs = d.applyVariants(ctx, event, configs)
@@ -201,6 +205,10 @@ func (d *EventDispatcher) applyVariants(ctx context.Context, event entities.Even
 	}
 
 	return append(resultado, variantes...)
+}
+
+var systemAssistantEvents = map[string]bool{
+	"whatsapp.message_received": true,
 }
 
 func (d *EventDispatcher) forwardToAssistant(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) {

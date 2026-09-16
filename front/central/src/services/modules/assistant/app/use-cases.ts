@@ -105,6 +105,7 @@ export const ALERT_EVENT_TYPES = [
     'invoice.failed',
     'wallet.low_balance',
     'wallet.recharge.failed',
+    'whatsapp.message_received',
 ];
 
 export const ALERT_TOAST_MS = 14000;

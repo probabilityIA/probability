@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useSSE } from '@/shared/hooks/use-sse';
 import {
   listConversationsAction,
@@ -420,6 +421,9 @@ export function WhatsAppConversations({ businessId, campaignId, fillHeight = fal
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+  const searchParams = useSearchParams();
+  const requestedConversation = searchParams.get('conversation');
+  const openedFromUrl = useRef<string | null>(null);
 
   const fetchConversations = useCallback(async () => {
     setListLoading(true);
@@ -448,6 +452,7 @@ export function WhatsAppConversations({ businessId, campaignId, fillHeight = fal
   useEffect(() => { setPage(1); }, [stateFilter, phoneSearch, businessId, campaignId]);
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 
+
   const openConversation = useCallback(async (convId: string) => {
     setSelectedId(convId);
     setShowChat(true);
@@ -471,6 +476,12 @@ export function WhatsAppConversations({ businessId, campaignId, fillHeight = fal
       setDetailLoading(false);
     }
   }, [businessId, conversations]);
+
+  useEffect(() => {
+    if (!requestedConversation || listLoading || openedFromUrl.current === requestedConversation) return;
+    openedFromUrl.current = requestedConversation;
+    void openConversation(requestedConversation);
+  }, [requestedConversation, listLoading, openConversation]);
 
   const followLatest = useRef(true);
 
