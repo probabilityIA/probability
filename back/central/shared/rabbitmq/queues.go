@@ -9,6 +9,11 @@ const (
 )
 
 const (
+	QueueAIAssistantConversations = "ai.assistant.conversations"
+	QueueAIAssistantAlerts        = "ai.assistant.alerts"
+)
+
+const (
 	QueueEventsUnified = "events.unified"
 )
 

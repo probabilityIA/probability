@@ -15,6 +15,13 @@ type IHandlers interface {
 	AssistantChat(c *gin.Context)
 	GetAssistantState(c *gin.Context)
 	MarkAssistantIntroSeen(c *gin.Context)
+	SubmitAssistantFeedback(c *gin.Context)
+	MarkAssistantClick(c *gin.Context)
+	ListAssistantAlerts(c *gin.Context)
+	GetAssistantAlertsUnread(c *gin.Context)
+	MarkAssistantAlertsSeen(c *gin.Context)
+	ListAssistantReviewMessages(c *gin.Context)
+	GetAssistantReviewSummary(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 

@@ -39,6 +39,48 @@ func TestForUser_IncluyeSubpaginasDeLosModulosVisibles(t *testing.T) {
 	assert.False(t, ok, "una subpagina de un modulo no visible no se ofrece")
 }
 
+func TestForUser_TusIntegracionesRequiereOrdenes(t *testing.T) {
+	withOrders := New(func(context.Context, uint, uint, uint) ([]authz.NavEntry, error) {
+		return entriesFor("orders", "integrations"), nil
+	})
+	got, err := withOrders.ForUser(context.Background(), dtos.AccessScope{UserID: 1, TokenBusinessID: 26})
+	require.NoError(t, err)
+	hub, ok := got.Find("integrations.hub.inventory")
+	require.True(t, ok)
+	assert.Equal(t, "/orders", hub.Route)
+
+	withoutOrders := New(func(context.Context, uint, uint, uint) ([]authz.NavEntry, error) {
+		return entriesFor("integrations"), nil
+	})
+	got, err = withoutOrders.ForUser(context.Background(), dtos.AccessScope{UserID: 1, TokenBusinessID: 26})
+	require.NoError(t, err)
+	_, ok = got.Find("integrations.hub")
+	assert.False(t, ok, "el hub vive en la barra de Ordenes; sin acceso a Ordenes no se ofrece")
+}
+
+func TestForUser_SenalesSoloConLosPermisosDelBoton(t *testing.T) {
+	withShipments := New(func(context.Context, uint, uint, uint) ([]authz.NavEntry, error) {
+		return entriesFor("orders", "shipments"), nil
+	})
+	got, err := withShipments.ForUser(context.Background(), dtos.AccessScope{UserID: 1, TokenBusinessID: 26})
+	require.NoError(t, err)
+	guide, ok := got.Find("orders.generate_guide")
+	require.True(t, ok)
+	require.NotNil(t, guide.Highlight)
+	assert.Contains(t, guide.Highlight.Target, `data-tour="orders.row.generate-guide"`)
+
+	ordersOnly := New(func(context.Context, uint, uint, uint) ([]authz.NavEntry, error) {
+		return entriesFor("orders"), nil
+	})
+	got, err = ordersOnly.ForUser(context.Background(), dtos.AccessScope{UserID: 1, TokenBusinessID: 26})
+	require.NoError(t, err)
+	_, ok = got.Find("orders.generate_guide")
+	assert.False(t, ok, "sin acceso a Envios no se senala el boton de generar guia")
+	create, ok := got.Find("orders.create")
+	require.True(t, ok)
+	assert.NotNil(t, create.Highlight)
+}
+
 func TestForUser_NoRevelaModulosDeSuperAdmin(t *testing.T) {
 	catalog := New(func(context.Context, uint, uint, uint) ([]authz.NavEntry, error) {
 		return entriesFor("home"), nil

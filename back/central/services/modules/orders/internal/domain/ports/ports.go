@@ -116,6 +116,10 @@ type IIntegrationEventPublisher interface {
 	PublishSyncOrderRejected(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 }
 
+type IWhatsAppTemplateRequester interface {
+	RequestTemplate(ctx context.Context, businessID uint, phone, templateName string, parameters []string) error
+}
+
 type IOrderRabbitPublisher interface {
 	PublishOrderCreated(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishOrderUpdated(ctx context.Context, order *entities.ProbabilityOrder) error

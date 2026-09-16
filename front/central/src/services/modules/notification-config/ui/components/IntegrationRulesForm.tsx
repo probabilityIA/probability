@@ -9,7 +9,7 @@ import { useOrderStatuses } from "@/services/modules/orderstatus/ui";
 import { useIntegrationsSimple } from "@/services/integrations/core/ui/hooks/useIntegrationsSimple";
 import { RuleCard, LocalRule } from "./RuleCard";
 import { SyncConfigsDTO } from "../../domain/types";
-import { getConfigsAction, syncConfigsAction, getNotificationTypesAction } from "../../infra/actions";
+import { getConfigsAction, syncConfigsAction, getNotificationTypesAction, getNotificationEventTypesAction } from "../../infra/actions";
 import { ScheduledRulesSection } from "./ScheduledRulesSection";
 import type { IntegrationSimple } from "@/services/integrations/core/domain/types";
 
@@ -61,6 +61,8 @@ export function IntegrationRulesForm({
     businessId ? { businessId } : undefined,
   );
   const [whatsappTypeId, setWhatsappTypeId] = useState(0);
+  const [assistantTypeId, setAssistantTypeId] = useState(0);
+  const [assistantStatusEventId, setAssistantStatusEventId] = useState(0);
   const [activeTab, setActiveTab] = useState<"status" | "scheduled">("status");
   const [expandedSections, setExpandedSections] = useState<number[]>([]);
   const [tabsSlot, setTabsSlot] = useState<HTMLElement | null>(null);
@@ -85,6 +87,17 @@ export function IntegrationRulesForm({
           (type: { code: string; id: number }) => type.code === "whatsapp",
         );
         if (whatsapp) setWhatsappTypeId(whatsapp.id);
+        const assistant = result.data.find(
+          (type: { code: string; id: number }) => type.code === "assistant",
+        );
+        if (assistant) {
+          setAssistantTypeId(assistant.id);
+          const events = await getNotificationEventTypesAction(assistant.id);
+          if (events.success) {
+            const statusEvent = events.data.find((e) => e.event_code === "order.status_changed");
+            if (statusEvent) setAssistantStatusEventId(statusEvent.id);
+          }
+        }
       }
     };
     loadTypes();
@@ -194,6 +207,15 @@ export function IntegrationRulesForm({
         }
         if (!rule.notification_event_type_id) {
           showToast(`${section.name}, regla ${i + 1}: selecciona un evento`, "error");
+          return;
+        }
+        if (
+          assistantTypeId > 0 &&
+          rule.notification_type_id === assistantTypeId &&
+          rule.notification_event_type_id === assistantStatusEventId &&
+          (rule.order_status_ids || []).length === 0
+        ) {
+          showToast(`${section.name}, regla ${i + 1}: elige al menos un estado para avisar por V\u00eda`, "error");
           return;
         }
       }

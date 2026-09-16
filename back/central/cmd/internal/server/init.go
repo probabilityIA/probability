@@ -78,8 +78,12 @@ func Init(ctx context.Context) error {
 	authzBundle.SetModuleAccess(modulesBundle.Subscriptions.UseCase)
 	authzBundle.ReportCoverage(ctx, r.Routes())
 
-	authBundle.Demo.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
-	authBundle.Business.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
+	onBusinessCreated := func(ctx context.Context, businessID uint) {
+		modulesBundle.Subscriptions.UseCase.AssignTrialSubscription(ctx, businessID)
+		modulesBundle.Notifications.EnsureDefaultRules(ctx, businessID)
+	}
+	authBundle.Demo.SetOnBusinessCreated(onBusinessCreated)
+	authBundle.Business.SetOnBusinessCreated(onBusinessCreated)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

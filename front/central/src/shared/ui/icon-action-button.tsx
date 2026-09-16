@@ -10,6 +10,7 @@ interface IconActionButtonProps {
     disabled?: boolean;
     className?: string;
     tooltipAlign?: 'center' | 'left' | 'right';
+    tourId?: string;
 }
 
 const TOOLTIP_ALIGN: Record<string, string> = {
@@ -19,12 +20,13 @@ const TOOLTIP_ALIGN: Record<string, string> = {
 };
 
 export const IconActionButton = forwardRef<HTMLButtonElement, IconActionButtonProps>(
-    function IconActionButton({ label, icon, onClick, variant = 'primary', disabled, className = '', tooltipAlign = 'center' }, ref) {
+    function IconActionButton({ label, icon, onClick, variant = 'primary', disabled, className = '', tooltipAlign = 'center', tourId }, ref) {
         return (
             <span className="relative group inline-flex">
                 <button
                     ref={ref}
                     type="button"
+                    data-tour={tourId}
                     onClick={onClick}
                     disabled={disabled}
                     aria-label={label}

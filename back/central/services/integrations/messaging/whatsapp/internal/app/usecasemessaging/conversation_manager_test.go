@@ -9,8 +9,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/mocks"
 )
 
-// newUsecasesForTest construye la instancia de usecases con todos los mocks.
-// Centraliza el setup para que cada test solo sobreescriba lo que necesita.
 func newUsecasesForTest(
 	waClient *mocks.WhatsAppMock,
 	convCache *mocks.ConversationCacheMock,
@@ -31,7 +29,6 @@ func newUsecasesForTest(
 	}
 }
 
-// newActiveConversation construye una conversación activa de prueba
 func newActiveConversation(state entities.ConversationState) *entities.Conversation {
 	return &entities.Conversation{
 		ID:           "conv-test-001",
@@ -45,10 +42,6 @@ func newActiveConversation(state entities.ConversationState) *entities.Conversat
 		ExpiresAt:    time.Now().Add(24 * time.Hour),
 	}
 }
-
-// ---------------------------------------------------------------------------
-// GetInitialState
-// ---------------------------------------------------------------------------
 
 func TestGetInitialState(t *testing.T) {
 	uc := newUsecasesForTest(
@@ -67,10 +60,6 @@ func TestGetInitialState(t *testing.T) {
 		t.Errorf("GetInitialState() = %q, quería %q", got, want)
 	}
 }
-
-// ---------------------------------------------------------------------------
-// IsTerminalState
-// ---------------------------------------------------------------------------
 
 func TestIsTerminalState(t *testing.T) {
 	uc := newUsecasesForTest(
@@ -138,10 +127,6 @@ func TestIsTerminalState(t *testing.T) {
 		})
 	}
 }
-
-// ---------------------------------------------------------------------------
-// TransitionState — AWAITING_CONFIRMATION
-// ---------------------------------------------------------------------------
 
 func TestTransitionState_AwaitingConfirmation_ConfirmarPedido(t *testing.T) {
 	uc := newUsecasesForTest(
@@ -221,10 +206,6 @@ func TestTransitionState_AwaitingConfirmation_RespuestaInvalida(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// TransitionState — AWAITING_MENU_SELECTION
-// ---------------------------------------------------------------------------
-
 func TestTransitionState_AwaitingMenuSelection_PresentarNovedad(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
@@ -301,10 +282,6 @@ func TestTransitionState_AwaitingMenuSelection_Asesor(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// TransitionState — AWAITING_NOVELTY_TYPE
-// ---------------------------------------------------------------------------
-
 func TestTransitionState_AwaitingNoveltyType(t *testing.T) {
 	tests := []struct {
 		userResponse     string
@@ -368,10 +345,6 @@ func TestTransitionState_AwaitingNoveltyType_RespuestaInvalida(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// TransitionState — AWAITING_CANCEL_CONFIRM
-// ---------------------------------------------------------------------------
-
 func TestTransitionState_AwaitingCancelConfirm_SiCancelar(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
@@ -388,11 +361,14 @@ func TestTransitionState_AwaitingCancelConfirm_SiCancelar(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TransitionState() error inesperado: %v", err)
 	}
-	if transition.NextState != entities.StateAwaitingCancelReason {
-		t.Errorf("NextState = %q, quería %q", transition.NextState, entities.StateAwaitingCancelReason)
+	if transition.NextState != entities.StateCompleted {
+		t.Errorf("NextState = %q, quería %q", transition.NextState, entities.StateCompleted)
 	}
-	if transition.TemplateName != "motivo_cancelacion_pedido" {
-		t.Errorf("TemplateName = %q, quería %q", transition.TemplateName, "motivo_cancelacion_pedido")
+	if transition.TemplateName != "" {
+		t.Errorf("TemplateName = %q, no debe enviar plantilla: la decide ordenes segun la guia", transition.TemplateName)
+	}
+	if !transition.PublishEvent || transition.EventType != "cancelled" {
+		t.Errorf("debe publicar el evento cancelled de inmediato, got PublishEvent=%v EventType=%q", transition.PublishEvent, transition.EventType)
 	}
 }
 
@@ -417,10 +393,6 @@ func TestTransitionState_AwaitingCancelConfirm_NoVolver(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// TransitionState — AWAITING_CANCEL_REASON (texto libre)
-// ---------------------------------------------------------------------------
-
 func TestTransitionState_AwaitingCancelReason_CualquierTexto(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
@@ -442,8 +414,8 @@ func TestTransitionState_AwaitingCancelReason_CualquierTexto(t *testing.T) {
 	if transition.NextState != entities.StateCompleted {
 		t.Errorf("NextState = %q, quería %q", transition.NextState, entities.StateCompleted)
 	}
-	if transition.TemplateName != "pedido_cancelado" {
-		t.Errorf("TemplateName = %q, quería %q", transition.TemplateName, "pedido_cancelado")
+	if transition.TemplateName != "" {
+		t.Errorf("TemplateName = %q, no debe enviar plantilla: la decide ordenes segun la guia", transition.TemplateName)
 	}
 	if !transition.PublishEvent || transition.EventType != "cancelled" {
 		t.Errorf("PublishEvent=%v EventType=%q, se esperaba PublishEvent=true EventType=cancelled",
@@ -453,10 +425,6 @@ func TestTransitionState_AwaitingCancelReason_CualquierTexto(t *testing.T) {
 		t.Errorf("EventMetadata[cancellation_reason] = %v, quería %q", reason, motivo)
 	}
 }
-
-// ---------------------------------------------------------------------------
-// TransitionState — estado no reconocido
-// ---------------------------------------------------------------------------
 
 func TestTransitionState_EstadoNoReconocido(t *testing.T) {
 	uc := newUsecasesForTest(
@@ -476,10 +444,6 @@ func TestTransitionState_EstadoNoReconocido(t *testing.T) {
 		t.Fatal("TransitionState() esperaba error con estado no reconocido, no obtuvo ninguno")
 	}
 }
-
-// ---------------------------------------------------------------------------
-// ValidateTransition
-// ---------------------------------------------------------------------------
 
 func TestValidateTransition_TransicionesValidas(t *testing.T) {
 	uc := newUsecasesForTest(
@@ -531,10 +495,8 @@ func TestValidateTransition_TransicionesInvalidas(t *testing.T) {
 		from entities.ConversationState
 		to   entities.ConversationState
 	}{
-		// Retrocesos no permitidos
 		{entities.StateAwaitingConfirmation, entities.StateStart},
 		{entities.StateCompleted, entities.StateStart},
-		// Saltos no permitidos
 		{entities.StateStart, entities.StateCompleted},
 		{entities.StateAwaitingConfirmation, entities.StateAwaitingNoveltyType},
 	}

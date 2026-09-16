@@ -20,6 +20,13 @@ type Destination struct {
 	Route       string
 	Description string
 	Guide       string
+	Highlight   *Highlight
+}
+
+type Highlight struct {
+	Target string
+	Title  string
+	Hint   string
 }
 
 type NavigationCatalog struct {
@@ -45,8 +52,10 @@ func (c NavigationCatalog) Keys() []string {
 }
 
 type AssistantReply struct {
-	Message     string
-	Destination *Destination
+	MessageID      string
+	ConversationID string
+	Message        string
+	Destination    *Destination
 }
 
 type Usage struct {

@@ -27,6 +27,7 @@ func (f *recommendationFake) GetRecommendation(_ context.Context, origin, destin
 
 type modelFake struct {
 	reply    *dtos.ModelReply
+	replies  []*dtos.ModelReply
 	err      error
 	requests []dtos.ModelRequest
 }
@@ -34,8 +35,20 @@ type modelFake struct {
 var _ ports.IAssistantModel = (*modelFake)(nil)
 
 func (f *modelFake) Reply(_ context.Context, req dtos.ModelRequest) (*dtos.ModelReply, error) {
-	f.requests = append(f.requests, req)
-	return f.reply, f.err
+	snapshot := req
+	snapshot.Messages = append([]dtos.ModelMessage(nil), req.Messages...)
+	f.requests = append(f.requests, snapshot)
+	if f.err != nil {
+		return nil, f.err
+	}
+	if len(f.replies) > 0 {
+		index := len(f.requests) - 1
+		if index >= len(f.replies) {
+			index = len(f.replies) - 1
+		}
+		return f.replies[index], nil
+	}
+	return f.reply, nil
 }
 
 type navigationFake struct {
@@ -79,6 +92,49 @@ func (f *storeFake) MarkIntroSeen(_ context.Context, _ uint) error {
 	return nil
 }
 
+type readerFake struct {
+	customerName string
+	unread       []entities.UnreadChats
+	orders       []entities.OrderInfo
+	businessIDs  []uint
+	numbers      []string
+}
+
+var _ ports.IBusinessDataReader = (*readerFake)(nil)
+
+func (f *readerFake) FindOrders(_ context.Context, businessID uint, number string) ([]entities.OrderInfo, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	f.numbers = append(f.numbers, number)
+	return f.orders, nil
+}
+
+func (f *readerFake) FindShipments(_ context.Context, businessID uint, _ string) ([]entities.ShipmentInfo, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	return nil, nil
+}
+
+func (f *readerFake) ListOrders(_ context.Context, businessID uint, _ dtos.OrderQuery) ([]entities.OrderSummary, int64, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	return nil, 0, nil
+}
+
+func (f *readerFake) DescribeIdentity(_ context.Context, _ uint, _ *uint) (*entities.ChatIdentity, error) {
+	return &entities.ChatIdentity{UserName: "Ana", BusinessName: "Demo"}, nil
+}
+
+func (f *readerFake) FindCustomerNameByPhone(_ context.Context, _ uint, _ string) (string, error) {
+	return f.customerName, nil
+}
+
+func (f *readerFake) CountUnreadWhatsAppChats(_ context.Context) ([]entities.UnreadChats, error) {
+	return f.unread, nil
+}
+
+func (f *readerFake) SummarizeOrders(_ context.Context, businessID uint, from, to time.Time) (*entities.OrdersOverview, error) {
+	f.businessIDs = append(f.businessIDs, businessID)
+	return &entities.OrdersOverview{From: from, To: to}, nil
+}
+
 func sampleCatalog() *entities.NavigationCatalog {
 	return &entities.NavigationCatalog{
 		Allowed: []entities.Destination{
@@ -94,5 +150,48 @@ func newTestUseCase(model *modelFake, store *storeFake) *UseCase {
 	if store != nil {
 		s = store
 	}
-	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, log.New()).(*UseCase)
+	return New(&recommendationFake{}, model, &navigationFake{catalog: sampleCatalog()}, s, nil, nil, nil, nil, log.New()).(*UseCase)
+}
+
+func newDataUseCase(model *modelFake, reader *readerFake, catalog *entities.NavigationCatalog) *UseCase {
+	uc := New(&recommendationFake{}, model, &navigationFake{catalog: catalog}, &storeFake{}, nil, nil, reader, nil, log.New()).(*UseCase)
+	uc.now = func() time.Time { return time.Date(2026, 9, 14, 15, 0, 0, 0, colombia) }
+	return uc
+}
+
+type alertsFake struct {
+	saved []entities.Alert
+	last  map[uint]*entities.Alert
+}
+
+var _ ports.IAlertRepository = (*alertsFake)(nil)
+
+func (f *alertsFake) SaveAlert(_ context.Context, alert entities.Alert) (bool, error) {
+	f.saved = append(f.saved, alert)
+	return true, nil
+}
+
+func (f *alertsFake) ListAlerts(_ context.Context, _ dtos.AlertQuery) ([]entities.Alert, int64, error) {
+	return nil, 0, nil
+}
+
+func (f *alertsFake) CountUnread(_ context.Context, _, _ uint) (int64, *entities.Alert, error) {
+	return 0, nil, nil
+}
+
+func (f *alertsFake) MarkSeen(_ context.Context, _, _ uint, _ time.Time) error { return nil }
+
+func (f *alertsFake) RecentAlerts(_ context.Context, _ uint, _ int) ([]entities.Alert, error) {
+	return nil, nil
+}
+
+func (f *alertsFake) DeleteAlertsOlderThan(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
+
+func (f *alertsFake) LastAlertOfType(_ context.Context, businessID uint, _ string) (*entities.Alert, error) {
+	if f.last == nil {
+		return nil, nil
+	}
+	return f.last[businessID], nil
 }

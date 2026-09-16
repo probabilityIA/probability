@@ -3,10 +3,17 @@
 import { getAuthToken } from '@/shared/utils/server-auth';
 import { AssistantApiError, AssistantApiRepository } from '../repository/api-repository';
 import type {
+    AssistantAlert,
+    AssistantAlertsUnread,
     AssistantHistoryMessage,
     AssistantReply,
     AssistantResult,
     AssistantState,
+    FeedbackValue,
+    PaginatedResponse,
+    ReviewFilters,
+    ReviewMessage,
+    ReviewSummary,
 } from '../../domain/types';
 
 async function withRepository<T>(run: (repo: AssistantApiRepository) => Promise<T>): Promise<AssistantResult<T>> {
@@ -26,8 +33,11 @@ async function withRepository<T>(run: (repo: AssistantApiRepository) => Promise<
 
 export async function sendAssistantMessageAction(
     messages: AssistantHistoryMessage[],
+    conversationId: string,
+    pathname: string,
+    businessId?: number | null,
 ): Promise<AssistantResult<AssistantReply>> {
-    return withRepository((repo) => repo.chat(messages));
+    return withRepository((repo) => repo.chat(messages, conversationId, pathname, businessId));
 }
 
 export async function getAssistantStateAction(): Promise<AssistantResult<AssistantState>> {
@@ -37,6 +47,51 @@ export async function getAssistantStateAction(): Promise<AssistantResult<Assista
 export async function markAssistantIntroSeenAction(): Promise<AssistantResult<null>> {
     return withRepository(async (repo) => {
         await repo.markIntroSeen();
+        return null;
+    });
+}
+
+export async function submitAssistantFeedbackAction(messageId: string, value: FeedbackValue): Promise<AssistantResult<null>> {
+    return withRepository(async (repo) => {
+        await repo.sendFeedback(messageId, value);
+        return null;
+    });
+}
+
+export async function markAssistantClickAction(messageId: string): Promise<AssistantResult<null>> {
+    return withRepository(async (repo) => {
+        await repo.markClick(messageId);
+        return null;
+    });
+}
+
+export async function getAssistantReviewMessagesAction(
+    filters: ReviewFilters,
+): Promise<AssistantResult<PaginatedResponse<ReviewMessage>>> {
+    return withRepository((repo) => repo.listReviewMessages(filters));
+}
+
+export async function getAssistantReviewSummaryAction(filters: ReviewFilters): Promise<AssistantResult<ReviewSummary>> {
+    return withRepository((repo) => repo.getReviewSummary(filters));
+}
+
+export async function getAssistantAlertsAction(
+    businessId: number | null | undefined,
+    page = 1,
+    pageSize = 20,
+): Promise<AssistantResult<PaginatedResponse<AssistantAlert>>> {
+    return withRepository((repo) => repo.listAlerts(businessId, page, pageSize));
+}
+
+export async function getAssistantAlertsUnreadAction(
+    businessId: number | null | undefined,
+): Promise<AssistantResult<AssistantAlertsUnread>> {
+    return withRepository((repo) => repo.getAlertsUnread(businessId));
+}
+
+export async function markAssistantAlertsSeenAction(businessId: number | null | undefined): Promise<AssistantResult<null>> {
+    return withRepository(async (repo) => {
+        await repo.markAlertsSeen(businessId);
         return null;
     });
 }

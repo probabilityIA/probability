@@ -18,7 +18,6 @@ type notificationEventTypeRepository struct {
 	logger log.ILogger
 }
 
-// GetByNotificationType obtiene todos los eventos de un tipo de notificación
 func (r *notificationEventTypeRepository) GetByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error) {
 	var models []models.NotificationEventType
 
@@ -41,7 +40,6 @@ func (r *notificationEventTypeRepository) GetByNotificationType(ctx context.Cont
 	return entities, nil
 }
 
-// GetByID obtiene un evento de notificación por su ID
 func (r *notificationEventTypeRepository) GetByID(ctx context.Context, id uint) (*entities.NotificationEventType, error) {
 	var model models.NotificationEventType
 
@@ -62,21 +60,11 @@ func (r *notificationEventTypeRepository) GetByID(ctx context.Context, id uint) 
 	return entity, nil
 }
 
-// Create crea un nuevo evento de notificación
 func (r *notificationEventTypeRepository) Create(ctx context.Context, eventType *entities.NotificationEventType) error {
 	model, err := mappers.NotificationEventTypeToModel(eventType)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Error converting entity to model")
 		return err
-	}
-
-	// Asignar AllowedOrderStatuses M2M si se proporcionan
-	if len(eventType.AllowedOrderStatusIDs) > 0 {
-		orderStatuses := make([]models.OrderStatus, len(eventType.AllowedOrderStatusIDs))
-		for i, sid := range eventType.AllowedOrderStatusIDs {
-			orderStatuses[i].ID = sid
-		}
-		model.AllowedOrderStatuses = orderStatuses
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -85,10 +73,15 @@ func (r *notificationEventTypeRepository) Create(ctx context.Context, eventType 
 	}
 
 	eventType.ID = model.ID
+	if len(eventType.AllowedOrderStatusIDs) > 0 {
+		if err := replaceAllowedStatuses(r.db.Conn(ctx), model.ID, eventType.AllowedOrderStatusIDs); err != nil {
+			r.logger.Error().Err(err).Uint("id", model.ID).Msg("Error saving allowed order statuses")
+			return err
+		}
+	}
 	return nil
 }
 
-// Update actualiza un evento de notificación existente
 func (r *notificationEventTypeRepository) Update(ctx context.Context, eventType *entities.NotificationEventType) error {
 	model, err := mappers.NotificationEventTypeToModel(eventType)
 	if err != nil {
@@ -109,16 +102,8 @@ func (r *notificationEventTypeRepository) Update(ctx context.Context, eventType 
 		return domainerrors.ErrNotificationEventTypeNotFound
 	}
 
-	// Reemplazar AllowedOrderStatuses M2M
-	// AllowedOrderStatusIDs nil = no tocar, vacío = limpiar, con IDs = reemplazar
 	if eventType.AllowedOrderStatusIDs != nil {
-		targetModel := &models.NotificationEventType{}
-		targetModel.ID = eventType.ID
-		orderStatuses := make([]models.OrderStatus, len(eventType.AllowedOrderStatusIDs))
-		for i, sid := range eventType.AllowedOrderStatusIDs {
-			orderStatuses[i].ID = sid
-		}
-		if err := r.db.Conn(ctx).Model(targetModel).Association("AllowedOrderStatuses").Replace(orderStatuses); err != nil {
+		if err := replaceAllowedStatuses(r.db.Conn(ctx), eventType.ID, eventType.AllowedOrderStatusIDs); err != nil {
 			r.logger.Error().Err(err).Uint("id", eventType.ID).Msg("Error replacing allowed order statuses")
 			return err
 		}
@@ -127,9 +112,7 @@ func (r *notificationEventTypeRepository) Update(ctx context.Context, eventType 
 	return nil
 }
 
-// Delete elimina un evento de notificación por su ID (soft delete)
 func (r *notificationEventTypeRepository) Delete(ctx context.Context, id uint) error {
-	// Unscoped() hace que la eliminación sea permanente (hard delete) en lugar de soft delete
 	result := r.db.Conn(ctx).Unscoped().Delete(&models.NotificationEventType{}, id)
 
 	if result.Error != nil {
@@ -144,7 +127,6 @@ func (r *notificationEventTypeRepository) Delete(ctx context.Context, id uint) e
 	return nil
 }
 
-// GetAll obtiene todos los eventos de notificación sin filtros
 func (r *notificationEventTypeRepository) GetAll(ctx context.Context) ([]entities.NotificationEventType, error) {
 	r.logger.Info().Msg("🔍 [Repository] Fetching all notification event types from DB")
 
@@ -164,4 +146,21 @@ func (r *notificationEventTypeRepository) GetAll(ctx context.Context) ([]entitie
 	}
 
 	return entities, nil
+}
+
+func replaceAllowedStatuses(conn *gorm.DB, eventTypeID uint, statusIDs []uint) error {
+	return conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("DELETE FROM notification_event_type_allowed_statuses WHERE notification_event_type_id = ?", eventTypeID).Error; err != nil {
+			return err
+		}
+		for _, statusID := range statusIDs {
+			if err := tx.Exec(
+				"INSERT INTO notification_event_type_allowed_statuses (notification_event_type_id, order_status_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+				eventTypeID, statusID,
+			).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

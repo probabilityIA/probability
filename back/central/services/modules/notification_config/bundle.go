@@ -35,7 +35,21 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient.IRedis, logger log.ILogger, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, environment env.IConfig) {
+type Bundle struct {
+	ensureDefaults func(ctx context.Context, businessID uint) error
+	logger         log.ILogger
+}
+
+func (b *Bundle) EnsureDefaultRules(ctx context.Context, businessID uint) {
+	if b == nil || b.ensureDefaults == nil {
+		return
+	}
+	if err := b.ensureDefaults(ctx, businessID); err != nil {
+		b.logger.Warn(ctx).Err(err).Uint("business_id", businessID).Msg("No se pudieron crear las reglas de notificacion predeterminadas")
+	}
+}
+
+func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient.IRedis, logger log.ILogger, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, environment env.IConfig) *Bundle {
 	logger = logger.WithModule("notification_config")
 
 	repo := repository.New(database, logger)
@@ -58,10 +72,17 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 
 	useCase := app.New(repo, notificationTypeRepo, notificationEventTypeRepo, cacheManager, messageAuditQuerier, aiPauseChecker, logger)
 
+	bundle := &Bundle{logger: logger}
+	if defaults, ok := useCase.(interface {
+		SetDefaultRulesQuerier(ports.IDefaultRulesQuerier)
+		EnsureDefaultRules(ctx context.Context, businessID uint) error
+	}); ok {
+		defaults.SetDefaultRulesQuerier(repository.NewDefaultRulesQuerier(database))
+		bundle.ensureDefaults = defaults.EnsureDefaultRules
+	}
+
 	if signer, ok := useCase.(interface{ SetChatMediaSigner(ports.IChatMediaSigner) }); ok {
-
 		if chatMedia := storage.NewChatMedia(environment, logger); chatMedia != nil {
-
 			signer.SetChatMediaSigner(chatMedia)
 
 		}
@@ -212,4 +233,5 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 		go worker.NewCampaignDispatcher(campaignsUseCase, logger).Start(context.Background())
 		go worker.NewTemplateStatusSync(templatesUseCase, logger).Start(context.Background())
 	}
+	return bundle
 }

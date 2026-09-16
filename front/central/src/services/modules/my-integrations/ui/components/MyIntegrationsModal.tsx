@@ -23,7 +23,8 @@ import { ShippingConfigModal } from '@/services/modules/shipping-config/ui';
 import { CyberChannelsCluster } from './CyberChannelsCluster';
 import { CyberHub } from './CyberHub';
 import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
-import { SyncActivityProvider, type HubView } from '../sync-activity-context';
+import { SyncActivityProvider, type HubView, type SyncEnvironment } from '../sync-activity-context';
+import { HubIntentApplier } from './HubIntentApplier';
 import { SyncActions } from './SyncActions';
 import { ReportView } from './ReportView';
 import { INTEGRATIONS_SUBHEADER_SLOT_ID, INTEGRATIONS_TOOLBAR_SLOT_ID } from './PanelToolbar';
@@ -34,6 +35,7 @@ interface MyIntegrationsModalProps {
     isOpen: boolean;
     onClose: () => void;
     businessId?: number | null;
+    initialEnvironment?: SyncEnvironment | null;
 }
 
 const WIDE_FORM_TYPE_IDS = [1, 2, 3, 4, 8, 16, 17, 33];
@@ -55,7 +57,7 @@ const HUB_KEYFRAMES = `
 .orbit-ring:has(.orbit-chip:hover) .orbit-chip { animation-play-state: paused !important; }
 `;
 
-export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrationsModalProps) {
+export function MyIntegrationsModal({ isOpen, onClose, businessId, initialEnvironment = null }: MyIntegrationsModalProps) {
     const { permissions, isSuperAdmin } = usePermissions();
     const effectiveBusinessId = businessId ?? (isSuperAdmin ? null : permissions?.business_id ?? null);
     const [findings, setFindings] = useState<FindingsReport | null>(null);
@@ -212,10 +214,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             if (res.success && res.data) {
                 setEditingIntegration(res.data as Integration);
             } else {
-                console.error('Error al obtener integración:', res.message);
+                console.error('Error al obtener integraci\u00f3n:', res.message);
             }
         } catch (err) {
-            console.error('Error al obtener integración:', err);
+            console.error('Error al obtener integraci\u00f3n:', err);
         } finally {
             setEditLoadingId(null);
         }
@@ -347,6 +349,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             view={view}
             onViewChange={setView}
         >
+            {isOpen && initialEnvironment && <HubIntentApplier environment={initialEnvironment} />}
             <Modal
                 isOpen={isOpen}
                 onClose={onClose}

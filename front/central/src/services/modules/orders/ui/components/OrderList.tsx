@@ -563,6 +563,7 @@ const OrderRow = memo(({
                         <button
                             onClick={() => onViewRecommendation(order)}
                             disabled={!!order.guide_link}
+                            data-tour="orders.row.generate-guide"
                             className={`p-2 rounded-md transition-all duration-200 flex items-center justify-center shadow-sm ${order.guide_link
                                     ? 'bg-gray-400 text-gray-600 dark:text-gray-300 cursor-not-allowed opacity-60'
                                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'

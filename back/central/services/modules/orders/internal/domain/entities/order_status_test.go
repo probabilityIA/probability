@@ -184,3 +184,21 @@ func TestOrderStatus_CanTransitionTo_InvalidSourceStatus(t *testing.T) {
 	assert.True(t, OrderStatusProcessing.CanTransitionTo(OrderStatusCancelled))
 	assert.True(t, OrderStatusShipped.CanTransitionTo(OrderStatusCancelled))
 }
+
+func TestSolicitudDeCancelacion(t *testing.T) {
+	if !OrderStatusReadyToShip.CanTransitionTo(OrderStatusCancelRequested) {
+		t.Fatal("desde listo para despacho se debe poder pasar a solicitud de cancelacion")
+	}
+	if OrderStatusCancelRequested.CanTransitionTo(OrderStatusCancelRequested) {
+		t.Fatal("no se debe repetir la solicitud de cancelacion")
+	}
+	if !OrderStatusCancelRequested.CanTransitionTo(OrderStatusCancelled) {
+		t.Fatal("una solicitud de cancelacion se debe poder cancelar")
+	}
+	if !OrderStatusCancelRequested.CanTransitionTo(OrderStatusInTransit) {
+		t.Fatal("una solicitud de cancelacion se debe poder retomar")
+	}
+	if OrderStatusCancelled.CanTransitionTo(OrderStatusCancelRequested) {
+		t.Fatal("una orden cancelada no pasa a solicitud")
+	}
+}

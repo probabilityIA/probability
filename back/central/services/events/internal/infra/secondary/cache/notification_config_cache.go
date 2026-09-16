@@ -10,14 +10,28 @@ import (
 	"github.com/secamc93/probability/back/central/services/events/internal/infra/secondary/cache/mappers"
 )
 
-// GetActiveConfigsByIntegrationAndTrigger obtiene configuraciones activas desde Redis cache.
-// Lee de la secondary key: notification:configs:evt:{integrationID}:{trigger}
+func (c *notificationConfigCache) GetActiveBusinessConfigsByTrigger(
+	ctx context.Context,
+	businessID uint,
+	trigger string,
+) ([]entities.CachedNotificationConfig, error) {
+	return c.readConfigs(ctx, fmt.Sprintf("notification:configs:biz:%d:%s", businessID, trigger), 0, trigger)
+}
+
 func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 	ctx context.Context,
 	integrationID uint,
 	trigger string,
 ) ([]entities.CachedNotificationConfig, error) {
-	key := fmt.Sprintf("notification:configs:evt:%d:%s", integrationID, trigger)
+	return c.readConfigs(ctx, fmt.Sprintf("notification:configs:evt:%d:%s", integrationID, trigger), integrationID, trigger)
+}
+
+func (c *notificationConfigCache) readConfigs(
+	ctx context.Context,
+	key string,
+	integrationID uint,
+	trigger string,
+) ([]entities.CachedNotificationConfig, error) {
 
 	entries, err := c.redis.HGetAll(ctx, key)
 	if err != nil {

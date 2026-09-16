@@ -6,11 +6,9 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/secondary/repository/mappers"
-	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
-// SyncConfigs ejecuta create/update/delete en una transacción atómica
 func (r *repository) SyncConfigs(
 	ctx context.Context,
 	businessID uint,
@@ -20,11 +18,8 @@ func (r *repository) SyncConfigs(
 	toDeleteIDs []uint,
 ) error {
 	return r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
-		// 1. DELETE: soft-delete configs que ya no están en el request
 		for _, id := range toDeleteIDs {
-			// Limpiar M2M antes de soft-delete
-			if err := tx.Model(&mappers.IntegrationNotificationConfigModel{Model: gorm.Model{ID: id}}).
-				Association("OrderStatuses").Clear(); err != nil {
+			if err := replaceConfigStatuses(tx, id, nil); err != nil {
 				r.logger.Error().Err(err).Uint("id", id).Msg("Error clearing order statuses before delete")
 				return fmt.Errorf("failed to clear order statuses for config %d: %w", id, err)
 			}
@@ -34,7 +29,6 @@ func (r *repository) SyncConfigs(
 			}
 		}
 
-		// 2. CREATE: insertar nuevas configs
 		for _, entity := range toCreate {
 			model, err := mappers.ToModel(entity)
 			if err != nil {
@@ -45,15 +39,8 @@ func (r *repository) SyncConfigs(
 				return fmt.Errorf("failed to create config: %w", err)
 			}
 
-			// Reemplazar M2M de order statuses
-			if len(entity.OrderStatusIDs) > 0 {
-				orderStatuses := make([]models.OrderStatus, len(entity.OrderStatusIDs))
-				for i, sid := range entity.OrderStatusIDs {
-					orderStatuses[i].ID = sid
-				}
-				if err := tx.Model(model).Association("OrderStatuses").Replace(orderStatuses); err != nil {
-					return fmt.Errorf("failed to set order statuses for new config: %w", err)
-				}
+			if err := replaceConfigStatuses(tx, model.ID, entity.OrderStatusIDs); err != nil {
+				return fmt.Errorf("failed to set order statuses for new config: %w", err)
 			}
 
 			entity.ID = model.ID
@@ -61,14 +48,12 @@ func (r *repository) SyncConfigs(
 			entity.UpdatedAt = model.UpdatedAt
 		}
 
-		// 3. UPDATE: actualizar configs existentes
 		for _, entity := range toUpdate {
 			model, err := mappers.ToModel(entity)
 			if err != nil {
 				return fmt.Errorf("failed to convert entity to model for update: %w", err)
 			}
 
-			// Actualizar campos
 			if err := tx.Model(&mappers.IntegrationNotificationConfigModel{}).
 				Where("id = ?", entity.ID).
 				Updates(map[string]interface{}{
@@ -80,18 +65,26 @@ func (r *repository) SyncConfigs(
 				return fmt.Errorf("failed to update config %d: %w", entity.ID, err)
 			}
 
-			// Reemplazar M2M de order statuses
-			configModel := &mappers.IntegrationNotificationConfigModel{}
-			configModel.ID = entity.ID
-			orderStatuses := make([]models.OrderStatus, len(entity.OrderStatusIDs))
-			for i, sid := range entity.OrderStatusIDs {
-				orderStatuses[i].ID = sid
-			}
-			if err := tx.Model(configModel).Association("OrderStatuses").Replace(orderStatuses); err != nil {
+			if err := replaceConfigStatuses(tx, entity.ID, entity.OrderStatusIDs); err != nil {
 				return fmt.Errorf("failed to replace order statuses for config %d: %w", entity.ID, err)
 			}
 		}
 
 		return nil
 	})
+}
+
+func replaceConfigStatuses(tx *gorm.DB, configID uint, statusIDs []uint) error {
+	if err := tx.Exec("DELETE FROM business_notification_config_order_statuses WHERE business_notification_config_id = ?", configID).Error; err != nil {
+		return err
+	}
+	for _, statusID := range statusIDs {
+		if err := tx.Exec(
+			"INSERT INTO business_notification_config_order_statuses (business_notification_config_id, order_status_id, created_at) VALUES (?, ?, NOW()) ON CONFLICT DO NOTHING",
+			configID, statusID,
+		).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }

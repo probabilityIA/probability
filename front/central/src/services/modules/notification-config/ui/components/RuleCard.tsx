@@ -46,6 +46,7 @@ const CHANNEL_COLORS: Record<string, { bg: string; selectedBg: string }> = {
   email: { bg: "bg-orange-50 border-orange-200 text-orange-700", selectedBg: "bg-orange-500 border-orange-600 text-white" },
   sms: { bg: "bg-purple-50 border-purple-200 text-purple-700", selectedBg: "bg-purple-500 border-purple-600 text-white" },
   sse: { bg: "bg-purple-50 border-purple-200 text-purple-700", selectedBg: "bg-purple-500 border-purple-600 text-white" },
+  assistant: { bg: "bg-violet-50 border-violet-200 text-[#3E0FA8]", selectedBg: "bg-[#5B1BE6] border-[#4A12C9] text-white" },
 };
 
 const CHANNEL_BADGE: Record<string, string> = {
@@ -53,6 +54,7 @@ const CHANNEL_BADGE: Record<string, string> = {
   email: "bg-orange-100 text-orange-700",
   sms: "bg-purple-100 text-purple-700",
   sse: "bg-purple-100 text-purple-700",
+  assistant: "bg-violet-100 text-[#3E0FA8]",
 };
 
 export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onDelete }: RuleCardProps) {
@@ -157,6 +159,9 @@ export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onD
             {channelName || "—"}
           </span>
         )}
+        {channelCode === "assistant" && (
+          <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">{"Aplica a todo el negocio"}</p>
+        )}
       </td>
 
       <td className="py-3 px-3">
@@ -203,6 +208,7 @@ export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onD
             options={filteredStatuses}
             selected={rule.order_status_ids}
             onChange={(ids) => onChange({ ...rule, order_status_ids: ids })}
+            emptyLabel={channelCode === "assistant" ? "Elige los estados" : undefined}
           />
         ) : (
           <span className="text-[10px] text-gray-400 italic">Sin filtro de estado</span>
@@ -228,7 +234,7 @@ export function RuleCard({ rule, index, orderStatuses, businessId, onChange, onD
             type="button"
             onClick={() => setPreviewOpen(true)}
             className="p-1.5 rounded-md bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-colors"
-            title="Ver la plantilla que se envia"
+            title={"Ver la plantilla que se env\u00eda"}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

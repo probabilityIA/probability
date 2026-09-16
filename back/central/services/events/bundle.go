@@ -16,16 +16,12 @@ import (
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
 
-// New inicializa el módulo unificado de eventos.
-// NO recibe database — este módulo lee configs de Redis cache.
 func New(
 	router *gin.RouterGroup,
 	logger log.ILogger,
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redisclient.IRedis,
 ) {
-	// 0. Sin RabbitMQ el modulo levanta en modo degradado: SSE sigue disponible,
-	// los consumers y publishers por cola quedan deshabilitados.
 	if rabbitMQ == nil {
 		logger.Warn(context.Background()).
 			Msg("RabbitMQ no disponible - eventos por cola deshabilitados, SSE activo")
@@ -34,7 +30,6 @@ func New(
 		return
 	}
 
-	// 1. Declarar infraestructura RabbitMQ (exchange + queue + binding)
 	if err := rmqInfra.SetupInfrastructure(rabbitMQ, logger); err != nil {
 		logger.Error(context.Background()).
 			Err(err).
@@ -42,21 +37,16 @@ func New(
 		return
 	}
 
-	// 2. SSE EventManager
 	eventManager := sse.New(logger)
 
-	// 2. Notification config cache reader (lee de Redis, no de BD)
 	configCache := cache.New(redisClient, logger)
 
-	// 3. Channel publishers (WhatsApp -> RabbitMQ queue)
 	channelPub := channel.New(rabbitMQ, logger)
 
-	// 4. Event Dispatcher (capa de aplicación)
-	dispatcher := app.New(eventManager, configCache, channelPub, logger)
+	alertPub := channel.NewAssistantAlertPublisher(rabbitMQ, logger)
 
-	// 5. RabbitMQ consumers -> background
+	dispatcher := app.New(eventManager, configCache, channelPub, alertPub, logger)
 
-	// Consumer del exchange topic unificado (events.exchange)
 	eventConsumer := consumer.New(rabbitMQ, dispatcher, logger)
 	go func() {
 		ctx := context.Background()
@@ -67,7 +57,6 @@ func New(
 		}
 	}()
 
-	// Consumer del fanout de órdenes (orders.events -> orders.events.events)
 	orderEventConsumer := consumer.NewOrderEventConsumer(rabbitMQ, dispatcher, logger)
 	go func() {
 		ctx := context.Background()
@@ -78,7 +67,6 @@ func New(
 		}
 	}()
 
-	// 6. SSE HTTP handler + routes
 	sseHandler := handlers.New(eventManager, logger)
 	sseHandler.RegisterRoutes(router)
 

@@ -50,6 +50,31 @@ func TestChat_DescartaUnDestinoQueNoEstaPermitido(t *testing.T) {
 	assert.Equal(t, "Mira contabilidad.", reply.Message)
 }
 
+func TestChat_RecuperaElDestinoEscritoEnElTexto(t *testing.T) {
+	model := &modelFake{reply: &dtos.ModelReply{Message: "Puedes verlas en Ordenes.\n\n1. Filtra por estado.\n\ndestination: orders"}}
+	uc := newTestUseCase(model, &storeFake{})
+
+	reply, err := uc.Chat(context.Background(), chatInput(userMessage("donde veo las ordenes")))
+
+	require.NoError(t, err)
+	require.NotNil(t, reply.Destination)
+	assert.Equal(t, "/orders", reply.Destination.Route)
+	assert.NotContains(t, reply.Message, "destination")
+	assert.Equal(t, "Puedes verlas en Ordenes.\n\n1. Filtra por estado.", reply.Message)
+}
+
+func TestChat_RecuperaElDestinoEscritoComoJSON(t *testing.T) {
+	model := &modelFake{reply: &dtos.ModelReply{Message: "No tienes guias con novedad.\n\n{ \"destination\": \"orders\" }"}}
+	uc := newTestUseCase(model, &storeFake{})
+
+	reply, err := uc.Chat(context.Background(), chatInput(userMessage("tengo guias con novedad")))
+
+	require.NoError(t, err)
+	require.NotNil(t, reply.Destination)
+	assert.Equal(t, "/orders", reply.Destination.Route)
+	assert.Equal(t, "No tienes guias con novedad.", reply.Message)
+}
+
 func TestChat_SinTextoPeroConDestinoArmaUnMensaje(t *testing.T) {
 	model := &modelFake{reply: &dtos.ModelReply{DestinationKey: "shipments.cod"}}
 	uc := newTestUseCase(model, &storeFake{})
@@ -166,4 +191,13 @@ func TestGetAssistantState(t *testing.T) {
 	state, err = uc.GetAssistantState(context.Background(), 7)
 	require.NoError(t, err)
 	assert.True(t, state.IntroSeen)
+}
+
+func TestComposeReplyDescartaJSONFiltrado(t *testing.T) {
+	reply := &dtos.ModelReply{Message: "Hay una alerta reciente.\n\n{\"message\": \"Hay una alerta reciente: DEM-0048 fue cancelada.\", \"destination\": \"orders\"}"}
+	out, err := composeReply(reply, sampleCatalog())
+	require.NoError(t, err)
+	assert.Equal(t, "Hay una alerta reciente: DEM-0048 fue cancelada.", out.Message)
+	require.NotNil(t, out.Destination)
+	assert.Equal(t, "orders", out.Destination.Key)
 }

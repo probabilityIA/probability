@@ -2,20 +2,31 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { sendAssistantMessageAction } from '../../infra/actions';
+import {
+    markAssistantClickAction,
+    sendAssistantMessageAction,
+    submitAssistantFeedbackAction,
+} from '../../infra/actions';
 import {
     GREETING,
     buildHistory,
     entryId,
+    hubEnvironmentFor,
     isCurrentRoute,
+    isHubDestination,
+    newConversationId,
+    nextFeedback,
     rateLimitText,
 } from '../../app/use-cases';
+import { queueIntegrationsHub, requestIntegrationsHub } from '@/services/modules/my-integrations/ui/open-hub';
+import { useSelectedBusiness } from '@/shared/contexts/selected-business-context';
 import type {
     AssistantDestination,
     AssistantHistoryMessage,
     AssistantState,
     AvatarMood,
     ChatEntry,
+    FeedbackValue,
 } from '../../domain/types';
 
 const POINTING_MS = 1800;
@@ -31,17 +42,23 @@ function withoutNotices(entries: ChatEntry[]): ChatEntry[] {
 export function useAssistantChat() {
     const router = useRouter();
     const pathname = usePathname();
+    const { selectedBusinessId } = useSelectedBusiness();
     const [entries, setEntries] = useState<ChatEntry[]>(() => [greetingEntry()]);
     const [pending, setPending] = useState(false);
     const [mood, setMood] = useState<AvatarMood>('idle');
     const [limit, setLimit] = useState(30);
     const [blockedUntil, setBlockedUntil] = useState<string | null>(null);
     const entriesRef = useRef(entries);
+    const conversationRef = useRef<string>('');
     const moodTimer = useRef<number | null>(null);
 
     useEffect(() => {
         entriesRef.current = entries;
     }, [entries]);
+
+    useEffect(() => {
+        if (!conversationRef.current) conversationRef.current = newConversationId();
+    }, []);
 
     useEffect(() => {
         if (!blockedUntil) return;
@@ -72,15 +89,19 @@ export function useAssistantChat() {
         async (history: AssistantHistoryMessage[]) => {
             setPending(true);
             setMood('thinking');
-            const result = await sendAssistantMessageAction(history).catch(() => null);
+            if (!conversationRef.current) conversationRef.current = newConversationId();
+            const result = await sendAssistantMessageAction(history, conversationRef.current, pathname, selectedBusinessId).catch(() => null);
             setPending(false);
 
             if (result?.success) {
+                if (result.data.conversation_id) conversationRef.current = result.data.conversation_id;
                 append({
                     id: entryId(),
                     kind: 'assistant',
                     text: result.data.message,
                     destination: result.data.destination,
+                    messageId: result.data.message_id || undefined,
+                    feedback: 0,
                 });
                 if (result.data.destination) point();
                 else setMood('idle');
@@ -105,7 +126,7 @@ export function useAssistantChat() {
                 text: 'No pude conectarme para responder. Tu mensaje qued\u00f3 guardado.',
             });
         },
-        [append, limit, point],
+        [append, limit, pathname, point, selectedBusinessId],
     );
 
     const blocked = blockedUntil !== null;
@@ -129,8 +150,23 @@ export function useAssistantChat() {
     }, [blocked, pending, request]);
 
     const goTo = useCallback(
-        (destination: AssistantDestination) => {
-            if (isCurrentRoute(pathname, destination.route)) return;
+        (destination: AssistantDestination, messageId?: string) => {
+            if (messageId) void markAssistantClickAction(messageId).catch(() => null);
+
+            const onRoute = isCurrentRoute(pathname, destination.route);
+            if (isHubDestination(destination.key)) {
+                const intent = { environment: hubEnvironmentFor(destination.key) };
+                if (onRoute) {
+                    requestIntegrationsHub(intent);
+                } else {
+                    queueIntegrationsHub(intent);
+                    router.push(destination.route);
+                }
+                append({ id: entryId(), kind: 'system', text: `Te abr\u00ed ${destination.label}` });
+                point();
+                return;
+            }
+            if (onRoute) return;
             router.push(destination.route);
             append({ id: entryId(), kind: 'system', text: `Te llev\u00e9 a ${destination.label} \u00b7 ${destination.route}` });
             point();
@@ -138,7 +174,35 @@ export function useAssistantChat() {
         [append, pathname, point, router],
     );
 
+    const prepareHighlight = useCallback(
+        (destination: AssistantDestination, messageId?: string) => {
+            if (messageId) void markAssistantClickAction(messageId).catch(() => null);
+            if (!isCurrentRoute(pathname, destination.route)) router.push(destination.route);
+            append({ id: entryId(), kind: 'system', text: `Te mostr\u00e9 d\u00f3nde est\u00e1 ${destination.label}` });
+        },
+        [append, pathname, router],
+    );
+
+    const rate = useCallback((id: string, pressed: 1 | -1) => {
+        const entry = entriesRef.current.find((e) => e.id === id);
+        if (!entry || entry.kind !== 'assistant' || !entry.messageId) return;
+
+        const previous: FeedbackValue = entry.feedback ?? 0;
+        const value = nextFeedback(previous, pressed);
+        const messageId = entry.messageId;
+        const apply = (feedback: FeedbackValue) =>
+            setEntries((prev) => prev.map((e) => (e.id === id && e.kind === 'assistant' ? { ...e, feedback } : e)));
+
+        apply(value);
+        void submitAssistantFeedbackAction(messageId, value)
+            .then((result) => {
+                if (!result.success) apply(previous);
+            })
+            .catch(() => apply(previous));
+    }, []);
+
     const reset = useCallback(() => {
+        conversationRef.current = newConversationId();
         setEntries([greetingEntry()]);
         setMood('idle');
     }, []);
@@ -148,7 +212,7 @@ export function useAssistantChat() {
         if (state.remaining <= 0 && state.reset_at) setBlockedUntil(state.reset_at);
     }, []);
 
-    return { entries, pending, mood, blocked, blockedUntil, pathname, send, retry, goTo, reset, applyState };
+    return { entries, pending, mood, blocked, blockedUntil, pathname, send, retry, goTo, prepareHighlight, rate, reset, applyState };
 }
 
 export type AssistantChat = ReturnType<typeof useAssistantChat>;

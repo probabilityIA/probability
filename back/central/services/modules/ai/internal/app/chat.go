@@ -2,9 +2,13 @@ package app
 
 import (
 	"context"
+	"encoding/json"
+	"regexp"
 	"strings"
+	"time"
 	"unicode/utf8"
 
+	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/ai/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/ai/internal/domain/errors"
@@ -18,26 +22,77 @@ func (uc *UseCase) Chat(ctx context.Context, input dtos.ChatInput) (*entities.As
 		return nil, err
 	}
 
+	started := time.Now()
+	record := entities.MessageRecord{
+		ID:             uuid.NewString(),
+		ConversationID: conversationIDOrNew(input.ConversationID),
+		BusinessID:     businessOf(input.Scope),
+		UserID:         input.Scope.UserID,
+		Pathname:       normalizePathname(input.Pathname),
+		Question:       messages[len(messages)-1].Text,
+		CreatedAt:      started,
+	}
+
 	catalog, err := uc.navigation.ForUser(ctx, input.Scope)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := uc.consumeQuota(ctx, input.Scope.UserID); err != nil {
+		record.ErrorCode = entities.ErrorCodeRateLimited
+		uc.recordMessage(ctx, record, started)
 		return nil, err
 	}
 
-	reply, err := uc.model.Reply(ctx, dtos.ModelRequest{
-		SystemPrompt:    buildSystemPrompt(catalog),
-		Messages:        messages,
+	access := uc.resolveDataAccess(catalog, input.Scope)
+	request := dtos.ModelRequest{
+		SystemPrompt:    buildSystemPrompt(catalog, access, uc.describeIdentity(ctx, input.Scope), uc.now()),
+		Messages:        toModelMessages(messages),
 		DestinationKeys: catalog.Keys(),
-	})
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Uint("user_id", input.Scope.UserID).Msg("[ai.assistant] el modelo no respondio")
-		return nil, domainerrors.ErrModelUnavailable
+		Tools:           access.Tools,
 	}
 
-	return composeReply(reply, catalog)
+	var reply *dtos.ModelReply
+	for round := 0; ; round++ {
+		request.ForceReply = len(request.Tools) == 0 || round >= MaxToolRounds
+		reply, err = uc.model.Reply(ctx, request)
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Uint("user_id", input.Scope.UserID).Int("round", round).Msg("[ai.assistant] el modelo no respondio")
+			record.ErrorCode = entities.ErrorCodeUnavailable
+			uc.recordMessage(ctx, record, started)
+			return nil, domainerrors.ErrModelUnavailable
+		}
+
+		record.Model = reply.Model
+		record.InputTokens += reply.InputTokens
+		record.OutputTokens += reply.OutputTokens
+
+		if request.ForceReply || len(reply.ToolCalls) == 0 {
+			break
+		}
+		request.Messages = append(request.Messages,
+			dtos.ModelMessage{Role: entities.RoleAssistant, Text: reply.Message, ToolCalls: reply.ToolCalls},
+			dtos.ModelMessage{Role: entities.RoleUser, ToolResults: uc.runTools(ctx, access, reply.ToolCalls)},
+		)
+	}
+
+	result, err := composeReply(reply, catalog)
+	if err != nil {
+		record.ErrorCode = entities.ErrorCodeUnavailable
+		uc.recordMessage(ctx, record, started)
+		return nil, err
+	}
+
+	record.Answer = result.Message
+	if result.Destination != nil {
+		record.DestinationKey = result.Destination.Key
+		record.DestinationRoute = result.Destination.Route
+	}
+	uc.recordMessage(ctx, record, started)
+
+	result.MessageID = record.ID
+	result.ConversationID = record.ConversationID
+	return result, nil
 }
 
 func (uc *UseCase) consumeQuota(ctx context.Context, userID uint) error {
@@ -53,6 +108,58 @@ func (uc *UseCase) consumeQuota(ctx context.Context, userID uint) error {
 		return &domainerrors.RateLimitedError{Limit: AssistantMessageLimit, ResetAt: usage.ResetAt}
 	}
 	return nil
+}
+
+func (uc *UseCase) recordMessage(ctx context.Context, record entities.MessageRecord, started time.Time) {
+	record.LatencyMs = int(time.Since(started).Milliseconds())
+
+	var err error
+	switch {
+	case uc.recorder != nil:
+		err = uc.recorder.RecordMessage(ctx, record)
+	case uc.conversations != nil:
+		err = uc.conversations.SaveMessage(ctx, record)
+	default:
+		return
+	}
+	if err != nil {
+		uc.log.Warn(ctx).Err(err).Str("message_id", record.ID).Msg("[ai.assistant] no se pudo guardar el mensaje")
+	}
+}
+
+func conversationIDOrNew(raw string) string {
+	if parsed, err := uuid.Parse(strings.TrimSpace(raw)); err == nil {
+		return parsed.String()
+	}
+	return uuid.NewString()
+}
+
+func businessOf(scope dtos.AccessScope) *uint {
+	if scope.TokenBusinessID > 0 {
+		id := scope.TokenBusinessID
+		return &id
+	}
+	if scope.RequestedBusinessID > 0 {
+		id := scope.RequestedBusinessID
+		return &id
+	}
+	return nil
+}
+
+func toModelMessages(messages []entities.ChatMessage) []dtos.ModelMessage {
+	out := make([]dtos.ModelMessage, 0, len(messages))
+	for _, m := range messages {
+		out = append(out, dtos.ModelMessage{Role: m.Role, Text: m.Text})
+	}
+	return out
+}
+
+func normalizePathname(raw string) string {
+	path := strings.TrimSpace(raw)
+	if !strings.HasPrefix(path, "/") {
+		return ""
+	}
+	return truncateRunes(path, MaxPathnameRunes)
 }
 
 func normalizeConversation(messages []entities.ChatMessage) ([]entities.ChatMessage, error) {
@@ -101,15 +208,19 @@ func composeReply(reply *dtos.ModelReply, catalog *entities.NavigationCatalog) (
 		return nil, domainerrors.ErrModelUnavailable
 	}
 
+	message, inlineKey := extractInlineDestination(extractInlinePayload(cleanModelText(reply.Message)))
+
 	var destination *entities.Destination
 	key := strings.TrimSpace(reply.DestinationKey)
+	if key == "" || key == noDestination {
+		key = inlineKey
+	}
 	if key != "" && key != noDestination {
 		if d, ok := catalog.Find(key); ok {
 			destination = d
 		}
 	}
 
-	message := cleanModelText(reply.Message)
 	if message == "" {
 		if destination == nil {
 			return nil, domainerrors.ErrModelUnavailable
@@ -118,6 +229,52 @@ func composeReply(reply *dtos.ModelReply, catalog *entities.NavigationCatalog) (
 	}
 
 	return &entities.AssistantReply{Message: message, Destination: destination}, nil
+}
+
+var inlineDestinationPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?is)\{\s*"?destination"?\s*:\s*"([a-z_.]+)"\s*\}`),
+	regexp.MustCompile(`(?im)^[\s*_]*destination[\s*_]*[:=][\s*_]*([a-z_.]+)[\s*_.]*$`),
+}
+
+func extractInlineDestination(text string) (string, string) {
+	for _, pattern := range inlineDestinationPatterns {
+		match := pattern.FindStringSubmatchIndex(text)
+		if match == nil {
+			continue
+		}
+		key := text[match[2]:match[3]]
+		cleaned := strings.TrimSpace(text[:match[0]] + text[match[1]:])
+		return cleaned, key
+	}
+	return text, ""
+}
+
+type inlinePayload struct {
+	Message     string `json:"message"`
+	Destination string `json:"destination"`
+}
+
+func extractInlinePayload(text string) string {
+	start := strings.LastIndex(text, "{\"message\"")
+	if start < 0 {
+		start = strings.LastIndex(text, "{ \"message\"")
+	}
+	if start < 0 {
+		return text
+	}
+	end := strings.LastIndex(text, "}")
+	if end < start {
+		return strings.TrimSpace(text[:start])
+	}
+	var payload inlinePayload
+	if err := json.Unmarshal([]byte(text[start:end+1]), &payload); err != nil || strings.TrimSpace(payload.Message) == "" {
+		return strings.TrimSpace(text[:start])
+	}
+	message := strings.TrimSpace(payload.Message)
+	if payload.Destination != "" && payload.Destination != noDestination {
+		message += "\n{\"destination\": \"" + payload.Destination + "\"}"
+	}
+	return message
 }
 
 func cleanModelText(text string) string {
@@ -141,4 +298,19 @@ func truncateRunes(text string, max int) string {
 		return text
 	}
 	return string([]rune(text)[:max])
+}
+
+func (uc *UseCase) describeIdentity(ctx context.Context, scope dtos.AccessScope) *entities.ChatIdentity {
+	if uc.businessData == nil {
+		return nil
+	}
+	identity, err := uc.businessData.DescribeIdentity(ctx, scope.UserID, businessOf(scope))
+	if err != nil {
+		uc.log.Warn(ctx).Err(err).Uint("user_id", scope.UserID).Msg("[ai.assistant] no se pudo resolver la identidad")
+		return nil
+	}
+	if identity != nil {
+		identity.IsSuperAdmin = scope.TokenBusinessID == 0
+	}
+	return identity
 }

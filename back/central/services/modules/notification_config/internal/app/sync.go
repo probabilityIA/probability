@@ -10,8 +10,6 @@ import (
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/errors"
 )
 
-// SyncByIntegration sincroniza las reglas de notificación para una integración.
-// Clasifica las reglas incoming como create/update/delete y ejecuta todo en una transacción.
 func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificationConfigsDTO) (*dtos.SyncNotificationConfigsResponseDTO, error) {
 	uc.logger.Info().
 		Uint("business_id", dto.BusinessID).
@@ -19,7 +17,6 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 		Int("rules_count", len(dto.Rules)).
 		Msg("🔄 Sync notification configs by integration")
 
-	// 1. Obtener configs existentes para esta integración + business
 	businessID := dto.BusinessID
 	filters := dtos.FilterNotificationConfigDTO{
 		BusinessID:    &businessID,
@@ -32,13 +29,11 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 		return nil, err
 	}
 
-	// 2. Construir mapa de existentes por ID
 	existingMap := make(map[uint]*entities.IntegrationNotificationConfig, len(existing))
 	for i := range existing {
 		existingMap[existing[i].ID] = &existing[i]
 	}
 
-	// 3. Validar no duplicados dentro del request
 	seen := make(map[string]bool)
 	for _, rule := range dto.Rules {
 		key := fmt.Sprintf("%d:%d", rule.NotificationTypeID, rule.NotificationEventTypeID)
@@ -51,14 +46,12 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 		seen[key] = true
 	}
 
-	// 4. Clasificar reglas
 	var toCreate []*entities.IntegrationNotificationConfig
 	var toUpdate []*entities.IntegrationNotificationConfig
 	incomingIDs := make(map[uint]bool)
 
 	for _, rule := range dto.Rules {
 		if rule.ID != nil && *rule.ID > 0 {
-			// Update: verificar que existe
 			incomingIDs[*rule.ID] = true
 			if _, exists := existingMap[*rule.ID]; !exists {
 				uc.logger.Warn().
@@ -78,7 +71,6 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 			}
 			toUpdate = append(toUpdate, entity)
 		} else {
-			// Create
 			entity := &entities.IntegrationNotificationConfig{
 				BusinessID:              &dto.BusinessID,
 				IntegrationID:           dto.IntegrationID,
@@ -92,7 +84,6 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 		}
 	}
 
-	// 5. IDs existentes no presentes en incoming -> delete
 	var toDeleteIDs []uint
 	for id := range existingMap {
 		if !incomingIDs[id] {
@@ -106,13 +97,19 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 		Int("to_delete", len(toDeleteIDs)).
 		Msg("📋 Sync classification complete")
 
-	// 6. Ejecutar sync en transacción
 	if err := uc.repository.SyncConfigs(ctx, dto.BusinessID, dto.IntegrationID, toCreate, toUpdate, toDeleteIDs); err != nil {
 		uc.logger.Error().Err(err).Msg("❌ Error executing sync transaction")
 		return nil, err
 	}
 
-	// 7. Invalidar cache de la integración
+	for i := range existing {
+		if existing[i].NotificationTypeID == AssistantChannelID {
+			if err := uc.cacheManager.RemoveConfigFromCache(ctx, &existing[i]); err != nil {
+				uc.logger.Warn().Err(err).Uint("config_id", existing[i].ID).Msg("Error limpiando regla del asistente de la cache")
+			}
+		}
+	}
+
 	if err := uc.cacheManager.InvalidateConfigsByIntegration(ctx, dto.IntegrationID); err != nil {
 		uc.logger.Warn().
 			Err(err).
@@ -120,14 +117,12 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 			Msg("⚠️ Error invalidating cache after sync - cache may be stale")
 	}
 
-	// 8. Re-fetch y retornar
 	updated, err := uc.repository.List(ctx, filters)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error re-fetching configs after sync")
 		return nil, err
 	}
 
-	// 9. Re-cachear configs activas (el invalidate solo borra, no reconstruye)
 	for i := range updated {
 		if updated[i].Enabled {
 			if cacheErr := uc.cacheManager.CacheConfig(ctx, &updated[i]); cacheErr != nil {

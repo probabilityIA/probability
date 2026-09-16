@@ -1,6 +1,3 @@
-/**
- * ConfigListTable - Configuraciones de notificación agrupadas por integración
- */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -42,7 +39,6 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
   const [configs, setConfigs] = useState<NotificationConfig[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all configs
   const fetchConfigs = useCallback(async () => {
     setLoading(true);
     try {
@@ -61,7 +57,6 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
     fetchConfigs();
   }, [fetchConfigs, refreshKey]);
 
-  // Group configs by integration_id and enrich with integration info
   const groups: IntegrationGroup[] = useMemo(() => {
     const groupMap = new Map<number, NotificationConfig[]>();
 
@@ -84,7 +79,6 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
     for (const [integrationId, groupConfigs] of groupMap) {
       const integration = integrations.find((i) => i.id === integrationId);
 
-      // Skip configs for inactive/unknown integrations
       if (!integration) continue;
 
       result.push({
@@ -105,7 +99,6 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
     }
   }, [groups, onGroupsLoaded]);
 
-  // WhatsApp integration for testing
   const whatsAppIntegration = useMemo(
     () => integrations.find((i) => i.category === 'messaging' && i.is_active),
     [integrations]
@@ -135,14 +128,12 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
 
   const isLoading = loading || loadingIntegrations;
 
-  // Check if any group has WhatsApp rules
   const hasWhatsAppRules = groups.some((g) =>
     g.events.some((e) => e.channelCode.includes('whatsapp'))
   );
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium text-gray-900 dark:text-white">Reglas por Integración</h3>
@@ -186,7 +177,6 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
         </div>
       </div>
 
-      {/* Content */}
       {isLoading ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">Cargando...</div>
       ) : groups.length === 0 ? (
@@ -206,7 +196,6 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
               key={group.integration.id}
               className="flex items-start gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              {/* Integration info */}
               <div className="flex items-center gap-3 shrink-0 w-[180px] pt-0.5">
                 {group.integration.image_url ? (
                   <img
@@ -231,7 +220,6 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                 </div>
               </div>
 
-              {/* Events list */}
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap gap-1.5">
                   {group.events.map((ev, i) => {
@@ -239,6 +227,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                     const channelBg = chCode.includes('whatsapp') ? 'bg-green-100 text-green-700'
                       : chCode.includes('email') ? 'bg-orange-100 text-orange-700'
                       : chCode.includes('sms') ? 'bg-purple-100 text-purple-700'
+                      : chCode.includes('assistant') ? 'bg-violet-100 text-[#3E0FA8]'
                       : 'bg-purple-100 text-purple-700';
                     return (
                       <span
@@ -258,14 +247,12 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                 </div>
               </div>
 
-              {/* Count summary */}
               <div className="text-right shrink-0 pt-0.5">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {group.activeCount}/{group.configs.length} activas
                 </p>
               </div>
 
-              {/* Configure icon */}
               <div className="shrink-0 pt-0.5">
                 <button
                   type="button"

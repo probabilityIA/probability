@@ -11,6 +11,7 @@ import (
 )
 
 type IUseCase interface {
+	SystemFlows() []entities.SystemFlow
 	SendManualMedia(ctx context.Context, conversationID string, phoneNumber string, businessID uint, media entities.OutboundMedia, caption string, sentBy string) (string, error)
 	SendMessage(ctx context.Context, req dtos.SendMessageRequest) (string, error)
 

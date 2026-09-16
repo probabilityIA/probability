@@ -105,6 +105,11 @@ var authenticatedRoutes = []string{
 	post("/ai/assistant/chat"),
 	get("/ai/assistant/state"),
 	post("/ai/assistant/intro-seen"),
+	post("/ai/assistant/messages/:id/feedback"),
+	post("/ai/assistant/messages/:id/click"),
+	get("/ai/assistant/alerts"),
+	get("/ai/assistant/alerts/unread"),
+	post("/ai/assistant/alerts/seen"),
 
 	get("/businesses/:id"),
 	put("/businesses/:id"),
@@ -248,6 +253,7 @@ var permissionRoutes = map[string]RoutePolicy{
 	post("/customers/upload-bulk"):                                     PermAction("customers", ActionCreate),
 	get("/integrations"):                                               AnyPermission("integrations.read", "orders.read"),
 	get("/integrations/stats"):                                         AnyPermission("integrations.read", "orders.read"),
+	get("/integrations/whatsapp/system-flows"):                         PermAction("notifications", ActionRead),
 	post("/integrations/whatsapp/send-template"):                       Perm("notifications"),
 	post("/integrations/whatsapp/conversations/:id/reply"):             Perm("notifications"),
 	post("/integrations/whatsapp/conversations/:id/reply-media"):       Perm("notifications"),
@@ -302,6 +308,7 @@ var prefixRules = []PrefixRule{
 	{Prefix: "/tours", Policy: Authenticated()},
 	{Prefix: "/push", Policy: Authenticated()},
 
+	{Prefix: "/ai/assistant/admin", Policy: SuperAdmin()},
 	{Prefix: "/accounting", Policy: SuperAdmin()},
 	{Prefix: "/announcements", Policy: SuperAdmin()},
 	{Prefix: "/commercial", Policy: SuperAdmin()},

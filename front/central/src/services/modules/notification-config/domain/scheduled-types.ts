@@ -223,3 +223,31 @@ export interface TemplatePreview {
   found_in_whatsapp: boolean;
   rejected_reason: string;
 }
+
+export type SystemFlowNodeKind = "template" | "decision";
+
+export interface SystemFlowBranch {
+  label: string;
+  node?: SystemFlowNode;
+  back_to?: string;
+}
+
+export interface SystemFlowNode {
+  kind: SystemFlowNodeKind;
+  template?: string;
+  description?: string;
+  body?: string;
+  buttons?: string[];
+  title?: string;
+  detail?: string;
+  effects?: string[];
+  branches?: SystemFlowBranch[];
+}
+
+export interface SystemFlow {
+  key: string;
+  name: string;
+  description: string;
+  trigger: string;
+  root: SystemFlowNode;
+}
