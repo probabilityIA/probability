@@ -16,9 +16,10 @@ import {
   refreshInvoiceAction,
   deletePendingInvoiceAction,
   generateCashReceiptAction,
+  createCreditNoteAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
-import type { Invoice, SyncLog, InvoiceSSEEventData } from '../../domain/types';
+import type { Invoice, SyncLog, InvoiceSSEEventData, CreditNoteType } from '../../domain/types';
 import { normalizeInvoicePreview } from '../../domain/invoice-preview';
 import { InvoicePreview } from './InvoicePreview';
 
@@ -55,6 +56,11 @@ export function InvoiceDetailModal({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [consultandoProveedor, setConsultandoProveedor] = useState(false);
   const [pdfVisible, setPdfVisible] = useState(false);
+  const [creditNoteFormOpen, setCreditNoteFormOpen] = useState(false);
+  const [creditNoteAmount, setCreditNoteAmount] = useState('');
+  const [creditNoteReason, setCreditNoteReason] = useState('');
+  const [creditNoteType, setCreditNoteType] = useState<CreditNoteType>('correction');
+  const [creatingCreditNote, setCreatingCreditNote] = useState(false);
 
   const copyToClipboard = (text: string, fieldId: string) => {
     navigator.clipboard.writeText(text);
@@ -131,9 +137,11 @@ export function InvoiceDetailModal({
       setRetrying(false);
       setRetryProgress(0);
       setRetryResult(null);
+      setCreditNoteFormOpen(false);
     } else {
       setSyncLogs([]);
       setFreshInvoice(null);
+      setCreditNoteFormOpen(false);
     }
   }, [isOpen, invoiceProp?.id]);
 
@@ -236,6 +244,46 @@ export function InvoiceDetailModal({
       showToast('Error al eliminar: ' + error.message, 'error');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleOpenCreditNoteForm = () => {
+    if (!invoice) return;
+    setCreditNoteAmount(String(invoice.total_amount));
+    setCreditNoteReason('');
+    setCreditNoteType('correction');
+    setCreditNoteFormOpen(true);
+  };
+
+  const handleCreateCreditNote = async () => {
+    if (!invoice) return;
+    const amount = Number(creditNoteAmount);
+    if (!amount || amount <= 0) {
+      showToast('El monto debe ser mayor a cero', 'error');
+      return;
+    }
+    if (creditNoteReason.trim().length < 3) {
+      showToast('Escribe un motivo (m\u00ednimo 3 caracteres)', 'error');
+      return;
+    }
+    try {
+      setCreatingCreditNote(true);
+      const result = await createCreditNoteAction(invoice.id, {
+        invoice_id: invoice.id,
+        amount,
+        reason: creditNoteReason.trim(),
+        note_type: creditNoteType,
+      });
+      if (!result.success) {
+        showToast('Error al crear la nota de cr\u00e9dito: ' + result.error, 'error');
+        return;
+      }
+      showToast('Nota de cr\u00e9dito creada exitosamente', 'success');
+      setCreditNoteFormOpen(false);
+      await refreshInvoice();
+      onRefresh();
+    } finally {
+      setCreatingCreditNote(false);
     }
   };
 
@@ -557,6 +605,16 @@ export function InvoiceDetailModal({
                   Cancelar Factura
                 </Button>
               )}
+              {invoice.status === 'issued' && !!invoice.external_id && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleOpenCreditNoteForm}
+                  disabled={creditNoteFormOpen}
+                >
+                  {"Nota de Cr\u00e9dito"}
+                </Button>
+              )}
               {cashReceiptFailed && (
                 <Button
                   variant="primary"
@@ -588,6 +646,68 @@ export function InvoiceDetailModal({
                 </Button>
               )}
             </div>
+
+            {creditNoteFormOpen && (
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  {"Nueva nota de cr\u00e9dito"}
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Monto</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={creditNoteAmount}
+                      onChange={(e) => setCreditNoteAmount(e.target.value)}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo</label>
+                    <select
+                      value={creditNoteType}
+                      onChange={(e) => setCreditNoteType(e.target.value as CreditNoteType)}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-800"
+                    >
+                      <option value="correction">{"Correcci\u00f3n"}</option>
+                      <option value="full_refund">Reembolso total</option>
+                      <option value="partial_refund">Reembolso parcial</option>
+                      <option value="cancellation">{"Anulaci\u00f3n"}</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Motivo</label>
+                  <textarea
+                    value={creditNoteReason}
+                    onChange={(e) => setCreditNoteReason(e.target.value)}
+                    rows={2}
+                    placeholder={"Ej. correcci\u00f3n de valor de env\u00edo, faltaba la comisi\u00f3n del carrier"}
+                    className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-800"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleCreateCreditNote}
+                    disabled={creatingCreditNote}
+                  >
+                    {creatingCreditNote ? 'Creando...' : 'Crear Nota de Cr\u00e9dito'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setCreditNoteFormOpen(false)}
+                    disabled={creatingCreditNote}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
 
                         <div>
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
