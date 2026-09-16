@@ -13,6 +13,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 			Node: &entities.SystemFlowNode{
 				Kind:     entities.SystemFlowNodeTemplate,
 				Template: template,
+				Title:    "Novedad: " + label,
 				Event:    "novelty",
 				Effects:  []string{detail, "La orden queda sin confirmar"},
 			},
@@ -28,6 +29,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 			Root: &entities.SystemFlowNode{
 				Kind:     entities.SystemFlowNodeTemplate,
 				Template: "confirmacion_pedido_contraentrega",
+				Title:    "Pide confirmar el pedido",
 				Detail:   "Se usa la variante que corresponda a la orden: contra entrega, sin valor, sin contra entrega o con mapa.",
 				State:    entities.StateAwaitingConfirmation,
 				Branches: []entities.SystemFlowBranch{
@@ -36,6 +38,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 						Node: &entities.SystemFlowNode{
 							Kind:     entities.SystemFlowNodeTemplate,
 							Template: "pedido_confirmado_v2",
+							Title:    "Pedido confirmado",
 							Event:    "confirmed",
 							Effects:  []string{"La orden queda confirmada"},
 						},
@@ -45,6 +48,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 						Node: &entities.SystemFlowNode{
 							Kind:     entities.SystemFlowNodeTemplate,
 							Template: "menu_no_confirmacion",
+							Title:    "Men\u00fa de opciones",
 							State:    entities.StateAwaitingMenuSelection,
 							Branches: []entities.SystemFlowBranch{
 								{
@@ -52,6 +56,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 									Node: &entities.SystemFlowNode{
 										Kind:     entities.SystemFlowNodeTemplate,
 										Template: "tipo_novedad_pedido",
+										Title:    "Tipo de novedad",
 										State:    entities.StateAwaitingNoveltyType,
 										Branches: []entities.SystemFlowBranch{
 											novelty("Cambio de dirección", "novedad_cambio_direccion", "Se registra la novedad de cambio de dirección"),
@@ -65,6 +70,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 									Node: &entities.SystemFlowNode{
 										Kind:     entities.SystemFlowNodeTemplate,
 										Template: "confirmar_cancelacion_pedido",
+										Title:    "Confirmar cancelaci\u00f3n",
 										State:    entities.StateAwaitingCancelConfirm,
 										Branches: []entities.SystemFlowBranch{
 											{
@@ -80,6 +86,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 															Node: &entities.SystemFlowNode{
 																Kind:     entities.SystemFlowNodeTemplate,
 																Template: "pedido_cancelado",
+																Title:    "Pedido cancelado",
 																Effects:  []string{"La orden pasa a Cancelada", "Vía avisa: Orden cancelada"},
 															},
 														},
@@ -88,6 +95,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 															Node: &entities.SystemFlowNode{
 																Kind:     entities.SystemFlowNodeTemplate,
 																Template: "solicitud_cancelacion_recibida",
+																Title:    "Solicitud de cancelaci\u00f3n recibida",
 																Effects:  []string{"La orden pasa a Cliente solicita cancelar", "Vía avisa: El cliente solicita cancelar"},
 															},
 														},
@@ -106,6 +114,7 @@ func SystemFlowCatalog() []entities.SystemFlow {
 									Node: &entities.SystemFlowNode{
 										Kind:     entities.SystemFlowNodeTemplate,
 										Template: "handoff_asesor",
+										Title:    "Paso a un asesor",
 										Event:    "handoff",
 										Effects:  []string{"La conversación pasa a una persona del negocio"},
 									},
