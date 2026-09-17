@@ -2,54 +2,87 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import CarriersMarquee from '../components/CarriersMarquee.astro';
 import TrackingClient from '../components/TrackingClient';
 
 const title = 'Rastreo de Envíos - Tracking en Tiempo Real | ProbabilityIA';
 const description = 'Sistema inteligente de rastreo para tus envíos. Reduce incertidumbre y mejora la experiencia del cliente en tiempo real.';
+
+const stats = [
+	{ value: '24/7', label: 'actualización en vivo', animate: false },
+	{ value: 8, suffix: '', label: 'transportadoras integradas', animate: true },
+	{ value: 100, suffix: '%', label: 'trazabilidad del pedido', animate: true },
+];
 ---
 
 <Layout title={title} description={description} path="/rastreo">
-	<Header />
+	<Header transparentOnTop transparentVariant="light" />
 	<main>
 		<!-- Hero Section -->
-		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
-			<div class="max-w-6xl mx-auto relative z-10">
-				<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
-					<span class="text-[#8B5CF6] font-medium text-sm">RASTREO DE ENVÍOS</span>
+		<section id="rastreo-hero" class="relative isolate overflow-hidden bg-white pt-32 sm:pt-40 lg:pt-44 pb-20 sm:pb-24 lg:pb-28 px-6 sm:px-12">
+			<div class="rastreo-grid absolute inset-0"></div>
+			<div class="rastreo-glow absolute inset-0"></div>
+
+			<svg class="route-path absolute inset-0 w-full h-full opacity-70 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 1440 500">
+				<path
+					class="route-path-line"
+					d="M-40,420 C 220,420 260,180 480,180 S 760,380 1000,300 S 1300,60 1500,60"
+					fill="none"
+					stroke="url(#routeGrad)"
+					stroke-width="2"
+					stroke-dasharray="1 14"
+					stroke-linecap="round"
+				/>
+				<defs>
+					<linearGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
+						<stop offset="0" stop-color="#8B5CF6" stop-opacity="0" />
+						<stop offset="0.5" stop-color="#7C3AED" stop-opacity="0.75" />
+						<stop offset="1" stop-color="#8B5CF6" stop-opacity="0" />
+					</linearGradient>
+				</defs>
+				<circle class="route-pin" r="6" fill="#7C3AED">
+					<animateMotion
+						dur="7s"
+						repeatCount="indefinite"
+						path="M-40,420 C 220,420 260,180 480,180 S 760,380 1000,300 S 1300,60 1500,60"
+					/>
+				</circle>
+			</svg>
+
+			<div class="max-w-5xl mx-auto relative z-10 text-center">
+				<div class="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-full px-4 py-2 mb-7">
+					<span class="pulse-dot w-2 h-2 rounded-full bg-[#8B5CF6] shadow-[0_0_8px_rgba(139,92,246,0.6)]"></span>
+					<span class="text-[12.5px] font-bold tracking-[0.06em] text-[#7C3AED] uppercase">Rastreo en tiempo real</span>
 				</div>
-				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-					Sigue tu <span class="gradient-text">envío</span> en tiempo real
+
+				<h1 class="font-space-grotesk font-bold text-4xl sm:text-5xl lg:text-6xl leading-[1.08] -tracking-[0.02em] text-gray-900 mb-6 text-balance">
+					Sigue tu <span class="gradient-text">envío</span>, paso a paso
 				</h1>
-				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl">
-					Ingresa tu número de tracking o número de orden para consultar el estado de tu envío
+
+				<p class="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto mb-12">
+					Ingresa tu número de tracking o de orden y consulta al instante dónde está tu pedido,
+					sin llamadas ni esperas.
 				</p>
+
+				<div class="flex gap-8 sm:gap-14 items-end flex-wrap justify-center">
+					{stats.map((stat) => (
+						<div>
+							<div class="font-space-grotesk font-bold text-[28px] sm:text-[32px] leading-none text-[#181225]">
+								{stat.animate ? <span data-count={stat.value}>0</span> : stat.value}{stat.suffix}
+							</div>
+							<div class="text-[13px] text-gray-500 mt-1.5">{stat.label}</div>
+						</div>
+					))}
+				</div>
 			</div>
 		</section>
+
+		<CarriersMarquee />
 
 		<!-- Tracking Content -->
-		<section class="bg-white py-20 px-6 sm:px-20">
-			<div class="max-w-4xl mx-auto">
+		<section class="rastreo-content relative overflow-hidden py-16 sm:py-20 px-6 sm:px-12">
+			<div class="max-w-4xl mx-auto relative z-10">
 				<TrackingClient client:load />
-			</div>
-		</section>
-
-		<!-- CTA Section -->
-		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
-			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#A855F7] to-[#7C3AED] rounded-2xl p-12 sm:p-20 text-center border border-purple-300">
-				<h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
-					¿Necesitas más ayuda?
-				</h2>
-				<p class="text-white text-opacity-90 mb-10 text-lg">
-					Contacta con nuestro equipo de soporte o escríbenos por WhatsApp
-				</p>
-				<div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-					<a href="mailto:soporte@probabilityia.com" class="flex justify-center items-center bg-white text-[#8B5CF6] hover:bg-gray-100 px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-lg w-full sm:w-auto">
-						Contactar Soporte
-					</a>
-					<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20tengo%20una%20pregunta%20sobre%20mi%20rastreo" class="flex justify-center items-center border-2 border-white text-white hover:bg-white hover:text-[#8B5CF6] px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all w-full sm:w-auto">
-						Contáctanos por WhatsApp
-					</a>
-				</div>
 			</div>
 		</section>
 	</main>
@@ -58,9 +91,87 @@ const description = 'Sistema inteligente de rastreo para tus envíos. Reduce inc
 
 <style>
 	.gradient-text {
-		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		background: linear-gradient(115deg, #c4b5fd, #a855f7);
 		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
 		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		color: transparent;
+	}
+
+	.pulse-dot {
+		animation: rastreoPulseDot 2s ease-in-out infinite;
+	}
+
+	@keyframes rastreoPulseDot {
+		0%, 100% { opacity: 1; transform: scale(1); }
+		50% { opacity: 0.45; transform: scale(0.82); }
+	}
+
+	.rastreo-grid {
+		background-image:
+			repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(139, 92, 246, 0.06) 38px, rgba(139, 92, 246, 0.06) 39px),
+			repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(139, 92, 246, 0.06) 38px, rgba(139, 92, 246, 0.06) 39px);
+		mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 0%, transparent 75%);
+	}
+
+	.rastreo-glow {
+		background: radial-gradient(ellipse 60% 55% at 50% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+	}
+
+	.route-path-line {
+		animation: rastreoDash 3.5s linear infinite;
+	}
+
+	@keyframes rastreoDash {
+		to { stroke-dashoffset: -30; }
+	}
+
+	.rastreo-content {
+		background-color: #FAFBFE;
+		background-image:
+			linear-gradient(135deg, rgba(250, 251, 254, 0) 0%, rgba(245, 243, 255, 1) 100%),
+			repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px),
+			repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pulse-dot,
+		.route-path-line,
+		.route-pin animateMotion {
+			animation: none !important;
+		}
 	}
 </style>
+
+<script>
+	(function () {
+		const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const els = document.querySelectorAll('#rastreo-hero [data-count]');
+		if (!els.length) return;
+
+		if (prefersReduced) {
+			els.forEach((el) => {
+				el.textContent = el.getAttribute('data-count');
+			});
+			return;
+		}
+
+		const duration = 1200;
+		const startTime = performance.now();
+
+		const frame = (now: number) => {
+			const elapsed = now - startTime;
+			const progress = Math.min(1, elapsed / duration);
+			const easeOut = 1 - Math.pow(1 - progress, 3);
+
+			els.forEach((el) => {
+				const target = parseFloat(el.getAttribute('data-count') || '0');
+				el.textContent = String(Math.round(target * easeOut));
+			});
+
+			if (progress < 1) requestAnimationFrame(frame);
+		};
+
+		requestAnimationFrame(frame);
+	})();
+</script>
