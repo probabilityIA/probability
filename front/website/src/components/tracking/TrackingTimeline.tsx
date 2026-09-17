@@ -151,7 +151,12 @@ export default function TrackingTimeline({ history, isLoading = false, error }: 
     const el = scrollRef.current;
     if (!el || orderedHistory.length <= 1) return;
 
-    const SPEED_PX_PER_SEC = 40;
+    // Velocidad fija en px/s hacía que envíos con muchos eventos (se han visto
+    // hasta 140) tardaran minutos en recorrerse. En vez de eso, la velocidad
+    // se calcula para que todo el recorrido dure siempre ~parecido.
+    const TARGET_TRAVERSAL_SECONDS = 18;
+    const MIN_SPEED_PX_PER_SEC = 40;
+    const MAX_SPEED_PX_PER_SEC = 260;
     const EDGE_HOLD_MS = 1200;
     let rafId: number;
     let lastTime: number | null = null;
@@ -167,7 +172,11 @@ export default function TrackingTimeline({ history, isLoading = false, error }: 
       if (now >= pauseUntilRef.current && now >= holdUntil) {
         const maxScroll = el.scrollWidth - el.clientWidth;
         if (maxScroll > 0) {
-          const next = el.scrollLeft + direction * ((SPEED_PX_PER_SEC * delta) / 1000);
+          const speed = Math.min(
+            MAX_SPEED_PX_PER_SEC,
+            Math.max(MIN_SPEED_PX_PER_SEC, maxScroll / TARGET_TRAVERSAL_SECONDS),
+          );
+          const next = el.scrollLeft + direction * ((speed * delta) / 1000);
           el.scrollLeft = Math.min(maxScroll, Math.max(0, next));
 
           if (el.scrollLeft >= maxScroll - 0.5) {
