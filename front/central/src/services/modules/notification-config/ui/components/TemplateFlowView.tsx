@@ -283,30 +283,31 @@ export function TemplateFlowView({
                 <div key={buttonText} className="flex items-center gap-3">
                   <div className="flex shrink-0 items-center">
                     <span className="h-px w-4 bg-gray-300 dark:bg-gray-600" />
-                    <span
-                      className="whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
-                      style={{
-                        borderColor: "var(--color-primary)",
-                        color: "var(--color-primary)",
-                      }}
-                    >
-                      {buttonText}
+                    <span className="relative inline-flex">
+                      <span
+                        className="whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                        style={{
+                          borderColor: "var(--color-primary)",
+                          color: "var(--color-primary)",
+                        }}
+                      >
+                        {buttonText}
+                      </span>
+                      {flow && !readOnly && (
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => unlinkResponse(template.ID, buttonText)}
+                          title="Desconectar esta respuesta"
+                          className="absolute -right-1.5 -top-1.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white bg-red-500 text-[9px] font-bold leading-none text-white hover:bg-red-600 disabled:opacity-40 dark:border-gray-900"
+                        >
+                          {"✕"}
+                        </button>
+                      )}
                     </span>
                     <span className="h-px w-5 bg-gray-300 dark:bg-gray-600" />
                     <span className="h-0 w-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-gray-300 dark:border-l-gray-600" />
                   </div>
-
-                  {flow && !readOnly && (
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => unlinkResponse(template.ID, buttonText)}
-                      title="Desconectar esta respuesta"
-                      className="shrink-0 self-start rounded-full px-1.5 py-0.5 text-[11px] font-medium text-red-500 hover:bg-red-50 disabled:opacity-40 dark:hover:bg-red-950/30"
-                    >
-                      {"✕"}
-                    </button>
-                  )}
 
                   {flow && target && !looping && !tooDeep && renderNode(target, depth + 1, [
                     ...path,
