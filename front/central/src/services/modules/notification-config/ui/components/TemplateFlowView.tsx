@@ -77,6 +77,7 @@ export function TemplateFlowView({
   const { showToast } = useToast();
   const [pending, setPending] = useState<PendingResponse | null>(null);
   const [picking, setPicking] = useState<PendingResponse | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<WhatsappTemplate | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [scale, setScale] = useState(1);
@@ -256,6 +257,15 @@ export function TemplateFlowView({
               <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-600">
                 {"Reutilizada"}
               </span>
+            )}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setEditingTemplate(template)}
+                className="shrink-0 text-[10px] font-medium text-[var(--color-primary)] hover:underline"
+              >
+                {"Editar"}
+              </button>
             )}
           </div>
 
@@ -595,6 +605,39 @@ export function TemplateFlowView({
             )}
             saving={saving}
             onPick={(template) => linkResponse(template, picking)}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={editingTemplate !== null}
+        onClose={() => setEditingTemplate(null)}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{"Editar plantilla"}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {"Plantilla de mensaje para WhatsApp · Meta"}
+            </span>
+          </span>
+        )}
+        size="4xl"
+        zIndex={80}
+        noPadding
+        noBodyScroll
+      >
+        {editingTemplate !== null && (
+          <TemplateForm
+            businessId={businessId}
+            variableCatalog={variableCatalog}
+            template={editingTemplate}
+            linkedButtonTexts={(childrenBySource.get(editingTemplate.ID) || []).map(
+              (flow) => flow.ButtonText,
+            )}
+            onSuccess={() => {
+              setEditingTemplate(null);
+              onChanged();
+            }}
+            onCancel={() => setEditingTemplate(null)}
           />
         )}
       </Modal>
