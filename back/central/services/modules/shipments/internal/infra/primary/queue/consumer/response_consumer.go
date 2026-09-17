@@ -205,6 +205,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			c.log.Error(ctx).Err(err).Msg("Failed to get shipment")
 			return
 		}
+		var declaredCodCarrierFee *float64
 		if shipment != nil {
 			if businessID == 0 && shipment.OrderID != nil && *shipment.OrderID != "" {
 				if bid, err := c.repo.GetOrderBusinessID(ctx, *shipment.OrderID); err == nil {
@@ -242,6 +243,8 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 
 			shipment.Status = "pending"
 			shipment.IsTest = response.IsTest
+
+			declaredCodCarrierFee = shipment.CodCarrierFee
 
 			if calibratedCODFee > 0 {
 				previousFee := 0.0
@@ -327,12 +330,16 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 
 		var notification *domain.GuideNotificationData
 		if shipment != nil {
+			notificationCodCarrierFee := declaredCodCarrierFee
+			if notificationCodCarrierFee == nil {
+				notificationCodCarrierFee = shipment.CodCarrierFee
+			}
 			notification = &domain.GuideNotificationData{
 				CustomerName:  shipment.CustomerName,
 				CustomerPhone: shipment.CustomerPhone,
 				OrderNumber:   shipment.OrderNumber,
 				CodTotal:      shipment.CodTotal,
-				CodCarrierFee: shipment.CodCarrierFee,
+				CodCarrierFee: notificationCodCarrierFee,
 			}
 			if shipment.CodCollectAmount != nil {
 				notification.CodCollectAmount = *shipment.CodCollectAmount
