@@ -182,6 +182,32 @@ export function TemplateFlowView({
     onChanged();
   };
 
+  const unlinkResponse = async (sourceID: number, buttonText: string) => {
+    const existing = flows
+      .filter((flow) => flow.SourceTemplateID === sourceID)
+      .map((flow) => ({
+        button_text: flow.ButtonText,
+        target_template_id: flow.TargetTemplateID,
+        enabled: flow.Enabled,
+      }));
+
+    const next = existing.filter(
+      (item) => item.button_text.toLowerCase() !== buttonText.toLowerCase(),
+    );
+
+    setSaving(true);
+    const result = await replaceTemplateFlowsAction(sourceID, next, businessId, flowId);
+    setSaving(false);
+
+    if (!result.success) {
+      showToast(result.error || "No se pudo desconectar", "error");
+      return;
+    }
+
+    showToast(`"${buttonText}" quedó sin respuesta`, "success");
+    onChanged();
+  };
+
   if (!explicitRoot && participates.length === 0) {
     return (
       <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-600">
@@ -269,6 +295,18 @@ export function TemplateFlowView({
                     <span className="h-px w-5 bg-gray-300 dark:bg-gray-600" />
                     <span className="h-0 w-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-gray-300 dark:border-l-gray-600" />
                   </div>
+
+                  {flow && !readOnly && (
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => unlinkResponse(template.ID, buttonText)}
+                      title="Desconectar esta respuesta"
+                      className="shrink-0 self-start rounded-full px-1.5 py-0.5 text-[11px] font-medium text-red-500 hover:bg-red-50 disabled:opacity-40 dark:hover:bg-red-950/30"
+                    >
+                      {"✕"}
+                    </button>
+                  )}
 
                   {flow && target && !looping && !tooDeep && renderNode(target, depth + 1, [
                     ...path,
