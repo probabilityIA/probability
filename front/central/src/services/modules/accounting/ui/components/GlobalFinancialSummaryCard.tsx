@@ -9,6 +9,37 @@ import { Alert, Spinner } from '@/shared/ui';
 
 const PIE_COLORS = ['#8B5CF6', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#6366F1', '#EC4899'];
 
+function PieCard({ title, data, emptyLabel, keyPrefix }: { title: string; data: { name: string; value: number }[]; emptyLabel: string; keyPrefix: string }) {
+    return (
+        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 self-start">{title}</h3>
+            {data.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-12">{emptyLabel}</p>
+            ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                            outerRadius={100}
+                            dataKey="value"
+                        >
+                            {data.map((_, index) => (
+                                <Cell key={`${keyPrefix}-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatCOP(value as number)} />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
+            )}
+        </div>
+    );
+}
+
 export function GlobalFinancialSummaryCard() {
     const [from, setFrom] = useState(firstDayOfCurrentMonth());
     const [to, setTo] = useState(lastDayOfCurrentMonth());
@@ -48,6 +79,16 @@ export function GlobalFinancialSummaryCard() {
     const realIncomePieData = useMemo(
         () => realIncomeRows.map((row) => ({ name: row.name, value: row.amount })),
         [realIncomeRows]
+    );
+    const subscriptionByBusiness = report?.by_subscription_business || [];
+    const guideMarginByBusiness = report?.by_guide_margin_business || [];
+    const subscriptionByBusinessPieData = useMemo(
+        () => subscriptionByBusiness.map((row) => ({ name: row.business_name, value: row.amount })),
+        [subscriptionByBusiness]
+    );
+    const guideMarginByBusinessPieData = useMemo(
+        () => guideMarginByBusiness.map((row) => ({ name: row.business_name, value: row.amount })),
+        [guideMarginByBusiness]
     );
     const cashInPieData = useMemo(
         () => cashInRows.map((row) => ({ name: row.name, value: row.amount })),
@@ -116,59 +157,33 @@ export function GlobalFinancialSummaryCard() {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center">
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 self-start">Ganancia real por fuente</h3>
-                            {realIncomePieData.length === 0 ? (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 py-12">Sin ganancia real en el periodo</p>
-                            ) : (
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <PieChart>
-                                        <Pie
-                                            data={realIncomePieData}
-                                            cx="50%"
-                                            cy="50%"
-                                            labelLine={false}
-                                            label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                            outerRadius={100}
-                                            dataKey="value"
-                                        >
-                                            {realIncomePieData.map((_, index) => (
-                                                <Cell key={`real-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip formatter={(value) => formatCOP(value as number)} />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            )}
-                        </div>
+                        <PieCard
+                            title="Ganancia real por fuente"
+                            data={realIncomePieData}
+                            emptyLabel="Sin ganancia real en el periodo"
+                            keyPrefix="real"
+                        />
+                        <PieCard
+                            title="Todo lo que entra a caja"
+                            data={cashInPieData}
+                            emptyLabel="Sin movimientos en el periodo"
+                            keyPrefix="cash"
+                        />
+                    </div>
 
-                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center">
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 self-start">Todo lo que entra a caja</h3>
-                            {cashInPieData.length === 0 ? (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 py-12">Sin movimientos en el periodo</p>
-                            ) : (
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <PieChart>
-                                        <Pie
-                                            data={cashInPieData}
-                                            cx="50%"
-                                            cy="50%"
-                                            labelLine={false}
-                                            label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                            outerRadius={100}
-                                            dataKey="value"
-                                        >
-                                            {cashInPieData.map((_, index) => (
-                                                <Cell key={`cash-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip formatter={(value) => formatCOP(value as number)} />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            )}
-                        </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <PieCard
+                            title="Membresias: que negocio las genera"
+                            data={subscriptionByBusinessPieData}
+                            emptyLabel="Sin pagos de membresia en el periodo"
+                            keyPrefix="sub-biz"
+                        />
+                        <PieCard
+                            title="Ganancia por guias: que negocio la genera"
+                            data={guideMarginByBusinessPieData}
+                            emptyLabel="Sin ganancia por guias en el periodo"
+                            keyPrefix="guide-biz"
+                        />
                     </div>
 
                     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">

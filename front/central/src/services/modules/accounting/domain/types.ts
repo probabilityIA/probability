@@ -141,12 +141,21 @@ export interface ReportTaxRow {
     amount: number;
 }
 
+export interface ReportBusinessRow {
+    business_id: number | null;
+    business_name: string;
+    entries_count: number;
+    amount: number;
+}
+
 export interface AccountingReport {
     from: string;
     to: string;
     totals: ReportTotals;
     by_concept: ReportConceptRow[] | null;
     by_tax: ReportTaxRow[] | null;
+    by_subscription_business: ReportBusinessRow[] | null;
+    by_guide_margin_business: ReportBusinessRow[] | null;
 }
 
 export interface SyncResult {

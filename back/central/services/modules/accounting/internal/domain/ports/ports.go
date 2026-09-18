@@ -44,6 +44,7 @@ type IRepository interface {
 	DeleteEntry(ctx context.Context, id uint) error
 
 	Report(ctx context.Context, params dtos.ReportParams) ([]dtos.ReportConceptRow, []dtos.ReportTaxRow, error)
+	ReportByBusiness(ctx context.Context, sourceType string, params dtos.ReportParams) ([]dtos.ReportBusinessRow, error)
 
 	FindSyncCandidates(ctx context.Context, sourceType string, limit int) ([]dtos.SyncCandidate, error)
 

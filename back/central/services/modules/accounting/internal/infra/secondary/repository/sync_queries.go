@@ -69,6 +69,10 @@ SELECT t.id::text AS source_id,
        CONCAT('Recarga billetera ', COALESCE(t.reference, '')) AS description
 FROM transaction t
 WHERE t.type = 'RECHARGE' AND t.status = 'COMPLETED' AND t.amount > 0
+  AND NULLIF(t.business_id, 0) IN (
+      SELECT (jsonb_array_elements_text(w.selected_business_ids))::int
+      FROM wallet_kpi_selection w WHERE w.id = 1
+  )
   AND NOT EXISTS (
       SELECT 1 FROM accounting_entries ae
       WHERE ae.source_type = 'WALLET_RECHARGE' AND ae.source_id = t.id::text AND ae.deleted_at IS NULL
@@ -84,6 +88,10 @@ SELECT c.id::text AS source_id,
        CONCAT('Consignacion COD ', TO_CHAR(c.period_start, 'YYYY-MM-DD'), ' a ', TO_CHAR(c.period_end, 'YYYY-MM-DD')) AS description
 FROM cod_payment_cut c
 WHERE c.status = 'confirmed' AND c.deleted_at IS NULL AND c.total_net > 0
+  AND NULLIF(c.business_id, 0) IN (
+      SELECT (jsonb_array_elements_text(w.selected_business_ids))::int
+      FROM wallet_kpi_selection w WHERE w.id = 1
+  )
   AND NOT EXISTS (
       SELECT 1 FROM accounting_entries ae
       WHERE ae.source_type = 'COD_PAYOUT' AND ae.source_id = c.id::text AND ae.deleted_at IS NULL
