@@ -36,6 +36,8 @@ type IRepository interface {
 	SaveWalletTransactionGatewayResponse(ctx context.Context, id uuid.UUID, response []byte) error
 	UpdateWalletTransaction(ctx context.Context, tx *entities.WalletTransaction) error
 	GetTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) ([]*entities.WalletTransaction, error)
+	GetSpendSummary(ctx context.Context, dto *dtos.SpendSummaryDTO) ([]dtos.ConceptTotal, error)
+	ListTransactionsFiltered(ctx context.Context, dto *dtos.TransactionFilterDTO) ([]*entities.WalletTransaction, int64, error)
 	GetPendingRechargeTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
 	GetProcessedTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
 	DeleteTransactionsByWalletIDAndType(ctx context.Context, walletID uuid.UUID, txType string) error
@@ -94,6 +96,8 @@ type IWalletUseCase interface {
 	GetPendingTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
 	GetProcessedTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
 	GetTransactionsByBusinessID(ctx context.Context, businessID uint) ([]*entities.WalletTransaction, error)
+	GetSpendSummary(ctx context.Context, dto *dtos.SpendSummaryDTO) ([]dtos.ConceptTotal, error)
+	ListSpendTransactions(ctx context.Context, dto *dtos.TransactionFilterDTO) ([]*entities.WalletTransaction, int64, error)
 	ClearRechargeHistory(ctx context.Context, businessID uint) error
 	AdminAdjustBalance(ctx context.Context, dto *dtos.AdminAdjustBalanceDTO) error
 	GetFinancialStats(ctx context.Context, dto *dtos.FinancialStatsDTO) (*dtos.FinancialStatsResponse, error)

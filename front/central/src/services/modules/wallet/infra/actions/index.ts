@@ -254,6 +254,68 @@ export async function getWalletHistoryAction(businessId?: number) {
     }
 }
 
+export interface ConceptTotal {
+    concept: string;
+    count: number;
+    amount: number;
+}
+
+/**
+ * Total gastado por el negocio de su propia billetera, agrupado por concepto
+ * (GUIDE, SUBSCRIPTION, etc.). Nunca incluye margen/ganancia de Probability.
+ */
+export async function getWalletSpendSummaryAction(startDate?: string, endDate?: string, businessId?: number) {
+    try {
+        const headers = await getAuthHeader();
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        if (businessId) params.append('business_id', String(businessId));
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/spend-summary?${params.toString()}`, {
+            headers,
+            cache: 'no-store'
+        });
+        if (!res.ok) throw new Error(`Failed to fetch spend summary: ${res.status}`);
+        const data = await res.json();
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('getWalletSpendSummaryAction error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export interface ListSpendTransactionsParams {
+    startDate?: string;
+    endDate?: string;
+    concept?: string;
+    page?: number;
+    pageSize?: number;
+    businessId?: number;
+}
+
+export async function listWalletSpendTransactionsAction(params: ListSpendTransactionsParams) {
+    try {
+        const headers = await getAuthHeader();
+        const query = new URLSearchParams();
+        if (params.startDate) query.append('start_date', params.startDate);
+        if (params.endDate) query.append('end_date', params.endDate);
+        if (params.concept) query.append('concept', params.concept);
+        if (params.page) query.append('page', String(params.page));
+        if (params.pageSize) query.append('page_size', String(params.pageSize));
+        if (params.businessId) query.append('business_id', String(params.businessId));
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/spend-transactions?${query.toString()}`, {
+            headers,
+            cache: 'no-store'
+        });
+        if (!res.ok) throw new Error(`Failed to fetch spend transactions: ${res.status}`);
+        const data = await res.json();
+        return { success: true, ...data };
+    } catch (error: any) {
+        console.error('listWalletSpendTransactionsAction error:', error);
+        return { success: false, data: [], total: 0, page: params.page || 1, page_size: params.pageSize || 15, total_pages: 0 };
+    }
+}
+
 /**
  * Admin adjust wallet balance without restrictions (Admin only)
  * @param businessId - Business ID
