@@ -45,8 +45,13 @@ func isAdminUser(c *gin.Context) bool {
 	return false
 }
 
+const reportTimeZone = "America/Bogota"
+
 func parseDateRange(c *gin.Context) (time.Time, time.Time) {
-	loc := time.UTC
+	loc, err := time.LoadLocation(reportTimeZone)
+	if err != nil {
+		loc = time.UTC
+	}
 	now := time.Now().In(loc)
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	endOfToday := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
