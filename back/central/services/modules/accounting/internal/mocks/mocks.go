@@ -31,7 +31,8 @@ type RepositoryMock struct {
 	CreateEntryFn  func(ctx context.Context, e *entities.Entry) (bool, error)
 	DeleteEntryFn  func(ctx context.Context, id uint) error
 
-	ReportFn func(ctx context.Context, params dtos.ReportParams) ([]dtos.ReportConceptRow, []dtos.ReportTaxRow, error)
+	ReportFn           func(ctx context.Context, params dtos.ReportParams) ([]dtos.ReportConceptRow, []dtos.ReportTaxRow, error)
+	ReportByBusinessFn func(ctx context.Context, sourceType string, params dtos.ReportParams) ([]dtos.ReportBusinessRow, error)
 
 	FindSyncCandidatesFn func(ctx context.Context, sourceType string, limit int) ([]dtos.SyncCandidate, error)
 
@@ -182,6 +183,13 @@ func (m *RepositoryMock) Report(ctx context.Context, params dtos.ReportParams) (
 		return m.ReportFn(ctx, params)
 	}
 	return nil, nil, nil
+}
+
+func (m *RepositoryMock) ReportByBusiness(ctx context.Context, sourceType string, params dtos.ReportParams) ([]dtos.ReportBusinessRow, error) {
+	if m.ReportByBusinessFn != nil {
+		return m.ReportByBusinessFn(ctx, sourceType, params)
+	}
+	return nil, nil
 }
 
 func (m *RepositoryMock) FindSyncCandidates(ctx context.Context, sourceType string, limit int) ([]dtos.SyncCandidate, error) {
