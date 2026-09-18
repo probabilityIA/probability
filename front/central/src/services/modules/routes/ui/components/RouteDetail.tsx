@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { ArrowLeftIcon, PlayIcon, CheckCircleIcon, XCircleIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { RouteDetail as RouteDetailType, RouteStopInfo } from '../../domain/types';
 import {
@@ -12,6 +13,8 @@ import {
 } from '../../infra/actions';
 import { Alert, Spinner, Button } from '@/shared/ui';
 import { getActionError, unwrapAction } from '@/shared/utils/action-result';
+
+const RouteMap = dynamic(() => import('./RouteMap'), { ssr: false });
 
 interface RouteDetailProps {
     routeId: number;
@@ -58,6 +61,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
     const [optimizeResult, setOptimizeResult] = useState<{ antesKm: number | null; antesMin: number | null; despuesKm: number; despuesMin: number; sinCoords: number } | null>(null);
     const [failureStopId, setFailureStopId] = useState<number | null>(null);
     const [failureReason, setFailureReason] = useState('');
+    const [selectedStopId, setSelectedStopId] = useState<number | null>(null);
 
     const fetchRoute = useCallback(async () => {
         setLoading(true);
@@ -343,7 +347,13 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
+            <div className="xl:col-span-3 xl:sticky xl:top-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Mapa de la ruta</h3>
+                <RouteMap route={route} selectedStopId={selectedStopId} onSelectStop={setSelectedStopId} />
+            </div>
+
+            <div className="xl:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                         Paradas ({sortedStops.length})
@@ -355,9 +365,13 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                         No hay paradas en esta ruta
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700 xl:max-h-[560px] xl:overflow-y-auto">
                         {sortedStops.map((stop) => (
-                            <div key={stop.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div
+                                key={stop.id}
+                                onClick={() => setSelectedStopId(stop.id)}
+                                className={`px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 cursor-pointer transition-colors ${selectedStopId === stop.id ? 'bg-purple-50 dark:bg-purple-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/40'}`}
+                            >
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300">
                                     {stop.sequence}
                                 </div>
@@ -417,6 +431,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                         ))}
                     </div>
                 )}
+            </div>
             </div>
 
             {failureStopId !== null && (

@@ -132,3 +132,18 @@ func TestCreateRouteSinOrigenTomaLaBodegaPorDefecto(t *testing.T) {
 	require.NotNil(t, creada.OriginLat)
 	assert.Nil(t, creada.Stops)
 }
+
+func TestGetRouteSinOrigenMuestraLaBodegaSinGuardar(t *testing.T) {
+	repo, guardada := rutaSinOrigen(paradasConOrden())
+	repo.GetDefaultWarehouseOriginFn = func(ctx context.Context, businessID uint) (*entities.OriginWarehouse, error) {
+		return &entities.OriginWarehouse{ID: 22, Address: "Cl. 47a #51-18", Lat: ptrF(6.34), Lng: ptrF(-75.50)}, nil
+	}
+
+	uc := newRoutesUseCaseCon(repo, nil)
+	route, err := uc.GetRoute(context.Background(), 46, 4)
+
+	require.NoError(t, err)
+	require.NotNil(t, route.OriginLat)
+	assert.InDelta(t, 6.34, *route.OriginLat, 0.0001)
+	assert.Nil(t, *guardada)
+}
