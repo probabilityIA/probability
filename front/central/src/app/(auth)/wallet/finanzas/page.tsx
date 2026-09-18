@@ -6,6 +6,7 @@ import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusine
 import { useWalletBusiness } from '@/shared/contexts/wallet-business-context';
 import ShippingProfitMonthly from '@/services/modules/shipping-margins/ui/components/ShippingProfitMonthly';
 import { BusinessWalletFinancialSummary } from '@/services/modules/wallet/ui/components';
+import { GlobalFinancialSummaryCard } from '@/services/modules/accounting/ui';
 import { Alert } from '@/shared/ui';
 
 export default function WalletFinanzasPage() {
@@ -36,14 +37,14 @@ export default function WalletFinanzasPage() {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 p-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Selecciona un negocio
+                    Ver finanzas de un negocio especifico (opcional)
                 </label>
                 <select
                     value={selectedBusinessId || ''}
                     onChange={(e) => setSelectedBusinessId(e.target.value ? parseInt(e.target.value) : null)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                    <option value="">Selecciona un negocio...</option>
+                    <option value="">Todos los negocios (resumen de Probability)</option>
                     {businesses.map(business => (
                         <option key={business.id} value={business.id}>
                             {business.name}
@@ -55,9 +56,7 @@ export default function WalletFinanzasPage() {
             {selectedBusinessId ? (
                 <ShippingProfitMonthly selectedBusinessId={selectedBusinessId} />
             ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-                    <Alert type="info">Selecciona un negocio en el dropdown para ver el resumen financiero.</Alert>
-                </div>
+                <GlobalFinancialSummaryCard />
             )}
         </div>
     );

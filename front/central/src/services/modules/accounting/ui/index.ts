@@ -1,4 +1,5 @@
 export { AccountingGate } from './components/AccountingGate';
+export { GlobalFinancialSummaryCard } from './components/GlobalFinancialSummaryCard';
 export { ReportView } from './components/ReportView';
 export { EntriesView } from './components/EntriesView';
 export { EntryFormModal } from './components/EntryFormModal';
