@@ -19,13 +19,14 @@ type Handlers struct {
 	tokenSecret     string                            // Seed for per-integration WooCommerce shipping tokens
 	pluginBaseURL   string                            // Public backend URL used by the WooCommerce plugin
 	ratesLimiter    ratelimit.Limiter                 // Rate limit + blacklist for the public shipping-rates endpoints (WooCommerce, Shopify)
+	trackingLimiter ratelimit.Limiter                 // Rate limit + blacklist for the public tracking endpoints (sin auth, tracking_number/order_number son enumerables)
 	geocoder        domain.IGeocoder                  // Google geocoder for destination address validation
 	overageChecker  domain.ShipmentOverageChecker     // Blocks guide generation past the free plan's included shipments
 	logCotizacion   log.ILogger
 }
 
 // New crea una nueva instancia de Handlers
-func New(uc *usecases.UseCases, transportPub domain.ITransportRequestPublisher, carrierResolver domain.ICarrierResolver, redisClient redis.IRedis, tokenSecret, pluginBaseURL string, ratesLimiter ratelimit.Limiter, geocoder domain.IGeocoder, logger log.ILogger) *Handlers {
+func New(uc *usecases.UseCases, transportPub domain.ITransportRequestPublisher, carrierResolver domain.ICarrierResolver, redisClient redis.IRedis, tokenSecret, pluginBaseURL string, ratesLimiter, trackingLimiter ratelimit.Limiter, geocoder domain.IGeocoder, logger log.ILogger) *Handlers {
 	return &Handlers{
 		uc:              uc,
 		transportPub:    transportPub,
@@ -34,6 +35,7 @@ func New(uc *usecases.UseCases, transportPub domain.ITransportRequestPublisher, 
 		tokenSecret:     tokenSecret,
 		pluginBaseURL:   pluginBaseURL,
 		ratesLimiter:    ratesLimiter,
+		trackingLimiter: trackingLimiter,
 		geocoder:        geocoder,
 		logCotizacion:   logger.WithModule(moduloCotizacion),
 	}
