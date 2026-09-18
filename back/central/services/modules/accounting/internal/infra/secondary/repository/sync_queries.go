@@ -31,6 +31,10 @@ JOIN shipments s ON s.id = t.shipment_id
 WHERE t.type = 'USAGE' AND t.status = 'COMPLETED' AND t.shipment_id IS NOT NULL
   AND s.deleted_at IS NULL AND s.is_test IS NOT TRUE
   AND COALESCE(s.applied_margin, 0) + COALESCE(s.cod_probability_margin, 0) > 0
+  AND NULLIF(t.business_id, 0) IN (
+      SELECT (jsonb_array_elements_text(w.selected_business_ids))::int
+      FROM wallet_kpi_selection w WHERE w.id = 1
+  )
   AND NOT EXISTS (
       SELECT 1 FROM accounting_entries ae
       WHERE ae.source_type = 'GUIDE_MARGIN' AND ae.source_id = s.id::text AND ae.deleted_at IS NULL
@@ -46,6 +50,10 @@ SELECT bs.id::text AS source_id,
        'Pago de membresia' AS description
 FROM business_subscriptions bs
 WHERE bs.status = 'paid' AND bs.deleted_at IS NULL AND bs.amount > 0
+  AND NULLIF(bs.business_id, 0) IN (
+      SELECT (jsonb_array_elements_text(w.selected_business_ids))::int
+      FROM wallet_kpi_selection w WHERE w.id = 1
+  )
   AND NOT EXISTS (
       SELECT 1 FROM accounting_entries ae
       WHERE ae.source_type = 'SUBSCRIPTION' AND ae.source_id = bs.id::text AND ae.deleted_at IS NULL
