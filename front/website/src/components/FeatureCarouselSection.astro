@@ -1,0 +1,509 @@
+---
+const channels = [
+  {
+    name: 'Shopify',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/shopify-logo.svg',
+  },
+  {
+    name: 'WooCommerce',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765745053_woocomerce.webp',
+  },
+  {
+    name: 'Mercado Libre',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/mercadolibre-icon.svg',
+  },
+  {
+    name: 'Jumpseller',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/jumpseller-icon.png',
+  },
+  {
+    name: 'Tiendanube',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/tiendanube-icon.png',
+  },
+];
+
+const radius = 38;
+const radialChannels = channels.map((c, i) => {
+  const angleDeg = -90 + i * (360 / channels.length);
+  const angleRad = (angleDeg * Math.PI) / 180;
+  return {
+    ...c,
+    x: 50 + radius * Math.cos(angleRad),
+    y: 50 + radius * Math.sin(angleRad),
+  };
+});
+
+const billers = [
+  {
+    name: 'Siigo',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1771738597_siigo.png',
+  },
+  {
+    name: 'Softpymes',
+    src: 'https://soporte.softpymes.com.co/hubfs/SPT1%20(1).png',
+  },
+];
+
+const notifCards = [
+  {
+    title: 'Reglas por canal y evento',
+    description: 'Defines qué evento dispara cada notificación (guía generada, pedido enviado, entregado) por cada canal de venta, sin tocar código.',
+  },
+  {
+    title: 'Campañas por WhatsApp',
+    description: 'Crea plantillas de marketing aprobadas por Meta y lánzalas a tu base de clientes directamente desde Probability.',
+  },
+  {
+    title: 'Conversaciones centralizadas',
+    description: 'Ves el historial completo de cada chat de WhatsApp con tus clientes, en un solo panel, sin cambiar de aplicación.',
+  },
+];
+
+const slides = [
+  { id: 'channels', tag: 'Canales de venta' },
+  { id: 'invoicing', tag: 'Facturación automática' },
+  { id: 'notif-1', tag: 'Notificaciones' },
+];
+---
+
+<section id="feature-carousel-section" class="feature-carousel-section relative w-full overflow-x-clip bg-[#FAF9FD] py-8 sm:py-10 md:py-12">
+  <style>
+    .feature-carousel-section.is-paused * {
+      animation-play-state: paused !important;
+    }
+
+    .feature-slide-inner {
+      min-height: 470px;
+    }
+
+    @media (min-width: 1024px) {
+      .feature-slide-inner {
+        min-height: 420px;
+      }
+    }
+
+    .feature-track {
+      transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    .feature-arrow {
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .feature-arrow:hover {
+      background: #7C3AED;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    @keyframes invoiceFloat {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .invoicing-mock {
+      animation: invoiceFloat 6s ease-in-out infinite;
+    }
+
+    .biller-tile,
+    .channel-tile {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .biller-tile:hover,
+    .channel-tile:hover {
+      transform: translateY(-3px);
+      border-color: rgba(196, 181, 253, 0.6);
+      box-shadow: 0 14px 26px -14px rgba(196, 181, 253, 0.5);
+    }
+
+    @keyframes channelFlow {
+      to {
+        stroke-dashoffset: -200;
+      }
+    }
+
+    @keyframes channelFlowReverse {
+      to {
+        stroke-dashoffset: 200;
+      }
+    }
+
+    @keyframes channelGlowPulse {
+      0%,
+      100% {
+        opacity: 0.55;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .channel-line {
+      fill: none;
+      stroke: #a855f7;
+      stroke-width: 0.5;
+      stroke-linecap: round;
+      stroke-dasharray: 1.6 3.2;
+      filter: drop-shadow(0 0 2.5px rgba(168, 85, 247, 0.85));
+      animation: channelFlow 12s linear infinite, channelGlowPulse 2.4s ease-in-out infinite;
+    }
+
+    .channel-line-reverse {
+      animation: channelFlowReverse 12s linear infinite, channelGlowPulse 2.4s ease-in-out infinite;
+    }
+
+    .metrics-bg {
+      filter: blur(1.5px);
+      z-index: 0;
+    }
+
+    .metrics-figure {
+      position: absolute;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      color: #8B5CF6;
+      opacity: 0.16;
+      white-space: nowrap;
+      transform: translate(-50%, -50%);
+    }
+
+    .metrics-trend {
+      opacity: 0.14;
+    }
+
+    .notif-emoji {
+      position: absolute;
+      opacity: 0.14;
+      filter: grayscale(1);
+      line-height: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .feature-carousel-section * {
+        animation: none !important;
+      }
+    }
+  </style>
+
+  <div class="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+    <div class="text-center max-w-[680px] mx-auto mb-6 sm:mb-8">
+      <div class="inline-flex items-center gap-2 bg-[#F6F3FD] border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-5">
+        <span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+        <span id="feature-carousel-tag" class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase">
+          {slides[0].tag}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="relative z-10 w-full">
+      <div class="feature-carousel-viewport overflow-hidden">
+        <div class="feature-track flex w-full">
+
+          <div class="feature-slide w-full shrink-0" data-tag={slides[0].tag}>
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+            <div class="feature-slide-inner flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
+              <div class="w-full lg:w-[560px] lg:shrink-0 text-center lg:text-left">
+                <h2 class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[44px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-6 text-balance">
+                  Todos tus canales de venta,
+                  <span class="text-[#7C3AED]">conectados a Probability</span>
+                </h2>
+
+                <p class="text-[#3A2E5C] text-base sm:text-lg mb-7">
+                  Sincronizamos tus pedidos e inventario en tiempo real sin importar dónde vendes: hoy conectamos Shopify, WooCommerce, Mercado Libre, Jumpseller y Tiendanube.
+                </p>
+
+                <ul class="flex flex-col gap-3 items-center lg:items-start">
+                  <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+                    Sincronización de pedidos en segundos, sin intervención manual
+                  </li>
+                  <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+                    Sin duplicar catálogo entre canales
+                  </li>
+                  <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+                    Inventario compartido y actualizado en tiempo real
+                  </li>
+                </ul>
+              </div>
+
+              <div class="w-full lg:w-[480px] flex justify-center">
+                <div class="relative w-full max-w-[380px] aspect-square">
+                  <div class="metrics-bg absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+                    <span class="metrics-figure" style="left: 4%; top: 8%; font-size: 15px;">+34%</span>
+                    <span class="metrics-figure" style="left: 72%; top: 4%; font-size: 12px;">1.284</span>
+                    <span class="metrics-figure" style="left: 82%; top: 22%; font-size: 18px;">↑ 89%</span>
+                    <span class="metrics-figure" style="left: 2%; top: 40%; font-size: 12px;">3.2K</span>
+                    <span class="metrics-figure" style="left: 86%; top: 52%; font-size: 13px;">+512</span>
+                    <span class="metrics-figure" style="left: 6%; top: 68%; font-size: 20px;">↑ 12%</span>
+                    <span class="metrics-figure" style="left: 76%; top: 74%; font-size: 12px;">98.4%</span>
+                    <span class="metrics-figure" style="left: 10%; top: 88%; font-size: 13px;">+2.5K</span>
+                    <span class="metrics-figure" style="left: 66%; top: 90%; font-size: 16px;">↑ 47%</span>
+                    <svg viewBox="0 0 100 100" class="absolute inset-0 w-full h-full metrics-trend" preserveAspectRatio="none">
+                      <polyline
+                        points="2,85 16,70 28,78 42,55 54,62 68,35 80,42 96,10"
+                        fill="none"
+                        stroke="#8B5CF6"
+                        stroke-width="1.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path d="M88,10 L96,10 L96,18" fill="none" stroke="#8B5CF6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+
+                  <svg viewBox="0 0 100 100" class="absolute inset-0 w-full h-full">
+                    {radialChannels.map((c) => (
+                      <path class="channel-line" d={`M${c.x},${c.y} L50,50`} />
+                    ))}
+                    {radialChannels.map((c) => (
+                      <path class="channel-line channel-line-reverse" d={`M${c.x},${c.y} L50,50`} />
+                    ))}
+                  </svg>
+
+                  <img
+                    src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/brand/logo-mark-badge.svg"
+                    alt="ProbabilityIA"
+                    class="absolute w-14 h-14 sm:w-20 sm:h-20 rounded-full shadow-[0_10px_30px_-8px_rgba(124,58,237,0.6)]"
+                    style="left: 50%; top: 50%; transform: translate(-50%, -50%);"
+                  />
+
+                  {radialChannels.map((c) => (
+                    <div
+                      class="channel-tile absolute flex items-center justify-center bg-white border border-[#EFEAFB] rounded-xl w-12 h-12 sm:w-16 sm:h-16 p-2 sm:p-2.5 shadow-[0_6px_16px_-10px_rgba(124,58,237,0.3)]"
+                      style={`left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%);`}
+                      title={c.name}
+                    >
+                      <img src={c.src} alt={c.name} class="w-full h-full object-contain" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+
+          <div class="feature-slide w-full shrink-0" data-tag={slides[1].tag}>
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+            <div class="feature-slide-inner flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
+              <div class="w-full lg:w-[460px] lg:shrink-0 text-center lg:text-left">
+                <h2 class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[44px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-6 text-balance">
+                  Facturas y sincronizas
+                  <span class="text-[#7C3AED]">tu inventario</span>
+                  sin digitar dos veces
+                </h2>
+
+                <ul class="flex flex-col gap-3 items-center lg:items-start mb-7">
+                  <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+                    Generas la factura electrónica automáticamente por cada venta
+                  </li>
+                  <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+                    Sincronizas tu inventario en tiempo real, sin doble digitación
+                  </li>
+                  <li class="inline-flex items-center gap-2.5 text-[#3A2E5C] text-[18px] font-medium">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] shrink-0">✓</span>
+                    Compatible con tu facturador, sin curva de aprendizaje
+                  </li>
+                </ul>
+
+                <div class="flex items-center justify-center lg:justify-start gap-3">
+                  {billers.map((b) => (
+                    <div
+                      class="biller-tile flex items-center justify-center bg-white border border-[#EFEAFB] rounded-xl h-14 w-28 px-4 shadow-[0_6px_16px_-10px_rgba(124,58,237,0.3)]"
+                      title={b.name}
+                    >
+                      <img src={b.src} alt={b.name} class="max-w-full max-h-full object-contain" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div class="w-full lg:w-[580px] flex justify-center">
+                <div class="invoicing-mock relative w-full max-w-[540px]">
+                  <div class="rounded-2xl border border-[#EFEAFB] shadow-[0_30px_60px_-30px_rgba(124,58,237,0.35)] overflow-hidden bg-white">
+                    <img
+                      src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/invoicing-list.png"
+                      alt="Panel de facturas generadas automáticamente en Probability"
+                      class="w-full h-auto object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  <div class="absolute -bottom-8 -right-6 sm:-right-8 w-[58%] rounded-xl border border-[#EFEAFB] shadow-[0_20px_40px_-18px_rgba(124,58,237,0.4)] overflow-hidden bg-white">
+                    <img
+                      src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/invoicing-detail.png"
+                      alt="Detalle de factura electrónica con estado DIAN e items sincronizados"
+                      class="w-full h-auto object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+
+          <div class="feature-slide w-full shrink-0" data-tag={slides[2].tag}>
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+            <div class="feature-slide-inner flex flex-col justify-center">
+              <div class="text-center max-w-[680px] mx-auto mb-6">
+                <h2 class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[44px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-4 text-balance">
+                  Mantén a tus clientes informados,
+                  <span class="text-[#7C3AED]">sin mover un dedo</span>
+                </h2>
+                <p class="text-[#3A2E5C] text-base sm:text-lg">
+                  Probability le avisa a tu cliente en cada paso del pedido, automáticamente y sin que tu equipo tenga que hacer seguimiento manual.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                <div class="notif-card relative rounded-2xl overflow-hidden bg-white border border-[#EFEAFB] p-5 sm:p-6 pt-6 shadow-[0_6px_20px_-12px_rgba(124,58,237,0.25)]">
+                  <div class="flex items-center justify-center h-[130px] mb-4">
+                    <div class="w-[190px] rounded-2xl bg-gradient-to-br from-[#F6F3FD] to-[#EDE6FB] border border-[#E7E2F5] shadow-lg p-4">
+                      <p class="text-[10px] text-[#8A7FA8] uppercase tracking-wide mb-3">Reglas · WhatsApp</p>
+                      {[
+                        { label: 'Guía generada', on: true },
+                        { label: 'Pedido enviado', on: true },
+                        { label: 'Entregado', on: true },
+                        { label: 'Devolución', on: false },
+                      ].map((row) => (
+                        <div class="flex items-center justify-between mb-2.5 last:mb-0">
+                          <span class="text-[11px] text-[#3A2E5C]">{row.label}</span>
+                          <span class={`w-7 h-4 rounded-full relative ${row.on ? 'bg-[#8B5CF6]' : 'bg-[#D9CFF2]'}`}>
+                            <span class={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${row.on ? 'left-3.5' : 'left-0.5'}`}></span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <h3 class="text-[#181225] font-bold text-lg mb-2">{notifCards[0].title}</h3>
+                  <p class="text-[#3A2E5C] text-sm">{notifCards[0].description}</p>
+                </div>
+
+                <div class="notif-card relative rounded-2xl overflow-hidden bg-white border border-[#EFEAFB] p-5 sm:p-6 pt-6 shadow-[0_6px_20px_-12px_rgba(124,58,237,0.25)]">
+                  <div class="flex items-center justify-center h-[130px] mb-4">
+                    <div class="w-[190px] rounded-2xl bg-gradient-to-br from-[#F6F3FD] to-[#EDE6FB] border border-[#E7E2F5] shadow-lg p-4">
+                      <p class="text-[10px] text-[#8A7FA8] uppercase tracking-wide mb-2">Nueva plantilla</p>
+                      <div class="h-2.5 w-24 rounded-full bg-[#D9CFF2] mb-1.5"></div>
+                      <div class="h-2.5 w-16 rounded-full bg-[#D9CFF2] mb-3"></div>
+                      <div class="rounded-xl rounded-tl-sm bg-[#8B5CF6] px-3 py-2">
+                        <p class="text-[10px] text-white leading-snug">Hola {'{{1}}'}, hace {'{{2}}'} días que no te vemos 👋</p>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 class="text-[#181225] font-bold text-lg mb-2">{notifCards[1].title}</h3>
+                  <p class="text-[#3A2E5C] text-sm">{notifCards[1].description}</p>
+                </div>
+
+                <div class="notif-card relative rounded-2xl overflow-hidden bg-white border border-[#EFEAFB] p-5 sm:p-6 pt-6 shadow-[0_6px_20px_-12px_rgba(124,58,237,0.25)]">
+                  <div class="flex items-center justify-center h-[130px] mb-4">
+                    <div class="w-[190px] rounded-2xl bg-gradient-to-br from-[#F6F3FD] to-[#EDE6FB] border border-[#E7E2F5] shadow-lg p-3">
+                      {[
+                        { name: 'Carlos A.', msg: 'Tu pedido va en camino', active: true },
+                        { name: 'Camila G.', msg: 'Gracias!', active: false },
+                        { name: 'Sebastián C.', msg: 'Confirmar pedido', active: false },
+                      ].map((chat) => (
+                        <div class={`flex items-center gap-2 rounded-lg px-2 py-1.5 mb-1.5 last:mb-0 ${chat.active ? 'bg-[#8B5CF6]/10' : ''}`}>
+                          <div class="w-6 h-6 rounded-full bg-[#8B5CF6] flex items-center justify-center shrink-0">
+                            <span class="text-white text-[9px] font-bold">{chat.name.charAt(0)}</span>
+                          </div>
+                          <div class="min-w-0">
+                            <p class="text-[10px] font-semibold text-[#181225] truncate">{chat.name}</p>
+                            <p class="text-[9px] text-[#8A7FA8] truncate">{chat.msg}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <h3 class="text-[#181225] font-bold text-lg mb-2">{notifCards[2].title}</h3>
+                  <p class="text-[#3A2E5C] text-sm">{notifCards[2].description}</p>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <button id="feature-prev" type="button" aria-label="Anterior" class="feature-arrow hidden sm:flex absolute top-1/2 left-2 sm:left-4 -translate-y-1/2 items-center justify-center w-10 h-10 rounded-full bg-white border border-[#E7E2F5] text-[#7C3AED] shadow-[0_10px_20px_-10px_rgba(124,58,237,0.4)] z-20">
+        ‹
+      </button>
+      <button id="feature-next" type="button" aria-label="Siguiente" class="feature-arrow hidden sm:flex absolute top-1/2 right-2 sm:right-4 -translate-y-1/2 items-center justify-center w-10 h-10 rounded-full bg-white border border-[#E7E2F5] text-[#7C3AED] shadow-[0_10px_20px_-10px_rgba(124,58,237,0.4)] z-20">
+        ›
+      </button>
+  </div>
+</section>
+
+<script>
+  const section = document.getElementById('feature-carousel-section');
+  const track = section?.querySelector('.feature-track') as HTMLElement | null;
+  const slideEls = Array.from(section?.querySelectorAll('.feature-slide') ?? []) as HTMLElement[];
+  const tagLabel = document.getElementById('feature-carousel-tag');
+  const prevBtn = document.getElementById('feature-prev');
+  const nextBtn = document.getElementById('feature-next');
+  const total = slideEls.length;
+  let index = 0;
+  let autoplayTimer: ReturnType<typeof setInterval> | null = null;
+
+  function goTo(i: number) {
+    index = (i + total) % total;
+    if (track) {
+      track.style.transform = `translateX(-${index * 100}%)`;
+    }
+    if (tagLabel) {
+      tagLabel.textContent = slideEls[index]?.dataset.tag ?? '';
+    }
+  }
+
+  function startAutoplay() {
+    stopAutoplay();
+    autoplayTimer = setInterval(() => goTo(index + 1), 6000);
+  }
+
+  function stopAutoplay() {
+    if (autoplayTimer) {
+      clearInterval(autoplayTimer);
+      autoplayTimer = null;
+    }
+  }
+
+  prevBtn?.addEventListener('click', () => {
+    goTo(index - 1);
+    startAutoplay();
+  });
+
+  nextBtn?.addEventListener('click', () => {
+    goTo(index + 1);
+    startAutoplay();
+  });
+
+  if (section && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        section.classList.toggle('is-paused', !entry.isIntersecting);
+        if (entry.isIntersecting) {
+          startAutoplay();
+        } else {
+          stopAutoplay();
+        }
+      },
+      { threshold: 0 }
+    );
+    observer.observe(section);
+  } else {
+    startAutoplay();
+  }
+
+  goTo(0);
+</script>

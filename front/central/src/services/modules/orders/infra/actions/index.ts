@@ -193,6 +193,7 @@ export const downloadOrderTemplateAction = async () => {
         'shipping_postal_code',
         'shipping_lat',
         'shipping_lng',
+        'order_date',
         'subtotal',
         'tax',
         'discount',
@@ -214,7 +215,13 @@ export const downloadOrderTemplateAction = async () => {
         'driver_name',
         'notes',
         'order_type_name',
-        'invoiceable'
+        'invoiceable',
+        'sku',
+        'product_name',
+        'quantity',
+        'unit_price',
+        'product_discount',
+        'product_tax'
     ];
 
     const exampleRows = [
@@ -233,6 +240,7 @@ export const downloadOrderTemplateAction = async () => {
             '110111',
             '4.7110',
             '-74.0721',
+            '2027-01-05',
             '45000',
             '5000',
             '0',
@@ -254,7 +262,24 @@ export const downloadOrderTemplateAction = async () => {
             'Driver 1',
             'Nota de ejemplo',
             'standard',
-            'true'
+            'true',
+            'CAM-01',
+            'Camiseta blanca',
+            '2',
+            '20000',
+            '',
+            ''
+        ],
+        [
+            'ORD-001', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+            '', '', '', '', '', '', '', '', '', '', '',
+            '', '', '', '', '', '', '', '', '', '', '',
+            'PAN-02',
+            'Pantalón azul',
+            '1',
+            '10000',
+            '',
+            ''
         ],
         [
             'ORD-002',
@@ -271,6 +296,7 @@ export const downloadOrderTemplateAction = async () => {
             '50001',
             '6.2442',
             '-75.5812',
+            '2027-01-06',
             '100000',
             '15000',
             '5000',
@@ -292,7 +318,13 @@ export const downloadOrderTemplateAction = async () => {
             'Driver 2',
             '',
             'express',
-            'true'
+            'true',
+            'CAM-01',
+            'Camiseta blanca',
+            '1',
+            '45000',
+            '',
+            ''
         ]
     ];
 

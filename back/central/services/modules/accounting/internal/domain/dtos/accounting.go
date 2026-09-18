@@ -98,6 +98,13 @@ type ReportTaxRow struct {
 	Amount  float64 `json:"amount"`
 }
 
+type ReportBusinessRow struct {
+	BusinessID   *uint   `json:"business_id"`
+	BusinessName string  `json:"business_name"`
+	EntriesCount int64   `json:"entries_count"`
+	Amount       float64 `json:"amount"`
+}
+
 type ReportTotals struct {
 	RealIncome  float64 `json:"real_income"`
 	CashIn      float64 `json:"cash_in"`
@@ -108,9 +115,11 @@ type ReportTotals struct {
 }
 
 type ReportResponse struct {
-	From      string             `json:"from"`
-	To        string             `json:"to"`
-	Totals    ReportTotals       `json:"totals"`
-	ByConcept []ReportConceptRow `json:"by_concept"`
-	ByTax     []ReportTaxRow     `json:"by_tax"`
+	From                   string              `json:"from"`
+	To                     string              `json:"to"`
+	Totals                 ReportTotals        `json:"totals"`
+	ByConcept              []ReportConceptRow  `json:"by_concept"`
+	ByTax                  []ReportTaxRow      `json:"by_tax"`
+	BySubscriptionBusiness []ReportBusinessRow `json:"by_subscription_business"`
+	ByGuideMarginBusiness  []ReportBusinessRow `json:"by_guide_margin_business"`
 }

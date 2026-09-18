@@ -617,19 +617,19 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {(canViewStorefront || canViewWebsiteConfig) && (
+              {canViewStorefront && (
                 <li>
                   <Link
-                    href={canViewStorefront ? '/storefront/catalogo' : '/website-config'}
+                    href="/storefront/catalogo"
                     className={`
                       flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 px-3 py-1.5 rounded-lg transition-colors duration-300 w-full
-                      ${pathname.startsWith('/storefront') || pathname.startsWith('/website-config')
+                      ${pathname.startsWith('/storefront')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
-                    {(pathname.startsWith('/storefront') || pathname.startsWith('/website-config')) && (
+                    {pathname.startsWith('/storefront') && (
                       <div
                         className="absolute left-0 w-1 h-8 rounded-r-full"
                         style={{ backgroundColor: 'var(--color-tertiary)' }}
@@ -640,6 +640,34 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Catalogo</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {canViewWebsiteConfig && (
+                <li>
+                  <Link
+                    href="/website-config"
+                    className={`
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 px-3 py-1.5 rounded-lg transition-colors duration-300 w-full
+                      ${pathname.startsWith('/website-config')
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/website-config') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Sitio web</span>
                     )}
                   </Link>
                 </li>

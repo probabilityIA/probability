@@ -1,0 +1,95 @@
+---
+const carriers = [
+	{ name: 'Coordinadora', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_coordinadora.png' },
+	{ name: 'Servientrega', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_servientrega.png' },
+	{ name: 'Interrapidisimo', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_inerapidisimo.png' },
+	{ name: 'Envia', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_envia.png' },
+	{ name: 'Deprisa', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_deprisa.png' },
+	{ name: 'Pibox', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_pibox.png' },
+	{ name: 'Mensajeros Urbanos', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_mensajerosUrbanos.png' },
+	{ name: 'TCC', src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/carriers/imagen_TCC.png' },
+];
+
+const track = [...carriers, ...carriers];
+---
+
+<section class="carriers-marquee-section relative overflow-hidden py-12 sm:py-16">
+	<div class="carriers-marquee-grid absolute inset-0"></div>
+	<div class="carriers-marquee-glow absolute inset-0"></div>
+
+	<div class="relative z-10 text-center mb-8 sm:mb-10 px-6">
+		<span class="text-[12.5px] font-bold tracking-[0.06em] text-white/60 uppercase">
+			Rastrea envíos de todas estas transportadoras
+		</span>
+	</div>
+
+	<div class="carriers-marquee-viewport relative z-10">
+		<div class="carriers-marquee-track">
+			{track.map((c) => (
+				<div class="carrier-chip flex items-center justify-center bg-white rounded-2xl shadow-[0_10px_24px_-12px_rgba(0,0,0,0.45)]" title={c.name}>
+					<img src={c.src} alt={c.name} class="w-full h-full object-contain p-3" loading="lazy" />
+				</div>
+			))}
+		</div>
+	</div>
+</section>
+
+<style>
+	.carriers-marquee-section {
+		background: linear-gradient(160deg, #2E1065 0%, #3B0764 55%, #2E1065 100%);
+	}
+
+	.carriers-marquee-grid {
+		background-image:
+			repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255, 255, 255, 0.16) 38px, rgba(255, 255, 255, 0.16) 39px),
+			repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(255, 255, 255, 0.16) 38px, rgba(255, 255, 255, 0.16) 39px);
+		mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 0%, transparent 85%);
+		-webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 0%, transparent 85%);
+	}
+
+	.carriers-marquee-glow {
+		background:
+			radial-gradient(ellipse 50% 60% at 15% 20%, rgba(168, 85, 247, 0.25) 0%, transparent 60%),
+			radial-gradient(ellipse 50% 60% at 85% 80%, rgba(139, 92, 246, 0.25) 0%, transparent 60%);
+	}
+
+	.carriers-marquee-viewport {
+		overflow: hidden;
+		-webkit-mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+		mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+	}
+
+	.carriers-marquee-track {
+		display: flex;
+		align-items: center;
+		width: max-content;
+		animation: carriersMarqueeScroll 26s linear infinite;
+	}
+
+	.carrier-chip {
+		position: relative;
+		flex-shrink: 0;
+		width: 132px;
+		height: 88px;
+		margin-right: 1.25rem;
+	}
+
+	@media (min-width: 640px) {
+		.carrier-chip {
+			width: 156px;
+			height: 100px;
+			margin-right: 1.25rem;
+		}
+	}
+
+	@keyframes carriersMarqueeScroll {
+		from { transform: translateX(0); }
+		to { transform: translateX(-50%); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.carriers-marquee-track {
+			animation: none;
+		}
+	}
+</style>

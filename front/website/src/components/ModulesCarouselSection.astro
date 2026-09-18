@@ -1,0 +1,111 @@
+---
+const modules = [
+  {
+    title: 'Billetera empresarial',
+    description: 'Recargas saldo, pagas tu suscripción automáticamente y ves cada movimiento del dinero de tu negocio.',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/module-wallet.png',
+  },
+  {
+    title: 'Centro de integraciones',
+    description: 'Conectas tus canales de venta, mensajería y transportadoras, todo desde un mismo panel central.',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/module-integrations.png',
+  },
+  {
+    title: 'Catálogo de productos',
+    description: 'Administras tus SKUs, variantes, precios e inventario de todos tus canales en un solo listado.',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/module-products.png',
+  },
+  {
+    title: 'Suscripción y plan',
+    description: 'Consultas tu plan activo, los módulos incluidos y el estado del pago automático de tu ciclo.',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/module-subscription.png',
+  },
+  {
+    title: 'Dashboard de órdenes',
+    description: 'Ves tus órdenes totales, diarias y mensuales, con tendencias y pronóstico de demanda.',
+    src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/public/website/module-dashboard.png',
+  },
+];
+
+const track = [...modules, ...modules];
+---
+
+<section id="modules-carousel-section" class="relative w-full overflow-x-clip bg-white py-14 sm:py-20 md:py-24">
+  <style>
+    @keyframes modulesMarquee {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    .modules-track {
+      animation: modulesMarquee 32s linear infinite;
+    }
+
+    .modules-stage:hover .modules-track,
+    .modules-stage:focus-within .modules-track {
+      animation-play-state: paused;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .modules-track {
+        animation: none;
+      }
+    }
+  </style>
+
+  <div
+    class="modules-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[420px] rounded-full bg-[#8B5CF6]/25 blur-[110px] -z-10"
+  ></div>
+
+  <div class="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-12">
+    <div class="text-center max-w-[680px] mx-auto mb-14 sm:mb-20">
+      <div
+        class="inline-flex items-center gap-2 bg-[#F6F3FD] border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-5"
+      >
+        <span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+        <span class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase">
+          La plataforma
+        </span>
+      </div>
+
+      <h2
+        class="font-space-grotesk font-bold text-3xl sm:text-4xl lg:text-[52px] leading-[1.1] -tracking-[0.02em] text-[#181225] mb-6 text-balance"
+      >
+        Un vistazo a
+        <span class="text-[#7C3AED]">todos tus módulos</span>
+      </h2>
+
+      <p class="text-[#3A2E5C] text-base sm:text-lg">
+        Billetera, integraciones, catálogo, suscripción y órdenes: todo lo que necesitas para operar tu negocio, en una sola plataforma.
+      </p>
+    </div>
+  </div>
+
+  <div class="modules-stage relative w-full overflow-hidden" tabindex="0">
+    <div class="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-32 z-20 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
+    <div class="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-32 z-20 bg-gradient-to-l from-white via-white/80 to-transparent"></div>
+
+    <div class="modules-track flex items-stretch gap-6 sm:gap-8 w-max px-4 sm:px-6">
+      {track.map((m) => (
+        <div class="w-[380px] sm:w-[460px] shrink-0 rounded-2xl overflow-hidden border border-[#EFEAFB] bg-white shadow-[0_10px_30px_-16px_rgba(124,58,237,0.35)]">
+          <div class="flex items-center justify-center bg-[#FAF9FD] p-3">
+            <img
+              src={m.src}
+              alt={m.title}
+              class="w-full h-auto object-contain"
+              loading="lazy"
+            />
+          </div>
+          <div class="p-4 sm:p-5">
+            <p class="text-[#181225] font-bold text-base sm:text-lg mb-1.5">{m.title}</p>
+            <p class="text-[#3A2E5C] text-xs sm:text-sm leading-snug">{m.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

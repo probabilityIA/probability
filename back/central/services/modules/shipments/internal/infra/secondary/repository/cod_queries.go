@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -11,6 +12,16 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
+
+// firstName recorta un nombre completo a solo el primer nombre. Se usa en el
+// tracking publico (sin autenticacion) para no exponer el apellido completo.
+func firstName(fullName string) string {
+	trimmed := strings.TrimSpace(fullName)
+	if trimmed == "" {
+		return ""
+	}
+	return strings.Fields(trimmed)[0]
+}
 
 func (r *Repository) ListCODShipments(ctx context.Context, filter domain.CODFilter) ([]domain.Shipment, int64, error) {
 	page := filter.Page
@@ -89,20 +100,23 @@ func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNu
 		CodTotal           *float64 `gorm:"column:cod_total"`
 		Currency           string
 		CustomerName       string     `gorm:"column:customer_name"`
-		CustomerPhone      string     `gorm:"column:customer_phone"`
-		ShippingStreet     string     `gorm:"column:shipping_street"`
 		ShippingCity       string     `gorm:"column:shipping_city"`
 		ShippingState      string     `gorm:"column:shipping_state"`
-		ShippingPostalCode string     `gorm:"column:shipping_postal_code"`
 		CreatedAt          time.Time  `gorm:"column:created_at"`
 		OccurredAt         *time.Time `gorm:"column:occurred_at"`
 	}
+	// Este endpoint es publico y sin autenticacion (rastreo por order_number).
+	// El order_number es predecible (prob-<secuencial>), asi que a proposito
+	// NO se trae telefono, calle ni codigo postal completos: alguien podria
+	// iterar order_number y extraer datos personales de pedidos ajenos.
+	// Solo ciudad/departamento (contexto general, no localiza a nadie) y el
+	// nombre se recorta a un primer nombre en el mapeo de abajo.
 	query := r.db.Conn(ctx).
 		Table("orders o").
 		Select(`o.id, o.order_number, o.business_id, COALESCE(b.name,'') AS business_name,
 			o.status, o.is_paid, o.total_amount, o.cod_total, o.currency,
-			o.customer_name, o.customer_phone,
-			o.shipping_street, o.shipping_city, o.shipping_state, o.shipping_postal_code,
+			o.customer_name,
+			o.shipping_city, o.shipping_state,
 			o.created_at, o.occurred_at`).
 		Joins("LEFT JOIN business b ON b.id = o.business_id").
 		Joins(`LEFT JOIN LATERAL (
@@ -134,22 +148,19 @@ func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNu
 		return nil, nil
 	}
 	out := &domain.OrderPublicTracking{
-		ID:                 result.ID,
-		OrderNumber:        result.OrderNumber,
-		BusinessName:       result.BusinessName,
-		Status:             result.Status,
-		IsPaid:             result.IsPaid,
-		TotalAmount:        result.TotalAmount,
-		CodTotal:           result.CodTotal,
-		Currency:           result.Currency,
-		CustomerName:       result.CustomerName,
-		CustomerPhone:      result.CustomerPhone,
-		ShippingStreet:     result.ShippingStreet,
-		ShippingCity:       result.ShippingCity,
-		ShippingState:      result.ShippingState,
-		ShippingPostalCode: result.ShippingPostalCode,
-		CreatedAt:          result.CreatedAt,
-		OccurredAt:         result.OccurredAt,
+		ID:            result.ID,
+		OrderNumber:   result.OrderNumber,
+		BusinessName:  result.BusinessName,
+		Status:        result.Status,
+		IsPaid:        result.IsPaid,
+		TotalAmount:   result.TotalAmount,
+		CodTotal:      result.CodTotal,
+		Currency:      result.Currency,
+		CustomerName:  firstName(result.CustomerName),
+		ShippingCity:  result.ShippingCity,
+		ShippingState: result.ShippingState,
+		CreatedAt:     result.CreatedAt,
+		OccurredAt:    result.OccurredAt,
 	}
 	if result.BusinessID != nil {
 		out.BusinessID = *result.BusinessID

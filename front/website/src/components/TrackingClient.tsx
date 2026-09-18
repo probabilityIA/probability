@@ -126,7 +126,7 @@ export default function TrackingClient() {
   return (
     <div class="space-y-8">
       {/* Search Section */}
-      <div class="bg-white rounded-2xl shadow-lg p-8">
+      <div class="bg-white rounded-3xl border border-[#EFEAFB] shadow-[0_20px_50px_-30px_rgba(124,58,237,0.3)] p-6 sm:p-8">
         <TrackingSearchInput onSearch={handleSearch} isLoading={isLoading} initialValue={initialQuery} />
       </div>
 
@@ -137,9 +137,9 @@ export default function TrackingClient() {
           <div class="flex justify-center mt-6">
             <button
               onClick={handleReset}
-              class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
+              class="px-6 py-3 rounded-xl bg-gradient-to-r from-[#A855F7] to-[#7C3AED] hover:shadow-[0_14px_28px_-10px_rgba(124,58,237,0.55)] text-white font-semibold transition-all shadow-[0_10px_20px_-10px_rgba(124,58,237,0.5)]"
             >
-              Rastrear Otro Pedido
+              Rastrear otro pedido
             </button>
           </div>
         </div>
@@ -173,16 +173,19 @@ export default function TrackingClient() {
             clientName={shipment.client_name}
             trackingNumber={shipment.tracking_number}
             carrier={shipment.carrier}
+            guideUrl={shipment.guide_url}
             hasGuide={!!(shipment.guide_url || shipment.tracking_number)}
           />
 
           {/* Details */}
-          <div class="bg-white rounded-2xl shadow-lg p-8">
-            <TrackingDetails shipment={shipment} />
-          </div>
+          {(shipment.destination_address || shipment.tracking_url) && (
+            <div class="bg-white rounded-3xl border border-[#EFEAFB] shadow-[0_20px_50px_-30px_rgba(124,58,237,0.3)] p-6 sm:p-8">
+              <TrackingDetails shipment={shipment} />
+            </div>
+          )}
 
           {/* Timeline */}
-          <div class="bg-white rounded-2xl shadow-lg p-8">
+          <div class="bg-white rounded-3xl border border-[#EFEAFB] shadow-[0_20px_50px_-30px_rgba(124,58,237,0.3)] pt-6 sm:pt-8 px-6 sm:px-8">
             <TrackingTimeline history={history} isLoading={false} />
           </div>
 
@@ -190,9 +193,9 @@ export default function TrackingClient() {
           <div class="flex justify-center">
             <button
               onClick={handleReset}
-              class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
+              class="px-6 py-3 rounded-xl bg-gradient-to-r from-[#A855F7] to-[#7C3AED] hover:shadow-[0_14px_28px_-10px_rgba(124,58,237,0.55)] text-white font-semibold transition-all shadow-[0_10px_20px_-10px_rgba(124,58,237,0.5)]"
             >
-              Rastrear Otro Envío
+              Rastrear otro envío
             </button>
           </div>
         </div>
@@ -200,16 +203,16 @@ export default function TrackingClient() {
 
       {/* Initial State */}
       {!shipment && !orderOnly && !error && !isLoading && (
-        <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
+        <div class="bg-white rounded-3xl border border-[#EFEAFB] shadow-[0_20px_50px_-30px_rgba(124,58,237,0.3)] p-12 text-center">
           <div class="flex justify-center mb-4">
-            <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-              <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#F0EAFD] to-[#F6F3FD] flex items-center justify-center">
+              <svg class="w-8 h-8 text-[#7C3AED]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9-4v4m0 0v4m0-4h4m-4 0H9"></path>
               </svg>
             </div>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">Comienza a rastrear</h3>
-          <p class="text-gray-600">
+          <h3 class="font-space-grotesk text-xl font-bold text-[#181225] mb-2">Comienza a rastrear</h3>
+          <p class="text-[#6B6480]">
             Busca el número de tracking o de orden en la barra anterior para ver el estado de tu envío
           </p>
         </div>

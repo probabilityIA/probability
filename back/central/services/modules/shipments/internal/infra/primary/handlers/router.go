@@ -7,8 +7,12 @@ import (
 )
 
 func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
-	router.GET("/tracking/search", h.PublicSearchTracking)
-	router.GET("/tracking/:tracking_number/history", h.PublicGetTrackingHistory)
+	router.GET("/tracking/search",
+		ratelimit.Gin(h.trackingLimiter, ratelimit.ByClientIP("trackip")),
+		h.PublicSearchTracking)
+	router.GET("/tracking/:tracking_number/history",
+		ratelimit.Gin(h.trackingLimiter, ratelimit.ByClientIP("trackip")),
+		h.PublicGetTrackingHistory)
 
 	router.POST("/shopify/shipping-rates/:integration_id",
 		ratelimit.Gin(h.ratesLimiter, ratelimit.FirstNonEmpty(

@@ -42,3 +42,25 @@ ORDER BY amount DESC
 
 	return byConcept, byTax, nil
 }
+
+func (r *Repository) ReportByBusiness(ctx context.Context, sourceType string, params dtos.ReportParams) ([]dtos.ReportBusinessRow, error) {
+	from := params.From.Format("2006-01-02")
+	to := params.To.Format("2006-01-02")
+
+	rows := []dtos.ReportBusinessRow{}
+	err := r.db.Conn(ctx).Raw(`
+SELECT e.business_id AS business_id,
+       COALESCE(b.name, 'Sin negocio') AS business_name,
+       COUNT(*) AS entries_count,
+       COALESCE(SUM(e.amount), 0) AS amount
+FROM accounting_entries e
+LEFT JOIN business b ON b.id = e.business_id
+WHERE e.deleted_at IS NULL AND e.source_type = ? AND e.entry_date >= ? AND e.entry_date <= ?
+GROUP BY e.business_id, b.name
+ORDER BY amount DESC
+`, sourceType, from, to).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}

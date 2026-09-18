@@ -16,6 +16,14 @@ func (uc *UseCase) Report(ctx context.Context, params dtos.ReportParams) (*dtos.
 	if err != nil {
 		return nil, err
 	}
+	bySubscriptionBusiness, err := uc.repo.ReportByBusiness(ctx, entities.SourceSubscription, params)
+	if err != nil {
+		return nil, err
+	}
+	byGuideMarginBusiness, err := uc.repo.ReportByBusiness(ctx, entities.SourceGuideMargin, params)
+	if err != nil {
+		return nil, err
+	}
 	totals := dtos.ReportTotals{}
 	for _, row := range byConcept {
 		totals.TaxTotal += row.TaxTotal
@@ -39,10 +47,12 @@ func (uc *UseCase) Report(ctx context.Context, params dtos.ReportParams) (*dtos.
 	totals.TaxTotal = round2(totals.TaxTotal)
 
 	return &dtos.ReportResponse{
-		From:      params.From.Format("2006-01-02"),
-		To:        params.To.Format("2006-01-02"),
-		Totals:    totals,
-		ByConcept: byConcept,
-		ByTax:     byTax,
+		From:                   params.From.Format("2006-01-02"),
+		To:                     params.To.Format("2006-01-02"),
+		Totals:                 totals,
+		ByConcept:              byConcept,
+		ByTax:                  byTax,
+		BySubscriptionBusiness: bySubscriptionBusiness,
+		ByGuideMarginBusiness:  byGuideMarginBusiness,
 	}, nil
 }

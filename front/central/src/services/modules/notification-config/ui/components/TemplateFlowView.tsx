@@ -77,6 +77,7 @@ export function TemplateFlowView({
   const { showToast } = useToast();
   const [pending, setPending] = useState<PendingResponse | null>(null);
   const [picking, setPicking] = useState<PendingResponse | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<WhatsappTemplate | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [scale, setScale] = useState(1);
@@ -182,6 +183,32 @@ export function TemplateFlowView({
     onChanged();
   };
 
+  const unlinkResponse = async (sourceID: number, buttonText: string) => {
+    const existing = flows
+      .filter((flow) => flow.SourceTemplateID === sourceID)
+      .map((flow) => ({
+        button_text: flow.ButtonText,
+        target_template_id: flow.TargetTemplateID,
+        enabled: flow.Enabled,
+      }));
+
+    const next = existing.filter(
+      (item) => item.button_text.toLowerCase() !== buttonText.toLowerCase(),
+    );
+
+    setSaving(true);
+    const result = await replaceTemplateFlowsAction(sourceID, next, businessId, flowId);
+    setSaving(false);
+
+    if (!result.success) {
+      showToast(result.error || "No se pudo desconectar", "error");
+      return;
+    }
+
+    showToast(`"${buttonText}" quedó sin respuesta`, "success");
+    onChanged();
+  };
+
   if (!explicitRoot && participates.length === 0) {
     return (
       <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-600">
@@ -231,6 +258,15 @@ export function TemplateFlowView({
                 {"Reutilizada"}
               </span>
             )}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setEditingTemplate(template)}
+                className="shrink-0 text-[10px] font-medium text-[var(--color-primary)] hover:underline"
+              >
+                {"Editar"}
+              </button>
+            )}
           </div>
 
           <TemplateBubble
@@ -257,14 +293,27 @@ export function TemplateFlowView({
                 <div key={buttonText} className="flex items-center gap-3">
                   <div className="flex shrink-0 items-center">
                     <span className="h-px w-4 bg-gray-300 dark:bg-gray-600" />
-                    <span
-                      className="whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
-                      style={{
-                        borderColor: "var(--color-primary)",
-                        color: "var(--color-primary)",
-                      }}
-                    >
-                      {buttonText}
+                    <span className="relative inline-flex">
+                      <span
+                        className="whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                        style={{
+                          borderColor: "var(--color-primary)",
+                          color: "var(--color-primary)",
+                        }}
+                      >
+                        {buttonText}
+                      </span>
+                      {flow && !readOnly && (
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => unlinkResponse(template.ID, buttonText)}
+                          title="Desconectar esta respuesta"
+                          className="absolute -right-1.5 -top-1.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white bg-red-500 text-[9px] font-bold leading-none text-white hover:bg-red-600 disabled:opacity-40 dark:border-gray-900"
+                        >
+                          {"✕"}
+                        </button>
+                      )}
                     </span>
                     <span className="h-px w-5 bg-gray-300 dark:bg-gray-600" />
                     <span className="h-0 w-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-gray-300 dark:border-l-gray-600" />
@@ -556,6 +605,39 @@ export function TemplateFlowView({
             )}
             saving={saving}
             onPick={(template) => linkResponse(template, picking)}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={editingTemplate !== null}
+        onClose={() => setEditingTemplate(null)}
+        title={(
+          <span className="flex w-full flex-col items-start pr-8">
+            <span className="text-lg font-semibold">{"Editar plantilla"}</span>
+            <span className="text-[13px] font-normal text-gray-400">
+              {"Plantilla de mensaje para WhatsApp · Meta"}
+            </span>
+          </span>
+        )}
+        size="4xl"
+        zIndex={80}
+        noPadding
+        noBodyScroll
+      >
+        {editingTemplate !== null && (
+          <TemplateForm
+            businessId={businessId}
+            variableCatalog={variableCatalog}
+            template={editingTemplate}
+            linkedButtonTexts={(childrenBySource.get(editingTemplate.ID) || []).map(
+              (flow) => flow.ButtonText,
+            )}
+            onSuccess={() => {
+              setEditingTemplate(null);
+              onChanged();
+            }}
+            onCancel={() => setEditingTemplate(null)}
           />
         )}
       </Modal>

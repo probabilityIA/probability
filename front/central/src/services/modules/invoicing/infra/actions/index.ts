@@ -29,6 +29,8 @@ import type {
   ItemCompareResponseData,
   BankAccountsResponseData,
   CODReport,
+  CreditNote,
+  CreateCreditNoteDTO,
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -205,6 +207,23 @@ export async function deletePendingInvoiceAction(id: number): Promise<void> {
 export async function getInvoiceSyncLogsAction(id: number): Promise<SyncLog[]> {
   const response = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/sync-logs`);
   return response.sync_logs || [];
+}
+
+export async function createCreditNoteAction(
+  id: number,
+  dto: CreateCreditNoteDTO
+): Promise<{ success: true; data: CreditNote } | { success: false; error: string }> {
+  try {
+    const data = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/credit-notes`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+    return { success: true, data };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido al crear la nota de credito';
+    console.error('[createCreditNoteAction] Error:', message);
+    return { success: false, error: message };
+  }
 }
 
 // ============================================

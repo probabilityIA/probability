@@ -187,24 +187,25 @@ type ShipmentStatsByGeozone struct {
 	SuccessRate float64
 }
 
+// OrderPublicTracking es la respuesta del tracking publico (sin autenticacion,
+// buscable por order_number predecible). A proposito NO trae telefono, calle
+// ni codigo postal, y el nombre viene recortado a un primer nombre: ver
+// GetOrderPublicTrackingByNumber en cod_queries.go.
 type OrderPublicTracking struct {
-	ID                 string
-	OrderNumber        string
-	BusinessID         uint
-	BusinessName       string
-	Status             string
-	IsPaid             bool
-	TotalAmount        float64
-	CodTotal           *float64
-	Currency           string
-	CustomerName       string
-	CustomerPhone      string
-	ShippingStreet     string
-	ShippingCity       string
-	ShippingState      string
-	ShippingPostalCode string
-	CreatedAt          time.Time
-	OccurredAt         *time.Time
+	ID            string
+	OrderNumber   string
+	BusinessID    uint
+	BusinessName  string
+	Status        string
+	IsPaid        bool
+	TotalAmount   float64
+	CodTotal      *float64
+	Currency      string
+	CustomerName  string
+	ShippingCity  string
+	ShippingState string
+	CreatedAt     time.Time
+	OccurredAt    *time.Time
 }
 
 type OrderCODInfo struct {

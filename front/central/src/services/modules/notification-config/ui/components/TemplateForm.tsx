@@ -23,6 +23,7 @@ interface TemplateFormProps {
   variableCatalog: Record<string, string>;
   scope?: TemplateScope;
   template?: WhatsappTemplate | null;
+  linkedButtonTexts?: string[];
   asFlowResponse?: boolean;
   onSuccess: (created?: WhatsappTemplate) => void;
   onCancel: () => void;
@@ -141,6 +142,7 @@ export function TemplateForm({
   variableCatalog,
   scope = "scheduled",
   template = null,
+  linkedButtonTexts = [],
   asFlowResponse = false,
   onSuccess,
   onCancel,
@@ -168,6 +170,13 @@ export function TemplateForm({
     ([key]) => !asFlowResponse || !FLOW_BLOCKED_SOURCES.includes(key),
   );
   const maxButtons = category === "MARKETING" ? MAX_BUTTONS - 1 : MAX_BUTTONS;
+
+  const currentButtonTexts = new Set(
+    buttons.map((item) => item.text.trim().toLowerCase()).filter(Boolean),
+  );
+  const brokenLinks = linkedButtonTexts.filter(
+    (text) => !currentButtonTexts.has(text.trim().toLowerCase()),
+  );
 
   const placeholders = countPlaceholders(bodyText);
   const slug = slugify(displayName);
@@ -675,6 +684,12 @@ export function TemplateForm({
               <span className="text-[12px] text-gray-400">
                 {"Qué responde cada botón se arma en el diagrama de flujo."}
               </span>
+
+              {brokenLinks.length > 0 && (
+                <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+                  {`Al guardar se pierde la conexión de flujo de: ${brokenLinks.join(", ")}. Vas a tener que volver a enlazar la respuesta en el flujo.`}
+                </div>
+              )}
             </div>
 
             {mismatch && (

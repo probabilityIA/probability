@@ -133,7 +133,10 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
                             <li>El archivo debe ser CSV o Excel (.xlsx, .xls)</li>
                             <li>La primera fila debe contener los encabezados de columna tal cual la plantilla</li>
+                            <li><strong>Si un pedido tiene varios productos:</strong> repite una fila por cada producto con el mismo order_number (los demás datos del pedido solo hacen falta en la primera fila de ese grupo)</li>
                             <li><strong>Requeridas:</strong> order_number, customer_name, customer_email, customer_phone, shipping_street, shipping_city, shipping_state, total_amount</li>
+                            <li><strong>Producto (sku, quantity, unit_price obligatorios si hay productos):</strong> sku, product_name, quantity, unit_price, product_discount, product_tax</li>
+                            <li><strong>Fecha (opcional):</strong> order_date (formato AAAA-MM-DD; si se deja vacío, toma la fecha de hoy)</li>
                             <li><strong>Cliente (opcionales):</strong> customer_first_name, customer_last_name, customer_dni</li>
                             <li><strong>Dirección (opcionales):</strong> shipping_country, shipping_postal_code, shipping_lat, shipping_lng</li>
                             <li><strong>Financiero (opcionales):</strong> subtotal, tax, discount, shipping_cost, shipping_discount, currency</li>

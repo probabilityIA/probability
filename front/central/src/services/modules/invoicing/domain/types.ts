@@ -273,11 +273,13 @@ export interface UpdateConfigDTO {
   integration_ids?: number[];
 }
 
+export type CreditNoteType = 'cancellation' | 'correction' | 'full_refund' | 'partial_refund';
+
 export interface CreateCreditNoteDTO {
   invoice_id: number;
   amount: number;
   reason: string;
-  note_type: string;
+  note_type: CreditNoteType;
 }
 
 export interface TestProviderResult {

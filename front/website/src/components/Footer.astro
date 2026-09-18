@@ -1,71 +1,62 @@
 ---
+import LegalModal from './LegalModal.astro';
 const currentYear = new Date().getFullYear();
 ---
 
-<footer class="bg-gray-100 text-gray-700 py-8 sm:py-12 md:py-16 px-4 sm:px-6 md:px-10 lg:px-20">
-	<div class="max-w-6xl mx-auto">
-		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12 mb-8 sm:mb-12 pb-8 sm:pb-12 border-b border-gray-300">
-			<!-- Left Column - Logo -->
-			<div class="flex flex-col items-start">
-				<a href="./" class="flex items-center gap-2 mb-4 sm:mb-6 group cursor-pointer inline-block">
-					<img
-						src="https://www.probabilityia.com.co/_next/image?url=%2Flogo2recortado.png&w=1200&q=75"
-						alt="probabilityIA logo"
-						class="h-10 sm:h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
-					/>
-				</a>
-				<p class="text-gray-600 text-xs sm:text-sm">
-					Reduce devoluciones. Aumenta ganancias. Crece con inteligencia artificial.
-				</p>
-			</div>
+<footer class="bg-gray-100 text-gray-700 py-6 sm:py-8 px-4 sm:px-6 md:px-10 lg:px-20">
+	<div class="max-w-6xl mx-auto flex flex-col gap-4 sm:gap-5">
+		<div class="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+			<a href="./" class="group flex items-center gap-2 cursor-pointer flex-shrink-0">
+				<img
+					src="https://probability-media-assets.s3.us-east-1.amazonaws.com/public/brand/logo-mark-badge.svg"
+					alt="ProbabilityIA"
+					class="h-9 sm:h-10 group-hover:scale-110 transition-transform duration-300"
+				/>
+				<span class="font-bold text-base sm:text-lg text-gray-800">ProbabilityIA</span>
+			</a>
 
-			<!-- Center Column - Navigation -->
-			<div class="flex flex-col">
-				<h3 class="font-bold text-gray-700 mb-4 sm:mb-6 text-base sm:text-lg">Navegación</h3>
-				<nav class="space-y-2 sm:space-y-3 flex flex-col">
-					<a href="./producto" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Producto</a>
-					<a href="./como-funciona" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Cómo funciona</a>
-					<a href="./precios" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Precios</a>
-					<a href="./integraciones" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Integraciones</a>
-					<a href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Demo</a>
-					<a href="/politica-de-privacidad" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Política de privacidad</a>
-					<a href="/terminos-y-condiciones" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Términos y condiciones</a>
-					<a href="/eliminacion-de-datos" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Eliminación de datos</a>
-				</nav>
-			</div>
-
-			<!-- Right Column - Contact Information -->
-			<div class="flex flex-col">
-				<div class="space-y-3 sm:space-y-4">
-					<div>
-						<p class="text-gray-500 text-xs font-medium mb-1">Email</p>
-						<a href="mailto:probabilitysas@gmail.com" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm break-all">
-							probabilitysas@gmail.com
-						</a>
-					</div>
-					<div>
-						<p class="text-gray-500 text-xs font-medium mb-1">Teléfono</p>
-						<a href="tel:+573138241302" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">
-							+57 313 824 1302
-						</a>
-					</div>
-					<div>
-						<p class="text-gray-500 text-xs font-medium mb-1">Contacto</p>
-						<p class="text-gray-600 text-xs sm:text-sm">Lina M.</p>
-					</div>
-					<div>
-						<p class="text-gray-500 text-xs font-medium mb-1">Horario</p>
-						<p class="text-gray-600 text-xs sm:text-sm">8:00am - 6:00pm</p>
-					</div>
-				</div>
-			</div>
+			<nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm">
+				<a href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos" class="text-gray-600 hover:text-gray-800 transition-colors">Demo</a>
+				<a href="/website/politica-de-privacidad" data-legal-modal="privacidad" class="text-gray-600 hover:text-gray-800 transition-colors">Política de privacidad</a>
+				<a href="/website/terminos-y-condiciones" data-legal-modal="terminos" class="text-gray-600 hover:text-gray-800 transition-colors">Términos y condiciones</a>
+			</nav>
 		</div>
 
-		<!-- Bottom Section -->
-		<div class="text-center">
-			<p class="text-gray-500 text-xs sm:text-sm px-2">
-				&copy; {currentYear} ProbabilityIA. Todos los derechos reservados.
-			</p>
+		<div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 pt-4 sm:pt-5 border-t border-gray-300">
+			<div class="flex items-center gap-4">
+				<a href="https://www.instagram.com/probabilityia/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="text-gray-500 hover:text-gray-800 transition-colors">
+					<svg class="w-4.5 h-4.5 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+						<rect x="2.5" y="2.5" width="19" height="19" rx="5"/>
+						<circle cx="12" cy="12" r="4.2"/>
+						<circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/>
+					</svg>
+				</a>
+				<a href="https://www.youtube.com/@ProbabilityIA" target="_blank" rel="noopener noreferrer" aria-label="YouTube" class="text-gray-500 hover:text-gray-800 transition-colors">
+					<svg class="w-4.5 h-4.5 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+						<rect x="2" y="5" width="20" height="14" rx="4"/>
+						<path d="M10.5 9.5l5 2.5-5 2.5v-5z" fill="currentColor" stroke="none"/>
+					</svg>
+				</a>
+				<a href="https://www.linkedin.com/company/probabilityia/posts/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="text-gray-500 hover:text-gray-800 transition-colors">
+					<svg class="w-4.5 h-4.5 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+						<rect x="2.5" y="2.5" width="19" height="19" rx="3"/>
+						<line x1="7" y1="10" x2="7" y2="17"/>
+						<circle cx="7" cy="6.7" r="0.9" fill="currentColor" stroke="none"/>
+						<path d="M11 17v-4.5c0-1.5 1-2.5 2.5-2.5s2.5 1 2.5 2.5V17"/>
+						<line x1="11" y1="10" x2="11" y2="17"/>
+					</svg>
+				</a>
+			</div>
+
+			<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] sm:text-xs">
+				<p class="text-gray-500 whitespace-nowrap">
+					&copy; {currentYear} ProbabilityIA. Todos los derechos reservados.
+				</p>
+				<a href="mailto:probabilitysas@gmail.com" class="text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">probabilitysas@gmail.com</a>
+				<a href="tel:+573138241302" class="text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">+57 313 824 1302</a>
+			</div>
 		</div>
 	</div>
+
+	<LegalModal />
 </footer>

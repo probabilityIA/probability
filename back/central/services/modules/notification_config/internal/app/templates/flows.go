@@ -122,6 +122,52 @@ func (uc *useCase) ReplaceFlows(ctx context.Context, dto dtos.ReplaceTemplateFlo
 	return uc.flowRepository.ListBySource(ctx, dto.BusinessID, dto.SourceTemplateID)
 }
 
+func (uc *useCase) pruneOrphanedFlows(ctx context.Context, businessID uint, template *entities.WhatsappTemplate) {
+	if uc.flowRepository == nil {
+		return
+	}
+
+	available := make(map[string]bool, len(template.Buttons))
+	for _, button := range template.Buttons {
+		if strings.EqualFold(strings.TrimSpace(button.Type), entities.TemplateButtonTypeURL) {
+			continue
+		}
+		available[strings.ToLower(strings.TrimSpace(button.Text))] = true
+	}
+
+	existing, err := uc.flowRepository.ListBySource(ctx, businessID, template.ID)
+	if err != nil {
+		uc.logger.Warn(ctx).Err(err).Uint("template_id", template.ID).
+			Msg("no se pudo revisar si quedaron enlaces de flujo huerfanos")
+		return
+	}
+
+	survivors := make([]entities.TemplateFlow, 0, len(existing))
+	dropped := make([]string, 0, len(existing))
+	for _, flow := range existing {
+		if available[strings.ToLower(strings.TrimSpace(flow.ButtonText))] {
+			survivors = append(survivors, flow)
+			continue
+		}
+		dropped = append(dropped, flow.ButtonText)
+	}
+
+	if len(dropped) == 0 {
+		return
+	}
+
+	if err := uc.flowRepository.ReplaceForSource(ctx, businessID, template.ID, survivors); err != nil {
+		uc.logger.Warn(ctx).Err(err).Uint("template_id", template.ID).
+			Msg("no se pudieron quitar los enlaces de flujo huerfanos")
+		return
+	}
+
+	uc.logger.Warn(ctx).
+		Uint("template_id", template.ID).
+		Strs("dropped_buttons", dropped).
+		Msg("se quitaron enlaces de flujo huerfanos tras editar los botones de la plantilla")
+}
+
 func (uc *useCase) validateGraph(
 	ctx context.Context,
 	businessID, sourceTemplateID uint,

@@ -1,9 +1,10 @@
 ---
 interface Props {
 	transparentOnTop?: boolean;
+	transparentVariant?: 'dark' | 'light';
 }
 
-const { transparentOnTop = false } = Astro.props;
+const { transparentOnTop = false, transparentVariant = 'dark' } = Astro.props;
 ---
 
 <style>
@@ -49,7 +50,7 @@ const { transparentOnTop = false } = Astro.props;
 		font-weight: 500;
 	}
 
-	.site-header.is-transparent-top:not(.is-scrolled) .header-logo-text {
+	.site-header.is-transparent-top:not(.is-scrolled):not(.is-light) .header-logo-text {
 		color: #e5e7eb;
 	}
 
@@ -57,12 +58,12 @@ const { transparentOnTop = false } = Astro.props;
 		transition: color 0.3s ease, border-color 0.3s ease;
 	}
 
-	.site-header.is-transparent-top:not(.is-scrolled) .header-register {
+	.site-header.is-transparent-top:not(.is-scrolled):not(.is-light) .header-register {
 		color: #fff;
 		border-color: rgba(255, 255, 255, 0.4);
 	}
 
-	.site-header.is-transparent-top:not(.is-scrolled) .header-register:hover {
+	.site-header.is-transparent-top:not(.is-scrolled):not(.is-light) .header-register:hover {
 		background-color: rgba(255, 255, 255, 0.1);
 	}
 
@@ -70,12 +71,12 @@ const { transparentOnTop = false } = Astro.props;
 		transition: color 0.3s ease, border-color 0.3s ease;
 	}
 
-	.site-header.is-transparent-top:not(.is-scrolled) .header-nav-link {
+	.site-header.is-transparent-top:not(.is-scrolled):not(.is-light) .header-nav-link {
 		color: #fff;
 		border-color: rgba(255, 255, 255, 0.4);
 	}
 
-	.site-header.is-transparent-top:not(.is-scrolled) .header-nav-link:hover {
+	.site-header.is-transparent-top:not(.is-scrolled):not(.is-light) .header-nav-link:hover {
 		border-color: #fff;
 		color: #fff;
 	}
@@ -84,7 +85,7 @@ const { transparentOnTop = false } = Astro.props;
 		transition: color 0.3s ease;
 	}
 
-	.site-header.is-transparent-top:not(.is-scrolled) .header-menu-icon {
+	.site-header.is-transparent-top:not(.is-scrolled):not(.is-light) .header-menu-icon {
 		color: #fff;
 	}
 
@@ -95,7 +96,7 @@ const { transparentOnTop = false } = Astro.props;
 	}
 </style>
 
-<header id="site-header" class={`site-header ${transparentOnTop ? '' : 'sticky'} top-0 z-50 border-b ${transparentOnTop ? 'is-transparent-top' : ''}`}>
+<header id="site-header" class={`site-header ${transparentOnTop ? '' : 'sticky'} top-0 z-50 border-b ${transparentOnTop ? 'is-transparent-top' : ''} ${transparentOnTop && transparentVariant === 'light' ? 'is-light' : ''}`}>
 	<nav class="mx-auto px-4 sm:px-6 md:px-10 lg:px-20 py-4 sm:py-5 flex items-center justify-between h-auto sm:h-20">
 		<!-- Logo -->
 		<a href="/website/" class="flex items-center gap-2 cursor-pointer group flex-shrink-0">
