@@ -22,10 +22,6 @@ func New(database db.IDatabase) ports.IRepository {
 	return &Repository{db: database}
 }
 
-// ============================================
-// Route CRUD
-// ============================================
-
 func (r *Repository) CreateRoute(ctx context.Context, route *entities.Route, stops []entities.RouteStop) (*entities.Route, error) {
 	model := entityToRouteModel(route)
 
@@ -77,7 +73,6 @@ func (r *Repository) GetRouteByID(ctx context.Context, businessID, routeID uint)
 
 	route := routeModelToEntity(&model)
 
-	// Denormalize driver name and vehicle plate
 	if model.DriverID != nil {
 		name, err := r.GetDriverNameByID(ctx, *model.DriverID)
 		if err == nil {
@@ -135,7 +130,6 @@ func (r *Repository) ListRoutes(ctx context.Context, params dtos.ListRoutesParam
 	routes := make([]entities.Route, len(modelsList))
 	for i, m := range modelsList {
 		routes[i] = *routeModelToEntity(&m)
-		// Denormalize names for list view
 		if m.DriverID != nil {
 			name, err := r.GetDriverNameByID(ctx, *m.DriverID)
 			if err == nil {
@@ -178,10 +172,6 @@ func (r *Repository) DeleteRoute(ctx context.Context, businessID, routeID uint) 
 	return nil
 }
 
-// ============================================
-// Route lifecycle
-// ============================================
-
 func (r *Repository) UpdateRouteStatus(ctx context.Context, routeID uint, status string) error {
 	return r.db.Conn(ctx).Model(&models.Route{}).
 		Where("id = ?", routeID).
@@ -190,10 +180,10 @@ func (r *Repository) UpdateRouteStatus(ctx context.Context, routeID uint, status
 
 func (r *Repository) UpdateRouteCounters(ctx context.Context, routeID uint) error {
 	return r.db.Conn(ctx).Exec(`
-		UPDATE routes SET
-			total_stops = (SELECT COUNT(*) FROM route_stops WHERE route_id = ? AND deleted_at IS NULL),
-			completed_stops = (SELECT COUNT(*) FROM route_stops WHERE route_id = ? AND deleted_at IS NULL AND status = 'delivered'),
-			failed_stops = (SELECT COUNT(*) FROM route_stops WHERE route_id = ? AND deleted_at IS NULL AND status = 'failed')
+		UPDATE route SET
+			total_stops = (SELECT COUNT(*) FROM route_stop WHERE route_id = ? AND deleted_at IS NULL),
+			completed_stops = (SELECT COUNT(*) FROM route_stop WHERE route_id = ? AND deleted_at IS NULL AND status = 'delivered'),
+			failed_stops = (SELECT COUNT(*) FROM route_stop WHERE route_id = ? AND deleted_at IS NULL AND status = 'failed')
 		WHERE id = ?
 	`, routeID, routeID, routeID, routeID).Error
 }
@@ -211,10 +201,6 @@ func (r *Repository) SetRouteActualEnd(ctx context.Context, routeID uint) error 
 		Where("id = ?", routeID).
 		Update("actual_end_time", now).Error
 }
-
-// ============================================
-// Stop CRUD
-// ============================================
 
 func (r *Repository) AddStop(ctx context.Context, stop *entities.RouteStop) (*entities.RouteStop, error) {
 	model := entityToStopModel(stop)
@@ -333,10 +319,6 @@ func (r *Repository) SetPendingStopsStatus(ctx context.Context, routeID uint, st
 		Update("status", status).Error
 }
 
-// ============================================
-// Cross-module queries (replicated locally)
-// ============================================
-
 func (r *Repository) GetDriverNameByID(ctx context.Context, driverID uint) (string, error) {
 	var result struct {
 		FirstName string
@@ -398,10 +380,6 @@ func (r *Repository) ClearOrderDriverInfo(ctx context.Context, orderID string) e
 		}).Error
 }
 
-// ============================================
-// Form options (drivers, vehicles, assignable orders)
-// ============================================
-
 func (r *Repository) ListDriversForBusiness(ctx context.Context, businessID uint) ([]dtos.DriverOption, error) {
 	var drivers []models.Driver
 	err := r.db.Conn(ctx).
@@ -459,13 +437,11 @@ func (r *Repository) ListAssignableOrders(ctx context.Context, businessID uint) 
 		return nil, err
 	}
 
-	// Collect order IDs for item count subquery
 	orderIDs := make([]string, len(orders))
 	for i, o := range orders {
 		orderIDs[i] = o.ID
 	}
 
-	// Get item counts per order
 	itemCounts := make(map[string]int)
 	if len(orderIDs) > 0 {
 		type countResult struct {
@@ -504,31 +480,27 @@ func (r *Repository) ListAssignableOrders(ctx context.Context, businessID uint) 
 	return result, nil
 }
 
-// ============================================
-// Mappers
-// ============================================
-
 func entityToRouteModel(e *entities.Route) *models.Route {
 	return &models.Route{
-		BusinessID:         e.BusinessID,
-		DriverID:           e.DriverID,
-		VehicleID:          e.VehicleID,
-		Status:             e.Status,
-		Date:               e.Date,
-		StartTime:          e.StartTime,
-		EndTime:            e.EndTime,
-		ActualStartTime:    e.ActualStartTime,
-		ActualEndTime:      e.ActualEndTime,
-		OriginWarehouseID:  e.OriginWarehouseID,
-		OriginAddress:      e.OriginAddress,
-		OriginLat:          e.OriginLat,
-		OriginLng:          e.OriginLng,
-		TotalStops:         e.TotalStops,
-		CompletedStops:     e.CompletedStops,
-		FailedStops:        e.FailedStops,
-		TotalDistanceKm:    e.TotalDistanceKm,
-		TotalDurationMin:   e.TotalDurationMin,
-		Notes:              e.Notes,
+		BusinessID:        e.BusinessID,
+		DriverID:          e.DriverID,
+		VehicleID:         e.VehicleID,
+		Status:            e.Status,
+		Date:              e.Date,
+		StartTime:         e.StartTime,
+		EndTime:           e.EndTime,
+		ActualStartTime:   e.ActualStartTime,
+		ActualEndTime:     e.ActualEndTime,
+		OriginWarehouseID: e.OriginWarehouseID,
+		OriginAddress:     e.OriginAddress,
+		OriginLat:         e.OriginLat,
+		OriginLng:         e.OriginLng,
+		TotalStops:        e.TotalStops,
+		CompletedStops:    e.CompletedStops,
+		FailedStops:       e.FailedStops,
+		TotalDistanceKm:   e.TotalDistanceKm,
+		TotalDurationMin:  e.TotalDurationMin,
+		Notes:             e.Notes,
 	}
 }
 

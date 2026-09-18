@@ -61,12 +61,19 @@ func (uc *UseCase) CreateRoute(ctx context.Context, dto dtos.CreateRouteDTO) (*e
 		}
 	}
 
+	if route.OriginLat == nil && route.OriginWarehouseID == nil {
+		route.Stops = stops
+		if wh, err := uc.resolveOriginWarehouse(ctx, route); err == nil && wh != nil {
+			applyOriginWarehouse(route, wh)
+		}
+		route.Stops = nil
+	}
+
 	created, err := uc.repo.CreateRoute(ctx, route, stops)
 	if err != nil {
 		return nil, err
 	}
 
-	// Set driver info on orders
 	if dto.DriverID != nil {
 		for _, s := range dto.Stops {
 			if s.OrderID != nil {

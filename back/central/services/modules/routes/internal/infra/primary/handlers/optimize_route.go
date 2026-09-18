@@ -33,7 +33,8 @@ func (h *Handlers) OptimizeRoute(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		case errors.Is(err, domainerrors.ErrRouteNotEditable),
 			errors.Is(err, domainerrors.ErrNotEnoughStops),
-			errors.Is(err, domainerrors.ErrOriginMissing):
+			errors.Is(err, domainerrors.ErrOriginMissing),
+			errors.Is(err, domainerrors.ErrOriginWithoutLocation):
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		case errors.Is(err, domainerrors.ErrOptimizerNotConfigured):
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
@@ -44,11 +45,11 @@ func (h *Handlers) OptimizeRoute(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":           "ruta optimizada",
-		"stop_ids":          result.StopIDs,
-		"total_distance_km": result.DistanceKm,
+		"message":            "ruta optimizada",
+		"stop_ids":           result.StopIDs,
+		"total_distance_km":  result.DistanceKm,
 		"total_duration_min": result.DurationMin,
-		"stops_optimized":   result.StopsOptimized,
-		"stops_sin_coords":  result.StopsSinCoords,
+		"stops_optimized":    result.StopsOptimized,
+		"stops_sin_coords":   result.StopsSinCoords,
 	})
 }

@@ -11,7 +11,7 @@ import {
     updateStopStatusAction,
 } from '../../infra/actions';
 import { Alert, Spinner, Button } from '@/shared/ui';
-import { getActionError } from '@/shared/utils/action-result';
+import { getActionError, unwrapAction } from '@/shared/utils/action-result';
 
 interface RouteDetailProps {
     routeId: number;
@@ -63,7 +63,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
         setLoading(true);
         setError(null);
         try {
-            const data = await getRouteByIdAction(routeId, businessId);
+            const data = unwrapAction(await getRouteByIdAction(routeId, businessId));
             setRoute(data);
         } catch (err: any) {
             setError(getActionError(err, 'Error al cargar la ruta'));
@@ -80,7 +80,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
         if (!confirm('¿Iniciar esta ruta? El estado cambiará a "En progreso".')) return;
         setActionLoading('start');
         try {
-            const updated = await startRouteAction(routeId, businessId);
+            const updated = unwrapAction(await startRouteAction(routeId, businessId));
             setRoute(updated);
             onRefreshList?.();
         } catch (err: any) {
@@ -96,7 +96,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
         try {
             const antesKm = route?.total_distance_km ?? null;
             const antesMin = route?.total_duration_min ?? null;
-            const resultado = await optimizeRouteAction(routeId, businessId);
+            const resultado = unwrapAction(await optimizeRouteAction(routeId, businessId));
             await fetchRoute();
             onRefreshList?.();
             setOptimizeResult({
@@ -117,7 +117,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
         if (!confirm('¿Completar esta ruta? El estado cambiará a "Completada".')) return;
         setActionLoading('complete');
         try {
-            const updated = await completeRouteAction(routeId, businessId);
+            const updated = unwrapAction(await completeRouteAction(routeId, businessId));
             setRoute(updated);
             onRefreshList?.();
         } catch (err: any) {
@@ -130,7 +130,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
     const handleStopDelivered = async (stop: RouteStopInfo) => {
         setActionLoading(`stop-${stop.id}`);
         try {
-            await updateStopStatusAction(routeId, stop.id, { status: 'delivered' }, businessId);
+            unwrapAction(await updateStopStatusAction(routeId, stop.id, { status: 'delivered' }, businessId));
             await fetchRoute();
             onRefreshList?.();
         } catch (err: any) {
@@ -149,12 +149,12 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
         if (failureStopId === null) return;
         setActionLoading(`stop-${failureStopId}`);
         try {
-            await updateStopStatusAction(
+            unwrapAction(await updateStopStatusAction(
                 routeId,
                 failureStopId,
                 { status: 'failed', failure_reason: failureReason || undefined },
                 businessId
-            );
+            ));
             setFailureStopId(null);
             setFailureReason('');
             await fetchRoute();
@@ -213,7 +213,6 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                 </Alert>
             )}
 
-            {/* Route header card */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="space-y-2">
@@ -312,7 +311,6 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                     </div>
                 )}
 
-                {/* Progress bar */}
                 <div className="mt-4">
                     <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
                         <span>Progreso</span>
@@ -329,7 +327,6 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                     )}
                 </div>
 
-                {/* Time info */}
                 <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mt-3">
                     {route.actual_start_time && (
                         <span>Inicio real: {formatTime(route.actual_start_time)}</span>
@@ -346,7 +343,6 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                 </div>
             </div>
 
-            {/* Stops list */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -362,12 +358,10 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                     <div className="divide-y divide-gray-100">
                         {sortedStops.map((stop) => (
                             <div key={stop.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                                {/* Sequence number */}
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300">
                                     {stop.sequence}
                                 </div>
 
-                                {/* Stop info */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-0.5">
                                         <span className="font-medium text-gray-900 dark:text-white text-sm truncate">
@@ -397,7 +391,6 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                                     </div>
                                 </div>
 
-                                {/* Action buttons for in_progress routes with pending stops */}
                                 {route.status === 'in_progress' && stop.status === 'pending' && (
                                     <div className="flex gap-2 flex-shrink-0">
                                         <button
@@ -426,7 +419,6 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                 )}
             </div>
 
-            {/* Failure reason modal */}
             {failureStopId !== null && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">

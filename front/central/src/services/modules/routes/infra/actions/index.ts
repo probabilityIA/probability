@@ -13,6 +13,17 @@ import {
     ReorderStopsDTO,
 } from '../../domain/types';
 
+export type ActionResult<T> = { success: true; data: T } | { success: false; error: string };
+
+async function run<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
+    try {
+        return { success: true, data: await fn() };
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error || '');
+        return { success: false, error: message || 'Ocurri\u00f3 un error. Por favor intenta de nuevo.' };
+    }
+}
+
 async function getUseCases() {
     const cookieStore = await cookies();
     const token = cookieStore.get('session_token')?.value || null;
@@ -20,146 +31,50 @@ async function getUseCases() {
     return new RouteUseCases(repository);
 }
 
-// ============================================
-// Route CRUD
-// ============================================
+export const getRoutesAction = async (params?: GetRoutesParams) =>
+    run(async () => (await getUseCases()).getRoutes(params));
 
-export const getRoutesAction = async (params?: GetRoutesParams) => {
-    try {
-        return await (await getUseCases()).getRoutes(params);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const getRouteByIdAction = async (id: number, businessId?: number) =>
+    run(async () => (await getUseCases()).getRouteById(id, businessId));
 
-export const getRouteByIdAction = async (id: number, businessId?: number) => {
-    try {
-        return await (await getUseCases()).getRouteById(id, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const createRouteAction = async (data: CreateRouteDTO, businessId?: number) =>
+    run(async () => (await getUseCases()).createRoute(data, businessId));
 
-export const createRouteAction = async (data: CreateRouteDTO, businessId?: number) => {
-    try {
-        return await (await getUseCases()).createRoute(data, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const updateRouteAction = async (id: number, data: UpdateRouteDTO, businessId?: number) =>
+    run(async () => (await getUseCases()).updateRoute(id, data, businessId));
 
-export const updateRouteAction = async (id: number, data: UpdateRouteDTO, businessId?: number) => {
-    try {
-        return await (await getUseCases()).updateRoute(id, data, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const deleteRouteAction = async (id: number, businessId?: number) =>
+    run(async () => (await getUseCases()).deleteRoute(id, businessId));
 
-export const deleteRouteAction = async (id: number, businessId?: number) => {
-    try {
-        return await (await getUseCases()).deleteRoute(id, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const startRouteAction = async (id: number, businessId?: number) =>
+    run(async () => (await getUseCases()).startRoute(id, businessId));
 
-// ============================================
-// Route lifecycle
-// ============================================
+export const optimizeRouteAction = async (id: number, businessId?: number) =>
+    run(async () => (await getUseCases()).optimizeRoute(id, businessId));
 
-export const startRouteAction = async (id: number, businessId?: number) => {
-    try {
-        return await (await getUseCases()).startRoute(id, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const completeRouteAction = async (id: number, businessId?: number) =>
+    run(async () => (await getUseCases()).completeRoute(id, businessId));
 
-export const optimizeRouteAction = async (id: number, businessId?: number) => {
-    try {
-        return await (await getUseCases()).optimizeRoute(id, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const addStopAction = async (routeId: number, data: AddStopDTO, businessId?: number) =>
+    run(async () => (await getUseCases()).addStop(routeId, data, businessId));
 
-export const completeRouteAction = async (id: number, businessId?: number) => {
-    try {
-        return await (await getUseCases()).completeRoute(id, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const updateStopAction = async (routeId: number, stopId: number, data: UpdateStopDTO, businessId?: number) =>
+    run(async () => (await getUseCases()).updateStop(routeId, stopId, data, businessId));
 
-// ============================================
-// Stop management
-// ============================================
+export const deleteStopAction = async (routeId: number, stopId: number, businessId?: number) =>
+    run(async () => (await getUseCases()).deleteStop(routeId, stopId, businessId));
 
-export const addStopAction = async (routeId: number, data: AddStopDTO, businessId?: number) => {
-    try {
-        return await (await getUseCases()).addStop(routeId, data, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const updateStopStatusAction = async (routeId: number, stopId: number, data: UpdateStopStatusDTO, businessId?: number) =>
+    run(async () => (await getUseCases()).updateStopStatus(routeId, stopId, data, businessId));
 
-export const updateStopAction = async (routeId: number, stopId: number, data: UpdateStopDTO, businessId?: number) => {
-    try {
-        return await (await getUseCases()).updateStop(routeId, stopId, data, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const reorderStopsAction = async (routeId: number, data: ReorderStopsDTO, businessId?: number) =>
+    run(async () => (await getUseCases()).reorderStops(routeId, data, businessId));
 
-export const deleteStopAction = async (routeId: number, stopId: number, businessId?: number) => {
-    try {
-        return await (await getUseCases()).deleteStop(routeId, stopId, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const getAvailableDriversAction = async (businessId?: number) =>
+    run(async () => (await getUseCases()).getAvailableDrivers(businessId));
 
-export const updateStopStatusAction = async (routeId: number, stopId: number, data: UpdateStopStatusDTO, businessId?: number) => {
-    try {
-        return await (await getUseCases()).updateStopStatus(routeId, stopId, data, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const getAvailableVehiclesAction = async (businessId?: number) =>
+    run(async () => (await getUseCases()).getAvailableVehicles(businessId));
 
-export const reorderStopsAction = async (routeId: number, data: ReorderStopsDTO, businessId?: number) => {
-    try {
-        return await (await getUseCases()).reorderStops(routeId, data, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
-
-// ============================================
-// Form options (for route creation)
-// ============================================
-
-export const getAvailableDriversAction = async (businessId?: number) => {
-    try {
-        return await (await getUseCases()).getAvailableDrivers(businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
-
-export const getAvailableVehiclesAction = async (businessId?: number) => {
-    try {
-        return await (await getUseCases()).getAvailableVehicles(businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
-
-export const getAssignableOrdersAction = async (businessId?: number) => {
-    try {
-        return await (await getUseCases()).getAssignableOrders(businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};
+export const getAssignableOrdersAction = async (businessId?: number) =>
+    run(async () => (await getUseCases()).getAssignableOrders(businessId));

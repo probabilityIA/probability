@@ -53,11 +53,14 @@ type RepositoryMock struct {
 	ListDriversForBusinessFn  func(ctx context.Context, businessID uint) ([]dtos.DriverOption, error)
 	ListVehiclesForBusinessFn func(ctx context.Context, businessID uint) ([]dtos.VehicleOption, error)
 
-	GetDriverNameByIDFn     func(ctx context.Context, driverID uint) (string, error)
-	UpdateDriverStatusFn    func(ctx context.Context, driverID uint, status string) error
-	GetVehiclePlateByIDFn   func(ctx context.Context, vehicleID uint) (string, error)
-	UpdateOrderDriverInfoFn func(ctx context.Context, orderID string, driverID *uint, driverName string, isLastMile bool) error
-	ClearOrderDriverInfoFn  func(ctx context.Context, orderID string) error
+	GetDriverNameByIDFn         func(ctx context.Context, driverID uint) (string, error)
+	UpdateDriverStatusFn        func(ctx context.Context, driverID uint, status string) error
+	GetVehiclePlateByIDFn       func(ctx context.Context, vehicleID uint) (string, error)
+	UpdateOrderDriverInfoFn     func(ctx context.Context, orderID string, driverID *uint, driverName string, isLastMile bool) error
+	ClearOrderDriverInfoFn      func(ctx context.Context, orderID string) error
+	GetWarehouseOriginFn        func(ctx context.Context, businessID, warehouseID uint) (*entities.OriginWarehouse, error)
+	GetDefaultWarehouseOriginFn func(ctx context.Context, businessID uint) (*entities.OriginWarehouse, error)
+	GetOrdersWarehouseIDsFn     func(ctx context.Context, businessID uint, orderIDs []string) ([]uint, error)
 
 	CreatedRoute      *entities.Route
 	CreatedStops      []entities.RouteStop
@@ -292,4 +295,25 @@ func (m *OptimizerMock) IsConfigured() bool {
 		return m.IsConfiguredFn()
 	}
 	return true
+}
+
+func (m *RepositoryMock) GetWarehouseOrigin(ctx context.Context, businessID, warehouseID uint) (*entities.OriginWarehouse, error) {
+	if m.GetWarehouseOriginFn != nil {
+		return m.GetWarehouseOriginFn(ctx, businessID, warehouseID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetDefaultWarehouseOrigin(ctx context.Context, businessID uint) (*entities.OriginWarehouse, error) {
+	if m.GetDefaultWarehouseOriginFn != nil {
+		return m.GetDefaultWarehouseOriginFn(ctx, businessID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetOrdersWarehouseIDs(ctx context.Context, businessID uint, orderIDs []string) ([]uint, error) {
+	if m.GetOrdersWarehouseIDsFn != nil {
+		return m.GetOrdersWarehouseIDsFn(ctx, businessID, orderIDs)
+	}
+	return nil, nil
 }

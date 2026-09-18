@@ -29,6 +29,7 @@ type mockRepository struct {
 	GetPlatformIntegrationIDByBusinessIDFn               func(ctx context.Context, businessID uint) (uint, error)
 	GetIntegrationCodIncludesShippingFn                  func(ctx context.Context, integrationID uint) (bool, error)
 	BusinessHasWarehouseFn                               func(ctx context.Context, businessID uint) (bool, error)
+	ResolveOrderWarehouseFn                              func(ctx context.Context, businessID, integrationID uint) (*entities.WarehouseRef, error)
 	OrderExistsFn                                        func(ctx context.Context, externalID string, integrationID uint) (bool, error)
 	GetOrderByExternalIDFn                               func(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)
 	CreateOrderItemsFn                                   func(ctx context.Context, items []*entities.ProbabilityOrderItem) error
@@ -164,6 +165,12 @@ func (m *mockRepository) BusinessHasWarehouse(ctx context.Context, businessID ui
 		return m.BusinessHasWarehouseFn(ctx, businessID)
 	}
 	return true, nil
+}
+func (m *mockRepository) ResolveOrderWarehouse(ctx context.Context, businessID, integrationID uint) (*entities.WarehouseRef, error) {
+	if m.ResolveOrderWarehouseFn != nil {
+		return m.ResolveOrderWarehouseFn(ctx, businessID, integrationID)
+	}
+	return nil, nil
 }
 func (m *mockRepository) GetShippingPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*entities.ShippingPackageConfig, error) {
 	return nil, nil

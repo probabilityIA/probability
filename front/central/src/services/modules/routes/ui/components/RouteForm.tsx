@@ -19,7 +19,7 @@ import {
     getAssignableOrdersAction,
 } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
-import { getActionError } from '@/shared/utils/action-result';
+import { getActionError, unwrapAction } from '@/shared/utils/action-result';
 
 interface RouteFormProps {
     route?: RouteInfo;
@@ -37,7 +37,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
     const [originAddress, setOriginAddress] = useState(route?.origin_address || '');
     const [notes, setNotes] = useState(route?.notes || '');
 
-    // Form options
     const [drivers, setDrivers] = useState<DriverOption[]>([]);
     const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
     const [assignableOrders, setAssignableOrders] = useState<AssignableOrder[]>([]);
@@ -48,21 +47,19 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    // Load form options on mount
     useEffect(() => {
         const loadOptions = async () => {
             setLoadingOptions(true);
             try {
                 const [driversList, vehiclesList, ordersList] = await Promise.all([
-                    getAvailableDriversAction(businessId),
-                    getAvailableVehiclesAction(businessId),
-                    isEditing ? Promise.resolve([]) : getAssignableOrdersAction(businessId),
+                    getAvailableDriversAction(businessId).then(unwrapAction),
+                    getAvailableVehiclesAction(businessId).then(unwrapAction),
+                    isEditing ? Promise.resolve([]) : getAssignableOrdersAction(businessId).then(unwrapAction),
                 ]);
                 setDrivers(driversList);
                 setVehicles(vehiclesList);
                 setAssignableOrders(ordersList);
             } catch {
-                // Silently fail — selectors will just be empty
             } finally {
                 setLoadingOptions(false);
             }
@@ -105,9 +102,8 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     origin_address: originAddress || undefined,
                     notes: notes || undefined,
                 };
-                await updateRouteAction(route.id, updateData, businessId);
+                unwrapAction(await updateRouteAction(route.id, updateData, businessId));
             } else {
-                // Build stops from selected orders
                 const validStops: CreateRouteStopDTO[] = assignableOrders
                     .filter((o) => selectedOrderIds.has(o.id))
                     .map((o) => ({
@@ -128,7 +124,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     notes: notes || undefined,
                     stops: validStops.length > 0 ? validStops : undefined,
                 };
-                await createRouteAction(createData, businessId);
+                unwrapAction(await createRouteAction(createData, businessId));
             }
 
             setSuccess(isEditing ? 'Ruta actualizada exitosamente' : 'Ruta creada exitosamente');
@@ -157,7 +153,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Fecha */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Fecha <span className="text-red-500">*</span>
@@ -170,7 +165,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     />
                 </div>
 
-                {/* Conductor */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Conductor
@@ -190,7 +184,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     </select>
                 </div>
 
-                {/* Vehiculo */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Vehiculo
@@ -210,7 +203,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     </select>
                 </div>
 
-                {/* Direccion de origen */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Direccion de origen
@@ -223,7 +215,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     />
                 </div>
 
-                {/* Notas */}
                 <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Notas
@@ -238,7 +229,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                 </div>
             </div>
 
-            {/* Order selector - only for creation */}
             {!isEditing && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -284,7 +274,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                                                 : 'bg-white dark:bg-gray-800 hover:bg-gray-50'
                                         }`}
                                     >
-                                        {/* Checkbox */}
                                         <div
                                             className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                                                 isSelected
@@ -295,7 +284,6 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                                             {isSelected && <CheckIcon className="w-3.5 h-3.5 text-white" />}
                                         </div>
 
-                                        {/* Order info */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-sm font-medium text-gray-900 dark:text-white">

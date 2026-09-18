@@ -5,7 +5,7 @@ import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { getRoutesAction, deleteRouteAction } from '../../infra/actions';
 import { RouteInfo, GetRoutesParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
-import { getActionError } from '@/shared/utils/action-result';
+import { getActionError, unwrapAction } from '@/shared/utils/action-result';
 
 interface RouteListProps {
     onView?: (route: RouteInfo) => void;
@@ -51,7 +51,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
             if (statusFilter) params.status = statusFilter;
             if (selectedBusinessId) params.business_id = selectedBusinessId;
 
-            const response = await getRoutesAction(params);
+            const response = unwrapAction(await getRoutesAction(params));
             setRoutes(response.data || []);
             setTotal(response.total || 0);
             setTotalPages(response.total_pages || 1);
@@ -71,7 +71,6 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
         onRefreshRef?.(fetchRoutes);
     }, [fetchRoutes, onRefreshRef]);
 
-    // Resetear a pagina 1 cuando cambia el negocio seleccionado
     useEffect(() => {
         setPage(1);
         setSearch('');
@@ -99,7 +98,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
     const handleDelete = async (route: RouteInfo) => {
         if (!confirm(`Eliminar la ruta del ${formatDate(route.date)}? Esta acción no se puede deshacer.`)) return;
         try {
-            await deleteRouteAction(route.id, selectedBusinessId);
+            unwrapAction(await deleteRouteAction(route.id, selectedBusinessId));
             fetchRoutes();
         } catch (err: any) {
             setError(getActionError(err, 'Error al eliminar la ruta'));
@@ -189,7 +188,6 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
 
     return (
         <div className="space-y-4">
-            {/* Filters row */}
             <div className="flex flex-col sm:flex-row gap-2">
                 <form onSubmit={handleSearch} className="flex gap-2 flex-1">
                     <input

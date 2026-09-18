@@ -82,6 +82,8 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 
 	uc.populateOrderFields(order, dto)
 
+	uc.assignWarehouseIfMissing(ctx, order)
+
 	uc.geocodeOrderIfNeeded(ctx, order)
 
 	if err := uc.repo.CreateOrder(ctx, order); err != nil {

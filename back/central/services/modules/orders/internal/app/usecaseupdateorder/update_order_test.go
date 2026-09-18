@@ -11,7 +11,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// Mock: IRepository
 type mockRepository struct {
 	IsChannelStatusInboundEnabledFn                      func(ctx context.Context, integrationID uint) (bool, error)
 	CreateOrderFn                                        func(ctx context.Context, order *entities.ProbabilityOrder) error
@@ -28,6 +27,7 @@ type mockRepository struct {
 	GetPlatformIntegrationIDByBusinessIDFn               func(ctx context.Context, businessID uint) (uint, error)
 	GetIntegrationCodIncludesShippingFn                  func(ctx context.Context, integrationID uint) (bool, error)
 	BusinessHasWarehouseFn                               func(ctx context.Context, businessID uint) (bool, error)
+	ResolveOrderWarehouseFn                              func(ctx context.Context, businessID, integrationID uint) (*entities.WarehouseRef, error)
 	OrderExistsFn                                        func(ctx context.Context, externalID string, integrationID uint) (bool, error)
 	GetOrderByExternalIDFn                               func(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)
 	CreateOrderItemsFn                                   func(ctx context.Context, items []*entities.ProbabilityOrderItem) error
@@ -160,6 +160,12 @@ func (m *mockRepository) BusinessHasWarehouse(ctx context.Context, businessID ui
 		return m.BusinessHasWarehouseFn(ctx, businessID)
 	}
 	return true, nil
+}
+func (m *mockRepository) ResolveOrderWarehouse(ctx context.Context, businessID, integrationID uint) (*entities.WarehouseRef, error) {
+	if m.ResolveOrderWarehouseFn != nil {
+		return m.ResolveOrderWarehouseFn(ctx, businessID, integrationID)
+	}
+	return nil, nil
 }
 func (m *mockRepository) GetShippingPackageConfig(ctx context.Context, businessID uint, warehouseID *uint) (*entities.ShippingPackageConfig, error) {
 	return nil, nil
@@ -324,7 +330,6 @@ func (m *mockRepository) SaveOrderItems(ctx context.Context, orderID string, ite
 	return nil
 }
 
-// Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {
 	PublishOrderCreatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishOrderUpdatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
@@ -378,7 +383,6 @@ func (m *mockRabbitPublisher) PublishGuideNotificationRequested(ctx context.Cont
 	return nil
 }
 
-// Mock: IIntegrationEventPublisher
 type mockIntegrationEventPublisher struct {
 	PublishSyncOrderCreatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 	PublishSyncOrderUpdatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
@@ -401,7 +405,6 @@ func (m *mockIntegrationEventPublisher) PublishSyncOrderRejected(ctx context.Con
 	}
 }
 
-// Mock: log.ILogger
 type mockLogger struct{}
 
 func (m *mockLogger) Info(ctx ...context.Context) *zerolog.Event {
@@ -454,7 +457,6 @@ func newTestUpdateUseCase(
 	return uc
 }
 
-// Tests: UpdateOrder
 func TestUpdateOrder_SinCambios_RetornaSinActualizar(t *testing.T) {
 	updateOrderCalled := false
 	existingOrder := &entities.ProbabilityOrder{
@@ -473,7 +475,6 @@ func TestUpdateOrder_SinCambios_RetornaSinActualizar(t *testing.T) {
 	}
 	uc := newTestUpdateUseCase(repo, nil, nil)
 
-	// DTO con los mismos valores que la orden existente (sin cambios)
 	dto := &dtos.ProbabilityOrderDTO{
 		Status:        "pending", // Igual al existente
 		TotalAmount:   0,         // No actualiza (dto.TotalAmount <= 0)

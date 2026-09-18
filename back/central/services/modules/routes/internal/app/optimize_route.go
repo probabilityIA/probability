@@ -22,8 +22,8 @@ func (uc *UseCase) OptimizeRoute(ctx context.Context, dto dtos.OptimizeRouteDTO)
 		return nil, domainerrors.ErrRouteNotEditable
 	}
 
-	if route.OriginLat == nil || route.OriginLng == nil {
-		return nil, domainerrors.ErrOriginMissing
+	if err := uc.ensureRouteOrigin(ctx, route); err != nil {
+		return nil, err
 	}
 
 	conCoords, sinCoords := splitByCoords(route.Stops)
