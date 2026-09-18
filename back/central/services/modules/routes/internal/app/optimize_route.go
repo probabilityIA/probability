@@ -65,6 +65,7 @@ func (uc *UseCase) OptimizeRoute(ctx context.Context, dto dtos.OptimizeRouteDTO)
 
 	route.TotalDistanceKm = &optimizada.DistanceKm
 	route.TotalDurationMin = &optimizada.DurationMin
+	route.EncodedPolyline = optimizada.Polyline
 	if _, err := uc.repo.UpdateRoute(ctx, route); err != nil {
 		return nil, err
 	}

@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/secamc93/probability/back/central/services/modules/routes/internal/domain/entities"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/datatypes"
 )
 
 type warehouseOriginRow struct {
@@ -76,4 +78,36 @@ func (r *Repository) GetOrdersWarehouseIDs(ctx context.Context, businessID uint,
 		Where("business_id = ? AND id IN ? AND warehouse_id IS NOT NULL", businessID, orderIDs).
 		Pluck("warehouse_id", &ids).Error
 	return ids, err
+}
+
+type routePath struct {
+	EncodedPolyline string `json:"encoded_polyline"`
+}
+
+func encodePath(polyline string) datatypes.JSON {
+	if polyline == "" {
+		return nil
+	}
+	raw, err := json.Marshal(routePath{EncodedPolyline: polyline})
+	if err != nil {
+		return nil
+	}
+	return datatypes.JSON(raw)
+}
+
+func decodePath(raw datatypes.JSON) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var p routePath
+	if err := json.Unmarshal(raw, &p); err != nil {
+		return ""
+	}
+	return p.EncodedPolyline
+}
+
+func (r *Repository) ClearRoutePath(ctx context.Context, routeID uint) error {
+	return r.db.Conn(ctx).Model(&models.Route{}).
+		Where("id = ?", routeID).
+		Update("optimized_waypoints", nil).Error
 }

@@ -28,6 +28,7 @@ type RouteResponse struct {
 	FailedStops       int        `json:"failed_stops"`
 	TotalDistanceKm   *float64   `json:"total_distance_km"`
 	TotalDurationMin  *int       `json:"total_duration_min"`
+	EncodedPolyline   string     `json:"encoded_polyline"`
 	Notes             *string    `json:"notes"`
 	CreatedAt         time.Time  `json:"created_at"`
 	UpdatedAt         time.Time  `json:"updated_at"`
@@ -69,6 +70,7 @@ func FromEntity(r *entities.Route) RouteResponse {
 		FailedStops:       r.FailedStops,
 		TotalDistanceKm:   r.TotalDistanceKm,
 		TotalDurationMin:  r.TotalDurationMin,
+		EncodedPolyline:   r.EncodedPolyline,
 		Notes:             r.Notes,
 		CreatedAt:         r.CreatedAt,
 		UpdatedAt:         r.UpdatedAt,

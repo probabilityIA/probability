@@ -22,14 +22,13 @@ type Route struct {
 	FailedStops       int
 	TotalDistanceKm   *float64
 	TotalDurationMin  *int
+	EncodedPolyline   string
 	Notes             *string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 
-	// Denormalized
 	DriverName   string
 	VehiclePlate string
 
-	// Loaded relationships
 	Stops []RouteStop
 }

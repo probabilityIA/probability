@@ -76,3 +76,14 @@ func joinAddress(address, city string) string {
 		return address + ", " + city
 	}
 }
+
+func sameOrigin(latA, lngA, latB, lngB *float64) bool {
+	return sameCoord(latA, latB) && sameCoord(lngA, lngB)
+}
+
+func sameCoord(a, b *float64) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return *a == *b
+}

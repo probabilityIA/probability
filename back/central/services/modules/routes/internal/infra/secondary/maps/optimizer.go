@@ -20,7 +20,7 @@ import (
 
 const computeRoutesURL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
-const fieldMask = "routes.duration,routes.distanceMeters,routes.optimizedIntermediateWaypointIndex"
+const fieldMask = "routes.duration,routes.distanceMeters,routes.optimizedIntermediateWaypointIndex,routes.polyline.encodedPolyline"
 
 type optimizer struct {
 	apiKey     string
@@ -52,8 +52,8 @@ type waypoint struct {
 }
 
 type computeRoutesRequest struct {
-	Origin                whereabouts `json:"origin"`
-	Destination           whereabouts `json:"destination"`
+	Origin                whereabouts   `json:"origin"`
+	Destination           whereabouts   `json:"destination"`
 	Intermediates         []whereabouts `json:"intermediates,omitempty"`
 	TravelMode            string        `json:"travelMode"`
 	OptimizeWaypointOrder bool          `json:"optimizeWaypointOrder"`
@@ -70,6 +70,9 @@ type computeRoutesResponse struct {
 		DistanceMeters int    `json:"distanceMeters"`
 		Duration       string `json:"duration"`
 		OptimizedOrder []int  `json:"optimizedIntermediateWaypointIndex"`
+		Polyline       struct {
+			EncodedPolyline string `json:"encodedPolyline"`
+		} `json:"polyline"`
 	} `json:"routes"`
 	Error *struct {
 		Message string `json:"message"`
@@ -151,6 +154,7 @@ func (o *optimizer) Optimize(ctx context.Context, origin dtos.GeoPoint, stops []
 
 	result.DistanceKm = float64(route.DistanceMeters) / 1000
 	result.DurationMin = parseDurationMinutes(route.Duration)
+	result.Polyline = route.Polyline.EncodedPolyline
 
 	return result, nil
 }

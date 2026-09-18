@@ -57,7 +57,7 @@ func TestOptimizeRouteReordenaYGuardaTotales(t *testing.T) {
 
 	optimizer := &mocks.OptimizerMock{
 		OptimizeFn: func(ctx context.Context, origin dtos.GeoPoint, stops []dtos.GeoPoint) (dtos.OptimizedRoute, error) {
-			return dtos.OptimizedRoute{Order: []int{2, 0, 1}, DistanceKm: 29.061, DurationMin: 67}, nil
+			return dtos.OptimizedRoute{Order: []int{2, 0, 1}, DistanceKm: 29.061, DurationMin: 67, Polyline: "_p~iF~ps|U_ulLnnqC"}, nil
 		},
 	}
 
@@ -73,6 +73,7 @@ func TestOptimizeRouteReordenaYGuardaTotales(t *testing.T) {
 	assert.InDelta(t, 29.061, *rutaGuardada.TotalDistanceKm, 0.001)
 	require.NotNil(t, rutaGuardada.TotalDurationMin)
 	assert.Equal(t, 67, *rutaGuardada.TotalDurationMin)
+	assert.Equal(t, "_p~iF~ps|U_ulLnnqC", rutaGuardada.EncodedPolyline)
 }
 
 func TestOptimizeRouteDejaAlFinalLasParadasSinCoordenadas(t *testing.T) {

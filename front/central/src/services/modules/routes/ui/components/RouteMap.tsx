@@ -39,6 +39,34 @@ const originIcon = L.divIcon({
     iconAnchor: [16, 16],
 });
 
+function decodePolyline(encoded: string): [number, number][] {
+    const points: [number, number][] = [];
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
+    while (index < encoded.length) {
+        let shift = 0;
+        let result = 0;
+        let byte: number;
+        do {
+            byte = encoded.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20 && index < encoded.length);
+        lat += result & 1 ? ~(result >> 1) : result >> 1;
+        shift = 0;
+        result = 0;
+        do {
+            byte = encoded.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20 && index < encoded.length);
+        lng += result & 1 ? ~(result >> 1) : result >> 1;
+        points.push([lat / 1e5, lng / 1e5]);
+    }
+    return points;
+}
+
 function FitBounds({ points }: { points: [number, number][] }) {
     const map = useMap();
     useEffect(() => {
@@ -75,6 +103,13 @@ export default function RouteMap({ route, height = '420px', selectedStopId, onSe
         return origin ? [origin, ...pts] : pts;
     }, [located, origin?.[0], origin?.[1]]);
 
+    const roadPath = useMemo(
+        () => (route.encoded_polyline ? decodePolyline(route.encoded_polyline) : []),
+        [route.encoded_polyline]
+    );
+    const hasRoadPath = roadPath.length > 1;
+    const boundsPoints = useMemo(() => (hasRoadPath ? [...path, ...roadPath] : path), [hasRoadPath, path, roadPath]);
+
     const selectedStop = stops.find((s) => s.id === selectedStopId) || null;
     const missing = stops.length - located.length;
 
@@ -94,10 +129,17 @@ export default function RouteMap({ route, height = '420px', selectedStopId, onSe
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution="&copy; OpenStreetMap"
                     />
-                    <FitBounds points={path} />
+                    <FitBounds points={boundsPoints} />
                     <FocusStop stop={selectedStop} />
-                    {path.length > 1 && (
-                        <Polyline positions={path} pathOptions={{ color: '#6d28d9', weight: 4, opacity: 0.75, dashArray: '8 8' }} />
+                    {hasRoadPath ? (
+                        <>
+                            <Polyline positions={roadPath} pathOptions={{ color: '#ffffff', weight: 8, opacity: 0.9 }} />
+                            <Polyline positions={roadPath} pathOptions={{ color: '#6d28d9', weight: 5, opacity: 0.9 }} />
+                        </>
+                    ) : (
+                        path.length > 1 && (
+                            <Polyline positions={path} pathOptions={{ color: '#6d28d9', weight: 4, opacity: 0.6, dashArray: '8 8' }} />
+                        )
                     )}
                     {origin && (
                         <Marker position={origin} icon={originIcon}>

@@ -100,7 +100,6 @@ type ReorderStopsDTO struct {
 	StopIDs    []uint
 }
 
-// DriverOption is a simplified driver for selection dropdowns
 type DriverOption struct {
 	ID             uint
 	FirstName      string
@@ -111,7 +110,6 @@ type DriverOption struct {
 	LicenseType    string
 }
 
-// VehicleOption is a simplified vehicle for selection dropdowns
 type VehicleOption struct {
 	ID           uint
 	Type         string
@@ -121,7 +119,6 @@ type VehicleOption struct {
 	Status       string
 }
 
-// AssignableOrder represents an order available for route assignment
 type AssignableOrder struct {
 	ID            string
 	OrderNumber   string
@@ -145,6 +142,7 @@ type OptimizedRoute struct {
 	Order       []int
 	DistanceKm  float64
 	DurationMin int
+	Polyline    string
 }
 
 type OptimizeRouteDTO struct {
@@ -153,9 +151,9 @@ type OptimizeRouteDTO struct {
 }
 
 type OptimizeRouteResult struct {
-	StopIDs         []uint
-	DistanceKm      float64
-	DurationMin     int
-	StopsOptimized  int
-	StopsSinCoords  int
+	StopIDs        []uint
+	DistanceKm     float64
+	DurationMin    int
+	StopsOptimized int
+	StopsSinCoords int
 }

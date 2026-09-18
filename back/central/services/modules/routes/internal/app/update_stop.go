@@ -18,6 +18,8 @@ func (uc *UseCase) UpdateStop(ctx context.Context, dto dtos.UpdateStopDTO) (*ent
 		return nil, err
 	}
 
+	moved := !sameOrigin(existing.Lat, existing.Lng, dto.Lat, dto.Lng)
+
 	existing.Address = dto.Address
 	existing.City = dto.City
 	existing.Lat = dto.Lat
@@ -26,5 +28,12 @@ func (uc *UseCase) UpdateStop(ctx context.Context, dto dtos.UpdateStopDTO) (*ent
 	existing.CustomerPhone = dto.CustomerPhone
 	existing.DeliveryNotes = dto.DeliveryNotes
 
-	return uc.repo.UpdateStop(ctx, existing)
+	updated, err := uc.repo.UpdateStop(ctx, existing)
+	if err != nil {
+		return nil, err
+	}
+	if moved {
+		_ = uc.repo.ClearRoutePath(ctx, dto.RouteID)
+	}
+	return updated, nil
 }

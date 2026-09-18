@@ -61,6 +61,7 @@ type RepositoryMock struct {
 	GetWarehouseOriginFn        func(ctx context.Context, businessID, warehouseID uint) (*entities.OriginWarehouse, error)
 	GetDefaultWarehouseOriginFn func(ctx context.Context, businessID uint) (*entities.OriginWarehouse, error)
 	GetOrdersWarehouseIDsFn     func(ctx context.Context, businessID uint, orderIDs []string) ([]uint, error)
+	ClearRoutePathFn            func(ctx context.Context, routeID uint) error
 
 	CreatedRoute      *entities.Route
 	CreatedStops      []entities.RouteStop
@@ -316,4 +317,11 @@ func (m *RepositoryMock) GetOrdersWarehouseIDs(ctx context.Context, businessID u
 		return m.GetOrdersWarehouseIDsFn(ctx, businessID, orderIDs)
 	}
 	return nil, nil
+}
+
+func (m *RepositoryMock) ClearRoutePath(ctx context.Context, routeID uint) error {
+	if m.ClearRoutePathFn != nil {
+		return m.ClearRoutePathFn(ctx, routeID)
+	}
+	return nil
 }

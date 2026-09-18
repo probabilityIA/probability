@@ -17,5 +17,8 @@ func (uc *UseCase) ReorderStops(ctx context.Context, dto dtos.ReorderStopsDTO) e
 		return domainerrors.ErrStopIDsMismatch
 	}
 
-	return uc.repo.ReorderStops(ctx, dto.RouteID, dto.StopIDs)
+	if err := uc.repo.ReorderStops(ctx, dto.RouteID, dto.StopIDs); err != nil {
+		return err
+	}
+	return uc.repo.ClearRoutePath(ctx, dto.RouteID)
 }

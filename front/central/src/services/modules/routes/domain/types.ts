@@ -51,6 +51,7 @@ export interface RouteDetail extends RouteInfo {
     origin_lng: number | null;
     total_distance_km: number | null;
     total_duration_min: number | null;
+    encoded_polyline?: string;
     stops: RouteStopInfo[];
 }
 

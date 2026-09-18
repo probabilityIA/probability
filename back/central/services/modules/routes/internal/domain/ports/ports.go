@@ -21,6 +21,7 @@ type IRepository interface {
 
 	UpdateRouteStatus(ctx context.Context, routeID uint, status string) error
 	UpdateRouteCounters(ctx context.Context, routeID uint) error
+	ClearRoutePath(ctx context.Context, routeID uint) error
 	SetRouteActualStart(ctx context.Context, routeID uint) error
 	SetRouteActualEnd(ctx context.Context, routeID uint) error
 

@@ -33,8 +33,8 @@ func (uc *UseCase) AddStop(ctx context.Context, dto dtos.AddStopDTO) (*entities.
 	}
 
 	_ = uc.repo.UpdateRouteCounters(ctx, dto.RouteID)
+	_ = uc.repo.ClearRoutePath(ctx, dto.RouteID)
 
-	// Set driver info on order if route has driver
 	if dto.OrderID != nil && route.DriverID != nil {
 		_ = uc.repo.UpdateOrderDriverInfo(ctx, *dto.OrderID, route.DriverID, route.DriverName, true)
 	}

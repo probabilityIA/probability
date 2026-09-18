@@ -15,7 +15,6 @@ func (uc *UseCase) DeleteStop(ctx context.Context, businessID, routeID, stopID u
 		return err
 	}
 
-	// Clear driver info from order
 	if stop.OrderID != nil {
 		_ = uc.repo.ClearOrderDriverInfo(ctx, *stop.OrderID)
 	}
@@ -25,5 +24,6 @@ func (uc *UseCase) DeleteStop(ctx context.Context, businessID, routeID, stopID u
 	}
 
 	_ = uc.repo.UpdateRouteCounters(ctx, routeID)
+	_ = uc.repo.ClearRoutePath(ctx, routeID)
 	return nil
 }

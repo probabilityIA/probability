@@ -39,6 +39,9 @@ func (uc *UseCase) UpdateRoute(ctx context.Context, dto dtos.UpdateRouteDTO) (*e
 	existing.Date = dto.Date
 	existing.StartTime = dto.StartTime
 	existing.EndTime = dto.EndTime
+	if !sameOrigin(existing.OriginLat, existing.OriginLng, dto.OriginLat, dto.OriginLng) {
+		existing.EncodedPolyline = ""
+	}
 	existing.OriginWarehouseID = dto.OriginWarehouseID
 	existing.OriginAddress = dto.OriginAddress
 	existing.OriginLat = dto.OriginLat
