@@ -99,6 +99,8 @@ func (uc *useCase) Update(ctx context.Context, dto dtos.UpdateTemplateDTO) (*ent
 		return nil, err
 	}
 
+	uc.pruneOrphanedFlows(ctx, dto.BusinessID, rebuilt)
+
 	if current.Status != entities.TemplateStatusApproved {
 		return rebuilt, nil
 	}
