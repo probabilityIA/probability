@@ -14,6 +14,8 @@ func (h *walletHandler) RegisterWalletRoutes(router *gin.RouterGroup) {
 		wallet.GET("/balance", h.GetBalance)
 		wallet.POST("/recharge", h.RechargeWallet)
 		wallet.GET("/history", h.GetHistory)
+		wallet.GET("/spend-summary", h.GetSpendSummary)
+		wallet.GET("/spend-transactions", h.ListSpendTransactions)
 		wallet.POST("/debit-guide", h.DebitForGuide)
 
 		wallet.GET("/bold/signature", h.BoldGenerateSignature)

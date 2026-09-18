@@ -153,6 +153,22 @@ func (m *RepositoryMock) GetTransactionsByWalletID(ctx context.Context, walletID
 	return args.Get(0).([]*entities.WalletTransaction), args.Error(1)
 }
 
+func (m *RepositoryMock) GetSpendSummary(ctx context.Context, dto *dtos.SpendSummaryDTO) ([]dtos.ConceptTotal, error) {
+	args := m.Called(ctx, dto)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]dtos.ConceptTotal), args.Error(1)
+}
+
+func (m *RepositoryMock) ListTransactionsFiltered(ctx context.Context, dto *dtos.TransactionFilterDTO) ([]*entities.WalletTransaction, int64, error) {
+	args := m.Called(ctx, dto)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*entities.WalletTransaction), args.Get(1).(int64), args.Error(2)
+}
+
 func (m *RepositoryMock) GetPendingRechargeTransactions(ctx context.Context) ([]*entities.WalletTransaction, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {

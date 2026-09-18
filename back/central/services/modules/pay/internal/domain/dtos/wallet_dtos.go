@@ -55,3 +55,28 @@ type PeriodInfo struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
 }
+
+// SpendSummaryDTO filtro para el resumen de gasto de un negocio (propia plata,
+// nunca margen de Probability)
+type SpendSummaryDTO struct {
+	BusinessID uint
+	StartDate  string // YYYY-MM-DD
+	EndDate    string // YYYY-MM-DD
+}
+
+// ConceptTotal total gastado por concepto (GUIDE, SUBSCRIPTION, etc.)
+type ConceptTotal struct {
+	Concept string  `json:"concept"`
+	Count   int64   `json:"count"`
+	Amount  float64 `json:"amount"`
+}
+
+// TransactionFilterDTO filtro paginado de transacciones de un negocio
+type TransactionFilterDTO struct {
+	BusinessID uint
+	StartDate  string // YYYY-MM-DD
+	EndDate    string // YYYY-MM-DD
+	Concept    string
+	Page       int
+	PageSize   int
+}
