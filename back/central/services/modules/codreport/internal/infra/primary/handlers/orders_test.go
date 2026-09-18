@@ -183,8 +183,8 @@ func TestListOrders_DateRangeFromBrowserInstants(t *testing.T) {
 		{
 			name:      "fechas simples legacy",
 			query:     "?start_date=2026-06-15&end_date=2026-07-14",
-			wantStart: "2026-06-15T00:00:00Z",
-			wantEnd:   "2026-07-14T23:59:59Z",
+			wantStart: "2026-06-15T05:00:00Z",
+			wantEnd:   "2026-07-15T04:59:59Z",
 		},
 	}
 
