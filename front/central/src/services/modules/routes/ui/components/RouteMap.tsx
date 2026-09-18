@@ -172,7 +172,11 @@ export default function RouteMap({ route, height = '420px', selectedStopId, onSe
                 {missing > 0 && (
                     <span className="text-amber-600">{`${missing} parada(s) sin ubicación no aparecen en el mapa`}</span>
                 )}
-                <span>{'La línea muestra el orden de visita, no el trazado por las calles'}</span>
+                {hasRoadPath ? (
+                    <span>{'Recorrido por las v\u00edas calculado por Google'}</span>
+                ) : (
+                    <span>{'L\u00ednea punteada: orden de visita. Optimiza la ruta para ver el recorrido por las v\u00edas'}</span>
+                )}
             </div>
         </div>
     );

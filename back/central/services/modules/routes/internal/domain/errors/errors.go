@@ -15,8 +15,28 @@ var (
 
 	ErrOptimizerNotConfigured = errors.New("la optimizacion de rutas no esta configurada")
 	ErrNotEnoughStops         = errors.New("se necesitan al menos dos paradas con coordenadas para optimizar")
-	ErrNoRouteFound           = errors.New("no se encontro una ruta entre las paradas")
+	ErrNoRouteFound           = errors.New("no hay un camino por carretera entre las paradas: revisa que todas est\u00e9n bien ubicadas")
+	ErrMapsProvider           = errors.New("Google Maps no pudo calcular la ruta, intenta de nuevo en unos minutos")
 	ErrRouteNotEditable       = errors.New("solo se puede optimizar una ruta en planeacion")
 	ErrOriginMissing          = errors.New("la ruta no tiene bodega de origen: crea una bodega para el negocio")
-	ErrOriginWithoutLocation  = errors.New("la bodega de origen no tiene ubicacion: edita la bodega y marca su ubicacion en el mapa")
+	ErrOriginWithoutLocation  = errors.New("la bodega de origen no tiene ubicaci\u00f3n: edita la bodega y marca su ubicaci\u00f3n en el mapa")
 )
+
+type UnreachableStopsError struct {
+	Stops []string
+}
+
+func (e *UnreachableStopsError) Error() string {
+	msg := "no hay camino por carretera hasta: "
+	for i, s := range e.Stops {
+		if i > 0 {
+			msg += "; "
+		}
+		msg += s
+	}
+	return msg + ". Corrige su ubicaci\u00f3n o qu\u00edtala de la ruta"
+}
+
+func (e *UnreachableStopsError) Is(target error) bool {
+	return target == ErrNoRouteFound
+}

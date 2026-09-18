@@ -36,6 +36,10 @@ func (h *Handlers) OptimizeRoute(c *gin.Context) {
 			errors.Is(err, domainerrors.ErrOriginMissing),
 			errors.Is(err, domainerrors.ErrOriginWithoutLocation):
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		case errors.Is(err, domainerrors.ErrNoRouteFound):
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		case errors.Is(err, domainerrors.ErrMapsProvider):
+			c.JSON(http.StatusBadGateway, gin.H{"error": domainerrors.ErrMapsProvider.Error()})
 		case errors.Is(err, domainerrors.ErrOptimizerNotConfigured):
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
 		default:

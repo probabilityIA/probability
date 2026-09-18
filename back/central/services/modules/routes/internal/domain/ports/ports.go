@@ -9,6 +9,7 @@ import (
 
 type IRouteOptimizer interface {
 	Optimize(ctx context.Context, origin dtos.GeoPoint, stops []dtos.GeoPoint) (dtos.OptimizedRoute, error)
+	Reachable(ctx context.Context, origin, destination dtos.GeoPoint) (bool, error)
 	IsConfigured() bool
 }
 

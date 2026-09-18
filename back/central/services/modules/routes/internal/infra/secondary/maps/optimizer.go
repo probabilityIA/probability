@@ -107,39 +107,9 @@ func (o *optimizer) Optimize(ctx context.Context, origin dtos.GeoPoint, stops []
 		body.Intermediates = append(body.Intermediates, point(s))
 	}
 
-	payload, err := json.Marshal(body)
+	parsed, err := o.call(ctx, body, fieldMask)
 	if err != nil {
-		return result, fmt.Errorf("serializando peticion de ruta: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, computeRoutesURL, bytes.NewReader(payload))
-	if err != nil {
-		return result, fmt.Errorf("armando peticion de ruta: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Goog-Api-Key", o.apiKey)
-	req.Header.Set("X-Goog-FieldMask", fieldMask)
-
-	resp, err := o.httpClient.Do(req)
-	if err != nil {
-		return result, fmt.Errorf("llamando a Routes API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	raw, _ := io.ReadAll(resp.Body)
-
-	var parsed computeRoutesResponse
-	if err := json.Unmarshal(raw, &parsed); err != nil {
-		return result, fmt.Errorf("respuesta ilegible de Routes API: %w", err)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		msg := string(raw)
-		if parsed.Error != nil {
-			msg = parsed.Error.Status + ": " + parsed.Error.Message
-		}
-		o.log.Error(ctx).Int("status", resp.StatusCode).Str("respuesta", msg).Msg("Routes API rechazo la peticion")
-		return result, fmt.Errorf("Routes API respondio %d: %s", resp.StatusCode, msg)
+		return result, err
 	}
 
 	if len(parsed.Routes) == 0 {
@@ -157,6 +127,63 @@ func (o *optimizer) Optimize(ctx context.Context, origin dtos.GeoPoint, stops []
 	result.Polyline = route.Polyline.EncodedPolyline
 
 	return result, nil
+}
+
+func (o *optimizer) Reachable(ctx context.Context, origin, destination dtos.GeoPoint) (bool, error) {
+	if !o.IsConfigured() {
+		return false, domainerrors.ErrOptimizerNotConfigured
+	}
+	parsed, err := o.call(ctx, computeRoutesRequest{
+		Origin:      point(origin),
+		Destination: point(destination),
+		TravelMode:  "DRIVE",
+	}, "routes.distanceMeters")
+	if err != nil {
+		return false, err
+	}
+	return len(parsed.Routes) > 0, nil
+}
+
+func (o *optimizer) call(ctx context.Context, body computeRoutesRequest, mask string) (computeRoutesResponse, error) {
+	var parsed computeRoutesResponse
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return parsed, fmt.Errorf("serializando peticion de ruta: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, computeRoutesURL, bytes.NewReader(payload))
+	if err != nil {
+		return parsed, fmt.Errorf("armando peticion de ruta: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Goog-Api-Key", o.apiKey)
+	req.Header.Set("X-Goog-FieldMask", mask)
+
+	resp, err := o.httpClient.Do(req)
+	if err != nil {
+		o.log.Error(ctx).Err(err).Msg("No se pudo llamar a Routes API")
+		return parsed, fmt.Errorf("%w: %v", domainerrors.ErrMapsProvider, err)
+	}
+	defer resp.Body.Close()
+
+	raw, _ := io.ReadAll(resp.Body)
+
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		o.log.Error(ctx).Err(err).Int("status", resp.StatusCode).Msg("Respuesta ilegible de Routes API")
+		return parsed, fmt.Errorf("%w: respuesta ilegible", domainerrors.ErrMapsProvider)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		msg := string(raw)
+		if parsed.Error != nil {
+			msg = parsed.Error.Status + ": " + parsed.Error.Message
+		}
+		o.log.Error(ctx).Int("status", resp.StatusCode).Str("respuesta", msg).Msg("Routes API rechazo la peticion")
+		return parsed, fmt.Errorf("%w: Routes API respondio %d: %s", domainerrors.ErrMapsProvider, resp.StatusCode, msg)
+	}
+
+	return parsed, nil
 }
 
 func parseDurationMinutes(d string) int {

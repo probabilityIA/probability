@@ -147,3 +147,28 @@ func TestGetRouteSinOrigenMuestraLaBodegaSinGuardar(t *testing.T) {
 	assert.InDelta(t, 6.34, *route.OriginLat, 0.0001)
 	assert.Nil(t, *guardada)
 }
+
+func TestOptimizeRouteSinCaminoDiceQueParadaFalla(t *testing.T) {
+	a := paradaCon(1, 4.71, -74.07)
+	a.Sequence, a.CustomerName, a.Address = 1, "Sebastian", "Calle 145"
+	b := paradaCon(2, 5.349, -77.644)
+	b.Sequence, b.CustomerName, b.Address = 2, "Carlos Ruiz", "Carrera 123 Apto 262"
+	repo := rutaConParadas("planned", []entities.RouteStop{a, b})
+
+	optimizer := &mocks.OptimizerMock{
+		OptimizeFn: func(ctx context.Context, origin dtos.GeoPoint, stops []dtos.GeoPoint) (dtos.OptimizedRoute, error) {
+			return dtos.OptimizedRoute{}, domainerrors.ErrNoRouteFound
+		},
+		ReachableFn: func(ctx context.Context, origin, destination dtos.GeoPoint) (bool, error) {
+			return destination.Lng > -77, nil
+		},
+	}
+
+	uc := newRoutesUseCaseCon(repo, optimizer)
+	_, err := uc.OptimizeRoute(context.Background(), dtos.OptimizeRouteDTO{RouteID: 1, BusinessID: 26})
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, domainerrors.ErrNoRouteFound)
+	assert.Contains(t, err.Error(), "parada 2 (Carlos Ruiz, Carrera 123 Apto 262)")
+	assert.NotContains(t, err.Error(), "parada 1")
+}

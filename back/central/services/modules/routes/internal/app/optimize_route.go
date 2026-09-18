@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/routes/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/routes/internal/domain/entities"
@@ -41,6 +43,9 @@ func (uc *UseCase) OptimizeRoute(ctx context.Context, dto dtos.OptimizeRouteDTO)
 		puntos,
 	)
 	if err != nil {
+		if errors.Is(err, domainerrors.ErrNoRouteFound) {
+			return nil, uc.explainUnreachable(ctx, route, conCoords)
+		}
 		return nil, err
 	}
 
@@ -88,4 +93,22 @@ func splitByCoords(stops []entities.RouteStop) (con, sin []entities.RouteStop) {
 		sin = append(sin, s)
 	}
 	return con, sin
+}
+
+func (uc *UseCase) explainUnreachable(ctx context.Context, route *entities.Route, stops []entities.RouteStop) error {
+	origen := dtos.GeoPoint{Lat: *route.OriginLat, Lng: *route.OriginLng}
+	var lejos []string
+	for _, s := range stops {
+		ok, err := uc.optimizer.Reachable(ctx, origen, dtos.GeoPoint{Lat: *s.Lat, Lng: *s.Lng})
+		if err != nil {
+			return err
+		}
+		if !ok {
+			lejos = append(lejos, fmt.Sprintf("parada %d (%s, %s)", s.Sequence, s.CustomerName, s.Address))
+		}
+	}
+	if len(lejos) == 0 {
+		return domainerrors.ErrNoRouteFound
+	}
+	return &domainerrors.UnreachableStopsError{Stops: lejos}
 }
