@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Spinner, Alert } from '@/shared/ui';
 import { ProfitReportDetailResponse } from '../../domain/types';
 import { shippingProfitReportDetailAction } from '../../infra/actions';
@@ -36,8 +36,44 @@ interface DailyShipmentData {
     customer_charge: number;
     carrier_cost: number;
     profit: number;
+    status: string;
     created_at: string;
 }
+
+interface StatusBreakdownData {
+    status: string;
+    shipments: number;
+    customer_charge: number;
+    carrier_cost: number;
+    profit: number;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+    pending: 'Pendiente',
+    picked_up: 'Recolectada',
+    in_transit: 'En tránsito',
+    out_for_delivery: 'En reparto',
+    delivered: 'Entregada',
+    on_hold: 'Novedad',
+    returned: 'Devuelta',
+    failed: 'Fallida',
+    cancelled: 'Cancelada',
+};
+
+const STATUS_BADGE: Record<string, string> = {
+    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    picked_up: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    in_transit: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    out_for_delivery: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    delivered: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    on_hold: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    returned: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    cancelled: 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+};
+
+const statusLabel = (status: string) => STATUS_LABELS[status] || status || 'Sin estado';
+const statusBadgeClass = (status: string) => STATUS_BADGE[status] || 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
 
 const fmt = (n: number) => '$ ' + Math.round(n).toLocaleString('es-CO');
 
@@ -74,8 +110,10 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [totals, setTotals] = useState({ shipments: 0, customer_charge: 0, carrier_cost: 0, profit: 0 });
+    const [statusBreakdown, setStatusBreakdown] = useState<StatusBreakdownData[]>([]);
     const [filterFromDate, setFilterFromDate] = useState<string>('');
     const [filterToDate, setFilterToDate] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<string>('');
     const [detailPage, setDetailPage] = useState(1);
     const pageSize = 20;
 
@@ -100,8 +138,10 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
             const data = result as ProfitReportDetailResponse;
             const monthMap = new Map<string, MonthlyData>();
             const carrierMonthMap = new Map<string, Map<string, CarrierMonthlyData>>();
+            const statusMap = new Map<string, StatusBreakdownData>();
 
             data.data.forEach(row => {
+                const isGuideRow = row.service_type === 'guide';
                 const monthKey = getMonthKey(row.created_at);
 
                 if (!monthMap.has(monthKey)) {
@@ -115,7 +155,7 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                     });
                 }
                 const month = monthMap.get(monthKey)!;
-                month.shipments += 1;
+                if (isGuideRow) month.shipments += 1;
                 month.customer_charge += row.customer_charge;
                 month.carrier_cost += row.carrier_cost;
                 month.profit += row.profit;
@@ -137,10 +177,21 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                 }
 
                 const carrier = carrierMap.get(carrierKey)!;
-                carrier.shipments += 1;
+                if (isGuideRow) carrier.shipments += 1;
                 carrier.customer_charge += row.customer_charge;
                 carrier.carrier_cost += row.carrier_cost;
                 carrier.profit += row.profit;
+
+                if (isGuideRow) {
+                    if (!statusMap.has(row.status)) {
+                        statusMap.set(row.status, { status: row.status, shipments: 0, customer_charge: 0, carrier_cost: 0, profit: 0 });
+                    }
+                    const bucket = statusMap.get(row.status)!;
+                    bucket.shipments += 1;
+                    bucket.customer_charge += row.customer_charge;
+                    bucket.carrier_cost += row.carrier_cost;
+                    bucket.profit += row.profit;
+                }
             });
 
             const sorted = Array.from(monthMap.values())
@@ -156,6 +207,10 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
             });
             setCarriersByMonth(carriersByMonthFinal);
 
+            const statusBreakdownSorted = Array.from(statusMap.values())
+                .sort((a, b) => b.shipments - a.shipments);
+            setStatusBreakdown(statusBreakdownSorted);
+
             const dailyShipmentsData: DailyShipmentData[] = data.data.map(row => ({
                 shipment_id: row.shipment_id,
                 order_number: row.order_number,
@@ -164,12 +219,14 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                 customer_charge: row.customer_charge,
                 carrier_cost: row.carrier_cost,
                 profit: row.profit,
+                status: row.status,
                 created_at: row.created_at
             })).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             setDailyShipments(dailyShipmentsData);
 
-            const totalShipments = data.data.length;
+            const guideRows = data.data.filter(row => row.service_type === 'guide');
+            const totalShipments = guideRows.length;
             const totalCustomerCharge = data.data.reduce((sum, row) => sum + row.customer_charge, 0);
             const totalCarrierCost = data.data.reduce((sum, row) => sum + row.carrier_cost, 0);
             const totalProfit = totalCustomerCharge - totalCarrierCost;
@@ -194,6 +251,15 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
         loadData();
     }, [loadData]);
 
+    const filteredDailyShipments = useMemo(() => {
+        return dailyShipments.filter(shipment => {
+            const shipmentDate = shipment.created_at.split('T')[0];
+            const inRange = shipmentDate >= filterFromDate && shipmentDate <= filterToDate;
+            const matchesStatus = !statusFilter || shipment.status === statusFilter;
+            return inRange && matchesStatus;
+        });
+    }, [dailyShipments, filterFromDate, filterToDate, statusFilter]);
+
     if (loading) return <Spinner />;
     if (error) return <Alert type="error">{error}</Alert>;
 
@@ -202,12 +268,19 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
         { name: 'Costo Carrier', value: totals.carrier_cost, fill: '#ef4444' }
     ];
 
+    const failedBreakdown = statusBreakdown.find(s => s.status === 'failed');
+    const totalStatusShipments = statusBreakdown.reduce((sum, s) => sum + s.shipments, 0);
+
     return (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Guías Generadas</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{totals.shipments}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Guías Fallidas</p>
+                    <p className="text-2xl font-bold text-red-600">{failedBreakdown?.shipments || 0}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cobrado Cliente</p>
@@ -220,6 +293,50 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ganancia</p>
                     <p className="text-2xl font-bold text-green-600">{fmt(totals.profit)}</p>
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Guías por Estado</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    De que se compone el total de {totalStatusShipments} guías (excluye canceladas)
+                </p>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Estado</th>
+                                <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Guías</th>
+                                <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">% del total</th>
+                                <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Cobrado</th>
+                                <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Costo Carrier</th>
+                                <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Ganancia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {statusBreakdown.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} className="text-center py-6 text-gray-500 dark:text-gray-400">Sin guías en el periodo</td>
+                                </tr>
+                            )}
+                            {statusBreakdown.map(row => (
+                                <tr key={row.status} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <td className="py-3 px-2">
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadgeClass(row.status)}`}>
+                                            {statusLabel(row.status)}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-2 text-right text-gray-600 dark:text-gray-300">{row.shipments}</td>
+                                    <td className="py-3 px-2 text-right text-gray-500 dark:text-gray-400">
+                                        {totalStatusShipments > 0 ? `${((row.shipments / totalStatusShipments) * 100).toFixed(0)}%` : '0%'}
+                                    </td>
+                                    <td className="py-3 px-2 text-right text-blue-600 font-medium">{fmt(row.customer_charge)}</td>
+                                    <td className="py-3 px-2 text-right text-red-600 font-medium">{fmt(row.carrier_cost)}</td>
+                                    <td className="py-3 px-2 text-right text-green-600 font-medium">{fmt(row.profit)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -278,7 +395,7 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Detalle por Día</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Desde
@@ -301,6 +418,21 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Estado
+                        </label>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => { setStatusFilter(e.target.value); setDetailPage(1); }}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">Todos los estados</option>
+                            {statusBreakdown.map(s => (
+                                <option key={s.status} value={s.status}>{statusLabel(s.status)} ({s.shipments})</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -311,6 +443,7 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                                 <th className="text-left py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Orden</th>
                                 <th className="text-left py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Tracking</th>
                                 <th className="text-left py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Transportadora</th>
+                                <th className="text-left py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Estado</th>
                                 <th className="text-right py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Cobrado</th>
                                 <th className="text-right py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Costo Real</th>
                                 <th className="text-right py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Ganancia</th>
@@ -318,13 +451,8 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                         </thead>
                         <tbody>
                             {(() => {
-                                const filtered = dailyShipments.filter(shipment => {
-                                    const shipmentDate = shipment.created_at.split('T')[0];
-                                    return shipmentDate >= filterFromDate && shipmentDate <= filterToDate;
-                                });
-                                const totalPages = Math.ceil(filtered.length / pageSize);
                                 const start = (detailPage - 1) * pageSize;
-                                const paginated = filtered.slice(start, start + pageSize);
+                                const paginated = filteredDailyShipments.slice(start, start + pageSize);
                                 return paginated.map(shipment => (
                                     <tr key={shipment.shipment_id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <td className="py-3 px-2 text-gray-900 dark:text-gray-100 text-xs">
@@ -333,6 +461,11 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                                         <td className="py-3 px-2 text-gray-900 dark:text-gray-100 font-medium">{shipment.order_number}</td>
                                         <td className="py-3 px-2 text-gray-600 dark:text-gray-400 text-xs">{shipment.tracking_number}</td>
                                         <td className="py-3 px-2 text-gray-600 dark:text-gray-400">{shipment.carrier}</td>
+                                        <td className="py-3 px-2">
+                                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadgeClass(shipment.status)}`}>
+                                                {statusLabel(shipment.status)}
+                                            </span>
+                                        </td>
                                         <td className="py-3 px-2 text-right text-blue-600 font-medium">{fmt(shipment.customer_charge)}</td>
                                         <td className="py-3 px-2 text-right text-red-600 font-medium">{fmt(shipment.carrier_cost)}</td>
                                         <td className="py-3 px-2 text-right text-green-600 font-medium">{fmt(shipment.profit)}</td>
@@ -344,15 +477,11 @@ export default function ShippingProfitMonthly({ selectedBusinessId }: Props) {
                 </div>
 
                 {(() => {
-                    const filtered = dailyShipments.filter(shipment => {
-                        const shipmentDate = shipment.created_at.split('T')[0];
-                        return shipmentDate >= filterFromDate && shipmentDate <= filterToDate;
-                    });
-                    const totalPages = Math.ceil(filtered.length / pageSize);
+                    const totalPages = Math.ceil(filteredDailyShipments.length / pageSize);
                     return (
                         <div className="mt-4 flex items-center justify-between">
                             <div className="text-gray-600 dark:text-gray-300">
-                                Página <span className="font-semibold">{detailPage}</span> de <span className="font-semibold">{totalPages}</span> &middot; {filtered.length} guías
+                                Página <span className="font-semibold">{detailPage}</span> de <span className="font-semibold">{totalPages}</span> &middot; {filteredDailyShipments.length} guías
                             </div>
                             <div className="flex items-center gap-2">
                                 <button

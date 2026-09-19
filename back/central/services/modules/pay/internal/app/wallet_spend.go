@@ -14,6 +14,12 @@ func (uc *walletUseCase) GetSpendSummary(ctx context.Context, dto *dtos.SpendSum
 	return uc.repo.GetSpendSummary(ctx, dto)
 }
 
+// GetGuideStatusSummary desglosa el gasto en guias por el estado real del
+// envio (delivered, failed, in_transit, etc.).
+func (uc *walletUseCase) GetGuideStatusSummary(ctx context.Context, dto *dtos.SpendSummaryDTO) ([]dtos.GuideStatusTotal, error) {
+	return uc.repo.GetGuideStatusSummary(ctx, dto)
+}
+
 // ListSpendTransactions detalle paginado de los debitos de billetera de un negocio.
 func (uc *walletUseCase) ListSpendTransactions(ctx context.Context, dto *dtos.TransactionFilterDTO) ([]*entities.WalletTransaction, int64, error) {
 	return uc.repo.ListTransactionsFiltered(ctx, dto)

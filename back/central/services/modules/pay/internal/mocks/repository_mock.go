@@ -161,6 +161,14 @@ func (m *RepositoryMock) GetSpendSummary(ctx context.Context, dto *dtos.SpendSum
 	return args.Get(0).([]dtos.ConceptTotal), args.Error(1)
 }
 
+func (m *RepositoryMock) GetGuideStatusSummary(ctx context.Context, dto *dtos.SpendSummaryDTO) ([]dtos.GuideStatusTotal, error) {
+	args := m.Called(ctx, dto)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]dtos.GuideStatusTotal), args.Error(1)
+}
+
 func (m *RepositoryMock) ListTransactionsFiltered(ctx context.Context, dto *dtos.TransactionFilterDTO) ([]*entities.WalletTransaction, int64, error) {
 	args := m.Called(ctx, dto)
 	if args.Get(0) == nil {

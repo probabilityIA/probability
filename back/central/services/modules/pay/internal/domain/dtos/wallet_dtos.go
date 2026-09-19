@@ -71,6 +71,15 @@ type ConceptTotal struct {
 	Amount  float64 `json:"amount"`
 }
 
+// GuideStatusTotal desglosa el gasto en guias (concept=GUIDE) por el estado
+// real del envio (delivered, failed, in_transit, etc.), para que el negocio
+// sepa que compone el total de guias que pago.
+type GuideStatusTotal struct {
+	Status string  `json:"status"`
+	Count  int64   `json:"count"`
+	Amount float64 `json:"amount"`
+}
+
 // TransactionFilterDTO filtro paginado de transacciones de un negocio
 type TransactionFilterDTO struct {
 	BusinessID uint

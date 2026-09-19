@@ -45,21 +45,30 @@ func (h *walletHandler) GetSpendSummary(c *gin.Context) {
 	}
 	start, end := spendDateRange(c)
 
-	totals, err := h.walletUC.GetSpendSummary(c.Request.Context(), &dtos.SpendSummaryDTO{
+	summaryDTO := &dtos.SpendSummaryDTO{
 		BusinessID: businessID,
 		StartDate:  start,
 		EndDate:    end,
-	})
+	}
+
+	totals, err := h.walletUC.GetSpendSummary(c.Request.Context(), summaryDTO)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	guideStatusBreakdown, err := h.walletUC.GetGuideStatusSummary(c.Request.Context(), summaryDTO)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":    true,
-		"start_date": start,
-		"end_date":   end,
-		"by_concept": totals,
+		"success":                true,
+		"start_date":             start,
+		"end_date":               end,
+		"by_concept":             totals,
+		"guide_status_breakdown": guideStatusBreakdown,
 	})
 }
 

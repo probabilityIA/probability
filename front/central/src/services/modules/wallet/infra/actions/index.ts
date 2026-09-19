@@ -260,6 +260,12 @@ export interface ConceptTotal {
     amount: number;
 }
 
+export interface GuideStatusTotal {
+    status: string;
+    count: number;
+    amount: number;
+}
+
 /**
  * Total gastado por el negocio de su propia billetera, agrupado por concepto
  * (GUIDE, SUBSCRIPTION, etc.). Nunca incluye margen/ganancia de Probability.

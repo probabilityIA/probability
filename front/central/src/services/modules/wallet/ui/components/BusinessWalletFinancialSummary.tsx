@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { DateRangePicker } from '@/shared/ui/date-range-picker';
-import { getWalletSpendSummaryAction, listWalletSpendTransactionsAction, ConceptTotal } from '../../infra/actions';
+import { getWalletSpendSummaryAction, listWalletSpendTransactionsAction, ConceptTotal, GuideStatusTotal } from '../../infra/actions';
 import { CONCEPT_LABELS } from '../../domain/concept';
 
 interface Props {
@@ -28,6 +28,35 @@ const CONCEPT_COLOR: Record<string, { bg: string; c: string }> = {
     EXTRA_USAGE: { bg: '#fef3c7', c: '#b45309' },
     OTHER: { bg: '#f1f5f9', c: '#475569' },
 };
+
+const GUIDE_STATUS_LABELS: Record<string, string> = {
+    pending: 'Pendiente',
+    picked_up: 'Recolectada',
+    in_transit: 'En tránsito',
+    out_for_delivery: 'En reparto',
+    delivered: 'Entregada',
+    on_hold: 'Novedad',
+    returned: 'Devuelta',
+    failed: 'Fallida',
+    cancelled: 'Cancelada',
+    desconocido: 'Sin guía asociada',
+};
+
+const GUIDE_STATUS_BADGE: Record<string, string> = {
+    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    picked_up: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    in_transit: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    out_for_delivery: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    delivered: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    on_hold: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    returned: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    cancelled: 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+    desconocido: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+};
+
+const guideStatusLabel = (status: string) => GUIDE_STATUS_LABELS[status] || status || 'Sin estado';
+const guideStatusBadgeClass = (status: string) => GUIDE_STATUS_BADGE[status] || 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
 
 function ConceptPill({ concept }: { concept: string }) {
     const m = CONCEPT_COLOR[concept] || CONCEPT_COLOR.OTHER;
@@ -60,6 +89,7 @@ export default function BusinessWalletFinancialSummary({ businessId }: Props) {
     const [startDate, setStartDate] = useState<string | undefined>(daysAgoISO(29));
     const [endDate, setEndDate] = useState<string | undefined>(todayISO());
     const [byConcept, setByConcept] = useState<ConceptTotal[]>([]);
+    const [guideStatusBreakdown, setGuideStatusBreakdown] = useState<GuideStatusTotal[]>([]);
     const [loadingSummary, setLoadingSummary] = useState(true);
     const [transactions, setTransactions] = useState<SpendTransaction[]>([]);
     const [loadingTx, setLoadingTx] = useState(true);
@@ -80,7 +110,10 @@ export default function BusinessWalletFinancialSummary({ businessId }: Props) {
         setLoadingSummary(true);
         getWalletSpendSummaryAction(startDate, endDate, businessId).then((res) => {
             if (cancelled) return;
-            if (res.success && res.data) setByConcept(res.data.by_concept || []);
+            if (res.success && res.data) {
+                setByConcept(res.data.by_concept || []);
+                setGuideStatusBreakdown(res.data.guide_status_breakdown || []);
+            }
             setLoadingSummary(false);
         });
         return () => { cancelled = true; };
@@ -144,6 +177,39 @@ export default function BusinessWalletFinancialSummary({ businessId }: Props) {
                             <p className="text-lg font-bold text-violet-600 dark:text-violet-400">{formatCurrency(grandTotal)}</p>
                         </div>
                     </div>
+
+                    {guideStatusBreakdown.length > 0 && (
+                        <div className={`${CARD} overflow-hidden`}>
+                            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Guías por estado</h3>
+                                <p className="text-[11px] text-gray-400 mt-0.5">De qué se compone el total de {guideTotal?.count || 0} guías pagadas</p>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="text-left text-[11px] text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700">
+                                            <th className="px-4 py-2 font-medium">Estado</th>
+                                            <th className="px-4 py-2 font-medium text-right">Guías</th>
+                                            <th className="px-4 py-2 font-medium text-right">Gastado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {guideStatusBreakdown.map((row) => (
+                                            <tr key={row.status} className="border-b border-gray-50 dark:border-gray-700/50">
+                                                <td className="px-4 py-2">
+                                                    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${guideStatusBadgeClass(row.status)}`}>
+                                                        {guideStatusLabel(row.status)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-300">{row.count}</td>
+                                                <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(row.amount)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
 
